@@ -1,0 +1,579 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  FACILITY_MANAGER
+  VICAR
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingCategory {
+  CHURCH_SERVICE
+  WEDDING
+  FUNERAL
+  MEETING
+  CONFERENCE
+  WORKSHOP
+  BIRTHDAY_PARTY
+  CONCERT
+  REHEARSAL
+  OTHER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InventoryCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  DISPOSED
+}
+
+enum InventoryStatus {
+  AVAILABLE
+  IN_USE
+  CHECKED_OUT
+  UNDER_MAINTENANCE
+  DISPOSED
+  LOST
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  FLUTTERWAVE
+  HUBTEL
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role
+  isActive              Boolean   @default(true)
+  permissions           Json      @default("{}")
+  mustChangePassword    Boolean   @default(false)
+  lastLoginAt           DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  bookings            Booking[]
+  createdExpenses     Expense[]            @relation("CreatedExpenses")
+  approvedExpenses    Expense[]            @relation("ApprovedExpenses")
+  createdIncome       Income[]
+  requestedMaint      MaintenanceRequest[] @relation("RequestedMaint")
+  assignedMaint       MaintenanceRequest[] @relation("AssignedMaint")
+  createdEvents       Event[]
+  auditLogs           AuditLog[]
+  inventoryCheckouts  InventoryCheckout[]  @relation("CheckedOutBy")
+  inventoryReturns    InventoryCheckout[]  @relation("ReturnedBy")
+  invMaintRequested   InventoryMaintenance[] @relation("InvMaintRequested")
+  invMaintAssigned    InventoryMaintenance[] @relation("InvMaintAssigned")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Patron {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings Booking[]
+  payments Payment[]
+
+  @@map("patrons")
+}
+
+model Facility {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  capacity         Int
+  pricePerHour     Decimal  @db.Decimal(10, 2)
+  pricePerDay      Decimal? @db.Decimal(10, 2)
+  amenities        String[]
+  images           String[]
+  isActive              Boolean   @default(true)
+  underMaintenance      Boolean   @default(false)
+  maintenanceStartsAt   DateTime?
+  maintenanceEndsAt     DateTime?
+  sortOrder             Int       @default(0)
+  availableFrom         String    @default("08:00")
+  availableTo           String    @default("22:00")
+  availableDays         Int[]     // 0=Sun…6=Sat
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  bookings    Booking[]
+  maintenance MaintenanceRequest[]
+  events      Event[]
+  pricing     FacilityPricing[]
+  timeSlots   FacilityTimeSlot[]
+
+  @@index([isActive])
+  @@map("facilities")
+}
+
+model FacilityPricing {
+  id           String          @id @default(cuid())
+  facilityId   String
+  category     BookingCategory
+  pricePerHour Decimal         @db.Decimal(10, 2)
+  pricePerDay  Decimal?        @db.Decimal(10, 2)
+  freeDays     Int[]           @default([]) // 0=Sunday ... 6=Saturday; if day is included, booking is free
+  description  String?         // Optional notes about this pricing
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@unique([facilityId, category])
+  @@index([facilityId, isActive])
+  @@map("facility_pricing")
+}
+
+model FacilityTimeSlot {
+  id          String   @id @default(cuid())
+  facilityId  String
+  category    BookingCategory?
+  dayOfWeek   Int      // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime   String   // "08:00"
+  endTime     String   // "11:00"
+  label       String   // "Morning Service Slot", "Afternoon Session"
+  isFlexible  Boolean  @default(false) // If true, users can book any time within this range; if false, must book the exact slot
+  pricePerHourOverride Decimal? @db.Decimal(10, 2)
+  isFree      Boolean  @default(false)
+  maxBookings Int      @default(1) // How many concurrent bookings allowed in this slot
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId, dayOfWeek, isActive])
+  @@map("facility_time_slots")
+}
+
+model Booking {
+  id              String          @id @default(cuid())
+  facilityId      String?         // null for item-only bookings
+  userId          String?         // staff booking
+  patronId        String?         // public booking
+  eventId         String?
+  category        BookingCategory @default(OTHER)
+  title           String
+  description     String?
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus   @default(PENDING)
+  paymentStatus   PaymentStatus   @default(UNPAID)
+  totalAmount     Decimal         @db.Decimal(10, 2)
+  notes           String?
+  rejectionReason String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  facility  Facility?         @relation(fields: [facilityId], references: [id])
+  user      User?             @relation(fields: [userId], references: [id])
+  patron    Patron?           @relation(fields: [patronId], references: [id])
+  event     Event?            @relation(fields: [eventId], references: [id])
+  payment   Payment?
+  receipt   Receipt?
+  lineItems BookingLineItem[]
+
+  @@index([facilityId, startTime, endTime])
+  @@index([status])
+  @@map("bookings")
+}
+
+// ─── Bookable Items & Bundles (external event rental catalog) ──────────────────
+
+model BookableItem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  unit         String   @default("piece") // e.g. "chair", "table", "set", "microphone"
+  pricePerUnit Decimal  @db.Decimal(10, 2)
+  quantity     Int      @default(1)         // total stock available for booking
+  images       String[]
+  tags         String[]
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bundleComponents BundleComponent[]
+  bookingLines     BookingLineItem[]
+
+  @@index([isActive])
+  @@map("bookable_items")
+}
+
+model BookableBundle {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  tagline     String?  // short pitch, e.g. "Everything for a wedding reception"
+  price       Decimal  @db.Decimal(10, 2) // flat bundle price
+  images      String[]
+  tags        String[]
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  components   BundleComponent[]
+  bookingLines BookingLineItem[]
+
+  @@index([isActive])
+  @@map("bookable_bundles")
+}
+
+// Pivot: which items (and quantities) make up a bundle
+model BundleComponent {
+  id       String @id @default(cuid())
+  bundleId String
+  itemId   String
+  quantity Int    @default(1)
+  label    String? // optional display name override within the bundle
+
+  bundle BookableBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  item   BookableItem   @relation(fields: [itemId],   references: [id])
+
+  @@unique([bundleId, itemId])
+  @@map("bundle_components")
+}
+
+// Line items attached to a booking (items or bundles)
+model BookingLineItem {
+  id        String  @id @default(cuid())
+  bookingId String
+  itemId    String? // either itemId or bundleId populated
+  bundleId  String?
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  booking Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  item    BookableItem?  @relation(fields: [itemId],   references: [id])
+  bundle  BookableBundle? @relation(fields: [bundleId], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_line_items")
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  bookingId   String        @unique
+  patronId    String?
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("GHS")
+  provider    PaymentProvider
+  providerRef String?       @unique
+  status      PaymentStatus @default(PENDING)
+  metadata    Json?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  patron  Patron? @relation(fields: [patronId], references: [id])
+  receipt Receipt?
+
+  @@index([status])
+  @@map("payments")
+}
+
+model Receipt {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  paymentId     String   @unique
+  receiptNumber String   @unique
+  fileUrl       String?
+  issuedAt      DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("receipts")
+}
+
+model PaymentConfig {
+  id            String          @id @default(cuid())
+  provider      PaymentProvider
+  publicKey     String
+  secretKey     String          // AES-256-GCM encrypted
+  webhookSecret String?         // encrypted
+  isActive      Boolean         @default(true)
+  updatedAt     DateTime        @updatedAt
+
+  @@map("payment_configs")
+}
+
+model Expense {
+  id              String        @id @default(cuid())
+  createdById     String
+  approvedById    String?
+  title           String
+  narration       String
+  amount          Decimal       @db.Decimal(10, 2)
+  category        String
+  status          ExpenseStatus @default(PENDING)
+  receiptUrl      String?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  approvedAt      DateTime?
+  updatedAt       DateTime      @updatedAt
+
+  createdBy  User   @relation("CreatedExpenses",  fields: [createdById],  references: [id])
+  approvedBy User?  @relation("ApprovedExpenses", fields: [approvedById], references: [id])
+
+  @@index([status])
+  @@map("expenses")
+}
+
+model Income {
+  id           String   @id @default(cuid())
+  recordedById String
+  title        String
+  narration    String
+  amount       Decimal  @db.Decimal(10, 2)
+  category     String
+  source       String?
+  receivedAt   DateTime
+  createdAt    DateTime @default(now())
+
+  recordedBy User @relation(fields: [recordedById], references: [id])
+
+  @@index([receivedAt])
+  @@map("income")
+}
+
+model MaintenanceRequest {
+  id             String              @id @default(cuid())
+  facilityId     String?             // null = non-facility (general campus asset described in notes)
+  requestedById  String
+  assignedToId   String?
+  title          String
+  description    String
+  priority       MaintenancePriority @default(MEDIUM)
+  status         MaintenanceStatus   @default(OPEN)
+  // Scheduled window: facility stays bookable OUTSIDE this range
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  estimatedCost  Decimal?            @db.Decimal(10, 2)
+  actualCost     Decimal?            @db.Decimal(10, 2)
+  resolvedAt     DateTime?
+  closedAt       DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  facility    Facility? @relation(fields: [facilityId], references: [id])
+  requestedBy User      @relation("RequestedMaint", fields: [requestedById], references: [id])
+  assignedTo  User?     @relation("AssignedMaint",  fields: [assignedToId],  references: [id])
+
+  @@index([status, priority])
+  @@map("maintenance_requests")
+}
+
+// ─── Inventory ─────────────────────────────────────────────────────────────────
+
+model InventoryCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?  // lucide icon name
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items InventoryItem[]
+
+  @@map("inventory_categories")
+}
+
+model InventoryItem {
+  id            String             @id @default(cuid())
+  categoryId    String?
+  name          String
+  description   String?
+  serialNumber  String?
+  assetTag      String?            @unique
+  condition     InventoryCondition @default(GOOD)
+  status        InventoryStatus    @default(AVAILABLE)
+  location      String?            // e.g. "Main Hall", "Storage Room B"
+  quantity      Int                @default(1)
+  unitCost      Decimal?           @db.Decimal(10, 2)
+  purchaseDate  DateTime?
+  supplier      String?
+  warrantyExp   DateTime?
+  notes         String?
+  images        String[]
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  category         InventoryCategory?     @relation(fields: [categoryId], references: [id])
+  checkouts        InventoryCheckout[]
+  maintenanceLogs  InventoryMaintenance[]
+
+  @@index([status, isActive])
+  @@map("inventory_items")
+}
+
+model InventoryCheckout {
+  id             String              @id @default(cuid())
+  itemId         String
+  checkedOutById String
+  returnedById   String?
+  purpose        String
+  quantity       Int                 @default(1)
+  locationNote   String?
+  checkedOutAt   DateTime            @default(now())
+  dueBack        DateTime?
+  returnedAt     DateTime?
+  conditionOut   InventoryCondition  @default(GOOD)
+  conditionIn    InventoryCondition?
+  notes          String?
+
+  item         InventoryItem @relation(fields: [itemId],         references: [id])
+  checkedOutBy User          @relation("CheckedOutBy",          fields: [checkedOutById], references: [id])
+  returnedBy   User?         @relation("ReturnedBy",            fields: [returnedById],   references: [id])
+
+  @@index([itemId])
+  @@index([checkedOutById])
+  @@map("inventory_checkouts")
+}
+
+model InventoryMaintenance {
+  id            String              @id @default(cuid())
+  itemId        String
+  requestedById String
+  assignedToId  String?
+  title         String
+  description   String
+  priority      MaintenancePriority @default(MEDIUM)
+  status        MaintenanceStatus   @default(OPEN)
+  estimatedCost Decimal?            @db.Decimal(10, 2)
+  actualCost    Decimal?            @db.Decimal(10, 2)
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  item        InventoryItem @relation(fields: [itemId],        references: [id])
+  requestedBy User          @relation("InvMaintRequested",    fields: [requestedById], references: [id])
+  assignedTo  User?         @relation("InvMaintAssigned",     fields: [assignedToId],  references: [id])
+
+  @@index([status, priority])
+  @@map("inventory_maintenance")
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  facilityId     String
+  createdById    String
+  title          String
+  description    String?
+  startTime      DateTime
+  endTime        DateTime
+  isRecurring    Boolean  @default(false)
+  recurrenceRule String?
+  maxAttendees   Int?
+  isPublic       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  facility  Facility @relation(fields: [facilityId], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id])
+  bookings  Booking[]
+
+  @@index([startTime])
+  @@map("events")
+}
+
+model NotificationLog {
+  id          String   @id @default(cuid())
+  type        String   // SMS | EMAIL
+  recipient   String
+  subject     String?
+  body        String
+  status      String   // SENT | FAILED | PENDING
+  provider    String
+  providerRef String?
+  error       String?
+  sentAt      DateTime @default(now())
+
+  @@index([type, status])
+  @@map("notification_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action, createdAt])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

@@ -1,0 +1,200 @@
+"use client";
+
+import Link from "next/link";
+import { ReactNode, useEffect, useState } from "react";
+
+type CurrentPage = "catalog" | "guest" | "patron";
+
+interface PublicSplitShellProps {
+  current: CurrentPage;
+  eyebrow: string;
+  title: string;
+  subtitle: ReactNode;
+  children: ReactNode;
+}
+
+const FEATURES = [
+  "Real-time booking visibility",
+  "Simple guest reservation flow",
+  "Trusted church facility operations",
+];
+
+const SPLASH_DURATION = 10000; // 10 seconds
+
+function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: ReactNode }) {
+  return (
+    <div style={{ position: "relative", maxWidth: 520 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", fontWeight: 700, color: "#fff" }}>First Love Center</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.07em", textTransform: "uppercase" }}>Facility Management</div>
+        </div>
+      </div>
+
+      <p style={{ color: "var(--gold-pale)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.7rem", marginBottom: 10 }}>{eyebrow}</p>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2.7rem", fontWeight: 700, color: "#fff", lineHeight: 1.15, marginBottom: 18 }}>{title}</h1>
+      <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.75, marginBottom: 40 }}>{subtitle}</p>
+
+      {FEATURES.map((item) => (
+        <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+          </div>
+          <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.55)" }}>{item}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function PublicSplitShell({ current, eyebrow, title, subtitle, children }: PublicSplitShellProps) {
+  const active = "var(--navy)";
+  const idle = "var(--muted)";
+
+  const [splashExiting, setSplashExiting] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
+
+  const dismissSplash = () => {
+    if (splashExiting || splashDone) return;
+    setSplashExiting(true);
+    setTimeout(() => setSplashDone(true), 700);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(dismissSplash, SPLASH_DURATION);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div style={{ height: "100vh", display: "flex", background: "var(--navy)", position: "relative", overflow: "hidden" }}>
+
+      {/* ── Mobile Splash (full-screen, lg:hidden) ── */}
+      {!splashDone && (
+        <div
+          className="lg:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "var(--navy)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "48px 36px",
+            overflow: "hidden",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+            opacity: splashExiting ? 0 : 1,
+            transform: splashExiting ? "translateY(-32px)" : "translateY(0)",
+            pointerEvents: splashExiting ? "none" : "auto",
+          }}
+        >
+          {/* Background media — drop splash-bg.mp4 or splash-bg.jpg into /public/ */}
+          <video autoPlay muted loop playsInline poster="/splash-bg.jpg" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+            <source src="/splash-bg.mp4" type="video/mp4" />
+          </video>
+          {/* Tint so text stays readable */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.65) 100%)" }} />
+
+          <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <BrandingPanel eyebrow={eyebrow} title={title} subtitle={subtitle} />
+          </div>
+
+          {/* Progress bar + skip */}
+          <div style={{ position: "absolute", bottom: 40, left: 36, right: 36, zIndex: 2 }}>
+            <div style={{ height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
+              <div
+                style={{
+                  height: "100%",
+                  background: "var(--gold)",
+                  borderRadius: 2,
+                  animation: `splashBar ${SPLASH_DURATION}ms linear forwards`,
+                }}
+              />
+            </div>
+            <button
+              onClick={dismissSplash}
+              style={{
+                display: "block",
+                marginLeft: "auto",
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.5)",
+                borderRadius: 20,
+                padding: "6px 18px",
+                fontSize: "0.75rem",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+              }}
+            >
+              Skip →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Desktop left panel ── */}
+      <div style={{ flex: 2, position: "relative", overflow: "hidden" }} className="hidden lg:flex items-center justify-center">
+        {/* Background media — drop splash-bg.mp4 or splash-bg.jpg into /public/ */}
+        <video autoPlay muted loop playsInline poster="/splash-bg.jpg" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+          <source src="/splash-bg.mp4" type="video/mp4" />
+        </video>
+        {/* Tint */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.65) 100%)" }} />
+        {/* Content */}
+        <div style={{ position: "relative", zIndex: 1, padding: "60px", width: "100%" }}>
+          <BrandingPanel eyebrow={eyebrow} title={title} subtitle={subtitle} />
+        </div>
+      </div>
+
+      {/* ── Right panel (always mounted) ── */}
+      <div style={{ flex: 3, background: "var(--cream)", display: "flex", flexDirection: "column" }}>
+        {/* Sticky Navigation */}
+        <div
+          className="px-4 py-5 sm:px-8 lg:px-[50px]"
+          style={{ 
+            position: "sticky", 
+            top: 0, 
+            zIndex: 10,
+            background: "var(--cream)", 
+            borderBottom: "1px solid rgba(10,22,40,0.08)",
+            boxShadow: "0 1px 3px rgba(10,22,40,0.03)"
+          }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }} className="lg:hidden">
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", fontWeight: 700, color: "var(--navy)" }}>First Love Center</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <Link href="/catalog" className="btn-ghost" style={{ color: current === "catalog" ? active : idle }}>Catalog</Link>
+              <Link href="/guest/book" className="btn-ghost" style={{ color: current === "guest" ? active : idle }}>Guest Booking</Link>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                <Link href="/" className="btn-secondary">Home</Link>
+                <Link href="/login" className="btn-primary">Sign In</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="px-4 py-8 sm:px-8 lg:px-[50px]" style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ width: "100%", maxWidth: 900, margin: "0 auto" }}>
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
