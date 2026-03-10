@@ -32,6 +32,7 @@ enum BookingCategory {
   BIRTHDAY_PARTY
   CONCERT
   REHEARSAL
+  BABY_DEDICATION
   OTHER
 }
 
@@ -115,6 +116,7 @@ model User {
   inventoryReturns    InventoryCheckout[]  @relation("ReturnedBy")
   invMaintRequested   InventoryMaintenance[] @relation("InvMaintRequested")
   invMaintAssigned    InventoryMaintenance[] @relation("InvMaintAssigned")
+  ceremonyDays        CeremonyDay[]
 
   @@index([role])
   @@map("users")
@@ -156,11 +158,12 @@ model Facility {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  bookings    Booking[]
-  maintenance MaintenanceRequest[]
-  events      Event[]
-  pricing     FacilityPricing[]
-  timeSlots   FacilityTimeSlot[]
+  bookings      Booking[]
+  maintenance   MaintenanceRequest[]
+  events        Event[]
+  pricing       FacilityPricing[]
+  timeSlots     FacilityTimeSlot[]
+  ceremonyDays  CeremonyDay[]
 
   @@index([isActive])
   @@map("facilities")
@@ -207,6 +210,48 @@ model FacilityTimeSlot {
   @@map("facility_time_slots")
 }
 
+// ─── Ceremony Days ────────────────────────────────────────────────────────────
+
+model CeremonyDay {
+  id          String   @id @default(cuid())
+  facilityId  String
+  date        DateTime @db.Date
+  title       String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facility  Facility           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  createdBy User               @relation(fields: [createdById], references: [id])
+  timeSlots CeremonyTimeSlot[]
+
+  @@unique([facilityId, date])
+  @@index([facilityId, date, isActive])
+  @@map("ceremony_days")
+}
+
+model CeremonyTimeSlot {
+  id            String          @id @default(cuid())
+  ceremonyDayId String
+  category      BookingCategory
+  startTime     String          // "09:00"
+  endTime       String          // "12:00"
+  label         String
+  maxBookings   Int             @default(1)
+  pricePerHour  Decimal?        @db.Decimal(10, 2)
+  isFree        Boolean         @default(false)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  ceremonyDay CeremonyDay @relation(fields: [ceremonyDayId], references: [id], onDelete: Cascade)
+
+  @@index([ceremonyDayId, category, isActive])
+  @@map("ceremony_time_slots")
+}
+
 model Booking {
   id              String          @id @default(cuid())
   facilityId      String?         // null for item-only bookings
@@ -223,6 +268,7 @@ model Booking {
   totalAmount     Decimal         @db.Decimal(10, 2)
   notes           String?
   rejectionReason String?
+  isBillingWaived Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -232,6 +278,7 @@ model Booking {
   event     Event?            @relation(fields: [eventId], references: [id])
   payment   Payment?
   receipt   Receipt?
+  income    Income?
   lineItems BookingLineItem[]
 
   @@index([facilityId, startTime, endTime])
@@ -386,7 +433,8 @@ model Expense {
 
 model Income {
   id           String   @id @default(cuid())
-  recordedById String
+  recordedById String?
+  bookingId    String?  @unique
   title        String
   narration    String
   amount       Decimal  @db.Decimal(10, 2)
@@ -395,7 +443,8 @@ model Income {
   receivedAt   DateTime
   createdAt    DateTime @default(now())
 
-  recordedBy User @relation(fields: [recordedById], references: [id])
+  recordedBy User?    @relation(fields: [recordedById], references: [id])
+  booking    Booking? @relation(fields: [bookingId], references: [id])
 
   @@index([receivedAt])
   @@map("income")

@@ -119,6 +119,7 @@ export default function FacilityAvailabilityCalendar({
   // Disable days that aren't in availableDays
   const disabledDays = [
     { before: addDays(new Date(), 1) }, // Can't book today or past
+    { dayOfWeek: [1] }, // Mondays are off-days (Sabbath)
     (date: Date) => !availableDays.includes(date.getDay()),
   ];
 

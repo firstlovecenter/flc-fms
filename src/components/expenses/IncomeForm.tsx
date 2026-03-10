@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
-import { recordIncome } from "@/actions/income.actions";
+import { useState, useEffect } from "react";
+import { recordIncome, getBookingsForIncomeLink } from "@/actions/income.actions";
 
 const schema = z.object({
   title:      z.string().min(2, "Title is required"),
@@ -13,10 +13,19 @@ const schema = z.object({
   amount:     z.coerce.number().positive("Amount must be positive"),
   category:   z.string().min(2, "Category is required"),
   source:     z.string().optional(),
+  bookingId:  z.string().optional(),
   receivedAt: z.string().min(1, "Date is required"),
 });
 
 type FormData = z.infer<typeof schema>;
+
+type BookingOption = {
+  id: string;
+  title: string;
+  totalAmount: { toString(): string };
+  startTime: Date;
+  facility: { name: string } | null;
+};
 
 const CATEGORIES = [
   "Tithes & Offerings", "Facility Hire", "Donations", "Grants",
@@ -26,6 +35,11 @@ const CATEGORIES = [
 export default function IncomeForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<BookingOption[]>([]);
+
+  useEffect(() => {
+    getBookingsForIncomeLink().then(setBookings).catch(() => {});
+  }, []);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -40,13 +54,14 @@ export default function IncomeForm() {
       amount:     data.amount,
       category:   data.category,
       source:     data.source || undefined,
+      bookingId:  data.bookingId || undefined,
       receivedAt: new Date(data.receivedAt),
     });
 
     if ("error" in result && result.error) {
       setError(result.error as string);
     } else {
-      router.push("/income");
+      router.push("/transactions?tab=income");
       router.refresh();
     }
   }
@@ -95,6 +110,21 @@ export default function IncomeForm() {
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
       </div>
+
+      {bookings.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Link to Booking (optional)</label>
+          <select {...register("bookingId")} className="input">
+            <option value="">— No booking linked —</option>
+            {bookings.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.title} {b.facility ? `(${b.facility.name})` : ""} — GHS {Number(b.totalAmount).toFixed(2)}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-[var(--muted)] mt-1">Link this income to an existing approved booking</p>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={isSubmitting} className="btn-primary">

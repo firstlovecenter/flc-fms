@@ -105,6 +105,13 @@ export default function BookingForm({
 
   async function onSubmit(data: FormData) {
     setError(null);
+
+    // Mondays are office off-days (Sabbath)
+    if (new Date(data.startTime).getDay() === 1) {
+      setError("Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day).");
+      return;
+    }
+
     const result = await createStaffBooking({
       facilityId:  data.facilityId,
       category:    data.category as any,
@@ -155,6 +162,7 @@ export default function BookingForm({
           <option value="BIRTHDAY_PARTY">Birthday Party</option>
           <option value="CONCERT">Concert</option>
           <option value="REHEARSAL">Rehearsal</option>
+          <option value="BABY_DEDICATION">Baby Dedication</option>
           <option value="OTHER">Other</option>
         </select>
         {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}

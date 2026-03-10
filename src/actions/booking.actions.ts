@@ -112,6 +112,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   const session  = await requirePermission("canCreateBookings");
   const validated = BookingSchema.parse(data);
 
+  // Mondays are office off-days (Sabbath) — no bookings allowed
+  if (validated.startTime.getDay() === 1) {
+    return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
+
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true },
   });
@@ -194,6 +199,11 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   const session  = await requirePatron();
   const validated = BookingSchema.parse(data);
 
+  // Mondays are office off-days (Sabbath) — no bookings allowed
+  if (validated.startTime.getDay() === 1) {
+    return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
+
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true },
   });
@@ -271,6 +281,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
 
 const GuestBookingSchema = z.object({
   facilityId: z.string().min(1, "Facility is required"),
+  category: z.nativeEnum(BookingCategory),
   title: z.string().min(2).max(200),
   description: z.string().optional(),
   startTime: z.coerce.date(),
@@ -282,7 +293,13 @@ const GuestBookingSchema = z.object({
   message: "End time must be after start time",
   path: ["endTime"]});
 
-export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema>) {  const validated = GuestBookingSchema.parse(data);
+export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema>) {
+  const validated = GuestBookingSchema.parse(data);
+
+  // Mondays are office off-days (Sabbath) — no bookings allowed
+  if (validated.startTime.getDay() === 1) {
+    return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
 
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true }});
@@ -291,17 +308,36 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     return { error: "Facility is under maintenance and cannot be booked." };
   }
 
+  const maintConflict = await getFacilityMaintenanceConflict(
+    validated.facilityId,
+    validated.startTime,
+    validated.endTime,
+  );
+  if (maintConflict) {
+    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    return {
+      error: `This facility is scheduled for maintenance from ${fmt(maintConflict.scheduledStart!)} to ${fmt(maintConflict.scheduledEnd!)}. Please choose dates outside this window.`,
+    };
+  }
+
   const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
   if (conflict) return { error: "Facility already has a booking for that time slot." };
 
-  const hours = (validated.endTime.getTime() - validated.startTime.getTime()) / 3_600_000;
-  const totalAmount = Number(facility.pricePerHour) * hours;
+  const amountResult = await computeConfiguredBookingAmount(
+    validated.facilityId,
+    validated.category,
+    validated.startTime,
+    validated.endTime,
+  );
+  if ("error" in amountResult) return { error: amountResult.error };
+  const totalAmount = amountResult.totalAmount;
 
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;
 
   const booking = await prisma.booking.create({
     data: {
       facilityId: validated.facilityId,
+      category: validated.category,
       title: validated.title,
       description: validated.description,
       startTime: validated.startTime,
@@ -339,18 +375,26 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 
 // ── Approve / Reject ──────────────────────────────────────────────────────────
 
-export async function approveBooking(bookingId: string) {
+export async function approveBooking(bookingId: string, waiveBilling = false) {
   const session  = await requireStaff("FACILITY_MANAGER");  const booking = await prisma.booking.update({
     where: { id: bookingId },
-    data: { status: "APPROVED" },
+    data: {
+      status: "APPROVED",
+      ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0, paymentStatus: "PAID" } : {}),
+    },
     include: { patron: true, user: true, facility: true }});
 
   const contact = booking.patron ?? booking.user;
+  const paymentUrl = !waiveBilling && Number(booking.totalAmount) > 0
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/patron/bookings`
+    : undefined;
+
   if (contact?.phone) {
     await notifyBookingApproved({
       phone:        contact.phone,
       bookingTitle: booking.title,
-      startTime:    booking.startTime});
+      startTime:    booking.startTime,
+      paymentUrl});
   }
   if (contact?.email) {
     await sendBookingApprovedEmail({
@@ -359,7 +403,8 @@ export async function approveBooking(bookingId: string) {
       bookingTitle: booking.title,
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
-      totalAmount:  Number(booking.totalAmount)});
+      totalAmount:  Number(booking.totalAmount),
+      paymentUrl});
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });

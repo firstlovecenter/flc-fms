@@ -28,6 +28,17 @@ export async function getFacilityAvailability(
   try {
     const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
 
+    // Mondays are office off-days (Sabbath) — no availability
+    if (dayOfWeek === 1) {
+      return {
+        success: true,
+        slots: [],
+        maintenanceWindow: null,
+        emergencyMaintenance: false,
+        message: "The office is closed on Mondays (Sabbath day). No bookings available.",
+      };
+    }
+
     // Check if this date is within a scheduled maintenance window
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);

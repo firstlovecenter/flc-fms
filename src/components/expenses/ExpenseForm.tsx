@@ -44,7 +44,7 @@ export default function ExpenseForm() {
     if ("error" in result && result.error) {
       setError(result.error as string);
     } else {
-      router.push("/expenses");
+      router.push("/transactions?tab=expenses");
       router.refresh();
     }
   }

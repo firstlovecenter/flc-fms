@@ -6,25 +6,20 @@ import { formatDate } from "@/lib/utils";
 export default async function SuperAdminUsersPage({
   searchParams,
 }: {
-  searchParams: { role?: string };
+  searchParams: { status?: string };
 }) {
   const session = await getSession();
   if (!session || session.role !== "SUPER_ADMIN") redirect("/login");
 
-  const where = {
-    ...(searchParams.role   ? { role: searchParams.role as any } : {}),
-  };
+  const where: Record<string, unknown> = { role: "PATRON" as const };
+  if (searchParams.status === "active")   where.isVerified = true;
+  if (searchParams.status === "inactive") where.isVerified = false;
 
-  const users = await prisma.user.findMany({
+  const patrons = await prisma.patron.findMany({
     where,
-    orderBy: [{ role: "asc" }, { name: "asc" }],
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { bookings: true } } },
   });
-
-  const roleBadge: Record<string, string> = {
-    SUPER_ADMIN:      "bg-purple-100 text-purple-700",
-    FACILITY_MANAGER: "bg-brand-100 text-[var(--navy)]",
-    VICAR:            "bg-amber-100 text-amber-700",
-  };
 
   return (
     <div className="space-y-6 animate-fade-in" style={{ position: "relative" }}>
@@ -67,13 +62,13 @@ export default async function SuperAdminUsersPage({
           lineHeight: 1.1,
           marginBottom: 4
         }}>
-          Staff Management
+          Manage Users
         </h1>
         <p style={{ 
           fontSize: "0.95rem", 
           color: "rgba(255,255,255,0.75)" 
         }}>
-          {users.length} staff members • Manage roles and permissions
+          {patrons.length} patron{patrons.length !== 1 ? "s" : ""} registered
         </p>
       </div>
 
@@ -86,9 +81,9 @@ export default async function SuperAdminUsersPage({
       }}>
         <form method="get" className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
           <select
-            name="role"
+            name="status"
             className="input w-full sm:w-auto text-sm"
-            defaultValue={searchParams.role ?? ""}
+            defaultValue={searchParams.status ?? ""}
             style={{
               padding: "8px 12px",
               borderRadius: "8px",
@@ -96,13 +91,12 @@ export default async function SuperAdminUsersPage({
               fontSize: "0.9rem"
             }}
           >
-            <option value="">All Roles</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
-            <option value="FACILITY_MANAGER">Facility Manager</option>
-            <option value="VICAR">Vicar</option>
+            <option value="">All Patrons</option>
+            <option value="active">Verified</option>
+            <option value="inactive">Unverified</option>
           </select>
           <button type="submit" className="btn-secondary text-sm py-2 px-3">Apply</button>
-          {searchParams.role && (
+          {searchParams.status && (
             <a href="/users" className="btn-secondary text-sm py-2 px-3">Clear</a>
           )}
         </form>
@@ -120,34 +114,32 @@ export default async function SuperAdminUsersPage({
               <tr>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Name</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Email</th>
-                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Role</th>
-                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Last Login</th>
+                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Phone</th>
+                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Bookings</th>
+                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Joined</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Status</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id} style={{ borderBottom: "1px solid var(--border)", opacity: u.isActive ? 1 : 0.65 }} className="hover:bg-[var(--cream)]">
-                  <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--navy)" }}>{u.name}</td>
-                  <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{u.email}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      padding: "4px 10px",
-                      borderRadius: 20,
-                      background: u.role === "SUPER_ADMIN" ? "rgba(168,85,247,0.1)" : u.role === "FACILITY_MANAGER" ? "rgba(200,163,90,0.1)" : "rgba(217,119,6,0.1)",
-                      color: u.role === "SUPER_ADMIN" ? "#7c3aed" : u.role === "FACILITY_MANAGER" ? "var(--gold)" : "#b45309"
-                    }}>
-                      {u.role.replace("_", " ")}
-                    </span>
+              {patrons.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted)" }}>
+                    No patrons found
                   </td>
+                </tr>
+              )}
+              {patrons.map((p) => (
+                <tr key={p.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-[var(--cream)]">
+                  <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--navy)" }}>{p.name}</td>
+                  <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{p.email}</td>
+                  <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{p.phone ?? "—"}</td>
+                  <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{p._count.bookings}</td>
                   <td style={{ padding: "12px 16px", color: "var(--muted)", fontSize: "0.9rem" }}>
-                    {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
+                    {formatDate(p.createdAt)}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <span className={`badge ${u.isActive ? "badge-approved" : "badge-cancelled"}`}>
-                      {u.isActive ? "Active" : "Inactive"}
+                    <span className={`badge ${p.isVerified ? "badge-approved" : "badge-pending"}`}>
+                      {p.isVerified ? "Verified" : "Unverified"}
                     </span>
                   </td>
                 </tr>

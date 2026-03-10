@@ -7,12 +7,12 @@ import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 
 export default async function ExpenseDetailPage({ params }: { params: { id: string } }) {
-  const session  = await requireStaff();
+  const session = await requireStaff();
 
   const expense = await prisma.expense.findFirst({
     where: { id: params.id },
     include: {
-      createdBy:  { select: { name: true, email: true, role: true } },
+      createdBy: { select: { name: true, email: true, role: true } },
       approvedBy: { select: { name: true } },
     },
   });
@@ -24,9 +24,8 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="max-w-2xl space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/expenses" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
+        <Link href="/transactions?tab=expenses" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
@@ -36,7 +35,6 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         <span className={statusBadgeClass(expense.status)}>{expense.status}</span>
       </div>
 
-      {/* Rejection reason */}
       {expense.status === "REJECTED" && expense.rejectionReason && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-sm font-semibold text-red-700 mb-1">Rejection Reason</p>
@@ -44,7 +42,6 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
       )}
 
-      {/* Meta cards */}
       <div className="grid grid-cols-2 gap-4">
         <div className="card p-4 col-span-2">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
@@ -73,7 +70,6 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      {/* Description */}
       {expense.narration && (
         <div className="card p-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
@@ -83,22 +79,16 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
       )}
 
-      {/* Receipt attachment */}
       {expense.receiptUrl && (
         <div className="card p-4">
           <p className="text-xs font-medium text-[var(--muted)] mb-2">Receipt / Attachment</p>
-          <a
-            href={expense.receiptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[var(--navy)] text-sm hover:underline"
-          >
+          <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-[var(--navy)] text-sm hover:underline">
             <ExternalLink size={14} /> View attachment
           </a>
         </div>
       )}
 
-      {/* FM Actions */}
       {canManage && isPending && (
         <div className="card p-6">
           <h2 className="font-semibold text-[var(--navy)] mb-4">Review Expense</h2>

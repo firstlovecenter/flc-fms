@@ -7,7 +7,7 @@ export default async function NewIncomePage() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="page-title">Record Income</h1>
-        <p className="text-sm page-subtitle">Log a new income entry for this campus.</p>
+        <p className="text-sm page-subtitle">Log a new income entry.</p>
       </div>
       <IncomeForm />
     </div>

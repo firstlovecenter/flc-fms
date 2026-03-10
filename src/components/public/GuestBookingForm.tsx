@@ -1,150 +1,614 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createGuestBooking } from "@/actions/booking.actions";
+import { getFacilityCategories, getFacilityAvailability } from "@/actions/availability.actions";
+import { getCeremonyDatesForCategory, getCeremonySlots, CEREMONY_CATEGORIES } from "@/actions/ceremony.actions";
+import { formatCurrency } from "@/lib/utils";
+import { BookingCategory } from "@prisma/client";
+import { DayPicker } from "react-day-picker";
+import { format, addDays } from "date-fns";
+import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
+import "react-day-picker/dist/style.css";
 
-const schema = z.object({
-  facilityId: z.string().min(1, "Please select a facility"),
-  guestName: z.string().min(2, "Name is required"),
-  guestEmail: z.string().email("Enter a valid email"),
-  guestPhone: z.string().min(9, "Phone number is required"),
-  title: z.string().min(2, "Title is required"),
-  description: z.string().optional(),
-  startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
-  notes: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-type Facility = {
+interface Facility {
   id: string;
   name: string;
+  description: string | null;
+  capacity: number;
   pricePerHour: unknown;
+  amenities: string[];
+  availableDays: number[];
+}
+
+interface CategoryOption {
+  category: BookingCategory;
+  pricePerHour: number;
+  description: string | null;
+}
+
+interface TimeSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  label: string;
+  isFlexible: boolean;
+  isFree: boolean;
+  effectivePricePerHour: number;
+  maxBookings: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
+const CATEGORY_LABELS: Record<BookingCategory, string> = {
+  CHURCH_SERVICE: "Church Service",
+  WEDDING: "Wedding",
+  FUNERAL: "Funeral",
+  MEETING: "Meeting",
+  CONFERENCE: "Conference",
+  WORKSHOP: "Workshop",
+  BIRTHDAY_PARTY: "Birthday Party",
+  CONCERT: "Concert",
+  REHEARSAL: "Rehearsal",
+  BABY_DEDICATION: "Baby Dedication",
+  OTHER: "Other",
 };
 
-export default function GuestBookingForm({ facilities, defaultFacilityId }: { facilities: Facility[]; defaultFacilityId?: string }) {
-  const [serverError, setServerError] = useState<string | null>(null);
+function formatTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "pm" : "am";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
+export default function GuestBookingForm({
+  facilities,
+  defaultFacilityId,
+}: {
+  facilities: Facility[];
+  defaultFacilityId?: string;
+}) {
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Step 1 state — Calendly picker
+  const [facilityId, setFacilityId] = useState(defaultFacilityId ?? "");
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [category, setCategory] = useState<BookingCategory | "">("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+
+  // Ceremony mode state
+  const [ceremonyDates, setCeremonyDates] = useState<{ id: string; date: Date; title: string | null }[]>([]);
+  const [isCeremonyMode, setIsCeremonyMode] = useState(false);
+
+  // Step 2 state — guest info + booking details
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { facilityId: defaultFacilityId ?? "" },
-  });
-
-  // Update form value when defaultFacilityId changes
+  // When facility changes, reset and fetch categories
   useEffect(() => {
-    if (defaultFacilityId) {
-      setValue("facilityId", defaultFacilityId);
+    const f = facilities.find((x) => x.id === facilityId) ?? null;
+    setSelectedFacility(f);
+    setCategories([]);
+    setCategory("");
+    setSelectedDate(undefined);
+    setSlots([]);
+    setSelectedSlot(null);
+    if (f) {
+      getFacilityCategories(f.id).then((res) => {
+        if (res.success) setCategories(res.categories);
+      });
     }
-  }, [defaultFacilityId, setValue]);
+  }, [facilityId, facilities]);
 
-  async function onSubmit(data: FormData) {
-    setServerError(null);
-    setSuccessMessage(null);
+  // When date or category changes, fetch available slots
+  useEffect(() => {
+    if (!selectedDate || !facilityId) return;
+    setSlotsLoading(true);
+    setSelectedSlot(null);
+
+    if (isCeremonyMode && category) {
+      getCeremonySlots(facilityId, selectedDate, category as BookingCategory)
+        .then((res) => setSlots((res.slots || []).map((s) => ({ ...s, isFlexible: false }))))
+        .finally(() => setSlotsLoading(false));
+    } else {
+      getFacilityAvailability(
+        facilityId,
+        selectedDate,
+        category ? (category as BookingCategory) : undefined
+      )
+        .then((res) => setSlots(res.success ? res.slots || [] : []))
+        .finally(() => setSlotsLoading(false));
+    }
+  }, [selectedDate, facilityId, category, isCeremonyMode]);
+
+  // Compute estimated cost from selected slot
+  const estimatedCost = (() => {
+    if (!selectedSlot) return null;
+    if (selectedSlot.isFree) return 0;
+    const [sh, sm] = selectedSlot.startTime.split(":").map(Number);
+    const [eh, em] = selectedSlot.endTime.split(":").map(Number);
+    const hours = (eh * 60 + em - (sh * 60 + sm)) / 60;
+    return hours * selectedSlot.effectivePricePerHour;
+  })();
+
+  const disabledDays = isCeremonyMode
+    ? [
+        { before: addDays(new Date(), 1) },
+        { dayOfWeek: [1] },
+        (date: Date) => {
+          // Only allow ceremony dates
+          return !ceremonyDates.some(
+            (cd) => new Date(cd.date).toDateString() === date.toDateString()
+          );
+        },
+      ]
+    : [
+        { before: addDays(new Date(), 1) },
+        { dayOfWeek: [1] },
+        (date: Date) =>
+          !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+      ];
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim() || !guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) return;
+    setSubmitting(true);
+    setError(null);
+
+    const [sh, sm] = selectedSlot.startTime.split(":").map(Number);
+    const [eh, em] = selectedSlot.endTime.split(":").map(Number);
+    const startTime = new Date(selectedDate);
+    startTime.setHours(sh, sm, 0, 0);
+    const endTime = new Date(selectedDate);
+    endTime.setHours(eh, em, 0, 0);
 
     const result = await createGuestBooking({
-      facilityId: data.facilityId,
-      guestName: data.guestName,
-      guestEmail: data.guestEmail,
-      guestPhone: data.guestPhone,
-      title: data.title,
-      description: data.description,
-      startTime: new Date(data.startTime),
-      endTime: new Date(data.endTime),
-      notes: data.notes,
+      facilityId: selectedFacility.id,
+      category: (category || "OTHER") as BookingCategory,
+      title,
+      description: description || undefined,
+      startTime,
+      endTime,
+      guestName,
+      guestEmail,
+      guestPhone,
     });
 
+    setSubmitting(false);
     if ("error" in result && result.error) {
-      setServerError(result.error);
+      setError(result.error as string);
       return;
     }
-
-    setSuccessMessage("Booking request submitted. You can create a patron account to track status and payment.");
+    setSuccessMessage("Booking request submitted successfully! You can create a patron account to track status and payment.");
   }
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {serverError && <div className="alert alert-error">{serverError}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
-
-      <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--muted)" }}>Guest Information</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Full Name</label>
-            <input {...register("guestName")} className="input" />
-            {errors.guestName && <p className="text-xs text-red-600 mt-1">{errors.guestName.message}</p>}
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input {...register("guestEmail")} type="email" className="input" />
-            {errors.guestEmail && <p className="text-xs text-red-600 mt-1">{errors.guestEmail.message}</p>}
-          </div>
+  if (successMessage) {
+    return (
+      <div className="card p-8 text-center space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)" }}>
+          <Check size={28} className="text-green-600" />
         </div>
-
-        <div className="mt-4">
-          <label className="label">Phone</label>
-          <input {...register("guestPhone")} className="input" />
-          {errors.guestPhone && <p className="text-xs text-red-600 mt-1">{errors.guestPhone.message}</p>}
-        </div>
+        <h2 className="font-display font-bold text-[var(--navy)] text-xl">Booking Submitted!</h2>
+        <p className="text-sm text-[var(--slate)]">{successMessage}</p>
       </div>
+    );
+  }
 
-      <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--muted)" }}>Booking Details</p>
-        <div>
-          <label className="label">Facility</label>
-          <select {...register("facilityId")} className="input">
-            <option value="">Select a facility</option>
-            {facilities.map((facility) => (
-              <option key={facility.id} value={facility.id}>{facility.name} ({Number(facility.pricePerHour).toFixed(2)}/hr)</option>
+  // ─── STEP 1: Calendly-style picker ───────────────────────────────────────
+  if (step === 1) {
+    return (
+      <div className="card overflow-hidden">
+        {/* Venue selector header */}
+        <div className="px-5 py-4 border-b border-[var(--border)]" style={{ background: "var(--cream)" }}>
+          <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">
+            Select Venue
+          </label>
+          <select
+            value={facilityId}
+            onChange={(e) => setFacilityId(e.target.value)}
+            className="input"
+          >
+            <option value="">Choose a venue…</option>
+            {facilities.map((f) => (
+              <option key={f.id} value={f.id}>{f.name}</option>
             ))}
           </select>
-          {errors.facilityId && <p className="text-xs text-red-600 mt-1">{errors.facilityId.message}</p>}
         </div>
 
-        <div className="mt-4">
-          <label className="label">Booking Title</label>
-          <input {...register("title")} className="input" placeholder="Wedding reception, conference, rehearsal" />
-          {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title.message}</p>}
-        </div>
-
-        <div className="mt-4">
-          <label className="label">Description (optional)</label>
-          <textarea {...register("description")} className="input" rows={3} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label className="label">Start</label>
-            <input {...register("startTime")} type="datetime-local" className="input" />
-            {errors.startTime && <p className="text-xs text-red-600 mt-1">{errors.startTime.message}</p>}
+        {/* Service name (Calendly-style) */}
+        {selectedFacility && (
+          <div className="px-5 pt-5 pb-1">
+            <h2 className="font-display font-bold text-[var(--navy)] text-2xl uppercase tracking-tight">
+              {selectedFacility.name}
+            </h2>
+            <p className="text-sm text-[var(--muted)] mt-1">Select a date and available time slot</p>
           </div>
-          <div>
-            <label className="label">End</label>
-            <input {...register("endTime")} type="datetime-local" className="input" />
-            {errors.endTime && <p className="text-xs text-red-600 mt-1">{errors.endTime.message}</p>}
+        )}
+
+        {/* 3-column picker */}
+        {selectedFacility && (
+          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_260px] divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
+
+            {/* LEFT — Calendar */}
+            <div className="p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
+                Select a Date
+              </p>
+              <DayPicker
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => { setSelectedDate(date); setSelectedSlot(null); }}
+                disabled={disabledDays}
+                fromDate={addDays(new Date(), 1)}
+                toDate={addDays(new Date(), 90)}
+                modifiersStyles={{
+                  selected: { background: "var(--navy)", color: "#ffffff", borderRadius: "50%" },
+                  today: { color: "var(--gold)", fontWeight: "bold" },
+                }}
+              />
+            </div>
+
+            {/* CENTER — Time Slots */}
+            <div className="p-5">
+              {!selectedDate ? (
+                <div className="h-full flex flex-col items-center justify-center text-center py-16">
+                  <Clock size={30} className="mb-3 text-[var(--muted)] opacity-25" />
+                  <p className="text-sm text-[var(--muted)]">Select a date to see available times</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-4">
+                    {format(selectedDate, "EEEE, MMMM d")}
+                  </p>
+
+                  {/* Category filter */}
+                  {categories.length > 0 && (
+                    <div className="mb-4">
+                      <select
+                        value={category}
+                        onChange={(e) => {
+                          const val = e.target.value as BookingCategory | "";
+                          setCategory(val);
+                          setSelectedSlot(null);
+                          if (val && CEREMONY_CATEGORIES.includes(val as BookingCategory) && facilityId) {
+                            getCeremonyDatesForCategory(facilityId, val as BookingCategory).then((dates) => {
+                              if (dates.length > 0) {
+                                setCeremonyDates(dates);
+                                setIsCeremonyMode(true);
+                                setSelectedDate(undefined);
+                                setSlots([]);
+                              } else {
+                                setCeremonyDates([]);
+                                setIsCeremonyMode(false);
+                              }
+                            });
+                          } else {
+                            setCeremonyDates([]);
+                            setIsCeremonyMode(false);
+                          }
+                        }}
+                        className="input text-sm"
+                      >
+                        <option value="">All event types</option>
+                        {categories.map((c) => (
+                          <option key={c.category} value={c.category}>
+                            {CATEGORY_LABELS[c.category]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {isCeremonyMode && (
+                    <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                      <strong>Ceremony booking:</strong> Only reserved ceremony dates are available. Select a highlighted date on the calendar.
+                    </div>
+                  )}
+
+                  {slotsLoading ? (
+                    <div className="space-y-2">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: "#f3f4f6" }} />
+                      ))}
+                    </div>
+                  ) : slots.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-sm text-[var(--muted)]">No slots available for this day.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {slots.map((slot) => {
+                        const isSelected = selectedSlot?.id === slot.id;
+                        return (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            disabled={!slot.isAvailable}
+                            onClick={() => setSelectedSlot(isSelected ? null : slot)}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-150"
+                            style={{
+                              border: isSelected ? "2px solid var(--navy)" : "1.5px solid var(--border)",
+                              background: isSelected ? "var(--navy)" : slot.isAvailable ? "#ffffff" : "#fafafa",
+                              opacity: slot.isAvailable ? 1 : 0.42,
+                              cursor: slot.isAvailable ? "pointer" : "not-allowed",
+                            }}
+                          >
+                            <div className="flex items-center gap-5">
+                              <span
+                                className="text-sm font-semibold tabular-nums"
+                                style={{ color: isSelected ? "#fff" : "var(--navy)", minWidth: 68 }}
+                              >
+                                {formatTime(slot.startTime)}
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ color: isSelected ? "rgba(255,255,255,0.55)" : "var(--muted)" }}
+                              >
+                                {formatTime(slot.endTime)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {slot.isFree ? (
+                                <span
+                                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                  style={{
+                                    color: isSelected ? "rgba(255,255,255,0.9)" : "#16a34a",
+                                    background: isSelected ? "rgba(255,255,255,0.15)" : "rgba(34,197,94,0.12)",
+                                  }}
+                                >
+                                  FREE
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-xs"
+                                  style={{ color: isSelected ? "rgba(255,255,255,0.65)" : "var(--slate)" }}
+                                >
+                                  {formatCurrency(slot.effectivePricePerHour)}/hr
+                                </span>
+                              )}
+                              {isSelected && <Check size={14} color="#fff" />}
+                              {!slot.isAvailable && (
+                                <span className="text-xs text-[var(--muted)]">Full</span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* RIGHT — Venue Details */}
+            <div className="p-5" style={{ background: "#fafaf8" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-4">
+                Venue Details
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-display font-bold text-[var(--navy)] text-sm uppercase leading-snug">
+                    {selectedFacility.name}
+                  </h3>
+                  {selectedFacility.description && (
+                    <p className="text-xs text-[var(--slate)] mt-1 leading-relaxed line-clamp-4">
+                      {selectedFacility.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[var(--slate)]">
+                  <Users size={12} />
+                  <span>Up to {selectedFacility.capacity.toLocaleString()} guests</span>
+                </div>
+                {selectedFacility.amenities.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-[var(--muted)] mb-1.5">Amenities</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedFacility.amenities.map((a) => (
+                        <span
+                          key={a}
+                          className="text-xs rounded-full px-2.5 py-0.5"
+                          style={{ background: "#fff", border: "1px solid var(--border)", color: "var(--navy)" }}
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedDate && selectedSlot && (
+                  <div className="pt-3 border-t border-[var(--border)]">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">
+                      Selected
+                    </p>
+                    <p className="text-sm font-semibold text-[var(--navy)]">
+                      {format(selectedDate, "MMMM d, yyyy")}
+                    </p>
+                    <p className="text-xs text-[var(--slate)] mt-0.5">
+                      {formatTime(selectedSlot.startTime)} → {formatTime(selectedSlot.endTime)}
+                    </p>
+                    {estimatedCost !== null && (
+                      <p className={`text-sm font-bold mt-1.5 ${estimatedCost === 0 ? "text-green-600" : "text-[var(--navy)]"}`}>
+                        {estimatedCost === 0 ? "FREE" : formatCurrency(estimatedCost)}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Footer — Continue button */}
+        {selectedFacility && (
+          <div className="px-5 py-3.5 border-t border-[var(--border)] flex items-center justify-between bg-white">
+            <p className="text-sm text-[var(--muted)]">
+              {!selectedDate
+                ? "Pick a date to continue"
+                : !selectedSlot
+                ? "Pick a time slot"
+                : `${format(selectedDate, "MMM d")} · ${formatTime(selectedSlot.startTime)}`}
+            </p>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={!selectedDate || !selectedSlot}
+              className="btn-primary flex items-center gap-2"
+              style={{ opacity: selectedDate && selectedSlot ? 1 : 0.35 }}
+            >
+              Next <ArrowRight size={15} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── STEP 2: Guest info + Booking details ────────────────────────────────
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Summary card */}
+      <div className="rounded-xl p-4 text-white" style={{ background: "var(--navy)" }}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest mb-1"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
+              {selectedFacility?.name}
+            </p>
+            <p className="font-semibold text-white">
+              {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")}
+            </p>
+            <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+              {selectedSlot &&
+                `${formatTime(selectedSlot.startTime)} – ${formatTime(selectedSlot.endTime)}`}
+            </p>
+          </div>
+          {estimatedCost !== null && (
+            <div className="text-right shrink-0">
+              <p className="text-xs mb-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>Estimated</p>
+              <p className={`text-xl font-bold ${estimatedCost === 0 ? "text-green-400" : "text-[var(--gold)]"}`}>
+                {estimatedCost === 0 ? "FREE" : formatCurrency(estimatedCost)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "var(--muted)" }}>Additional Notes</p>
-        <label className="label">Additional Notes (optional)</label>
-        <textarea {...register("notes")} className="input" rows={3} />
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+      )}
+
+      {/* Guest information */}
+      <div className="card p-5 space-y-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Guest Information</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
+            <input
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              className="input"
+              placeholder="John Doe"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
+            <input
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              type="email"
+              className="input"
+              placeholder="john@example.com"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone *</label>
+          <input
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value)}
+            className="input"
+            placeholder="0201234567"
+            required
+          />
+        </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="btn-gold w-full" style={{ paddingBlock: 12 }}>
-        {isSubmitting ? "Submitting..." : "Submit Guest Booking"}
-      </button>
+      {/* Event type */}
+      {categories.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Event Type *</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as BookingCategory | "")}
+            className="input"
+            required
+          >
+            <option value="">Select event type…</option>
+            {categories.map((c) => (
+              <option key={c.category} value={c.category}>
+                {CATEGORY_LABELS[c.category]} — {formatCurrency(c.pricePerHour)}/hr
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Booking title */}
+      <div>
+        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Booking Title *</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="input"
+          placeholder="e.g. Wedding Reception, Corporate Conference"
+          required
+        />
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="input"
+          rows={3}
+          placeholder="Tell us more about your event…"
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => setStep(1)}
+          className="btn-secondary flex items-center gap-2"
+        >
+          <ChevronLeft size={16} /> Back
+        </button>
+        <button
+          type="submit"
+          disabled={submitting || !title.trim() || !guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || (categories.length > 0 && !category)}
+          className="btn-primary flex-1"
+        >
+          {submitting ? "Submitting…" : "Submit Booking Request"}
+        </button>
+      </div>
     </form>
   );
 }

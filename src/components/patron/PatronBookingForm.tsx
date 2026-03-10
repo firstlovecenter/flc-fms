@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPatronBooking } from "@/actions/booking.actions";
 import { getFacilityCategories, getFacilityAvailability } from "@/actions/availability.actions";
+import { getCeremonyDatesForCategory, getCeremonySlots, CEREMONY_CATEGORIES } from "@/actions/ceremony.actions";
 import { formatCurrency } from "@/lib/utils";
 import { BookingCategory } from "@prisma/client";
 import { DayPicker } from "react-day-picker";
@@ -50,6 +51,7 @@ const CATEGORY_LABELS: Record<BookingCategory, string> = {
   BIRTHDAY_PARTY: "Birthday Party",
   CONCERT: "Concert",
   REHEARSAL: "Rehearsal",
+  BABY_DEDICATION: "Baby Dedication",
   OTHER: "Other",
 };
 
@@ -80,6 +82,10 @@ export default function PatronBookingForm({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
+  // Ceremony mode state
+  const [ceremonyDates, setCeremonyDates] = useState<{ id: string; date: Date; title: string | null }[]>([]);
+  const [isCeremonyMode, setIsCeremonyMode] = useState(false);
+
   // Step 2 state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -107,14 +113,21 @@ export default function PatronBookingForm({
     if (!selectedDate || !facilityId) return;
     setSlotsLoading(true);
     setSelectedSlot(null);
-    getFacilityAvailability(
-      facilityId,
-      selectedDate,
-      category ? (category as BookingCategory) : undefined
-    )
-      .then((res) => setSlots(res.success ? res.slots || [] : []))
-      .finally(() => setSlotsLoading(false));
-  }, [selectedDate, facilityId, category]);
+
+    if (isCeremonyMode && category) {
+      getCeremonySlots(facilityId, selectedDate, category as BookingCategory)
+        .then((res) => setSlots((res.slots || []).map((s) => ({ ...s, isFlexible: false }))))
+        .finally(() => setSlotsLoading(false));
+    } else {
+      getFacilityAvailability(
+        facilityId,
+        selectedDate,
+        category ? (category as BookingCategory) : undefined
+      )
+        .then((res) => setSlots(res.success ? res.slots || [] : []))
+        .finally(() => setSlotsLoading(false));
+    }
+  }, [selectedDate, facilityId, category, isCeremonyMode]);
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
@@ -126,11 +139,22 @@ export default function PatronBookingForm({
     return hours * selectedSlot.effectivePricePerHour;
   })();
 
-  const disabledDays = [
-    { before: addDays(new Date(), 1) },
-    (date: Date) =>
-      !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
-  ];
+  const disabledDays = isCeremonyMode
+    ? [
+        { before: addDays(new Date(), 1) },
+        { dayOfWeek: [1] },
+        (date: Date) => {
+          return !ceremonyDates.some(
+            (cd) => new Date(cd.date).toDateString() === date.toDateString()
+          );
+        },
+      ]
+    : [
+        { before: addDays(new Date(), 1) },
+        { dayOfWeek: [1] },
+        (date: Date) =>
+          !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+      ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -234,7 +258,27 @@ export default function PatronBookingForm({
                     <div className="mb-4">
                       <select
                         value={category}
-                        onChange={(e) => setCategory(e.target.value as BookingCategory | "")}
+                        onChange={(e) => {
+                          const val = e.target.value as BookingCategory | "";
+                          setCategory(val);
+                          setSelectedSlot(null);
+                          if (val && CEREMONY_CATEGORIES.includes(val as BookingCategory) && facilityId) {
+                            getCeremonyDatesForCategory(facilityId, val as BookingCategory).then((dates) => {
+                              if (dates.length > 0) {
+                                setCeremonyDates(dates);
+                                setIsCeremonyMode(true);
+                                setSelectedDate(undefined);
+                                setSlots([]);
+                              } else {
+                                setCeremonyDates([]);
+                                setIsCeremonyMode(false);
+                              }
+                            });
+                          } else {
+                            setCeremonyDates([]);
+                            setIsCeremonyMode(false);
+                          }
+                        }}
                         className="input text-sm"
                       >
                         <option value="">All event types</option>
@@ -244,6 +288,12 @@ export default function PatronBookingForm({
                           </option>
                         ))}
                       </select>
+                    </div>
+                  )}
+
+                  {isCeremonyMode && (
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                      <strong>Ceremony Booking:</strong> Only dates with scheduled ceremony slots are available.
                     </div>
                   )}
 

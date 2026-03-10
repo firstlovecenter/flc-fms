@@ -5,6 +5,7 @@ import { decrypt } from "@/lib/crypto";
 import { sendPaymentReceiptEmail } from "@/lib/notifications/email";
 import { notifyPaymentReceived } from "@/lib/notifications/sms";
 import { auditLog } from "@/lib/audit";
+import { autoRecordPaymentIncome } from "@/actions/income.actions";
 
 export async function POST(req: NextRequest) {
   const body      = await req.text();
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   const payment = await prisma.payment.findUnique({
     where: { providerRef: txRef },
     include: {
-      booking: { include: { patron: true } }}});
+      booking: { include: { patron: true, facility: { select: { name: true } } } }}});
   if (!payment) return NextResponse.json({ ok: false }, { status: 404 });
 
   const config = await prisma.paymentConfig.findFirst({});
@@ -76,6 +77,15 @@ export async function POST(req: NextRequest) {
       entity:   "Payment",
       entityId: payment.id,
       after:    { status: "PAID", receiptNumber }});
+
+    // Auto-record income
+    await autoRecordPaymentIncome({
+      bookingId:    payment.bookingId,
+      bookingTitle: payment.booking.title,
+      amount:       Number(payment.amount),
+      provider:     "Flutterwave",
+      facilityName: payment.booking.facility?.name,
+    });
   }
 
   return NextResponse.json({ ok: true });

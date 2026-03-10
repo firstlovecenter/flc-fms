@@ -5,6 +5,7 @@ import { sendPaymentReceiptEmail } from "@/lib/notifications/email";
 import { notifyPaymentReceived } from "@/lib/notifications/sms";
 import { auditLog } from "@/lib/audit";
 import crypto from "crypto";
+import { autoRecordPaymentIncome } from "@/actions/income.actions";
 
 export async function POST(req: NextRequest) {
   let body: Record<string, any>;
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   const payment = await prisma.payment.findUnique({
     where: { id: clientReference },
     include: {
-      booking: { include: { patron: true } }}});
+      booking: { include: { patron: true, facility: { select: { name: true } } } }}});
 
   if (!payment) {
     return NextResponse.json({ ok: false, message: "Payment not found" }, { status: 404 });
@@ -92,6 +93,15 @@ export async function POST(req: NextRequest) {
       entity:   "Payment",
       entityId: payment.id,
       after:    { status: "PAID", provider: "HUBTEL", receiptNumber }});
+
+    // Auto-record income
+    await autoRecordPaymentIncome({
+      bookingId:    payment.bookingId,
+      bookingTitle: payment.booking.title,
+      amount:       Number(payment.amount),
+      provider:     "Hubtel",
+      facilityName: payment.booking.facility?.name,
+    });
   }
 
   return NextResponse.json({ ok: true });

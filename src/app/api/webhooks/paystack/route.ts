@@ -5,6 +5,7 @@ import { decrypt } from "@/lib/crypto";
 import { sendPaymentReceiptEmail } from "@/lib/notifications/email";
 import { notifyPaymentReceived } from "@/lib/notifications/sms";
 import { auditLog } from "@/lib/audit";
+import { autoRecordPaymentIncome } from "@/actions/income.actions";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -82,6 +83,15 @@ export async function POST(req: NextRequest) {
       entity:   "Payment",
       entityId: payment.id,
       after:    { status: "PAID", receiptNumber }});
+
+    // Auto-record income
+    await autoRecordPaymentIncome({
+      bookingId:    payment.bookingId,
+      bookingTitle: payment.booking.title,
+      amount:       Number(payment.amount),
+      provider:     "Paystack",
+      facilityName: payment.booking.facility?.name,
+    });
   }
 
   return NextResponse.json({ ok: true });

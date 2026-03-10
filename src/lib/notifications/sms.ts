@@ -116,6 +116,7 @@ export async function notifyBookingApproved(params: {
   phone: string;
   bookingTitle: string;
   startTime: Date;
+  paymentUrl?: string;
 }) {
   const date = params.startTime.toLocaleDateString("en-GH", {
     weekday: "short",
@@ -123,9 +124,12 @@ export async function notifyBookingApproved(params: {
     month: "short",
     year: "numeric",
   });
+  const paymentSuffix = params.paymentUrl
+    ? ` Pay here: ${params.paymentUrl}`
+    : ``;
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Your booking "${params.bookingTitle}" on ${date} has been APPROVED. Please complete payment to confirm.`,
+    message: `[CFMS] Your booking "${params.bookingTitle}" on ${date} has been APPROVED.${paymentSuffix}`,
   });
 }
 

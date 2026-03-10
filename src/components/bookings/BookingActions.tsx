@@ -10,10 +10,11 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
   const [loading, setLoading] = useState<"approve" | "reject" | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
+  const [waiveBilling, setWaiveBilling] = useState(false);
 
   async function handleApprove() {
     setLoading("approve");
-    await approveBooking(bookingId);
+    await approveBooking(bookingId, waiveBilling);
     router.refresh();
     setLoading(null);
   }
@@ -55,7 +56,16 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
+      <label className="flex items-center gap-1 text-xs text-[var(--muted)] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={waiveBilling}
+          onChange={(e) => setWaiveBilling(e.target.checked)}
+          className="rounded border-gray-300"
+        />
+        Waive billing
+      </label>
       <button
         onClick={handleApprove}
         disabled={loading === "approve"}

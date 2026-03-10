@@ -9,8 +9,7 @@ import {
   Wrench,
   Building2,
   Users,
-  Receipt,
-  Wallet,
+  ArrowLeftRight,
   BarChart3,
   LogOut,
   X,
@@ -34,8 +33,7 @@ const NAV = [
   { href: "/items", label: "Items & Packages", icon: Package },
   { href: "/staff", label: "Staff", icon: Users },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/expenses", label: "Expenses", icon: Receipt },
-  { href: "/income", label: "Income", icon: Wallet },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 

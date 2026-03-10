@@ -33,7 +33,7 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   }
 
   auditLog({ userId: session.sub, action: "SUBMIT_EXPENSE", entity: "Expense", entityId: expense.id });
-  revalidatePath("/expenses");
+  revalidatePath("/transactions");
   return { success: true, expense };
 }
 
@@ -53,7 +53,7 @@ export async function approveExpense(expenseId: string) {
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_EXPENSE", entity: "Expense", entityId: expenseId });
-  revalidatePath("/expenses");
+  revalidatePath("/transactions");
   return { success: true, expense };
 }
 
@@ -73,7 +73,7 @@ export async function rejectExpense(expenseId: string, reason: string) {
   }
 
   auditLog({ userId: session.sub, action: "REJECT_EXPENSE", entity: "Expense", entityId: expenseId, after: { reason } });
-  revalidatePath("/expenses");
+  revalidatePath("/transactions");
   return { success: true };
 }
 

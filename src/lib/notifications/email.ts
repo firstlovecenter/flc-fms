@@ -124,8 +124,14 @@ export async function sendBookingApprovedEmail(params: {
   facilityName: string;
   startTime: Date;
   totalAmount: number;
+  paymentUrl?: string;
 }) {
   const fmt = (d: Date) => d.toLocaleString("en-GH", { dateStyle: "medium", timeStyle: "short" });
+  const paymentSection = params.paymentUrl && params.totalAmount > 0
+    ? `<p style="margin-top:16px"><a href="${params.paymentUrl}" style="background:#2e86ab;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none">Make Payment — GHS ${params.totalAmount.toFixed(2)}</a></p>`
+    : params.totalAmount === 0
+      ? `<p style="color:#16a34a;font-weight:bold">Billing has been waived for this booking.</p>`
+      : ``;
   await sendEmail({to: params.to,
     subject: `Booking Approved: ${params.bookingTitle}`,
     html: `
@@ -135,7 +141,7 @@ export async function sendBookingApprovedEmail(params: {
         <p><strong>${params.bookingTitle}</strong> at ${params.facilityName}<br/>
            <strong>When:</strong> ${fmt(params.startTime)}<br/>
            <strong>Amount due:</strong> GHS ${params.totalAmount.toFixed(2)}</p>
-        <p>Please complete payment to confirm your reservation.</p>
+        ${paymentSection}
       </div>`});
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon } from "lucide-react";
+import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon, Church } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
@@ -55,6 +55,9 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           <div className="flex gap-2">
             <Link href={`/facilities/${facility.id}/slots`} className="btn-secondary flex items-center gap-1.5">
               <TimerIcon size={14} /> Time Slots
+            </Link>
+            <Link href={`/facilities/${facility.id}/ceremonies`} className="btn-secondary flex items-center gap-1.5">
+              <Church size={14} /> Ceremony Days
             </Link>
             <Link href={`/facilities/${facility.id}/edit`} className="btn-secondary">Edit</Link>
             <ToggleMaintenanceButton

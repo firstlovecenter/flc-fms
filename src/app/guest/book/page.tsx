@@ -28,7 +28,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
 
   const facilities = (await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
-    select: { id: true, name: true, pricePerHour: true },
+    select: { id: true, name: true, description: true, capacity: true, pricePerHour: true, amenities: true, availableDays: true },
     orderBy: { name: "asc" },
   })).map(f => ({ ...f, pricePerHour: f.pricePerHour.toString() }));
 
@@ -118,9 +118,11 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
           </div>
         </section>
 
-        <section className="card p-6 md:p-7" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FCFAF6 100%)" }}>
+        <section>
           {isItemBooking ? (
-            <GuestItemBookingForm initialLines={initialLines} />
+            <div className="card p-6 md:p-7" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FCFAF6 100%)" }}>
+              <GuestItemBookingForm initialLines={initialLines} />
+            </div>
           ) : (
             <GuestBookingForm facilities={facilities} defaultFacilityId={searchParams.facilityId} />
           )}
