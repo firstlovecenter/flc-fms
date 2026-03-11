@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePermission } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import { BookingCategory } from "@prisma/client";
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -18,7 +17,7 @@ const CeremonyDaySchema = z.object({
 
 const CeremonyTimeSlotSchema = z.object({
   ceremonyDayId: z.string().min(1),
-  category: z.nativeEnum(BookingCategory),
+  category: z.string().min(1, "Category is required"),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Must be HH:MM"),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, "Must be HH:MM"),
   label: z.string().min(2).max(200),
@@ -32,7 +31,16 @@ const CeremonyTimeSlotSchema = z.object({
 
 // ── Categories that are considered ceremonies ────────────────────────────────
 
-export const CEREMONY_CATEGORIES: BookingCategory[] = [
+export async function getCeremonyCategories(): Promise<string[]> {
+  const cats = await prisma.bookingCategory.findMany({
+    where: { isCeremony: true, isActive: true },
+    select: { slug: true },
+  });
+  return cats.map((c) => c.slug);
+}
+
+/** Static fallback for client components that import synchronously */
+export const CEREMONY_CATEGORIES: string[] = [
   "WEDDING",
   "FUNERAL",
   "BABY_DEDICATION",
@@ -162,7 +170,7 @@ export async function deleteCeremonyTimeSlot(id: string) {
 
 export async function getCeremonyDatesForCategory(
   facilityId: string,
-  category: BookingCategory,
+  category: string,
 ) {
   const days = await prisma.ceremonyDay.findMany({
     where: {
@@ -184,7 +192,7 @@ export async function getCeremonyDatesForCategory(
 export async function getCeremonySlots(
   facilityId: string,
   date: Date,
-  category: BookingCategory,
+  category: string,
 ) {
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);

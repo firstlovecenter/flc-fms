@@ -24,9 +24,14 @@ export default async function FacilitiesPage() {
           <p className="text-sm text-[var(--muted)]">{facilities.length} {facilities.length === 1 ? "facility" : "facilities"}</p>
         </div>
         {canManage && (
-          <Link href="/facilities/new" className="btn-primary text-sm">
-            <Plus size={15} /> Add Facility
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/facilities/categories" className="btn-secondary text-sm">
+              Categories
+            </Link>
+            <Link href="/facilities/new" className="btn-primary text-sm">
+              <Plus size={15} /> Add Facility
+            </Link>
+          </div>
         )}
       </div>
 

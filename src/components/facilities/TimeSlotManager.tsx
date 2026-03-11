@@ -22,21 +22,12 @@ export interface TimeSlot {
   isActive:             boolean;
 }
 
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export interface CategoryOption {
+  value: string;
+  label: string;
+}
 
-const BOOKING_CATEGORIES = [
-  { value: "", label: "All categories" },
-  { value: "CHURCH_SERVICE", label: "Church Service" },
-  { value: "WEDDING",        label: "Wedding" },
-  { value: "FUNERAL",        label: "Funeral" },
-  { value: "MEETING",        label: "Meeting" },
-  { value: "CONFERENCE",     label: "Conference" },
-  { value: "WORKSHOP",       label: "Workshop" },
-  { value: "BIRTHDAY_PARTY", label: "Birthday Party" },
-  { value: "CONCERT",        label: "Concert" },
-  { value: "REHEARSAL",      label: "Rehearsal" },
-  { value: "OTHER",          label: "Other" },
-];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // ─── Slot Form ────────────────────────────────────────────────────────────────
 
@@ -83,7 +74,7 @@ interface SlotFormProps {
   onSaved: (slot: TimeSlot) => void;
 }
 
-function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSaved }: SlotFormProps) {
+function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSaved, bookingCategories }: SlotFormProps & { bookingCategories: CategoryOption[] }) {
   const [form, setForm] = useState<SlotFormState>(initial ?? emptyForm(defaultDay));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -160,7 +151,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
           >
-            {BOOKING_CATEGORIES.map((c) => (
+            {[{ value: "", label: "All categories" }, ...bookingCategories].map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
@@ -243,11 +234,13 @@ function SlotCard({
   facilityId,
   onDeleted,
   onUpdated,
+  bookingCategories,
 }: {
   slot: TimeSlot;
   facilityId: string;
   onDeleted: (slotId: string) => void;
   onUpdated: (slot: TimeSlot) => void;
+  bookingCategories: CategoryOption[];
 }) {
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -269,6 +262,7 @@ function SlotCard({
         editingSlotId={slot.id}
         onSaved={onUpdated}
         onDone={() => setEditing(false)}
+        bookingCategories={bookingCategories}
       />
     );
   }
@@ -297,7 +291,7 @@ function SlotCard({
             ) : null}
             {slot.category && (
               <span className="text-xs bg-[var(--cream)] text-[var(--slate)] border border-[var(--border)] px-1.5 py-0.5 rounded-full">
-                {BOOKING_CATEGORIES.find((c) => c.value === slot.category)?.label ?? slot.category}
+                {bookingCategories.find((c) => c.value === slot.category)?.label ?? slot.category}
               </span>
             )}
             {slot.maxBookings > 1 && (
@@ -355,12 +349,14 @@ function DayPanel({
   facilityId,
   onUpsert,
   onDelete,
+  bookingCategories,
 }: {
   day: number;
   slots: TimeSlot[];
   facilityId: string;
   onUpsert: (slot: TimeSlot) => void;
   onDelete: (slotId: string) => void;
+  bookingCategories: CategoryOption[];
 }) {
   const [adding, setAdding]   = useState(false);
 
@@ -378,6 +374,7 @@ function DayPanel({
           facilityId={facilityId}
           onDeleted={onDelete}
           onUpdated={onUpsert}
+          bookingCategories={bookingCategories}
         />
       ))}
       {adding ? (
@@ -386,6 +383,7 @@ function DayPanel({
           defaultDay={day}
           onSaved={onUpsert}
           onDone={() => { setAdding(false); }}
+          bookingCategories={bookingCategories}
         />
       ) : (
         <button
@@ -405,9 +403,11 @@ function DayPanel({
 export default function TimeSlotManager({
   facilityId,
   initialSlots,
+  bookingCategories = [],
 }: {
   facilityId:    string;
   initialSlots:  TimeSlot[];
+  bookingCategories?: CategoryOption[];
 }) {
   const [activeDay, setActiveDay] = useState<number>(new Date().getDay());
   const [slots, setSlots]         = useState<TimeSlot[]>(initialSlots);
@@ -481,6 +481,7 @@ export default function TimeSlotManager({
         facilityId={facilityId}
         onUpsert={handleUpsert}
         onDelete={handleDelete}
+        bookingCategories={bookingCategories}
       />
     </div>
   );

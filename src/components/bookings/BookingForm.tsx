@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState, useEffect } from "react";
 import { createStaffBooking } from "@/actions/booking.actions";
+import { getFacilityCategories } from "@/actions/availability.actions";
 import { formatCurrency } from "@/lib/utils";
 import { Clock } from "lucide-react";
 
@@ -54,6 +55,7 @@ export default function BookingForm({
   const [error, setError]               = useState<string | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<{ category: string; pricePerHour: number; description: string | null }[]>([]);
 
   const {
     register, handleSubmit, watch, setValue,
@@ -66,6 +68,16 @@ export default function BookingForm({
   const facilityId = watch("facilityId");
   const startTime  = watch("startTime");
   const endTime    = watch("endTime");
+
+  // Load configured categories when facility changes
+  useEffect(() => {
+    setCategoryOptions([]);
+    if (facilityId) {
+      getFacilityCategories(facilityId).then((res) => {
+        if (res.success) setCategoryOptions(res.categories);
+      });
+    }
+  }, [facilityId]);
 
   // Cost estimate
   useEffect(() => {
@@ -153,17 +165,12 @@ export default function BookingForm({
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Category *</label>
         <select {...register("category")} className="input">
           <option value="">Select a category…</option>
-          <option value="CHURCH_SERVICE">Church Service</option>
-          <option value="WEDDING">Wedding</option>
-          <option value="FUNERAL">Funeral</option>
-          <option value="MEETING">Meeting</option>
-          <option value="CONFERENCE">Conference</option>
-          <option value="WORKSHOP">Workshop</option>
-          <option value="BIRTHDAY_PARTY">Birthday Party</option>
-          <option value="CONCERT">Concert</option>
-          <option value="REHEARSAL">Rehearsal</option>
-          <option value="BABY_DEDICATION">Baby Dedication</option>
-          <option value="OTHER">Other</option>
+          {categoryOptions.map((c) => (
+            <option key={c.category} value={c.category}>
+              {c.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+              {c.pricePerHour ? ` — ${formatCurrency(c.pricePerHour)}/hr` : ""}
+            </option>
+          ))}
         </select>
         {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
       </div>

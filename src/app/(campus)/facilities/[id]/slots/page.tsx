@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import TimeSlotManager from "@/components/facilities/TimeSlotManager";
+import { getBookingCategories } from "@/actions/category.actions";
 
 export default async function FacilitySlotsPage({ params }: { params: { id: string } }) {
   await requirePermission("canManageFacilities");
@@ -19,6 +20,12 @@ export default async function FacilitySlotsPage({ params }: { params: { id: stri
   });
 
   if (!facility) notFound();
+
+  const allCategories = await getBookingCategories();
+  const bookingCategories = allCategories.map((c) => ({
+    value: c.slug,
+    label: c.name.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+  }));
 
   // Serialize Decimal fields so they cross the server→client boundary safely
   const slots = facility.timeSlots.map((s) => ({
@@ -41,7 +48,7 @@ export default async function FacilitySlotsPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      <TimeSlotManager facilityId={params.id} initialSlots={slots} />
+      <TimeSlotManager facilityId={params.id} initialSlots={slots} bookingCategories={bookingCategories} />
     </div>
   );
 }

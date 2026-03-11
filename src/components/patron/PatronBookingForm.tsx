@@ -6,7 +6,6 @@ import { createPatronBooking } from "@/actions/booking.actions";
 import { getFacilityCategories, getFacilityAvailability } from "@/actions/availability.actions";
 import { getCeremonyDatesForCategory, getCeremonySlots, CEREMONY_CATEGORIES } from "@/actions/ceremony.actions";
 import { formatCurrency } from "@/lib/utils";
-import { BookingCategory } from "@prisma/client";
 import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
@@ -23,7 +22,7 @@ interface Facility {
 }
 
 interface CategoryOption {
-  category: BookingCategory;
+  category: string;
   pricePerHour: number;
   description: string | null;
 }
@@ -41,19 +40,9 @@ interface TimeSlot {
   isAvailable: boolean;
 }
 
-const CATEGORY_LABELS: Record<BookingCategory, string> = {
-  CHURCH_SERVICE: "Church Service",
-  WEDDING: "Wedding",
-  FUNERAL: "Funeral",
-  MEETING: "Meeting",
-  CONFERENCE: "Conference",
-  WORKSHOP: "Workshop",
-  BIRTHDAY_PARTY: "Birthday Party",
-  CONCERT: "Concert",
-  REHEARSAL: "Rehearsal",
-  BABY_DEDICATION: "Baby Dedication",
-  OTHER: "Other",
-};
+function formatCategoryLabel(slug: string): string {
+  return slug.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
 
 function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
@@ -76,7 +65,7 @@ export default function PatronBookingForm({
   const [facilityId, setFacilityId] = useState(defaultFacilityId ?? "");
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [category, setCategory] = useState<BookingCategory | "">("");
+  const [category, setCategory] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -115,14 +104,14 @@ export default function PatronBookingForm({
     setSelectedSlot(null);
 
     if (isCeremonyMode && category) {
-      getCeremonySlots(facilityId, selectedDate, category as BookingCategory)
+      getCeremonySlots(facilityId, selectedDate, category)
         .then((res) => setSlots((res.slots || []).map((s) => ({ ...s, isFlexible: false }))))
         .finally(() => setSlotsLoading(false));
     } else {
       getFacilityAvailability(
         facilityId,
         selectedDate,
-        category ? (category as BookingCategory) : undefined
+        category || undefined
       )
         .then((res) => setSlots(res.success ? res.slots || [] : []))
         .finally(() => setSlotsLoading(false));
@@ -171,7 +160,7 @@ export default function PatronBookingForm({
 
     const result = await createPatronBooking({
       facilityId: selectedFacility.id,
-      category: (category || "OTHER") as BookingCategory,
+      category: (category || "OTHER") as any,
       title,
       description: description || undefined,
       startTime,
@@ -259,11 +248,11 @@ export default function PatronBookingForm({
                       <select
                         value={category}
                         onChange={(e) => {
-                          const val = e.target.value as BookingCategory | "";
+                          const val = e.target.value;
                           setCategory(val);
                           setSelectedSlot(null);
-                          if (val && CEREMONY_CATEGORIES.includes(val as BookingCategory) && facilityId) {
-                            getCeremonyDatesForCategory(facilityId, val as BookingCategory).then((dates) => {
+                          if (val && CEREMONY_CATEGORIES.includes(val) && facilityId) {
+                            getCeremonyDatesForCategory(facilityId, val).then((dates) => {
                               if (dates.length > 0) {
                                 setCeremonyDates(dates);
                                 setIsCeremonyMode(true);
@@ -284,7 +273,7 @@ export default function PatronBookingForm({
                         <option value="">All event types</option>
                         {categories.map((c) => (
                           <option key={c.category} value={c.category}>
-                            {CATEGORY_LABELS[c.category]}
+                            {formatCategoryLabel(c.category)}
                           </option>
                         ))}
                       </select>
@@ -498,14 +487,14 @@ export default function PatronBookingForm({
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Event Type *</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as BookingCategory | "")}
+            onChange={(e) => setCategory(e.target.value)}
             className="input"
             required
           >
             <option value="">Select event type…</option>
             {categories.map((c) => (
               <option key={c.category} value={c.category}>
-                {CATEGORY_LABELS[c.category]} — {formatCurrency(c.pricePerHour)}/hr
+                {formatCategoryLabel(c.category)} — {formatCurrency(c.pricePerHour)}/hr
               </option>
             ))}
           </select>

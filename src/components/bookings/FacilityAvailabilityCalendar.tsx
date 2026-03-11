@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import { format, addDays, startOfDay } from "date-fns";
 import { getFacilityAvailability, getFacilityPricing } from "@/actions/availability.actions";
-import { BookingCategory } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
 import "react-day-picker/dist/style.css";
 
@@ -23,7 +22,7 @@ interface TimeSlot {
 
 interface FacilityAvailabilityCalendarProps {
   facilityId: string;
-  category: BookingCategory;
+  category: string;
   onDateTimeSelect: (date: Date, startTime?: string, endTime?: string, slotId?: string) => void;
   selectedDate?: Date;
   availableDays?: number[]; // From facility.availableDays

@@ -8,12 +8,11 @@ import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guard
 import { auditLog } from "@/lib/audit";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation } from "@/lib/notifications/sms";
-import { BookingCategory } from "@prisma/client";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 
 const BookingSchema = z.object({
   facilityId:  z.string().min(1, "Facility is required"),
-  category:    z.nativeEnum(BookingCategory),
+  category:    z.string().min(1, "Category is required"),
   title:       z.string().min(2).max(200),
   description: z.string().optional(),
   startTime:   z.coerce.date(),
@@ -42,7 +41,7 @@ function toTimeString(date: Date) {
 
 async function findApplicableTimeSlot(
   facilityId: string,
-  category: BookingCategory,
+  category: string,
   startTime: Date,
   endTime: Date,
 ) {
@@ -79,7 +78,7 @@ async function findApplicableTimeSlot(
 
 async function computeConfiguredBookingAmount(
   facilityId: string,
-  category: BookingCategory,
+  category: string,
   startTime: Date,
   endTime: Date,
 ) {
@@ -281,7 +280,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
 
 const GuestBookingSchema = z.object({
   facilityId: z.string().min(1, "Facility is required"),
-  category: z.nativeEnum(BookingCategory),
+  category: z.string().min(1, "Category is required"),
   title: z.string().min(2).max(200),
   description: z.string().optional(),
   startTime: z.coerce.date(),
@@ -333,7 +332,14 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   const totalAmount = amountResult.totalAmount;
 
   // Find or create a Patron for the guest so booking is payable
-  let patron = await prisma.patron.findUnique({ where: { email: validated.guestEmail } });
+  let patron = await prisma.patron.findFirst({
+    where: {
+      OR: [
+        { email: validated.guestEmail },
+        ...(validated.guestPhone ? [{ phone: validated.guestPhone }] : []),
+      ],
+    },
+  });
   if (!patron) {
     const cryptoModule = await import("crypto");
     const tempHash = cryptoModule.randomBytes(32).toString("hex");

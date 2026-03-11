@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/db/prisma";
-import { BookingCategory } from "@prisma/client";
 
 interface TimeSlotAvailability {
   id: string;
@@ -23,7 +22,7 @@ interface TimeSlotAvailability {
 export async function getFacilityAvailability(
   facilityId: string,
   date: Date,
-  category?: BookingCategory
+  category?: string
 ) {
   try {
     const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
@@ -211,7 +210,7 @@ export async function getFacilityAvailability(
  */
 export async function getFacilityPricing(
   facilityId: string,
-  category: BookingCategory,
+  category: string,
   date?: Date
 ) {
   try {
@@ -349,7 +348,7 @@ export async function checkTimeRangeAvailability(
 
 export async function estimateFacilityBookingAmount(
   facilityId: string,
-  category: BookingCategory,
+  category: string,
   startTime: Date,
   endTime: Date,
 ) {

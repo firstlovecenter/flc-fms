@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BookingCategory } from "@prisma/client";
 import { Plus, Trash2, Calendar, Clock } from "lucide-react";
 import {
   createCeremonyDay,
@@ -28,7 +27,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 interface CeremonySlot {
   id: string;
-  category: BookingCategory;
+  category: string;
   startTime: string;
   endTime: string;
   label: string;
@@ -71,7 +70,7 @@ export default function CeremonyDayManager({
   // Add slot form (per ceremony day)
   const [showAddSlot, setShowAddSlot] = useState<string | null>(null);
   const [slotForm, setSlotForm] = useState({
-    category: "" as BookingCategory | "",
+    category: "" as string,
     startTime: "",
     endTime: "",
     label: "",
@@ -115,7 +114,7 @@ export default function CeremonyDayManager({
     startTransition(async () => {
       const result = await addCeremonyTimeSlot({
         ceremonyDayId,
-        category: slotForm.category as BookingCategory,
+        category: slotForm.category,
         startTime: slotForm.startTime,
         endTime: slotForm.endTime,
         label: slotForm.label,
@@ -263,12 +262,12 @@ export default function CeremonyDayManager({
                       <label className="block text-xs font-medium text-[var(--slate)] mb-1">Ceremony Type *</label>
                       <select
                         value={slotForm.category}
-                        onChange={(e) => setSlotForm((f) => ({ ...f, category: e.target.value as BookingCategory }))}
+                        onChange={(e) => setSlotForm((f) => ({ ...f, category: e.target.value }))}
                         className="input text-sm"
                       >
                         <option value="">Select…</option>
                         {CEREMONY_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                          <option key={c} value={c}>{CATEGORY_LABELS[c] ?? c}</option>
                         ))}
                       </select>
                     </div>

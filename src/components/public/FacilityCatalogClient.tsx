@@ -36,6 +36,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   BIRTHDAY_PARTY:  "Birthday Party",
   CONCERT:         "Concert",
   REHEARSAL:       "Rehearsal",
+  BABY_DEDICATION: "Baby Dedication",
   OTHER:           "Other",
 };
 
