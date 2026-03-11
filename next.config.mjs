@@ -17,11 +17,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.paystack.co *.flutterwave.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.paystack.co",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: *.cloudfront.net *.cloudinary.com",
-      "connect-src 'self' *.paystack.co api.paystack.co *.flutterwave.com bms.codeslaw.dev",
-      "frame-src *.paystack.co *.flutterwave.com",
+      "connect-src 'self' *.paystack.co api.paystack.co bms.codeslaw.dev",
+      "frame-src *.paystack.co",
     ].join("; "),
   },
 ];

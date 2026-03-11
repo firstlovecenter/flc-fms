@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!payment) return NextResponse.json({ ok: false }, { status: 404 });
 
   // Verify HMAC with campus-specific secret
-  const config = await prisma.paymentConfig.findFirst({});
+  const config = await prisma.paymentConfig.findFirst({ where: { provider: "PAYSTACK" } });
   if (!config) return NextResponse.json({ ok: false }, { status: 404 });
 
   const secretKey = decrypt(config.secretKey);
@@ -42,13 +42,28 @@ export async function POST(req: NextRequest) {
 
   // Handle events
   if (event.event === "charge.success") {
+    // Idempotency: already processed
+    if (payment.status === "PAID") {
+      return NextResponse.json({ ok: true });
+    }
+
+    // Don't process if booking has been cancelled or rejected
+    if (["CANCELLED", "REJECTED"].includes(payment.booking.status)) {
+      return NextResponse.json({ ok: true });
+    }
+
+    // Only auto-approve if currently PENDING; preserve APPROVED/COMPLETED
+    const bookingStatusUpdate = payment.booking.status === "PENDING" ? { status: "APPROVED" as const } : {};
+
     await prisma.$transaction([
       prisma.payment.update({
         where: { id: payment.id },
-        data: { status: "PAID", paidAt: new Date(), metadata: event.data }}),
+        data: { status: "PAID", paidAt: new Date(), metadata: event.data },
+      }),
       prisma.booking.update({
         where: { id: payment.bookingId },
-        data: { paymentStatus: "PAID", status: "APPROVED" }}),
+        data: { paymentStatus: "PAID", ...bookingStatusUpdate },
+      }),
     ]);
 
     // Issue receipt

@@ -42,7 +42,9 @@ export default async function PatronBookingsPage() {
 							<tbody>
 								{bookings.map((b) => (
 									<tr key={b.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
-										<td className="py-3 px-4 text-[var(--navy)] font-medium">{b.title}</td>
+										<td className="py-3 px-4 text-[var(--navy)] font-medium">
+											<Link href={`/patron/bookings/${b.id}`} className="hover:underline">{b.title}</Link>
+										</td>
 										<td className="py-3 px-4 text-[var(--slate)]">{b.facility?.name ?? "N/A"}</td>
 										<td className="py-3 px-4 text-[var(--muted)]">{formatDateTime(b.startTime)}</td>
 										<td className="py-3 px-4 text-[var(--slate)]">{formatCurrency(Number(b.totalAmount ?? 0))}</td>

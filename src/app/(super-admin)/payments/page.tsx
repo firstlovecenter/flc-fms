@@ -3,14 +3,17 @@ import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import PaymentConfigForm from "@/components/staff/PaymentConfigForm";
+import GatewayToggle from "@/components/staff/GatewayToggle";
 
 export default async function SuperAdminPaymentsPage() {
   const session = await getSession();
   if (!session || session.role !== "SUPER_ADMIN") redirect("/login");
 
-  const paymentConfig = await prisma.paymentConfig.findFirst({
-    orderBy: { updatedAt: "desc" },
+  const configs = await prisma.paymentConfig.findMany({
+    orderBy: { provider: "asc" },
   });
+
+  const activeConfig = configs.find(c => c.isActive);
 
   return (
     <div className="space-y-6">
@@ -41,7 +44,7 @@ export default async function SuperAdminPaymentsPage() {
             Payment Gateway Configuration
           </h1>
           <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.9)", maxWidth: "500px" }}>
-            Configure the global payment provider. Secret keys are encrypted at rest with AES-256-GCM.
+            Configure and toggle payment providers. Secret keys are encrypted at rest with AES-256-GCM.
           </p>
         </div>
       </div>
@@ -58,42 +61,69 @@ export default async function SuperAdminPaymentsPage() {
         <strong style={{ color: "#b45309" }}>Security Note:</strong> Secret keys are encrypted before being stored. They are never returned in full — you must re-enter them to update. Webhook secrets are optional but strongly recommended.
       </div>
 
+      {/* Configured gateways */}
+      {configs.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-6 py-4 bg-[var(--cream)] border-b border-[var(--border)]">
+            <p className="font-semibold text-[var(--navy)]">Configured Gateways</p>
+            <p className="text-xs text-[var(--muted)]">Toggle gateways on or off. The first active gateway is used for payments.</p>
+          </div>
+          <div className="divide-y divide-[var(--border)]">
+            {configs.map(config => (
+              <div key={config.id} className="px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-100 text-[var(--navy)] flex items-center justify-center font-bold text-xs">
+                    {config.provider === "PAYSTACK" ? "PS" : "HB"}
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--navy)]">{config.provider}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      Key: {config.publicKey.slice(0, 12)}… · Updated {config.updatedAt.toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {config.isActive ? (
+                    <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                      <CheckCircle size={14} /> Active
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-xs text-red-500 font-medium">
+                      <XCircle size={14} /> Disabled
+                    </span>
+                  )}
+                  <GatewayToggle provider={config.provider as "PAYSTACK" | "HUBTEL"} isActive={config.isActive} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Config form */}
       <div className="card overflow-hidden">
-        {/* Header */}
         <div className="px-6 py-4 bg-[var(--cream)] border-b border-[var(--border)] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-100 text-[var(--navy)] flex items-center justify-center font-bold text-sm">
-              FLC
+              +
             </div>
             <div>
-              <p className="font-semibold text-[var(--navy)]">First Love Center</p>
-              <p className="text-xs text-[var(--muted)]">Global Payment Configuration</p>
+              <p className="font-semibold text-[var(--navy)]">{configs.length > 0 ? "Add / Update Gateway" : "Configure Gateway"}</p>
+              <p className="text-xs text-[var(--muted)]">Enter credentials for a provider. Re-entering updates an existing one.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {!paymentConfig ? (
-              <span className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
-                <AlertCircle size={14} /> Not configured
-              </span>
-            ) : paymentConfig.isActive ? (
-              <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                <CheckCircle size={14} /> {paymentConfig.provider} · Active
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-xs text-red-500 font-medium">
-                <XCircle size={14} /> Disabled
-              </span>
-            )}
-          </div>
+          {!activeConfig && configs.length === 0 && (
+            <span className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+              <AlertCircle size={14} /> Not configured
+            </span>
+          )}
         </div>
-
-        {/* Config form */}
         <div className="p-6">
           <PaymentConfigForm
             campusId="global"
-            currentProvider={paymentConfig?.provider ?? null}
-            currentPublicKey={paymentConfig?.publicKey ?? null}
-            lastUpdated={paymentConfig?.updatedAt ?? null}
+            currentProvider={null}
+            currentPublicKey={null}
+            lastUpdated={null}
           />
         </div>
       </div>

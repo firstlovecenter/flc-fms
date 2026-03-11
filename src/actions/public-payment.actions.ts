@@ -154,7 +154,6 @@ export async function verifyPaymentOTP(data: z.infer<typeof VerifySchema>) {
 // ── Step 4: Initiate payment from public page ────────────────────────────────
 
 export async function initiatePublicPayment(bookingId: string, sessionToken: string) {
-  // Verify session token
   const patronId = await redis.get(`pay_session:${sessionToken}`);
   if (!patronId) return { error: "Session expired. Please verify again." };
 
@@ -170,20 +169,31 @@ export async function initiatePublicPayment(bookingId: string, sessionToken: str
 
   if (!booking) return { error: "Booking not found or already paid." };
 
-  const config = await prisma.paymentConfig.findFirst({});
-  if (!config?.isActive) return { error: "Payment gateway not configured." };
+  const config = await prisma.paymentConfig.findFirst({ where: { isActive: true } });
+  if (!config) return { error: "No active payment gateway configured." };
 
   const secretKey = decrypt(config.secretKey);
 
-  const payment = await prisma.payment.create({
-    data: {
-      bookingId,
-      patronId,
-      amount: booking.totalAmount,
-      provider: config.provider,
-      status: "PENDING",
-    },
-  });
+  // Reuse existing PENDING payment or create new one
+  let payment = await prisma.payment.findUnique({ where: { bookingId } });
+  if (payment?.status === "PAID") return { error: "Booking already paid." };
+
+  if (payment) {
+    payment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { provider: config.provider, amount: booking.totalAmount, status: "PENDING", providerRef: null },
+    });
+  } else {
+    payment = await prisma.payment.create({
+      data: {
+        bookingId,
+        patronId,
+        amount: booking.totalAmount,
+        provider: config.provider,
+        status: "PENDING",
+      },
+    });
+  }
 
   let checkoutUrl: string;
 
@@ -206,24 +216,6 @@ export async function initiatePublicPayment(bookingId: string, sessionToken: str
     if (!d.status) return { error: "Failed to initialise payment." };
     checkoutUrl = d.data.authorization_url;
     await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: payment.id } });
-  } else if (config.provider === "FLUTTERWAVE") {
-    const res = await fetch("https://api.flutterwave.com/v3/payments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        tx_ref: payment.id,
-        amount: Number(booking.totalAmount),
-        currency: "GHS",
-        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback`,
-        customer: { email: booking.patron!.email, name: booking.patron!.name },
-        customizations: { title: "CFMS Booking Payment" },
-      }),
-    });
-    const d = await res.json();
-    checkoutUrl = d.data?.link ?? "";
   } else {
     const res = await fetch("https://payproxyapi.hubtel.com/items/initiate", {
       method: "POST",

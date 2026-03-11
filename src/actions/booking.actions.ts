@@ -332,11 +332,28 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
 
+  // Find or create a Patron for the guest so booking is payable
+  let patron = await prisma.patron.findUnique({ where: { email: validated.guestEmail } });
+  if (!patron) {
+    const cryptoModule = await import("crypto");
+    const tempHash = cryptoModule.randomBytes(32).toString("hex");
+    patron = await prisma.patron.create({
+      data: {
+        email: validated.guestEmail,
+        name:  validated.guestName,
+        phone: validated.guestPhone,
+        passwordHash: tempHash,
+        isVerified: false,
+      },
+    });
+  }
+
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;
 
   const booking = await prisma.booking.create({
     data: {
       facilityId: validated.facilityId,
+      patronId: patron.id,
       category: validated.category,
       title: validated.title,
       description: validated.description,
@@ -345,8 +362,10 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       notes: [validated.notes, guestMeta].filter(Boolean).join("\n"),
       totalAmount,
       status: "PENDING",
-      paymentStatus: "UNPAID"},
-    include: { facility: true }});
+      paymentStatus: "UNPAID",
+    },
+    include: { facility: true },
+  });
 
   await notifyBookingConfirmation({
     phone:        validated.guestPhone,
@@ -413,24 +432,36 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 }
 
 export async function rejectBooking(bookingId: string, reason: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const booking = await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "REJECTED", rejectionReason: reason },
-    include: { patron: true, user: true }});
+  const session = await requireStaff("FACILITY_MANAGER");
+
+  const [booking] = await prisma.$transaction([
+    prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "REJECTED", rejectionReason: reason },
+      include: { patron: true, user: true },
+    }),
+    // Cancel any pending payment records
+    prisma.payment.updateMany({
+      where: { bookingId, status: "PENDING" },
+      data: { status: "FAILED" },
+    }),
+  ]);
 
   const contact = booking.patron ?? booking.user;
   if (contact?.phone) {
     await notifyBookingRejected({
       phone:        contact.phone,
       bookingTitle: booking.title,
-      reason});
+      reason,
+    });
   }
   if (contact?.email) {
     await sendBookingRejectedEmail({
       to:           contact.email,
       name:         contact.name,
       bookingTitle: booking.title,
-      reason});
+      reason,
+    });
   }
 
   auditLog({ userId: session.sub, action: "REJECT_BOOKING", entity: "Booking", entityId: bookingId, after: { reason } });
@@ -439,21 +470,47 @@ export async function rejectBooking(bookingId: string, reason: string) {
 }
 
 export async function cancelBooking(bookingId: string) {
-  const session  = await getSession();
-  if (!session) return { error: "Unauthorized" };  const booking = await prisma.booking.findFirstOrThrow({
-    where: { id: bookingId }});
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized" };
 
-  // Patron can only cancel their own bookings
+  const booking = await prisma.booking.findFirstOrThrow({
+    where: { id: bookingId },
+  });
+
   if (session.role === "PATRON" && booking.patronId !== session.sub) {
     return { error: "Unauthorized" };
   }
   if (booking.status === "COMPLETED") return { error: "Cannot cancel a completed booking." };
 
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "CANCELLED" }});
+  await prisma.$transaction([
+    // Cancel any pending payment records
+    prisma.payment.updateMany({
+      where: { bookingId, status: "PENDING" },
+      data: { status: "FAILED" },
+    }),
+    prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "CANCELLED" },
+    }),
+  ]);
 
   auditLog({ userId: session.sub, action: "CANCEL_BOOKING", entity: "Booking", entityId: bookingId });
+  revalidatePath("/bookings");
+  return { success: true };
+}
+
+export async function completeBooking(bookingId: string) {
+  const session = await requireStaff("FACILITY_MANAGER");
+
+  const booking = await prisma.booking.findFirstOrThrow({ where: { id: bookingId } });
+  if (booking.status !== "APPROVED") return { error: "Only approved bookings can be marked as completed." };
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "COMPLETED" },
+  });
+
+  auditLog({ userId: session.sub, action: "COMPLETE_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");
   return { success: true };
 }

@@ -84,7 +84,6 @@ enum InventoryStatus {
 
 enum PaymentProvider {
   PAYSTACK
-  FLUTTERWAVE
   HUBTEL
 }
 
@@ -406,6 +405,7 @@ model PaymentConfig {
   isActive      Boolean         @default(true)
   updatedAt     DateTime        @updatedAt
 
+  @@unique([provider])
   @@map("payment_configs")
 }
 

@@ -10,7 +10,7 @@ import { configurePaymentGateway } from "@/actions/payment.actions";
 import { formatDateTime } from "@/lib/utils";
 
 const schema = z.object({
-  provider:      z.enum(["PAYSTACK", "FLUTTERWAVE", "HUBTEL"]),
+  provider:      z.enum(["PAYSTACK", "HUBTEL"]),
   publicKey:     z.string().min(5, "Public key required"),
   secretKey:     z.string().min(5, "Secret key required"),
   webhookSecret: z.string().optional(),
@@ -22,11 +22,6 @@ const PROVIDER_HINTS: Record<string, { pub: string; sec: string; webhook: string
     pub:     "pk_live_... or pk_test_...",
     sec:     "sk_live_... or sk_test_...",
     webhook: "Your Paystack webhook secret (from dashboard → Settings → API)",
-  },
-  FLUTTERWAVE: {
-    pub:     "FLWPUBK_...",
-    sec:     "FLWSECK_...",
-    webhook: "Secret hash from Flutterwave dashboard → Webhooks",
   },
   HUBTEL: {
     pub:     "Merchant account number",
@@ -82,7 +77,6 @@ export default function PaymentConfigForm({ campusId, currentProvider, currentPu
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Provider *</label>
           <select {...register("provider")} className="input">
             <option value="PAYSTACK">Paystack</option>
-            <option value="FLUTTERWAVE">Flutterwave</option>
             <option value="HUBTEL">Hubtel</option>
           </select>
         </div>

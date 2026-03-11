@@ -11,10 +11,11 @@ import { auditLog } from "@/lib/audit";
 // ── Configure gateway (Super Admin only) ─────────────────────────────────────
 
 const ConfigSchema = z.object({
-  provider:      z.enum(["PAYSTACK", "FLUTTERWAVE", "HUBTEL"]),
+  provider:      z.enum(["PAYSTACK", "HUBTEL"]),
   publicKey:     z.string().min(10),
   secretKey:     z.string().min(10),
-  webhookSecret: z.string().optional()});
+  webhookSecret: z.string().optional(),
+});
 
 export async function configurePaymentGateway(data: z.infer<typeof ConfigSchema>) {
   const session = await getSession();
@@ -22,18 +23,18 @@ export async function configurePaymentGateway(data: z.infer<typeof ConfigSchema>
 
   const validated = ConfigSchema.parse(data);
 
-  // Try to find existing config, or create a new one
-  const existingConfig = await prisma.paymentConfig.findFirst({});
-  
+  const existingConfig = await prisma.paymentConfig.findFirst({
+    where: { provider: validated.provider },
+  });
+
   if (existingConfig) {
     await prisma.paymentConfig.update({
       where: { id: existingConfig.id },
       data: {
-        provider:      validated.provider,
         publicKey:     validated.publicKey,
         secretKey:     encrypt(validated.secretKey),
-        webhookSecret: validated.webhookSecret ? encrypt(validated.webhookSecret) : null
-      }
+        webhookSecret: validated.webhookSecret ? encrypt(validated.webhookSecret) : null,
+      },
     });
   } else {
     await prisma.paymentConfig.create({
@@ -41,12 +42,31 @@ export async function configurePaymentGateway(data: z.infer<typeof ConfigSchema>
         provider:      validated.provider,
         publicKey:     validated.publicKey,
         secretKey:     encrypt(validated.secretKey),
-        webhookSecret: validated.webhookSecret ? encrypt(validated.webhookSecret) : null
-      }
+        webhookSecret: validated.webhookSecret ? encrypt(validated.webhookSecret) : null,
+      },
     });
   }
 
-  auditLog({ userId: session.sub, action: "CONFIGURE_PAYMENT_GATEWAY", entity: "PaymentConfig", entityId: "payment-config" });
+  auditLog({ userId: session.sub, action: "CONFIGURE_PAYMENT_GATEWAY", entity: "PaymentConfig", entityId: validated.provider });
+  revalidatePath("/payments");
+  return { success: true };
+}
+
+// ── Toggle gateway on/off (Super Admin only) ─────────────────────────────────
+
+export async function togglePaymentGateway(provider: "PAYSTACK" | "HUBTEL", active: boolean) {
+  const session = await getSession();
+  if (!session || session.role !== "SUPER_ADMIN") return { error: "Unauthorized" };
+
+  const config = await prisma.paymentConfig.findFirst({ where: { provider } });
+  if (!config) return { error: "Gateway not configured yet." };
+
+  await prisma.paymentConfig.update({
+    where: { id: config.id },
+    data: { isActive: active },
+  });
+
+  auditLog({ userId: session.sub, action: active ? "ENABLE_GATEWAY" : "DISABLE_GATEWAY", entity: "PaymentConfig", entityId: config.id });
   revalidatePath("/payments");
   return { success: true };
 }
@@ -54,28 +74,43 @@ export async function configurePaymentGateway(data: z.infer<typeof ConfigSchema>
 // ── Initiate payment (patron) ─────────────────────────────────────────────────
 
 export async function initiatePayment(bookingId: string) {
-  const session  = await requirePatron();  const booking = await prisma.booking.findFirstOrThrow({
+  const session = await requirePatron();
+  const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, patronId: session.sub },
-    include: { patron: true }});
+    include: { patron: true },
+  });
 
   if (booking.paymentStatus === "PAID") return { error: "Booking already paid." };
+  if (!["APPROVED", "COMPLETED"].includes(booking.status)) {
+    return { error: "Booking must be approved before payment." };
+  }
 
-  // TODO: Resolve campus context for payment config lookup
-  const config = await prisma.paymentConfig.findFirst({});
-  if (!config?.isActive) return { error: "Campus payment gateway not configured." };
+  const config = await prisma.paymentConfig.findFirst({ where: { isActive: true } });
+  if (!config) return { error: "No active payment gateway configured." };
 
   const secretKey = decrypt(config.secretKey);
 
-  // Create a pending payment record
-  const payment = await prisma.payment.create({
-    data: {
-      bookingId,
-      patronId: session.sub,
-      amount:   booking.totalAmount,
-      provider: config.provider,
-      status:   "PENDING"}});
+  // Reuse existing PENDING payment or create new one
+  let payment = await prisma.payment.findUnique({ where: { bookingId } });
+  if (payment?.status === "PAID") return { error: "Booking already paid." };
 
-  // Generate provider-specific checkout URL
+  if (payment) {
+    payment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { provider: config.provider, amount: booking.totalAmount, status: "PENDING", providerRef: null },
+    });
+  } else {
+    payment = await prisma.payment.create({
+      data: {
+        bookingId,
+        patronId: session.sub,
+        amount: booking.totalAmount,
+        provider: config.provider,
+        status: "PENDING",
+      },
+    });
+  }
+
   let checkoutUrl: string;
 
   if (config.provider === "PAYSTACK") {
@@ -83,50 +118,37 @@ export async function initiatePayment(bookingId: string) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json"},
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        email:      booking.patron!.email,
-        amount:     Math.round(Number(booking.totalAmount) * 100), // kobo
-        reference:  payment.id,
+        email: booking.patron!.email,
+        amount: Math.round(Number(booking.totalAmount) * 100),
+        reference: payment.id,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback`,
-        metadata: { bookingId } })});
+        metadata: { bookingId },
+      }),
+    });
     const data = await res.json();
     if (!data.status) return { error: "Failed to initialise payment." };
     checkoutUrl = data.data.authorization_url;
-
     await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: payment.id } });
-
-  } else if (config.provider === "FLUTTERWAVE") {
-    const res = await fetch("https://api.flutterwave.com/v3/payments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json"},
-      body: JSON.stringify({
-        tx_ref:       payment.id,
-        amount:       Number(booking.totalAmount),
-        currency:     "GHS",
-        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback`,
-        customer:     { email: booking.patron!.email, name: booking.patron!.name },
-        customizations: { title: "CFMS Booking Payment" }})});
-    const data = await res.json();
-    checkoutUrl = data.data?.link ?? "";
-
   } else {
-    // Hubtel
     const res = await fetch("https://payproxyapi.hubtel.com/items/initiate", {
       method: "POST",
       headers: {
         Authorization: `Basic ${Buffer.from(secretKey).toString("base64")}`,
-        "Content-Type": "application/json"},
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        totalAmount:    Number(booking.totalAmount),
-        description:    `Booking: ${booking.title}`,
+        totalAmount: Number(booking.totalAmount),
+        description: `Booking: ${booking.title}`,
         clientReference: payment.id,
-        callbackUrl:    `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel`,
-        returnUrl:      `${process.env.NEXT_PUBLIC_APP_URL}/patron/bookings`,
+        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel`,
+        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/bookings`,
         cancellationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/bookings`,
-        merchantAccountNumber: config.publicKey})});
+        merchantAccountNumber: config.publicKey,
+      }),
+    });
     const data = await res.json();
     checkoutUrl = data.data?.checkoutDirectUrl ?? "";
   }
@@ -153,10 +175,12 @@ export async function getCampusTransactions(page = 1) {
   return { payments, total, page, pages: Math.ceil(total / take) };
 }
 
-// ── Get campus config (public key only — for frontend) ───────────────────────
+// ── Get all configured gateways ──────────────────────────────────────────────
 
-export async function getCampusPaymentPublicKey() {  const config = await prisma.paymentConfig.findFirst({
-    where: {},
-    select: { provider: true, publicKey: true, isActive: true }});
-  return config;
+export async function getCampusPaymentConfigs() {
+  const configs = await prisma.paymentConfig.findMany({
+    select: { id: true, provider: true, publicKey: true, isActive: true, updatedAt: true },
+    orderBy: { provider: "asc" },
+  });
+  return configs;
 }

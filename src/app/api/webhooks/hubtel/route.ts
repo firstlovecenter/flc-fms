@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: "Payment not found" }, { status: 404 });
   }
 
-  const config = await prisma.paymentConfig.findFirst({});
+  const config = await prisma.paymentConfig.findFirst({ where: { provider: "HUBTEL" } });
 
   // Verify webhook token if configured
   if (config?.webhookSecret) {
@@ -51,6 +51,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // Don't process if booking has been cancelled or rejected
+    if (["CANCELLED", "REJECTED"].includes(payment.booking.status)) {
+      return NextResponse.json({ ok: true });
+    }
+
+    // Only auto-approve if currently PENDING; preserve APPROVED/COMPLETED
+    const bookingStatusUpdate = payment.booking.status === "PENDING" ? { status: "APPROVED" as const } : {};
+
     await prisma.$transaction([
       prisma.payment.update({
         where: { id: payment.id },
@@ -58,10 +66,13 @@ export async function POST(req: NextRequest) {
           status:      "PAID",
           paidAt:      new Date(),
           providerRef: body.Data?.TransactionId ?? body.data?.TransactionId ?? clientReference,
-          metadata:    body.Data ?? body.data}}),
+          metadata:    body.Data ?? body.data,
+        },
+      }),
       prisma.booking.update({
         where: { id: payment.bookingId },
-        data: { paymentStatus: "PAID", status: "APPROVED" }}),
+        data: { paymentStatus: "PAID", ...bookingStatusUpdate },
+      }),
     ]);
 
     const receiptNumber = `RCP-${Date.now()}-${payment.id.slice(-4).toUpperCase()}`;

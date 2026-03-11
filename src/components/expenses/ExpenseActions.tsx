@@ -10,17 +10,24 @@ export default function ExpenseActions({ expenseId }: { expenseId: string }) {
   const [mode, setMode] = useState<null | "reject">(null);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleApprove() {
     setLoading(true);
-    await approveExpense(expenseId);
-    router.refresh();
+    setError(null);
+    const result = await approveExpense(expenseId);
+    if (result && "error" in result) {
+      setError(result.error as string);
+    } else {
+      router.refresh();
+    }
     setLoading(false);
   }
 
   async function handleReject() {
     if (!reason.trim()) return;
     setLoading(true);
+    setError(null);
     await rejectExpense(expenseId, reason);
     router.refresh();
     setLoading(false);
@@ -45,17 +52,24 @@ export default function ExpenseActions({ expenseId }: { expenseId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <button onClick={handleApprove} disabled={loading}
-        className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 text-xs font-medium px-2"
-        title="Approve">
-        Approve
-      </button>
-      <button onClick={() => setMode("reject")}
-        className="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium px-2"
-        title="Reject">
-        Reject
-      </button>
+    <div className="flex flex-col gap-1">
+      {error && (
+        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+          {error}
+        </p>
+      )}
+      <div className="flex items-center gap-1">
+        <button onClick={handleApprove} disabled={loading}
+          className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 text-xs font-medium px-2"
+          title="Approve">
+          Approve
+        </button>
+        <button onClick={() => setMode("reject")}
+          className="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium px-2"
+          title="Reject">
+          Reject
+        </button>
+      </div>
     </div>
   );
 }
