@@ -129,7 +129,7 @@ export async function notifyBookingApproved(params: {
     : ``;
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Your booking "${params.bookingTitle}" on ${date} has been APPROVED.${paymentSuffix}`,
+    message: `Your booking "${params.bookingTitle}" on ${date} has been APPROVED.${paymentSuffix}`,
   });
 }
 
@@ -141,7 +141,7 @@ export async function notifyBookingRejected(params: {
   const suffix = params.reason ? ` Reason: ${params.reason}` : "";
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Your booking "${params.bookingTitle}" has been REJECTED.${suffix}`,
+    message: `Your booking "${params.bookingTitle}" has been REJECTED.${suffix}`,
   });
 }
 
@@ -159,7 +159,7 @@ export async function notifyBookingConfirmation(params: {
   });
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.`,
+    message: `Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.`,
   });
 }
 
@@ -171,7 +171,7 @@ export async function notifyPaymentReceived(params: {
 }) {
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Payment of ${params.currency} ${params.amount.toFixed(2)} received for "${params.bookingTitle}". Thank you!`,
+    message: `Payment of ${params.currency} ${params.amount.toFixed(2)} received for "${params.bookingTitle}". Thank you!`,
   });
 }
 
@@ -185,7 +185,7 @@ export async function notifyExpenseDecision(params: {
   const suffix = !params.approved && params.reason ? ` Reason: ${params.reason}` : "";
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Expense request "${params.title}" has been ${status}.${suffix}`,
+    message: `Expense request "${params.title}" has been ${status}.${suffix}`,
   });
 }
 
@@ -197,7 +197,7 @@ export async function notifyMaintenanceUpdate(params: {
 }) {
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Maintenance #${params.requestId.slice(-6)} at ${params.facilityName} is now ${params.status}.`,
+    message: `Maintenance #${params.requestId.slice(-6)} at ${params.facilityName} is now ${params.status}.`,
   });
 }
 
@@ -215,7 +215,7 @@ export async function notifyEventPublished(params: {
   });
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] New event: "${params.eventTitle}" at ${params.venue} on ${date}. Don't miss it!`,
+    message: `New event: "${params.eventTitle}" at ${params.venue} on ${date}. Don't miss it!`,
   });
 }
 
@@ -225,7 +225,7 @@ export async function notifyPasswordChanged(params: {
 }) {
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Hi ${params.name}, your password has been changed successfully. If you did not make this change, please contact your administrator immediately.`,
+    message: `Hi ${params.name}, your password has been changed successfully. If you did not make this change, please contact your administrator immediately.`,
   });
 }
 
@@ -239,6 +239,6 @@ export async function notifyStaffAppointment(params: {
   const roleLabel = params.role === "FACILITY_MANAGER" ? "Facility Manager" : "Vicar";
   await sendSMS({
     to: params.phone,
-    message: `[CFMS] Hi ${params.name}, you have been appointed as ${roleLabel}. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword} — you will be asked to change it on first login.`,
+    message: `Hi ${params.name}, you have been appointed as ${roleLabel}. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword} — you will be asked to change it on first login.`,
   });
 }

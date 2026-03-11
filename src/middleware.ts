@@ -5,6 +5,7 @@ const PUBLIC_PATHS = [
   "/",
   "/catalog",
   "/guest",
+  "/pay",
   "/pwa",
   "/login",
   "/register",
@@ -47,7 +48,7 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/patron/dashboard", req.url));
       }
       if (session.role === "SUPER_ADMIN") {
-        return NextResponse.redirect(new URL("/audit", req.url));
+        return NextResponse.redirect(new URL("/dashboard", req.url));
       }
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }

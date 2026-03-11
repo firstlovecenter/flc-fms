@@ -2,19 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, KeyRound, UserX, UserCheck, Copy, Check } from "lucide-react";
+import { MoreHorizontal, KeyRound, UserX, UserCheck, Copy, Check, Pencil } from "lucide-react";
 import { deactivateStaffMember, reactivateStaffMember, resetStaffPassword } from "@/actions/staff.actions";
+import EditStaffModal from "./EditStaffModal";
 
 interface Props {
   userId: string;
   role: string;
   name: string;
+  email: string;
+  phone: string | null;
   inactive?: boolean;
 }
 
-export default function StaffRowActions({ userId, role, name, inactive }: Props) {
+export default function StaffRowActions({ userId, role, name, email, phone, inactive }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [tempPw, setTempPw] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -88,6 +92,12 @@ export default function StaffRowActions({ userId, role, name, inactive }: Props)
             ) : (
               <>
                 <button
+                  onClick={() => { setOpen(false); setEditOpen(true); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)]"
+                >
+                  <Pencil size={14} /> Edit Details
+                </button>
+                <button
                   onClick={handleResetPassword}
                   disabled={!!loading}
                   className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)] disabled:opacity-50"
@@ -106,6 +116,12 @@ export default function StaffRowActions({ userId, role, name, inactive }: Props)
           </div>
         </>
       )}
+
+      <EditStaffModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        staff={{ id: userId, name, email, phone, role }}
+      />
     </div>
   );
 }

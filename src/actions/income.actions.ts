@@ -21,8 +21,17 @@ export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
   const income = await prisma.income.create({
     data: { recordedById: session.sub, ...validated }});
 
+  // If linked to a booking, mark the booking as PAID
+  if (validated.bookingId) {
+    await prisma.booking.update({
+      where: { id: validated.bookingId },
+      data: { paymentStatus: "PAID" },
+    });
+  }
+
   auditLog({ userId: session.sub, action: "RECORD_INCOME", entity: "Income", entityId: income.id });
   revalidatePath("/transactions");
+  revalidatePath("/bookings");
   return { success: true, income };
 }
 

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { notifyMaintenanceUpdate } from "@/lib/notifications/sms";
-import { sendMaintenanceOpenedEmail } from "@/lib/notifications/email";
+import { sendMaintenanceOpenedEmail, sendExpenseNotificationEmail } from "@/lib/notifications/email";
 
 const CreateSchema = z.object({
   facilityId:    z.string().optional(),
@@ -126,6 +126,39 @@ export async function updateMaintenanceRequest(
       facilityName: request.facility.name,
       status:       validated.status,
     });
+  }
+
+  // Auto-create expense request when actualCost is set
+  if (validated.actualCost && validated.actualCost > 0) {
+    const existing = await prisma.expense.findFirst({
+      where: { title: { startsWith: `Maintenance — ` }, narration: { contains: requestId } },
+    });
+    if (!existing) {
+      const expense = await prisma.expense.create({
+        data: {
+          createdById: session.sub,
+          status:      "PENDING",
+          title:       `Maintenance — ${request.facility?.name ?? "General"}`,
+          narration:   `Auto-generated expense for maintenance request: ${request.title} (ID: ${requestId})`,
+          amount:      validated.actualCost,
+          category:    "Maintenance & Repairs",
+        },
+      });
+
+      // Notify all FMs about the new expense
+      const managers = await prisma.user.findMany({
+        where: { role: "FACILITY_MANAGER", isActive: true },
+        select: { email: true, name: true },
+      });
+      for (const mgr of managers) {
+        await sendExpenseNotificationEmail({
+          to: mgr.email, name: mgr.name,
+          expenseTitle: expense.title, amount: validated.actualCost, type: "SUBMITTED",
+        });
+      }
+
+      auditLog({ userId: session.sub, action: "AUTO_CREATE_EXPENSE", entity: "Expense", entityId: expense.id, after: { maintenanceRequestId: requestId } });
+    }
   }
 
   auditLog({

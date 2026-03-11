@@ -31,7 +31,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Script id="sw-register" strategy="afterInteractive">{`
           if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
+            navigator.serviceWorker.register('/sw.js').then(function(reg) {
+              // Check for updates periodically
+              setInterval(function() { reg.update(); }, 60 * 60 * 1000);
+              // If a new SW is waiting, activate it
+              if (reg.waiting) {
+                reg.waiting.postMessage('SKIP_WAITING');
+              }
+              reg.addEventListener('updatefound', function() {
+                var newSW = reg.installing;
+                if (newSW) {
+                  newSW.addEventListener('statechange', function() {
+                    if (newSW.state === 'activated') {
+                      newSW.postMessage('CLEAN_CACHE');
+                    }
+                  });
+                }
+              });
+            }).catch(function() {});
           }
         `}</Script>
       </body>

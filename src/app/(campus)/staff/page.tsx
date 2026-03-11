@@ -10,12 +10,12 @@ export default async function StaffPage() {
   const [activeStaff, inactiveStaff] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, email: true, role: true, lastLoginAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
     prisma.user.findMany({
       where: { isActive: false },
-      select: { id: true, name: true, email: true, role: true, lastLoginAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
   ]);
@@ -109,6 +109,7 @@ export default async function StaffPage() {
               <tr>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Name</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Email</th>
+                <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Phone</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Role</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Last Login</th>
                 <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Status</th>
@@ -120,6 +121,7 @@ export default async function StaffPage() {
                 <tr key={u.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-[var(--cream)]">
                   <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--navy)" }}>{u.name}</td>
                   <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{u.email}</td>
+                  <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{u.phone ?? "—"}</td>
                   <td style={{ padding: "12px 16px" }}>
                     <span
                       style={{
@@ -151,7 +153,7 @@ export default async function StaffPage() {
                     <span className="badge badge-approved">Active</span>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <StaffRowActions userId={u.id} role={u.role} name={u.name} />
+                    <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} />
                   </td>
                 </tr>
               ))}
@@ -185,6 +187,7 @@ export default async function StaffPage() {
                 <tr>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Name</th>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Email</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Phone</th>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Role</th>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Last Login</th>
                   <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>Status</th>
@@ -196,6 +199,7 @@ export default async function StaffPage() {
                   <tr key={u.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-[var(--cream)]">
                     <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--navy)" }}>{u.name}</td>
                     <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{u.email}</td>
+                    <td style={{ padding: "12px 16px", color: "var(--slate)" }}>{u.phone ?? "—"}</td>
                     <td style={{ padding: "12px 16px" }}>
                       <span
                         style={{
@@ -227,7 +231,7 @@ export default async function StaffPage() {
                       <span className="badge badge-cancelled">Inactive</span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <StaffRowActions userId={u.id} role={u.role} name={u.name} inactive />
+                      <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} inactive />
                     </td>
                   </tr>
                 ))}

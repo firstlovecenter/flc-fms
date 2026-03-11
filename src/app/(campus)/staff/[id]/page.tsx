@@ -91,6 +91,8 @@ export default async function StaffDetailPage({ params }: Props) {
           <StaffRowActions
             userId={member.id}
             name={member.name}
+            email={member.email}
+            phone={member.phone}
             inactive={!member.isActive}
             role={member.role}
           />

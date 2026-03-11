@@ -199,8 +199,8 @@ export async function updateBookableItem(id: string, raw: unknown) {
 
 export async function deleteBookableItem(id: string) {
   await requireStaff("FACILITY_MANAGER");
-  await prisma.bookableItem.delete({ where: { id } });
-  await auditLog({ action: "DELETE", entity: "BookableItem", entityId: id });
+  await prisma.bookableItem.update({ where: { id }, data: { isActive: false } });
+  await auditLog({ action: "DEACTIVATE", entity: "BookableItem", entityId: id });
   revalidatePath("/items");
   revalidatePath("/catalog");
   return { ok: true };
@@ -268,8 +268,8 @@ export async function updateBookableBundle(id: string, raw: unknown) {
 
 export async function deleteBookableBundle(id: string) {
   await requireStaff("FACILITY_MANAGER");
-  await prisma.bookableBundle.delete({ where: { id } });
-  await auditLog({ action: "DELETE", entity: "BookableBundle", entityId: id });
+  await prisma.bookableBundle.update({ where: { id }, data: { isActive: false } });
+  await auditLog({ action: "DEACTIVATE", entity: "BookableBundle", entityId: id });
   revalidatePath("/items");
   revalidatePath("/catalog");
   return { ok: true };

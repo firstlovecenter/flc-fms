@@ -38,23 +38,45 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
 }
 
 export async function approveExpense(expenseId: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const expense = await prisma.expense.update({
+  const session  = await requireStaff("FACILITY_MANAGER");
+
+  // Check account balance before approving
+  const expense = await prisma.expense.findUniqueOrThrow({
+    where: { id: expenseId, status: "PENDING" },
+  });
+
+  const [totalIncome, totalApprovedExpenses] = await Promise.all([
+    prisma.income.aggregate({ _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
+  ]);
+
+  const balance =
+    Number(totalIncome._sum.amount ?? 0) -
+    Number(totalApprovedExpenses._sum.amount ?? 0);
+
+  if (Number(expense.amount) > balance) {
+    return {
+      error: `Insufficient balance. Available: GH₵${balance.toFixed(2)}, Expense: GH₵${Number(expense.amount).toFixed(2)}`,
+    };
+  }
+
+  const updated = await prisma.expense.update({
     where: { id: expenseId, status: "PENDING" },
     data: { status: "APPROVED", approvedById: session.sub, approvedAt: new Date() },
     include: { createdBy: true }});
 
-  if (expense.createdBy.email) {
-    await sendExpenseNotificationEmail({ to: expense.createdBy.email, name: expense.createdBy.name,
-      expenseTitle: expense.title, amount: Number(expense.amount), type: "APPROVED"});
+  if (updated.createdBy.email) {
+    await sendExpenseNotificationEmail({ to: updated.createdBy.email, name: updated.createdBy.name,
+      expenseTitle: updated.title, amount: Number(updated.amount), type: "APPROVED"});
   }
-  if (expense.createdBy.phone) {
-    await notifyExpenseDecision({ phone: expense.createdBy.phone,
-      title: expense.title, approved: true});
+  if (updated.createdBy.phone) {
+    await notifyExpenseDecision({ phone: updated.createdBy.phone,
+      title: updated.title, approved: true});
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_EXPENSE", entity: "Expense", entityId: expenseId });
   revalidatePath("/transactions");
-  return { success: true, expense };
+  return { success: true, expense: updated };
 }
 
 export async function rejectExpense(expenseId: string, reason: string) {

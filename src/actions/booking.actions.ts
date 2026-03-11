@@ -386,7 +386,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 
   const contact = booking.patron ?? booking.user;
   const paymentUrl = !waiveBilling && Number(booking.totalAmount) > 0
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/patron/bookings`
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/pay`
     : undefined;
 
   if (contact?.phone) {

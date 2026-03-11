@@ -80,3 +80,59 @@ export async function resetStaffPassword(userId: string) {
 
   return { success: true, tempPassword };
 }
+
+const UpdateStaffSchema = z.object({
+  name:  z.string().min(2).max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(9).optional(),
+});
+
+export async function updateStaffMember(
+  userId: string,
+  data: z.infer<typeof UpdateStaffSchema>
+) {
+  const session = await requireStaff("FACILITY_MANAGER");
+  const validated = UpdateStaffSchema.parse(data);
+
+  const before = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { name: true, email: true, phone: true },
+  });
+
+  // Check email uniqueness if changing
+  if (validated.email && validated.email !== before.email) {
+    const existing = await prisma.user.findUnique({ where: { email: validated.email } });
+    if (existing) return { error: "Email already in use" };
+  }
+
+  const updateData: Record<string, string> = {};
+  if (validated.name)  updateData.name  = validated.name;
+  if (validated.email) updateData.email = validated.email;
+  if (validated.phone) updateData.phone = validated.phone;
+
+  await prisma.user.update({ where: { id: userId }, data: updateData });
+
+  auditLog({
+    userId: session.sub,
+    action: "UPDATE_STAFF",
+    entity: "User",
+    entityId: userId,
+    before,
+    after: updateData,
+  });
+
+  revalidatePath("/staff");
+  return { success: true };
+}
+
+export async function getInactiveStaffMembers() {
+  await requireStaff("FACILITY_MANAGER");
+  return prisma.user.findMany({
+    where: { isActive: false },
+    select: {
+      id: true, name: true, email: true, phone: true,
+      role: true, permissions: true, lastLoginAt: true, createdAt: true,
+    },
+    orderBy: [{ role: "asc" }, { name: "asc" }],
+  });
+}
