@@ -17,9 +17,20 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const CATEGORIES = [
-  "Utilities", "Maintenance & Repairs", "Supplies & Stationery",
-  "Catering & Events", "Transport", "Professional Services",
-  "IT & Technology", "Salaries & Wages", "Other",
+  "Utilities",
+  "ECG",
+  "Sewage",
+  "Rubbish",
+  "Welding",
+  "Painting",
+  "Purchases",
+  "Fuel",
+  "Transport",
+  "CAPENTRY",
+  "Electricals",
+  "Plumbing",
+  "Constructions",
+  "Other",
 ];
 
 export default function ExpenseForm() {
