@@ -3,7 +3,7 @@ import { getBookableItems } from "@/actions/bookable-items.actions";
 import AddBundleForm from "@/components/items/AddBundleForm";
 
 export default async function NewBundlePage() {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
   const items = await getBookableItems();
 
   return (

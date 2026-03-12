@@ -6,7 +6,7 @@ import { requireStaff } from "@/lib/auth/guards";
 import AddItemForm from "@/components/items/AddItemForm";
 
 export default async function EditItemPage({ params }: { params: { id: string } }) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
 
   const item = await prisma.bookableItem.findUnique({ where: { id: params.id } });
   if (!item) notFound();

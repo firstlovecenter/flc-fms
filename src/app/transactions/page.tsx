@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 
@@ -12,6 +13,7 @@ export default async function TransactionsPage({
 }) {
   const session = await requireStaff();
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canSubmitExpenses = isFM || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
   const tab = isFM ? (searchParams.tab ?? "overview") : "expenses";
   const page = Number(searchParams.page ?? 1);
   const take = 20;
@@ -42,6 +44,7 @@ export default async function TransactionsPage({
     }),
     prisma.expense.count({ where: expenseWhere }),
     prisma.expense.groupBy({
+      where: expenseWhere,
       by: ["status"],
       _sum: { amount: true },
       _count: true,
@@ -117,9 +120,11 @@ export default async function TransactionsPage({
               <ArrowDownLeft size={16} /> Record Income
             </Link>
           )}
-          <Link href="/transactions/new-expense" className="btn-gold flex items-center gap-2">
-            <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
-          </Link>
+          {canSubmitExpenses && (
+            <Link href="/transactions/new-expense" className="btn-gold flex items-center gap-2">
+              <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
+            </Link>
+          )}
         </div>
       </div>
 

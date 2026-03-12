@@ -30,3 +30,15 @@ export const PERMISSION_LABELS: Record<keyof VicarPermissions, string> = {
   canViewPatrons:       "View Patrons",
   canCreateEvents:      "Create Events",
 };
+
+export function isVicarPermissionKey(permission: string): permission is keyof VicarPermissions {
+  return permission in DEFAULT_VICAR_PERMISSIONS;
+}
+
+export function hasVicarPermission(
+  permissions: Record<string, boolean> | undefined,
+  permission: string,
+) {
+  if (!isVicarPermissionKey(permission)) return false;
+  return permissions?.[permission] ?? DEFAULT_VICAR_PERMISSIONS[permission];
+}

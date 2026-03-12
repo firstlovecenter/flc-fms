@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { getSession, SessionPayload } from "./session";
+import { hasVicarPermission } from "@/lib/staff-permissions";
 
 type AllowedRole = Role | "PATRON";
 
@@ -53,7 +54,7 @@ export async function requirePermission(
   }
 
   if (session.role === "VICAR") {
-    if (session.permissions?.[permission]) return session;
+    if (hasVicarPermission(session.permissions, permission)) return session;
     redirect("/unauthorized");
   }
 

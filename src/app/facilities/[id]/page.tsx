@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon, Church } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ToggleMaintenanceButton from "@/components/facilities/ToggleMaintenanceButton";
 
@@ -38,6 +39,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
   if (!facility) notFound();
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -51,24 +53,28 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
             <p className="page-subtitle mt-0.5">{facility.description}</p>
           )}
         </div>
-        {canManage && (
-          <div className="flex gap-2">
-            <Link href={`/facilities/${facility.id}/slots`} className="btn-secondary flex items-center gap-1.5">
-              <TimerIcon size={14} /> Time Slots
-            </Link>
-            <Link href={`/facilities/${facility.id}/ceremonies`} className="btn-secondary flex items-center gap-1.5">
-              <Church size={14} /> Ceremony Days
-            </Link>
-            <Link href={`/facilities/${facility.id}/edit`} className="btn-secondary">Edit</Link>
-            <ToggleMaintenanceButton
-              facilityId={facility.id}
-              underMaintenance={facility.underMaintenance}
-              maintenanceStartsAt={facility.maintenanceStartsAt}
-              maintenanceEndsAt={facility.maintenanceEndsAt}
-            />
+        <div className="flex gap-2">
+          {canManage && (
+            <>
+              <Link href={`/facilities/${facility.id}/slots`} className="btn-secondary flex items-center gap-1.5">
+                <TimerIcon size={14} /> Time Slots
+              </Link>
+              <Link href={`/facilities/${facility.id}/ceremonies`} className="btn-secondary flex items-center gap-1.5">
+                <Church size={14} /> Ceremony Days
+              </Link>
+              <Link href={`/facilities/${facility.id}/edit`} className="btn-secondary">Edit</Link>
+              <ToggleMaintenanceButton
+                facilityId={facility.id}
+                underMaintenance={facility.underMaintenance}
+                maintenanceStartsAt={facility.maintenanceStartsAt}
+                maintenanceEndsAt={facility.maintenanceEndsAt}
+              />
+            </>
+          )}
+          {canCreateBookings && (
             <Link href={`/bookings/new?facilityId=${facility.id}`} className="btn-primary">Book Now</Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Status banners */}

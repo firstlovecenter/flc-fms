@@ -2,12 +2,13 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth/guards";
 import { formatCurrency } from "@/lib/utils";
 import { getBookableItems, getBookableBundles } from "@/actions/bookable-items.actions";
-import { Package, Layers, Plus, Pencil, Trash2, Tag } from "lucide-react";
+import { Package, Layers, Plus, Pencil, Tag } from "lucide-react";
 import DeleteItemButton from "@/components/items/DeleteItemButton";
 
 export default async function ItemsPage() {
-  await requireStaff();
+  const session = await requireStaff();
   const [items, bundles] = await Promise.all([getBookableItems(), getBookableBundles()]);
+  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
 
   return (
     <div className="space-y-6 animate-fade-in" style={{ position: "relative" }}>
@@ -37,21 +38,23 @@ export default async function ItemsPage() {
               Manage single items and package bundles available for external event bookings
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Link
-              href="/items/new"
-              className="btn-gold flex items-center gap-2"
-            >
-              <Plus size={15} /> Add Item
-            </Link>
-            <Link
-              href="/items/bundles/new"
-              className="btn-secondary flex items-center gap-2"
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,0.25)" }}
-            >
-              <Layers size={15} /> New Package
-            </Link>
-          </div>
+          {canManage && (
+            <div className="flex gap-2 flex-wrap">
+              <Link
+                href="/items/new"
+                className="btn-gold flex items-center gap-2"
+              >
+                <Plus size={15} /> Add Item
+              </Link>
+              <Link
+                href="/items/bundles/new"
+                className="btn-secondary flex items-center gap-2"
+                style={{ color: "#fff", borderColor: "rgba(255,255,255,0.25)" }}
+              >
+                <Layers size={15} /> New Package
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -81,9 +84,11 @@ export default async function ItemsPage() {
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
             <Package size={16} /> Single Items
           </h2>
-          <Link href="/items/new" className="text-xs font-semibold text-[var(--navy)] hover:underline flex items-center gap-1">
-            <Plus size={12} /> Add
-          </Link>
+          {canManage && (
+            <Link href="/items/new" className="text-xs font-semibold text-[var(--navy)] hover:underline flex items-center gap-1">
+              <Plus size={12} /> Add
+            </Link>
+          )}
         </div>
         {items.length === 0 ? (
           <div className="py-16 text-center">
@@ -128,12 +133,16 @@ export default async function ItemsPage() {
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <div className="flex gap-2">
-                        <Link href={`/items/${item.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
-                          <Pencil size={12} /> Edit
-                        </Link>
-                        <DeleteItemButton id={item.id} type="item" name={item.name} />
-                      </div>
+                        {canManage ? (
+                          <div className="flex gap-2">
+                            <Link href={`/items/${item.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
+                              <Pencil size={12} /> Edit
+                            </Link>
+                            <DeleteItemButton id={item.id} type="item" name={item.name} />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[var(--muted)]">View only</span>
+                        )}
                     </td>
                   </tr>
                 ))}
@@ -149,9 +158,11 @@ export default async function ItemsPage() {
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
             <Layers size={16} /> Packages & Bouquets
           </h2>
-          <Link href="/items/bundles/new" className="text-xs font-semibold text-[var(--navy)] hover:underline flex items-center gap-1">
-            <Plus size={12} /> Add Package
-          </Link>
+          {canManage && (
+            <Link href="/items/bundles/new" className="text-xs font-semibold text-[var(--navy)] hover:underline flex items-center gap-1">
+              <Plus size={12} /> Add Package
+            </Link>
+          )}
         </div>
         {bundles.length === 0 ? (
           <div className="py-16 text-center">
@@ -199,12 +210,16 @@ export default async function ItemsPage() {
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <div className="flex gap-2">
-                        <Link href={`/items/bundles/${bundle.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
-                          <Pencil size={12} /> Edit
-                        </Link>
-                        <DeleteItemButton id={bundle.id} type="bundle" name={bundle.name} />
-                      </div>
+                        {canManage ? (
+                          <div className="flex gap-2">
+                            <Link href={`/items/bundles/${bundle.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
+                              <Pencil size={12} /> Edit
+                            </Link>
+                            <DeleteItemButton id={bundle.id} type="bundle" name={bundle.name} />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[var(--muted)]">View only</span>
+                        )}
                     </td>
                   </tr>
                 ))}

@@ -18,6 +18,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   });
 
   if (!expense) notFound();
+  if (session.role === "VICAR" && expense.createdById !== session.sub) notFound();
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const isPending = expense.status === "PENDING";

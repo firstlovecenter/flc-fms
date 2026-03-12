@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import type { VicarPermissions } from "@/lib/staff-permissions";
+import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
+import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 
 export async function getStaffMembers() {
   const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
@@ -70,15 +72,35 @@ export async function resetStaffPassword(userId: string) {
   const tempPassword = `Reset@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash, mustChangePassword: true }});
+    data: { passwordHash, mustChangePassword: true },
+    select: { name: true, email: true, phone: true },
+  });
+
+  const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+  if (user.phone) {
+    await notifyStaffPasswordReset({
+      phone: user.phone,
+      name: user.name,
+      tempPassword,
+      loginUrl,
+    });
+  }
+  if (user.email) {
+    await sendStaffPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      tempPassword,
+      loginUrl,
+    });
+  }
 
   auditLog({ userId: session.sub,
     action: "RESET_STAFF_PASSWORD",
     entity: "User", entityId: userId});
 
-  return { success: true, tempPassword };
+  return { success: true };
 }
 
 const UpdateStaffSchema = z.object({

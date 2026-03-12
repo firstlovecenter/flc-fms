@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePermission } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import BookingForm from "@/components/bookings/BookingForm";
 
@@ -7,7 +7,7 @@ export default async function NewBookingPage({
 }: {
   searchParams: { facilityId?: string };
 }) {
-  await requireStaff();
+  await requirePermission("canCreateBookings");
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },

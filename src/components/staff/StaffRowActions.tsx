@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, KeyRound, UserX, UserCheck, Copy, Check, Pencil } from "lucide-react";
+import { MoreHorizontal, KeyRound, UserX, UserCheck, Pencil } from "lucide-react";
 import { deactivateStaffMember, reactivateStaffMember, resetStaffPassword } from "@/actions/staff.actions";
 import EditStaffModal from "./EditStaffModal";
 
@@ -21,8 +21,7 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
-  const [tempPw, setTempPw] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleDeactivate() {
     if (!confirm(`Deactivate ${name}? They will no longer be able to log in.`)) return;
@@ -44,27 +43,18 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
   async function handleResetPassword() {
     if (!confirm(`Reset password for ${name}? A new temporary password will be generated.`)) return;
     setLoading("reset");
-    const result = await resetStaffPassword(userId);
-    if (result.tempPassword) setTempPw(result.tempPassword);
+    await resetStaffPassword(userId);
     setLoading(null);
+    setResetSent(true);
+    setOpen(false);
+    router.refresh();
   }
 
-  async function copyPw() {
-    if (tempPw) {
-      await navigator.clipboard.writeText(tempPw);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }
-
-  if (tempPw) {
+  if (resetSent) {
     return (
-      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-2 py-1">
-        <code className="font-mono text-xs text-green-800 font-semibold">{tempPw}</code>
-        <button onClick={copyPw} className="text-green-600 hover:text-green-800">
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-        </button>
-        <button onClick={() => setTempPw(null)} className="text-green-400 hover:text-green-700 text-xs ml-1">✕</button>
+      <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800 max-w-56">
+        Temporary password sent to the staff member notification channels.
+        <button onClick={() => setResetSent(false)} className="text-green-700 hover:text-green-900 ml-2 font-semibold">Dismiss</button>
       </div>
     );
   }

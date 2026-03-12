@@ -34,7 +34,7 @@ export async function getFinancialReport(months = 6) {
 }
 
 export async function getBookingReport() {
-  await requireStaff();  const [statusBreakdown, facilityBreakdown, recentPaid] = await Promise.all([
+  await requireStaff("FACILITY_MANAGER");  const [statusBreakdown, facilityBreakdown, recentPaid] = await Promise.all([
     prisma.booking.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -72,7 +72,7 @@ export async function getBookingReport() {
 }
 
 export async function getOperationalReport() {
-  await requireStaff();  const [maintenanceSummary, expenseSummary, topExpenseCategories] = await Promise.all([
+  await requireStaff("FACILITY_MANAGER");  const [maintenanceSummary, expenseSummary, topExpenseCategories] = await Promise.all([
     prisma.maintenanceRequest.groupBy({
       by: ["status", "priority"],
       _count: { _all: true }}),

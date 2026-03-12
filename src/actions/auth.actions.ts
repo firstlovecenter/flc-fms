@@ -178,5 +178,5 @@ export async function createStaffUser(formData: FormData) {
 
   auditLog({ userId: session.sub, action: "CREATE_STAFF", entity: "User", entityId: user.id, after: { role: user.role } });
 
-  return { success: true, tempPassword, userId: user.id };
+  return { success: true, userId: user.id };
 }

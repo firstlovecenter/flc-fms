@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UserPlus, X, Copy, Check } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { createStaffUser } from "@/actions/auth.actions";
 
 const schema = z.object({
@@ -20,8 +20,7 @@ type FormData = z.infer<typeof schema>;
 export default function AddStaffModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [created, setCreated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -35,22 +34,14 @@ export default function AddStaffModal() {
     Object.entries(data).forEach(([k, v]) => v && fd.append(k, v));
     const result = await createStaffUser(fd);
     if ("error" in result && result.error) { setError(result.error as string); return; }
-    if (result.tempPassword) setTempPassword(result.tempPassword);
+    setCreated(true);
     router.refresh();
     reset();
   }
 
-  async function copyPassword() {
-    if (tempPassword) {
-      await navigator.clipboard.writeText(tempPassword);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }
-
   function handleClose() {
     setOpen(false);
-    setTempPassword(null);
+    setCreated(false);
     setError(null);
     reset();
   }
@@ -71,19 +62,13 @@ export default function AddStaffModal() {
               </button>
             </div>
 
-            {tempPassword ? (
+            {created ? (
               <div className="p-6 space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
                   <p className="text-green-700 font-semibold mb-1">✅ Staff member created!</p>
-                  <p className="text-sm text-green-600">Share this temporary password securely. It cannot be retrieved again.</p>
+                  <p className="text-sm text-green-600">Login details have been sent through the configured notification channels.</p>
                 </div>
-                <div className="bg-[var(--cream)] border border-[var(--border)] rounded-lg p-3 flex items-center justify-between gap-3">
-                  <code className="font-mono text-sm font-semibold text-gray-800 tracking-wider">{tempPassword}</code>
-                  <button onClick={copyPassword} className="p-1.5 rounded hover:bg-gray-200 text-[var(--muted)] transition-colors">
-                    {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-                  </button>
-                </div>
-                <p className="text-xs text-[var(--muted)] text-center">The staff member must change this password on first login.</p>
+                <p className="text-xs text-[var(--muted)] text-center">The staff member will still be required to change the temporary password on first login.</p>
                 <button onClick={handleClose} className="btn-primary w-full">Done</button>
               </div>
             ) : (
@@ -118,7 +103,7 @@ export default function AddStaffModal() {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
-                    {isSubmitting ? "Creating…" : "Create & Generate Password"}
+                    {isSubmitting ? "Creating…" : "Create Staff"}
                   </button>
                   <button type="button" onClick={handleClose} className="btn-secondary">Cancel</button>
                 </div>

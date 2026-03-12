@@ -242,3 +242,15 @@ export async function notifyStaffAppointment(params: {
     message: `Hi ${params.name}, you have been appointed as ${roleLabel}. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword} — you will be asked to change it on first login.`,
   });
 }
+
+export async function notifyStaffPasswordReset(params: {
+  phone: string;
+  name: string;
+  tempPassword: string;
+  loginUrl: string;
+}) {
+  await sendSMS({
+    to: params.phone,
+    message: `Hi ${params.name}, your staff account password has been reset. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword}. You will be asked to change it on first login.`,
+  });
+}

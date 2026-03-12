@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import BookingActions from "@/components/bookings/BookingActions";
 
@@ -41,6 +42,7 @@ export default async function BookingsPage({
 
   const pages = Math.ceil(total / take);
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -50,7 +52,7 @@ export default async function BookingsPage({
           <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
           <p className="text-sm text-[var(--muted)]">{total} total</p>
         </div>
-        {canManage && (
+        {canCreateBookings && (
           <Link href="/bookings/new" className="btn-primary text-sm">
             <Plus size={15} /> New Booking
           </Link>

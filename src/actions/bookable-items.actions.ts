@@ -174,7 +174,7 @@ export async function createGuestItemBooking(raw: unknown) {
 // ─── Admin: manage items ──────────────────────────────────────────────────────
 
 export async function createBookableItem(raw: unknown) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
   const parsed = ItemSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -186,7 +186,7 @@ export async function createBookableItem(raw: unknown) {
 }
 
 export async function updateBookableItem(id: string, raw: unknown) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
   const parsed = ItemSchema.partial().safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -217,7 +217,7 @@ export async function getBookableItems() {
 // ─── Admin: manage bundles ────────────────────────────────────────────────────
 
 export async function createBookableBundle(raw: unknown) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
   const parsed = BundleSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -244,7 +244,7 @@ export async function createBookableBundle(raw: unknown) {
 }
 
 export async function updateBookableBundle(id: string, raw: unknown) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER");
   const parsed = BundleSchema.partial().safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 

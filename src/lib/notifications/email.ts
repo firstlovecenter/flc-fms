@@ -524,3 +524,32 @@ export async function sendStaffAppointmentEmail(params: {
     }),
   });
 }
+
+export async function sendStaffPasswordResetEmail(params: {
+  to: string;
+  name: string;
+  tempPassword: string;
+  loginUrl: string;
+}) {
+  await sendEmail({
+    to: params.to,
+    subject: "Your Staff Password Has Been Reset",
+    html: renderEmailTemplate({
+      preheader: "A new temporary password has been issued for your staff account.",
+      badge: "Staff Access",
+      title: "Password reset issued",
+      intro: `Hi ${esc(params.name)}, your staff account password has been reset by an administrator.`,
+      rows: [
+        { label: "Temporary password", value: `<code style="font-size:13px;background:#f1f5f9;padding:2px 6px;border-radius:6px">${esc(params.tempPassword)}</code>` },
+      ],
+      detailsHtml: `
+        <div style="margin-top:14px;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.6">
+          You will be prompted to change your password immediately after signing in. If you did not expect this reset, contact your administrator.
+        </div>
+      `,
+      ctaLabel: "Login now",
+      ctaUrl: params.loginUrl,
+      ctaAltText: "If the button does not open, copy your login URL into your browser.",
+    }),
+  });
+}
