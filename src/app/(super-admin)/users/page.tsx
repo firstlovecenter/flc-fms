@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import type { Prisma } from "@prisma/client";
 
 export default async function SuperAdminUsersPage({
   searchParams,
@@ -11,7 +12,7 @@ export default async function SuperAdminUsersPage({
   const session = await getSession();
   if (!session || session.role !== "SUPER_ADMIN") redirect("/login");
 
-  const where: Record<string, unknown> = { role: "PATRON" as const };
+  const where: Prisma.PatronWhereInput = {};
   if (searchParams.status === "active")   where.isVerified = true;
   if (searchParams.status === "inactive") where.isVerified = false;
 
