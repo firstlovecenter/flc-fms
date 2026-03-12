@@ -15,6 +15,15 @@ const IncomeSchema = z.object({
   bookingId:  z.string().optional(),
   receivedAt: z.coerce.date()});
 
+const UpdateIncomeSchema = z.object({
+  title:      z.string().min(2),
+  narration:  z.string().min(10),
+  amount:     z.coerce.number().positive(),
+  category:   z.string().min(2),
+  source:     z.string().optional(),
+  receivedAt: z.coerce.date(),
+});
+
 export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
   const session  = await requireStaff("FACILITY_MANAGER");  const validated = IncomeSchema.parse(data);
 
@@ -79,7 +88,7 @@ export async function getBookingsForIncomeLink() {
 }
 
 export async function getIncomeSummary() {
-  await requireStaff();  const [records, monthly] = await Promise.all([
+  await requireStaff("FACILITY_MANAGER");  const [records, monthly] = await Promise.all([
     prisma.income.findMany({
       where: {},
       include: { recordedBy: { select: { name: true } } },
@@ -93,4 +102,31 @@ export async function getIncomeSummary() {
   ]);
 
   return { records, monthly };
+}
+
+export async function updateIncome(incomeId: string, data: z.infer<typeof UpdateIncomeSchema>) {
+  const session = await requireStaff("FACILITY_MANAGER");
+  const validated = UpdateIncomeSchema.parse(data);
+
+  const updated = await prisma.income.update({
+    where: { id: incomeId },
+    data: {
+      ...validated,
+      recordedById: session.sub,
+    },
+  });
+
+  auditLog({ userId: session.sub, action: "UPDATE_INCOME", entity: "Income", entityId: incomeId });
+  revalidatePath("/transactions");
+  return { success: true, income: updated };
+}
+
+export async function deleteIncome(incomeId: string) {
+  const session = await requireStaff("FACILITY_MANAGER");
+
+  await prisma.income.delete({ where: { id: incomeId } });
+
+  auditLog({ userId: session.sub, action: "DELETE_INCOME", entity: "Income", entityId: incomeId });
+  revalidatePath("/transactions");
+  return { success: true };
 }

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff, requirePermission } from "@/lib/auth/guards";
+import { requireStaff } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
@@ -17,8 +17,16 @@ const ExpenseSchema = z.object({
   category:   z.string().min(2),
 });
 
+const UpdateExpenseSchema = z.object({
+  title:      z.string().min(2).max(200),
+  narration:  z.string().min(10),
+  amount:     z.coerce.number().positive(),
+  category:   z.string().min(2),
+});
+
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
-  const session  = await requirePermission("canSubmitExpenses");  const validated = ExpenseSchema.parse(data);
+  const session  = await requireStaff("FACILITY_MANAGER");
+  const validated = ExpenseSchema.parse(data);
 
   const expense = await prisma.expense.create({
     data: { createdById: session.sub, status: "PENDING", ...validated }});
@@ -135,4 +143,28 @@ export async function getExpenses(filters: { status?: string; page?: number } = 
   ]);
 
   return { expenses, total, page, pages: Math.ceil(total / take) };
+}
+
+export async function updateExpense(expenseId: string, data: z.infer<typeof UpdateExpenseSchema>) {
+  const session = await requireStaff("FACILITY_MANAGER");
+  const validated = UpdateExpenseSchema.parse(data);
+
+  const updated = await prisma.expense.update({
+    where: { id: expenseId },
+    data: validated,
+  });
+
+  auditLog({ userId: session.sub, action: "UPDATE_EXPENSE", entity: "Expense", entityId: expenseId });
+  revalidatePath("/transactions");
+  return { success: true, expense: updated };
+}
+
+export async function deleteExpense(expenseId: string) {
+  const session = await requireStaff("FACILITY_MANAGER");
+
+  await prisma.expense.delete({ where: { id: expenseId } });
+
+  auditLog({ userId: session.sub, action: "DELETE_EXPENSE", entity: "Expense", entityId: expenseId });
+  revalidatePath("/transactions");
+  return { success: true };
 }

@@ -3,9 +3,10 @@ import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
-import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
+import IncomeRowActions from "@/components/expenses/IncomeRowActions";
+import ExpenseRowActions from "@/components/expenses/ExpenseRowActions";
 
 export default async function TransactionsPage({
   searchParams,
@@ -14,7 +15,7 @@ export default async function TransactionsPage({
 }) {
   const session = await requireStaff();
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canSubmitExpenses = isFM || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
+  const canSubmitExpenses = isFM;
   const tab = isFM ? (searchParams.tab ?? "overview") : "expenses";
   const page = Number(searchParams.page ?? 1);
   const take = 20;
@@ -322,6 +323,7 @@ export default async function TransactionsPage({
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Recorded By</th>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Date</th>
                       <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Amount</th>
+                      <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -336,6 +338,9 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-[var(--slate)]">{r.recordedBy?.name ?? "System"}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(r.receivedAt)}</td>
                         <td className="py-3 px-4 text-right font-semibold text-green-700">{formatCurrency(Number(r.amount))}</td>
+                        <td className="py-3 px-4 text-right">
+                          {!r.id.startsWith("payment-") ? <IncomeRowActions incomeId={r.id} /> : <span className="text-xs text-[var(--muted)]">Auto</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -401,6 +406,7 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
+                            {isFM && <ExpenseRowActions expenseId={e.id} />}
                             {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>
