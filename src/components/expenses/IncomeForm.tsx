@@ -28,8 +28,8 @@ type BookingOption = {
 };
 
 const CATEGORIES = [
-  "Tithes & Offerings", "Facility Hire", "Donations", "Grants",
-  "Fundraising", "Membership Dues", "Programme Fees", "Other",
+  "Federal", "Events", "Weddings", "Namings",
+  "ECG", "Fuel", "Donations", "Other",
 ];
 
 export default function IncomeForm() {
