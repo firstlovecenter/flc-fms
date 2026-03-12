@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { auditLog } from "@/lib/audit";
+import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
 import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
 
@@ -57,13 +58,13 @@ export async function approveExpense(expenseId: string) {
     where: { id: expenseId, status: "PENDING" },
   });
 
-  const [totalIncome, totalApprovedExpenses] = await Promise.all([
-    prisma.income.aggregate({ _sum: { amount: true } }),
+  const [incomeTotals, totalApprovedExpenses] = await Promise.all([
+    getTotalIncomeIncludingBookingRevenue(),
     prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
   ]);
 
   const balance =
-    Number(totalIncome._sum.amount ?? 0) -
+    incomeTotals.totalIncome -
     Number(totalApprovedExpenses._sum.amount ?? 0);
 
   if (Number(expense.amount) > balance) {

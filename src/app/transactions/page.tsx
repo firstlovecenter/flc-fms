@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
@@ -30,7 +31,7 @@ export default async function TransactionsPage({
   // Fetch data in parallel
   const [
     expenses, expenseTotal, expenseSummary,
-    incomeRecords, incomeTotals, incomeByCategory,
+    incomeRecords, unlinkedBookingPayments, incomeTotals, incomeByCategory, unlinkedBookingPaymentsCount,
   ] = await Promise.all([
     prisma.expense.findMany({
       where: expenseWhere,
@@ -54,19 +55,81 @@ export default async function TransactionsPage({
       orderBy: { receivedAt: "desc" },
       take: 50,
     }) : Promise.resolve([]),
-    isFM ? prisma.income.aggregate({ _sum: { amount: true } }) : Promise.resolve({ _sum: { amount: null } }),
+    isFM
+      ? prisma.payment.findMany({
+          where: {
+            status: "PAID",
+            booking: { income: null },
+          },
+          include: {
+            booking: { select: { title: true } },
+            patron: { select: { name: true } },
+          },
+          orderBy: { paidAt: "desc" },
+          take: 50,
+        })
+      : Promise.resolve([]),
+    isFM
+      ? getTotalIncomeIncludingBookingRevenue()
+      : Promise.resolve({ recordedIncome: 0, paidBookingRevenue: 0, totalIncome: 0 }),
     isFM ? prisma.income.groupBy({
       by: ["category"],
       _sum: { amount: true },
       _count: true,
       orderBy: { _sum: { amount: "desc" } },
     }) : Promise.resolve([]),
+    isFM
+      ? prisma.payment.count({
+          where: {
+            status: "PAID",
+            booking: { income: null },
+          },
+        })
+      : Promise.resolve(0),
   ]);
+
+  const bookingIncomeRows = unlinkedBookingPayments.map((payment) => ({
+    id: `payment-${payment.id}`,
+    title: `Facility Hire — ${payment.booking.title}`,
+    narration: `Auto-captured from paid booking${payment.patron?.name ? ` (${payment.patron.name})` : ""}`,
+    category: "Facility Hire",
+    source: payment.provider,
+    recordedBy: null,
+    receivedAt: payment.paidAt ?? payment.createdAt,
+    amount: Number(payment.amount),
+  }));
+
+  const mergedIncomeRecords = [...incomeRecords, ...bookingIncomeRows]
+    .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime())
+    .slice(0, 50);
+
+  const mergedIncomeByCategoryMap = new Map(
+    incomeByCategory.map((entry) => [
+      entry.category,
+      { amount: Number(entry._sum.amount ?? 0), count: entry._count },
+    ]),
+  );
+
+  if (incomeTotals.paidBookingRevenue > 0 || unlinkedBookingPaymentsCount > 0) {
+    const existing = mergedIncomeByCategoryMap.get("Facility Hire") ?? { amount: 0, count: 0 };
+    mergedIncomeByCategoryMap.set("Facility Hire", {
+      amount: existing.amount + incomeTotals.paidBookingRevenue,
+      count: existing.count + unlinkedBookingPaymentsCount,
+    });
+  }
+
+  const mergedIncomeByCategory = Array.from(mergedIncomeByCategoryMap.entries())
+    .map(([category, stats]) => ({
+      category,
+      _sum: { amount: stats.amount },
+      _count: stats.count,
+    }))
+    .sort((a, b) => Number(b._sum.amount ?? 0) - Number(a._sum.amount ?? 0));
 
   const expensePages = Math.ceil(expenseTotal / take);
   const pendingExp = expenseSummary.find((s) => s.status === "PENDING");
   const approvedExp = expenseSummary.find((s) => s.status === "APPROVED");
-  const totalIncome = Number(incomeTotals._sum.amount ?? 0);
+  const totalIncome = incomeTotals.totalIncome;
   const totalApprovedExpenses = Number(approvedExp?._sum.amount ?? 0);
   const balance = totalIncome - totalApprovedExpenses;
 
@@ -233,9 +296,9 @@ export default async function TransactionsPage({
       {/* ── INCOME TAB (FM only) ───────────────────────────────────── */}
       {tab === "income" && isFM && (
         <>
-          {incomeByCategory.length > 0 && (
+          {mergedIncomeByCategory.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {incomeByCategory.map((c) => (
+              {mergedIncomeByCategory.map((c) => (
                 <div key={c.category} className="card p-4 bg-green-50 border-green-200">
                   <p className="text-xs font-medium text-green-700 truncate">{c.category}</p>
                   <p className="text-xl font-bold text-green-800">{formatCurrency(Number(c._sum.amount ?? 0))}</p>
@@ -246,7 +309,7 @@ export default async function TransactionsPage({
           )}
 
           <div className="card overflow-hidden">
-            {incomeRecords.length === 0 ? (
+            {mergedIncomeRecords.length === 0 ? (
               <div className="p-12 text-center text-[var(--muted)]">No income records yet.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -262,7 +325,7 @@ export default async function TransactionsPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {incomeRecords.map((r) => (
+                    {mergedIncomeRecords.map((r) => (
                       <tr key={r.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
                         <td className="py-3 px-4">
                           <p className="font-medium">{r.title}</p>

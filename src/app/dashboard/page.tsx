@@ -1,5 +1,6 @@
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils";
 import StatCard from "@/components/ui/StatCard";
 import RecentBookings from "@/components/bookings/RecentBookings";
@@ -10,18 +11,18 @@ export default async function DashboardPage() {
 
   const [
     totalFacilities, pendingBookings, activeBookings, openMaintenance,
-    pendingExpenses, incomeTotal, expenseTotal,
+    pendingExpenses, incomeTotals, expenseTotal,
   ] = await Promise.all([
     prisma.facility.count({ where: { isActive: true } }),
     prisma.booking.count({ where: { status: "PENDING" } }),
     prisma.booking.count({ where: { status: "APPROVED" } }),
     prisma.maintenanceRequest.count({ where: { status: { in: ["OPEN","IN_PROGRESS"] } } }),
     prisma.expense.count({ where: { status: "PENDING" } }),
-    prisma.income.aggregate({ _sum: { amount: true } }),
+    getTotalIncomeIncludingBookingRevenue(),
     prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
   ]);
 
-  const net = Number(incomeTotal._sum.amount ?? 0) - Number(expenseTotal._sum.amount ?? 0);
+  const net = incomeTotals.totalIncome - Number(expenseTotal._sum.amount ?? 0);
 
   const recentBookings = await prisma.booking.findMany({
     include: { facility: { select: { name: true } }, patron: { select: { name: true } }, user: { select: { name: true } } },
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
       {/* Financial stats — FM only */}
       {isFM && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Income"   value={formatCurrency(Number(incomeTotal._sum.amount ?? 0))}  icon={<TrendingUp size={16} />} trend="up" />
+          <StatCard label="Total Income"   value={formatCurrency(incomeTotals.totalIncome)}  icon={<TrendingUp size={16} />} trend="up" />
           <StatCard label="Total Expenses" value={formatCurrency(Number(expenseTotal._sum.amount ?? 0))} icon={<TrendingDown size={16} />} />
           <StatCard label="Net Balance"    value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} />
         </div>
