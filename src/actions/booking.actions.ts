@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth/session";
 import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
-import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation } from "@/lib/notifications/sms";
+import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 
 const BookingSchema = z.object({
@@ -188,6 +188,38 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   }
 
   auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
+    if (booking.user?.email) {
+      await sendBookingConfirmationEmail({
+        to:            booking.user.email,
+        name:          booking.user.name,
+        bookingTitle:  booking.title,
+        facilityName:  booking.facility?.name ?? "N/A",
+        startTime:     booking.startTime,
+        endTime:       booking.endTime,
+        totalAmount:   Number(booking.totalAmount),
+      });
+    }
+
+    // Alert FMs for pending bookings (FM self-bookings are auto-approved, no alert needed)
+    if (booking.status === "PENDING") {
+      const fms = await prisma.user.findMany({
+        where: { role: "FACILITY_MANAGER", isActive: true },
+        select: { phone: true },
+      });
+      for (const fm of fms) {
+        if (fm.phone) {
+          await notifyFMBookingPending({
+            phone:        fm.phone,
+            bookedBy:     booking.user?.name ?? "Staff",
+            bookingTitle: booking.title,
+            facilityName: booking.facility?.name ?? "N/A",
+            startTime:    booking.startTime,
+          });
+        }
+      }
+    }
+
+    auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
   revalidatePath("/bookings");
   return { success: true, booking };
 }
@@ -274,6 +306,35 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   }
 
   auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
+    if (booking.patron?.email) {
+      await sendBookingConfirmationEmail({
+        to:            booking.patron.email,
+        name:          booking.patron.name,
+        bookingTitle:  booking.title,
+        facilityName:  booking.facility?.name ?? "N/A",
+        startTime:     booking.startTime,
+        endTime:       booking.endTime,
+        totalAmount:   Number(booking.totalAmount)});
+    }
+
+    // Alert all FMs about the new pending patron booking
+    const patronFMs = await prisma.user.findMany({
+      where: { role: "FACILITY_MANAGER", isActive: true },
+      select: { phone: true },
+    });
+    for (const fm of patronFMs) {
+      if (fm.phone) {
+        await notifyFMBookingPending({
+          phone:        fm.phone,
+          bookedBy:     booking.patron?.name ?? "Patron",
+          bookingTitle: booking.title,
+          facilityName: booking.facility?.name ?? "N/A",
+          startTime:    booking.startTime,
+        });
+      }
+    }
+
+    auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
   revalidatePath("/bookings");
   return { success: true, booking };
 }
@@ -387,6 +448,23 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     startTime: booking.startTime,
     endTime: booking.endTime,
     totalAmount: Number(booking.totalAmount)});
+
+  // Alert all FMs about the new pending guest booking
+  const guestFMs = await prisma.user.findMany({
+    where: { role: "FACILITY_MANAGER", isActive: true },
+    select: { phone: true },
+  });
+  for (const fm of guestFMs) {
+    if (fm.phone) {
+      await notifyFMBookingPending({
+        phone:        fm.phone,
+        bookedBy:     validated.guestName,
+        bookingTitle: booking.title,
+        facilityName: booking.facility?.name ?? "N/A",
+        startTime:    booking.startTime,
+      });
+    }
+  }
 
   auditLog({
     action: "CREATE_GUEST_BOOKING",

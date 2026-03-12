@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import { notifyMaintenanceUpdate } from "@/lib/notifications/sms";
+import { notifyMaintenanceUpdate, notifyFMMaintenanceRequested } from "@/lib/notifications/sms";
 import { sendMaintenanceOpenedEmail, sendExpenseNotificationEmail } from "@/lib/notifications/email";
 
 const CreateSchema = z.object({
@@ -57,27 +57,33 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     });
   }
 
-  // Notify FMs by email (only when tied to a facility)
-  if (validated.facilityId) {
-    const [fms, facility, reporter] = await Promise.all([
-      prisma.user.findMany({
-        where:  { role: "FACILITY_MANAGER", isActive: true },
-        select: { email: true, name: true },
-      }),
-      prisma.facility.findUnique({
-        where:  { id: validated.facilityId },
-        select: { name: true },
-      }),
-      prisma.user.findUnique({
-        where:  { id: session.sub },
-        select: { name: true },
-      }),
-    ]);
-    for (const fm of fms) {
+  // Notify FMs by SMS (always) and email (only when tied to a facility)
+  const [fms, facility, reporter] = await Promise.all([
+    prisma.user.findMany({
+      where:  { role: "FACILITY_MANAGER", isActive: true },
+      select: { email: true, name: true, phone: true },
+    }),
+    validated.facilityId
+      ? prisma.facility.findUnique({ where: { id: validated.facilityId }, select: { name: true } })
+      : Promise.resolve(null),
+    prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
+  ]);
+
+  for (const fm of fms) {
+    if (fm.phone) {
+      await notifyFMMaintenanceRequested({
+        phone:        fm.phone,
+        requestedBy:  reporter?.name ?? "Staff",
+        title:        validated.title,
+        priority:     validated.priority,
+        facilityName: facility?.name,
+      });
+    }
+    if (validated.facilityId && facility) {
       await sendMaintenanceOpenedEmail({
         to:           fm.email,
         fmName:       fm.name,
-        facilityName: facility?.name ?? "Unknown",
+        facilityName: facility.name,
         requestTitle: validated.title,
         priority:     validated.priority ?? "MEDIUM",
         reportedBy:   reporter?.name ?? "Staff",

@@ -7,14 +7,14 @@ import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { auditLog } from "@/lib/audit";
 import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
-import { notifyExpenseDecision } from "@/lib/notifications/sms";
+import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
   narration:  z.string().min(10),
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
-  receiptUrl: z.string().url().optional()});
+});
 
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   const session  = await requirePermission("canSubmitExpenses");  const validated = ExpenseSchema.parse(data);
@@ -22,14 +22,26 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   const expense = await prisma.expense.create({
     data: { createdById: session.sub, status: "PENDING", ...validated }});
 
-  // Notify all FMs on this campus
-  const managers = await prisma.user.findMany({
-    where: { role: "FACILITY_MANAGER", isActive: true },
-    select: { email: true, name: true }});
+  // Notify all FMs by email + SMS
+  const [managers, submitter] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "FACILITY_MANAGER", isActive: true },
+      select: { email: true, name: true, phone: true },
+    }),
+    prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
+  ]);
 
   for (const mgr of managers) {
     await sendExpenseNotificationEmail({ to: mgr.email, name: mgr.name,
-      expenseTitle: expense.title, amount: Number(expense.amount), type: "SUBMITTED"});
+      expenseTitle: expense.title, amount: Number(expense.amount), type: "SUBMITTED" });
+    if (mgr.phone) {
+      await notifyFMExpenseSubmitted({
+        phone: mgr.phone,
+        submittedBy: submitter?.name ?? "Staff",
+        title: expense.title,
+        amount: Number(expense.amount),
+      });
+    }
   }
 
   auditLog({ userId: session.sub, action: "SUBMIT_EXPENSE", entity: "Expense", entityId: expense.id });

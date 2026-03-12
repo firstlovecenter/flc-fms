@@ -12,7 +12,6 @@ const schema = z.object({
   narration:  z.string().min(10, "Please provide a detailed narration (min 10 chars)"),
   amount:     z.coerce.number().positive("Amount must be positive"),
   category:   z.string().min(2, "Category is required"),
-  receiptUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -38,7 +37,6 @@ export default function ExpenseForm() {
       narration:  data.narration,
       amount:     data.amount,
       category:   data.category,
-      receiptUrl: data.receiptUrl || undefined,
     });
 
     if ("error" in result && result.error) {
@@ -88,12 +86,6 @@ export default function ExpenseForm() {
           </select>
           {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Receipt URL (optional)</label>
-        <input {...register("receiptUrl")} className="input" placeholder="https://drive.google.com/…" />
-        {errors.receiptUrl && <p className="text-red-500 text-xs mt-1">{errors.receiptUrl.message}</p>}
       </div>
 
       <div className="flex gap-3 pt-2">

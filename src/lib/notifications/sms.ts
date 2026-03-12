@@ -254,3 +254,45 @@ export async function notifyStaffPasswordReset(params: {
     message: `Hi ${params.name}, your staff account password has been reset. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword}. You will be asked to change it on first login.`,
   });
 }
+
+export async function notifyFMExpenseSubmitted(params: {
+  phone: string;
+  submittedBy: string;
+  title: string;
+  amount: number;
+}) {
+  await sendSMS({
+    to: params.phone,
+    message: `[Expense Request] ${params.submittedBy} submitted an expense: "${params.title}" (GHS ${params.amount.toFixed(2)}). Review it in your dashboard.`,
+  });
+}
+
+export async function notifyFMMaintenanceRequested(params: {
+  phone: string;
+  requestedBy: string;
+  title: string;
+  priority: string;
+  facilityName?: string;
+}) {
+  const facilityPart = params.facilityName ? ` at ${params.facilityName}` : "";
+  await sendSMS({
+    to: params.phone,
+    message: `[${params.priority} Maintenance] ${params.requestedBy} submitted a request${facilityPart}: "${params.title}". Review it in your dashboard.`,
+  });
+}
+
+export async function notifyFMBookingPending(params: {
+  phone: string;
+  bookedBy: string;
+  bookingTitle: string;
+  facilityName: string;
+  startTime: Date;
+}) {
+  const date = params.startTime.toLocaleDateString("en-GH", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric",
+  });
+  await sendSMS({
+    to: params.phone,
+    message: `[New Booking] ${params.bookedBy} booked "${params.bookingTitle}" at ${params.facilityName} on ${date}. Pending your approval.`,
+  });
+}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileText, User, DollarSign, Clock, ExternalLink } from "lucide-react";
+import { ArrowLeft, FileText, User, DollarSign, Clock } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
@@ -77,16 +77,6 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
             <FileText size={13} /> Description
           </div>
           <p className="text-gray-800 whitespace-pre-wrap text-sm">{expense.narration}</p>
-        </div>
-      )}
-
-      {expense.receiptUrl && (
-        <div className="card p-4">
-          <p className="text-xs font-medium text-[var(--muted)] mb-2">Receipt / Attachment</p>
-          <a href={expense.receiptUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[var(--navy)] text-sm hover:underline">
-            <ExternalLink size={14} /> View attachment
-          </a>
         </div>
       )}
 

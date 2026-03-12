@@ -101,39 +101,9 @@ function renderEmailTemplate(input: {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="supported-color-schemes" content="light dark" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
     <title>${esc(input.title)}</title>
-    <style>
-      :root {
-        color-scheme: light dark;
-        supported-color-schemes: light dark;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        .email-bg { background:#0b1220 !important; }
-        .email-card { background:#111827 !important; border-color:#374151 !important; }
-        .email-header { background:#0f172a !important; }
-        .email-title { color:#f8fafc !important; }
-        .email-text { color:#cbd5e1 !important; }
-        .email-muted { color:#94a3b8 !important; }
-        .email-divider { border-top-color:#334155 !important; }
-        .email-table { background:#111827 !important; border-color:#334155 !important; }
-        .email-table-label { color:#94a3b8 !important; border-bottom-color:#334155 !important; }
-        .email-table-value { color:#f8fafc !important; border-bottom-color:#334155 !important; }
-      }
-
-      [data-ogsc] .email-bg { background:#0b1220 !important; }
-      [data-ogsc] .email-card { background:#111827 !important; border-color:#374151 !important; }
-      [data-ogsc] .email-header { background:#0f172a !important; }
-      [data-ogsc] .email-title { color:#f8fafc !important; }
-      [data-ogsc] .email-text { color:#cbd5e1 !important; }
-      [data-ogsc] .email-muted { color:#94a3b8 !important; }
-      [data-ogsc] .email-divider { border-top-color:#334155 !important; }
-      [data-ogsc] .email-table { background:#111827 !important; border-color:#334155 !important; }
-      [data-ogsc] .email-table-label { color:#94a3b8 !important; border-bottom-color:#334155 !important; }
-      [data-ogsc] .email-table-value { color:#f8fafc !important; border-bottom-color:#334155 !important; }
-    </style>
   </head>
   <body class="email-bg" style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#0f172a">
     <span style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(input.preheader)}</span>
