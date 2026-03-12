@@ -43,7 +43,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
           {/* Header Section */}
           <section className="relative">
             <Link 
-              href="/catalog" 
+              href="/" 
               className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[var(--navy)] transition-colors mb-6 group"
             >
               <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Back to Catalog

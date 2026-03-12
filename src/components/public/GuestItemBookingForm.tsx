@@ -91,11 +91,11 @@ export default function GuestItemBookingForm({
         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
           <CheckCircle2 size={32} className="text-emerald-500" />
         </div>
-        <h3 className="font-display text-2xl font-bold text-[var(--navy)]">Booking Request Submitted!</h3>
-        <p className="text-[var(--slate)] max-w-sm mx-auto">
+        <h3 className="font-display text-2xl font-bold text-[var(--navy)] dark:text-gray-100">Booking Request Submitted!</h3>
+        <p className="text-[var(--slate)] dark:text-gray-300 max-w-sm mx-auto">
           Our team will review your request and get back to you via email. Reference: <strong>{bookingId.slice(0, 8).toUpperCase()}</strong>
         </p>
-        <a href="/catalog?tab=items" className="inline-flex items-center gap-2 text-sm font-semibold mt-2" style={{ color: "var(--navy)" }}>
+        <a href="/catalog?tab=items" className="inline-flex items-center gap-2 text-sm font-semibold mt-2 text-[var(--navy)] dark:text-[var(--gold)]">
           ← Back to catalog
         </a>
       </div>
@@ -108,24 +108,23 @@ export default function GuestItemBookingForm({
 
       {/* SELECTED ITEMS SUMMARY */}
       <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: "var(--muted)" }}>
+        <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Your Selection
         </p>
         {lines.length === 0 ? (
-          <p className="text-sm text-[var(--muted)]">No items selected. <a href="/catalog?tab=items" style={{ color: "var(--navy)" }}>Browse items</a></p>
+          <p className="text-sm text-[var(--muted)] dark:text-gray-400">No items selected. <a href="/catalog?tab=items" className="text-[var(--navy)] dark:text-gray-200">Browse items</a></p>
         ) : (
           <div className="space-y-2">
             {lines.map(line => (
               <div key={line.id} className="flex items-center gap-3 text-sm">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "var(--cream)" }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]"
                 >
-                  {line.type === "bundle" ? <Layers size={14} style={{ color: "var(--gold)" }} /> : <Package size={14} style={{ color: "var(--navy)" }} />}
+                  {line.type === "bundle" ? <Layers size={14} className="text-[var(--gold)]" /> : <Package size={14} className="text-[var(--navy)] dark:text-gray-200" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--navy)] truncate">{line.name}</p>
-                  <p className="text-xs" style={{ color: "var(--muted)" }}>
+                  <p className="font-medium text-[var(--navy)] dark:text-gray-100 truncate">{line.name}</p>
+                  <p className="text-xs text-[var(--muted)] dark:text-gray-400">
                     GHS {line.unitPrice.toFixed(2)} / {line.unit}
                   </p>
                 </div>
@@ -140,16 +139,16 @@ export default function GuestItemBookingForm({
                     <Plus size={11} />
                   </button>
                 </div>
-                <span className="text-sm font-semibold text-[var(--navy)] w-20 text-right">
+                <span className="text-sm font-semibold text-[var(--navy)] dark:text-gray-100 w-20 text-right">
                   GHS {(line.unitPrice * line.qty).toFixed(2)}
                 </span>
               </div>
             ))}
-            <div className="flex justify-between pt-3 border-t border-[var(--border)] font-bold">
-              <span style={{ color: "var(--navy)" }}>Estimated Total</span>
-              <span style={{ color: "var(--navy)" }}>GHS {total.toFixed(2)}</span>
+            <div className="flex justify-between pt-3 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] font-bold text-[var(--navy)] dark:text-gray-100">
+              <span>Estimated Total</span>
+              <span>GHS {total.toFixed(2)}</span>
             </div>
-            <p className="text-xs" style={{ color: "var(--muted)" }}>
+            <p className="text-xs text-[var(--muted)] dark:text-gray-400">
               * Final price confirmed by staff after review
             </p>
           </div>
@@ -158,7 +157,7 @@ export default function GuestItemBookingForm({
 
       {/* GUEST INFO */}
       <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: "var(--muted)" }}>
+        <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Your Information
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -182,7 +181,7 @@ export default function GuestItemBookingForm({
 
       {/* BOOKING DETAILS */}
       <div className="card-inset p-4 md:p-5">
-        <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: "var(--muted)" }}>
+        <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Event Details
         </p>
         <div>

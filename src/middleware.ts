@@ -3,7 +3,7 @@ import { verifyJWT } from "@/lib/auth/session";
 
 const PUBLIC_PATHS = [
   "/",
-  "/catalog",
+
   "/guest",
   "/pay",
   "/pwa",

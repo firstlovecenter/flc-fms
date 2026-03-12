@@ -19,7 +19,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.paystack.co",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' blob: data: *.cloudfront.net *.cloudinary.com",
+      "img-src 'self' blob: data: *.cloudfront.net cdn.sanity.io",
       "connect-src 'self' *.paystack.co api.paystack.co bms.codeslaw.dev",
       "frame-src *.paystack.co",
     ].join("; "),

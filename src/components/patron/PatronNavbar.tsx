@@ -36,7 +36,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
     <>
       <nav
         style={{
-          background: "rgba(249,246,240,0.95)",
+          background: "var(--white)",
           backdropFilter: "blur(16px) saturate(1.5)",
           borderBottom: "1px solid var(--border)",
           position: "sticky",
@@ -116,7 +116,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
                   fontSize: "0.82rem",
                   fontWeight: pathname === href ? 600 : 500,
                   color: pathname === href ? "var(--navy)" : "var(--slate)",
-                  background: pathname === href ? "rgba(10,22,40,0.06)" : "transparent",
+                  background: pathname === href ? "var(--cream-dark)" : "transparent",
                   textDecoration: "none",
                   transition: "all 0.15s",
                 }}
@@ -184,7 +184,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                background: "rgba(10,22,40,0.06)",
+                background: "var(--cream-dark)",
                 border: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
@@ -206,7 +206,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
             style={{
               borderTop: "1px solid var(--border)",
               padding: "12px 20px 16px",
-              background: "rgba(249,246,240,0.98)",
+              background: "var(--white)",
               display: "flex",
               flexDirection: "column",
               gap: 4,
@@ -222,7 +222,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
                   fontSize: "0.9rem",
                   fontWeight: pathname === href ? 600 : 400,
                   color: pathname === href ? "var(--navy)" : "var(--slate)",
-                  background: pathname === href ? "rgba(10,22,40,0.06)" : "transparent",
+                  background: pathname === href ? "var(--cream-dark)" : "transparent",
                   textDecoration: "none",
                 }}
               >

@@ -8,6 +8,8 @@ import {
   LayoutDashboard,
   Wrench,
   Building2,
+  Tags,
+  Boxes,
   Users,
   ArrowLeftRight,
   BarChart3,
@@ -30,7 +32,9 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/facilities", label: "Facilities", icon: Building2 },
+  { href: "/facilities/categories", label: "Category/Pricing", icon: Tags, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
   { href: "/items", label: "Items & Packages", icon: Package },
+  { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/staff", label: "Staff", icon: Users },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -193,8 +197,8 @@ export default function CampusSidebar({ role, name, isOpen = false, onClose }: C
       </div>
 
       <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+        {NAV.filter((item) => !item.roles || item.roles.includes(role)).map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
@@ -252,7 +256,7 @@ export default function CampusSidebar({ role, name, isOpen = false, onClose }: C
               </span>
             </div>
             {ADMIN_NAV.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
+              const isActive = pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <Link
                   key={href}

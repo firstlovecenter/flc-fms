@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
 
 export const metadata: Metadata = {
   title: { default: "Revival Mgmt — Facility Management", template: "%s | Revival Mgmt" },
@@ -18,7 +20,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1e3a5f",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f9f6f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1628" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -28,7 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        {children}
+        <ThemeProvider>
+          <GlobalDarkBackground />
+          {children}
+        </ThemeProvider>
         <Script id="sw-register" strategy="afterInteractive">{`
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(function(reg) {

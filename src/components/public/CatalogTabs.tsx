@@ -28,10 +28,10 @@ export default function CatalogTabs({
         return (
           <Link
             key={id}
-            href={id === "venues" ? "/catalog" : `/catalog?tab=${id}`}
+            href={id === "venues" ? "/" : `/?tab=${id}`}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all"
             style={{
-              background: isActive ? "var(--navy)" : "transparent",
+              background: isActive ? "var(--navy-glass)" : "transparent",
               color: isActive ? "#fff" : "var(--slate)",
               boxShadow: isActive ? "0 2px 8px rgba(10,22,40,0.18)" : "none",
             }}

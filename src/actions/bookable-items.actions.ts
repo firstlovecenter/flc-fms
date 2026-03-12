@@ -181,7 +181,7 @@ export async function createBookableItem(raw: unknown) {
   const item = await prisma.bookableItem.create({ data: parsed.data });
   await auditLog({ action: "CREATE", entity: "BookableItem", entityId: item.id, after: item });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { id: item.id };
 }
 
@@ -193,7 +193,7 @@ export async function updateBookableItem(id: string, raw: unknown) {
   const item = await prisma.bookableItem.update({ where: { id }, data: parsed.data });
   await auditLog({ action: "UPDATE", entity: "BookableItem", entityId: id, after: item });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { id };
 }
 
@@ -202,7 +202,7 @@ export async function deleteBookableItem(id: string) {
   await prisma.bookableItem.update({ where: { id }, data: { isActive: false } });
   await auditLog({ action: "DEACTIVATE", entity: "BookableItem", entityId: id });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -239,7 +239,7 @@ export async function createBookableBundle(raw: unknown) {
 
   await auditLog({ action: "CREATE", entity: "BookableBundle", entityId: bundle.id, after: bundle });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { id: bundle.id };
 }
 
@@ -262,7 +262,7 @@ export async function updateBookableBundle(id: string, raw: unknown) {
 
   await auditLog({ action: "UPDATE", entity: "BookableBundle", entityId: id });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { id };
 }
 
@@ -271,7 +271,7 @@ export async function deleteBookableBundle(id: string) {
   await prisma.bookableBundle.update({ where: { id }, data: { isActive: false } });
   await auditLog({ action: "DEACTIVATE", entity: "BookableBundle", entityId: id });
   revalidatePath("/items");
-  revalidatePath("/catalog");
+  revalidatePath("/");
   return { ok: true };
 }
 

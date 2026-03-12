@@ -44,26 +44,110 @@
   --glass-lg: backdrop-filter: blur(16px);
   --glass-border: rgba(255,255,255,0.18);
 
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --ui-background: 0 0% 100%;
+  --ui-foreground: 222.2 84% 4.9%;
+  --ui-card: 0 0% 100%;
+  --ui-card-foreground: 222.2 84% 4.9%;
+  --ui-popover: 0 0% 100%;
+  --ui-popover-foreground: 222.2 84% 4.9%;
+  --ui-primary: 221.2 83.2% 53.3%;
+  --ui-primary-foreground: 210 40% 98%;
+  --ui-secondary: 210 40% 96.1%;
+  --ui-secondary-foreground: 222.2 47.4% 11.2%;
+  --ui-muted: 210 40% 96.1%;
+  --ui-muted-foreground: 215.4 16.3% 46.9%;
+  --ui-accent: 210 40% 96.1%;
+  --ui-accent-foreground: 222.2 47.4% 11.2%;
+  --ui-destructive: 0 84.2% 60.2%;
+  --ui-destructive-foreground: 210 40% 98%;
+  --ui-border: 214.3 31.8% 91.4%;
+  --ui-input: 214.3 31.8% 91.4%;
+  --ui-ring: 221.2 83.2% 53.3%;
   --radius: 0.5rem;
+
+  --submit-bg: #132040;
+  --submit-bg-hover: #1c3058;
+  --submit-fg: #f8fafc;
+  --submit-border: #1c3058;
+  --submit-ring: rgba(28, 48, 88, 0.35);
+
+  --field-bg: #ffffff;
+  --field-bg-focus: #ffffff;
+  --field-fg: #0a1628;
+  --field-placeholder: #94a3b8;
+  --field-border: #e4ddd3;
+}
+
+.dark {
+  --navy:        #E8EEF8;
+  --navy-mid:    #CBD9EE;
+  --navy-light:  #9EB3D7;
+  --navy-glass:  rgba(8, 15, 26, 0.82);
+  --gold:        #D4B474;
+  --gold-bright: #E6C88B;
+  --gold-pale:   #2D2415;
+  --gold-muted:  #D9BF8B;
+  --cream:       transparent;
+  --cream-dark:  rgba(10, 17, 29, 0.4);
+  --white:       rgba(15, 26, 43, 0.6);
+  --slate:       #A7B6CC;
+  --muted:       #8EA1BC;
+  --border:      rgba(255, 255, 255, 0.1);
+  --border-dark: rgba(255, 255, 255, 0.15);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.36);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.4);
+  --glow-gold: 0 0 0 3px rgba(212, 180, 116, 0.2), 0 0 20px rgba(212, 180, 116, 0.12);
+
+  --ui-background: 222.2 47% 11%;
+  --ui-foreground: 210 40% 98%;
+  --ui-card: 222.2 47% 13%;
+  --ui-card-foreground: 210 40% 98%;
+  --ui-popover: 222.2 47% 12%;
+  --ui-popover-foreground: 210 40% 98%;
+  --ui-primary: 217.2 91.2% 59.8%;
+  --ui-primary-foreground: 222.2 47.4% 11.2%;
+  --ui-secondary: 217.2 32.6% 20%;
+  --ui-secondary-foreground: 210 40% 98%;
+  --ui-muted: 217.2 32.6% 17.5%;
+  --ui-muted-foreground: 215 20.2% 74.1%;
+  --ui-accent: 217.2 32.6% 20%;
+  --ui-accent-foreground: 210 40% 98%;
+  --ui-destructive: 0 62.8% 47.6%;
+  --ui-destructive-foreground: 210 40% 98%;
+  --ui-border: 217.2 26% 24%;
+  --ui-input: 217.2 26% 24%;
+  --ui-ring: 217.2 91.2% 59.8%;
+
+  --submit-bg: #223b63;
+  --submit-bg-hover: #2e4d80;
+  --submit-fg: #e8efff;
+  --submit-border: #355786;
+  --submit-ring: rgba(133, 170, 227, 0.35);
+
+  --field-bg: #0f1a2b;
+  --field-bg-focus: #16243b;
+  --field-fg: #e8eff8;
+  --field-placeholder: #8ea1bc;
+  --field-border: #24334b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+  }
+}
+
+:root.light,
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────────────────── */
@@ -134,6 +218,32 @@
 
 /* ─── Component Layer ────────────────────────────────────────────────────── */
 @layer components {
+
+  button[type="submit"],
+  input[type="submit"] {
+    background: var(--submit-bg);
+    color: var(--submit-fg);
+    border: 1px solid var(--submit-border);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  button[type="submit"]:hover:not(:disabled),
+  input[type="submit"]:hover:not(:disabled) {
+    background: var(--submit-bg-hover);
+    border-color: var(--submit-bg-hover);
+  }
+
+  button[type="submit"]:focus-visible,
+  input[type="submit"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--submit-ring);
+  }
+
+  button[type="submit"]:disabled,
+  input[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   /* BUTTONS */
   .btn {
@@ -245,6 +355,14 @@
     border-radius: var(--r-md);
     box-shadow: 0 2px 8px rgba(10,22,40,0.04), 0 1px 3px rgba(10,22,40,0.06);
   }
+  
+  .dark .card {
+    background: rgba(15, 26, 43, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
 
   .card-hover {
     @apply card;
@@ -275,7 +393,14 @@
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 8px 32px rgba(10, 22, 40, 0.12);
   }
-  
+
+  .dark .card-glass {
+    background: rgba(10, 22, 40, 0.45);
+    border: 1px solid rgba(200, 163, 90, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
   .card-glass:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(200, 163, 90, 0.3);
@@ -320,9 +445,9 @@
     width: 100%;
     font-family: var(--font-body);
     font-size: 0.875rem;
-    color: var(--navy);
-    background: var(--white);
-    border: 1.5px solid var(--border);
+    color: var(--field-fg);
+    background: var(--field-bg);
+    border: 1.5px solid var(--field-border);
     border-radius: var(--r-md);
     padding: 11px 14px;
     outline: none;
@@ -332,13 +457,21 @@
   .input:focus {
     border-color: var(--gold);
     box-shadow: 0 0 0 3px rgba(200, 163, 90, 0.1), var(--glow-gold);
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--field-bg-focus);
   }
-  .input::placeholder { color: var(--muted); }
+  .input::placeholder { color: var(--field-placeholder); }
   .input:disabled {
     background: var(--cream);
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--field-fg);
+    box-shadow: 0 0 0px 1000px var(--field-bg-focus) inset;
+    transition: background-color 9999s ease-out 0s;
   }
 
   select.input {
@@ -686,6 +819,37 @@
     color: var(--gold-bright);
     flex-shrink: 0;
   }
+
+  .dark .btn-primary {
+    background: linear-gradient(135deg, #1b2f52 0%, #132040 100%);
+    color: #f8fbff;
+    border: 1px solid rgba(148, 173, 214, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  }
+
+  .dark .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #26406a 0%, #1b2f52 100%);
+  }
+
+  .dark .btn-secondary {
+    background: #16253d;
+    color: #e6efff;
+    border-color: #2d4367;
+  }
+
+  .dark .btn-secondary:hover {
+    background: #1d3150;
+    border-color: #3a5480;
+  }
+
+  .dark .btn-ghost {
+    color: #b8c9e5;
+  }
+
+  .dark .btn-ghost:hover {
+    background: rgba(149, 173, 214, 0.15);
+    color: #eff5ff;
+  }
 }
 
 /* ─── Animations ─────────────────────────────────────────────────────────── */
@@ -845,6 +1009,44 @@
 
 .grid-gap-md {
   gap: 20px;
+}
+
+/* ─── App-wide Dark Compatibility Layer ─────────────────────────────────── */
+@layer utilities {
+  .dark .bg-white { background-color: #0f1a2b !important; }
+  .dark .bg-slate-50 { background-color: #111f33 !important; }
+  .dark .bg-slate-100 { background-color: #16253b !important; }
+  .dark .bg-slate-200 { background-color: #22334b !important; }
+
+  .dark .text-slate-900 { color: #e6eefc !important; }
+  .dark .text-slate-800 { color: #d9e5f7 !important; }
+  .dark .text-slate-700 { color: #c8d7ef !important; }
+  .dark .text-slate-600 { color: #b8c9e5 !important; }
+  .dark .text-slate-500 { color: #a3b7d6 !important; }
+  .dark .text-slate-400 { color: #8ea1bc !important; }
+
+  .dark .border-slate-50 { border-color: #1a2b43 !important; }
+  .dark .border-slate-100 { border-color: #1f314b !important; }
+  .dark .border-slate-200 { border-color: #243750 !important; }
+  .dark .border-slate-300 { border-color: #2f4564 !important; }
+
+  .dark .hover\:bg-white:hover { background-color: #16253b !important; }
+  .dark .hover\:bg-slate-50:hover { background-color: #1a2b43 !important; }
+  .dark .hover\:bg-slate-100:hover { background-color: #22334b !important; }
+  .dark .hover\:bg-slate-200:hover { background-color: #2a3e5b !important; }
+  .dark .hover\:text-slate-600:hover { color: #d6e4fb !important; }
+  .dark .hover\:text-slate-700:hover { color: #e4eeff !important; }
+
+  .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1f314b !important; }
+  .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: #243750 !important; }
+
+  .dark .shadow-sm,
+  .dark .shadow,
+  .dark .shadow-md,
+  .dark .shadow-lg,
+  .dark .shadow-xl {
+    --tw-shadow-color: rgba(0, 0, 0, 0.35) !important;
+  }
 }
 
 /* Scrollbar */

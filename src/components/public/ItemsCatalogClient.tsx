@@ -115,7 +115,7 @@ export default function ItemsCatalogClient({
           {showCart ? (
             <div
               className="rounded-2xl overflow-hidden w-80"
-              style={{ background: "#fff", border: "1px solid var(--border)" }}
+              style={{ background: "var(--white)", border: "1px solid var(--border)" }}
             >
               {/* Cart header */}
               <div
@@ -132,7 +132,7 @@ export default function ItemsCatalogClient({
               {/* Lines */}
               <div className="divide-y divide-[var(--border)] max-h-64 overflow-y-auto">
                 {cart.map(line => (
-                  <div key={line.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                  <div key={line.id} className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--slate)]">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[var(--navy)] truncate">{line.name}</p>
                       <p className="text-[var(--muted)]">GHS {line.unitPrice.toFixed(2)} / {line.unit}</p>
@@ -140,12 +140,12 @@ export default function ItemsCatalogClient({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => updateQty(line.id, line.type, -1)}
-                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200"
+                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Minus size={12} /></button>
                       <span className="w-6 text-center font-bold">{line.qty}</span>
                       <button
                         onClick={() => updateQty(line.id, line.type, 1)}
-                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200"
+                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Plus size={12} /></button>
                     </div>
                     <button
@@ -198,7 +198,7 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
   return (
     <div
       className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5"
-      style={{ background: "#fff", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
+      style={{ background: "var(--white)", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
     >
       {img ? (
         <img src={img} alt={item.name} className="w-full h-40 object-cover" />
@@ -267,7 +267,7 @@ function BundleCard({
   return (
     <div
       className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5"
-      style={{ background: "#fff", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
+      style={{ background: "var(--white)", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
     >
       {img ? (
         <img src={img} alt={bundle.name} className="w-full h-44 object-cover" />

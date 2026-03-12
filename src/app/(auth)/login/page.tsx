@@ -7,6 +7,11 @@ import { ArrowRight } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
+const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
+const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
+const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
+
 declare global {
   interface Window {
     google?: {
@@ -47,6 +52,7 @@ function LoginContent() {
   const from = searchParams.get("from");
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
 
   const [state, action] = useFormState(
     async (_: unknown, fd: FormData) => loginAnyAccount(fd),
@@ -113,21 +119,28 @@ function LoginContent() {
   }, [from, router]);
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", background: "var(--navy)", position: "relative" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", position: "relative" }} className="bg-navy dark:bg-transparent">
       {/* ── Desktop left panel ─────────────────────────────────────── */}
       <div
-        className="hidden lg:flex"
-        style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: "60px", position: "relative", overflow: "hidden" }}
+        className="hidden lg:flex lg:w-3/5"
+        style={{ flex: "0 0 60%", alignItems: "center", justifyContent: "center", padding: "60px", position: "relative", overflow: "hidden" }}
       >
-        {/* Decorative circles */}
-        <div style={{ position: "absolute", top: "20%", left: "10%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,163,90,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <svg style={{ position: "absolute", top: "25%", right: "5%", opacity: 0.06 }} width="320" height="320" viewBox="0 0 320 320" fill="none">
-          <circle cx="160" cy="160" r="150" stroke="#C8A35A" strokeWidth="1"/>
-          <circle cx="160" cy="160" r="110" stroke="#C8A35A" strokeWidth="0.5"/>
-          <circle cx="160" cy="160" r="70"  stroke="#C8A35A" strokeWidth="0.5"/>
-          <line x1="10" y1="160" x2="310" y2="160" stroke="#C8A35A" strokeWidth="0.5"/>
-          <line x1="160" y1="10" x2="160" y2="310" stroke="#C8A35A" strokeWidth="0.5"/>
-        </svg>
+        {/* Background media */}
+        <img
+          src={leftSplitImage}
+          alt=""
+          aria-hidden="true"
+          onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+          <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
+          <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
+        </video>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(6,15,30,0.84) 0%, rgba(8,20,40,0.68) 48%, rgba(17,33,59,0.6) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(224, 186, 112, 0.14) 0%, rgba(224, 186, 112, 0) 70%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(75% 55% at 88% 14%, rgba(150, 174, 215, 0.2) 0%, rgba(150, 174, 215, 0) 75%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(3,8,16,0.38) 0%, rgba(3,8,16,0) 55%)" }} />
 
         <div style={{ position: "relative", maxWidth: 440 }}>
           {/* Logo */}
@@ -147,18 +160,6 @@ function LoginContent() {
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2.8rem", fontWeight: 700, color: "#fff", lineHeight: 1.15, marginBottom: 20 }}>
             Welcome back<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>to Revival Campus</em>
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.75, marginBottom: 40 }}>
-            JESUS! SAVIOUR OF THE WORLD!.
-          </p>
-
-          {["Easy facility bookings & management", "Instant notifications & updates", "Secure payments & receipts"].map((f) => (
-            <div key={f} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.55)" }}>{f}</span>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -169,9 +170,9 @@ function LoginContent() {
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
-          // Desktop: fixed right column; Mobile: full viewport
+          // Desktop: wider auth panel; Mobile: full viewport
         }}
-        className="w-full lg:w-[480px] lg:shrink-0 min-h-dvh lg:min-h-0"
+        className="w-full lg:w-2/5 lg:shrink-0 min-h-dvh lg:min-h-0"
       >
         {/* Mobile-only header */}
         <div
@@ -218,14 +219,27 @@ function LoginContent() {
               </div>
 
               <div className="form-group">
-                <label className="label">Password</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <label className="label" style={{ margin: 0 }}>Password</label>
+                  <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
+                    Forgot password?
+                  </Link>
+                </div>
                 <input name="password" type="password" required className="input" placeholder="••••••••" autoComplete="current-password" />
               </div>
 
               <SubmitBtn />
-            </form>
 
-            <div className="divider" style={{ margin: "28px 0" }}>or</div>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+                <Link
+                  href="/patron/register"
+                  className="btn-secondary"
+                  style={{ padding: "8px 14px", fontSize: "0.78rem", textDecoration: "none" }}
+                >
+                  Create Account
+                </Link>
+              </div>
+            </form>
 
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
               <div ref={googleButtonRef} />
@@ -235,15 +249,8 @@ function LoginContent() {
               <div className="alert alert-error" style={{ marginTop: 10 }}>{googleError}</div>
             )}
 
-            <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--muted)", marginTop: 8 }}>
-              New patron?{" "}
-              <Link href="/patron/register" style={{ color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
-                Create account →
-              </Link>
-            </p>
-
             <p style={{ textAlign: "center", marginTop: 10, fontSize: "0.85rem" }}>
-              <Link href="/catalog" style={{ color: "var(--muted)", textDecoration: "none" }}>← Back to catalog</Link>
+              <Link href="/" style={{ color: "var(--muted)", textDecoration: "none" }}>← Back to Home</Link>
             </p>
           </div>
         </div>

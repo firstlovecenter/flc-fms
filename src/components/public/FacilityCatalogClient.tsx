@@ -150,7 +150,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
             <SlidersHorizontal size={15} />
             <span className="hidden sm:inline">Filters</span>
             {activeFilterCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--gold)] text-[var(--navy)] text-[10px] font-bold flex items-center justify-center leading-none">
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--gold)] text-[var(--navy)] dark:text-gray-100 text-[10px] font-bold flex items-center justify-center leading-none">
                 {activeFilterCount}
               </span>
             )}
@@ -230,7 +230,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                       className={cn(
                         "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
                         selectedAmenities.includes(a)
-                          ? "bg-[var(--gold)] text-[var(--navy)] border-[var(--gold)]"
+                          ? "bg-[var(--gold)] text-[var(--navy)] dark:text-gray-100 border-[var(--gold)]"
                           : "bg-slate-50 text-slate-600 border-slate-200 hover:border-[var(--gold)]/50 hover:bg-amber-50"
                       )}
                     >
@@ -267,15 +267,15 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
         {(activeFilterCount > 0 || searchQuery) && (
           <div className="flex items-center gap-2 flex-wrap text-xs">
             <span className="text-slate-400 shrink-0">
-              <span className="font-semibold text-[var(--navy)]">{filtered.length}</span> of {facilities.length} venues
+              <span className="font-semibold text-[var(--navy)] dark:text-gray-100">{filtered.length}</span> of {facilities.length} venues
             </span>
             {selectedCategories.map(c => (
-              <button key={c} onClick={() => toggleCategory(c)} className="flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--navy)]/10 text-[var(--navy)] font-semibold hover:bg-[var(--navy)]/20 transition-colors">
+              <button key={c} onClick={() => toggleCategory(c)} className="flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--navy)]/10 text-[var(--navy)] dark:text-gray-100 font-semibold hover:bg-[var(--navy)]/20 transition-colors">
                 {CATEGORY_LABELS[c] ?? c} <X size={11} />
               </button>
             ))}
             {capacityBucket !== "all" && (
-              <button onClick={() => setCapacityBucket("all")} className="flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--navy)]/10 text-[var(--navy)] font-semibold hover:bg-[var(--navy)]/20 transition-colors">
+              <button onClick={() => setCapacityBucket("all")} className="flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--navy)]/10 text-[var(--navy)] dark:text-gray-100 font-semibold hover:bg-[var(--navy)]/20 transition-colors">
                 {CAPACITY_BUCKETS.find(b => b.value === capacityBucket)?.label} <X size={11} />
               </button>
             )}
@@ -299,7 +299,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
           <Search size={32} className="mx-auto mb-3 text-slate-300" />
           <p className="font-semibold text-slate-500 mb-1">No venues match your filters</p>
           <p className="text-sm text-slate-400 mb-4">Try adjusting or clearing your filters</p>
-          <button onClick={clearAll} className="text-sm text-[var(--navy)] font-semibold underline">Clear all filters</button>
+          <button onClick={clearAll} className="text-sm text-[var(--navy)] dark:text-gray-100 font-semibold underline">Clear all filters</button>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
@@ -335,14 +335,14 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                     <Expand size={16} />
                   </Button>
                   <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
-                    {isPopular && !facility.underMaintenance && <Badge className="bg-[var(--gold)] text-[var(--navy)] border-none shadow-sm font-bold w-fit text-[10px] px-1.5 py-0.5">Popular</Badge>}
+                    {isPopular && !facility.underMaintenance && <Badge className="bg-[var(--gold)] text-[var(--navy)] dark:text-gray-100 border-none shadow-sm font-bold w-fit text-[10px] px-1.5 py-0.5">Popular</Badge>}
                     {facility.underMaintenance && <Badge variant="destructive" className="shadow-sm w-fit border-none text-[10px] px-1.5 py-0.5">Under Maintenance</Badge>}
                   </div>
                 </div>
 
                 {/* Content */}
                 <CardContent className="p-3 sm:p-5 flex-1 flex flex-col">
-                  <h3 className="font-display font-bold text-sm sm:text-xl text-[var(--navy)] leading-tight line-clamp-2 mb-1">{facility.name}</h3>
+                  <h3 className="font-display font-bold text-sm sm:text-xl text-[var(--navy)] dark:text-gray-100 leading-tight line-clamp-2 mb-1">{facility.name}</h3>
                   {facility.underMaintenance ? (
                     <div className="flex items-center gap-1.5 mb-1 sm:mb-2">
                       <span className="text-[10px] sm:text-xs text-orange-600 font-semibold">
@@ -364,7 +364,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                   {facility.supportedCategories.length > 0 && (
                     <div className="hidden sm:flex flex-wrap gap-1 mb-3">
                       {facility.supportedCategories.slice(0, 2).map(cat => (
-                        <span key={cat} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--navy)]/[0.08] text-[var(--navy)]/70 border border-[var(--navy)]/10">
+                        <span key={cat} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--navy)]/[0.08] text-[var(--navy)] dark:text-gray-100/70 border border-[var(--navy)]/10">
                           {CATEGORY_LABELS[cat] ?? cat}
                         </span>
                       ))}
@@ -426,8 +426,8 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                     </CarouselContent>
                     {selectedFacility.images.length > 1 && (
                       <>
-                        <CarouselPrevious className="left-4 bg-white/50 backdrop-blur hover:bg-white border-none text-[var(--navy)]" />
-                        <CarouselNext className="right-4 bg-white/50 backdrop-blur hover:bg-white border-none text-[var(--navy)]" />
+                        <CarouselPrevious className="left-4 bg-white/50 backdrop-blur hover:bg-white border-none text-[var(--navy)] dark:text-gray-100" />
+                        <CarouselNext className="right-4 bg-white/50 backdrop-blur hover:bg-white border-none text-[var(--navy)] dark:text-gray-100" />
                       </>
                     )}
                   </Carousel>
@@ -439,14 +439,14 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                 )}
                 <div className="absolute top-4 left-4 z-10 flex gap-2">
                   {selectedFacility.underMaintenance && <Badge variant="destructive" className="shadow-lg border-white border">Maintenance</Badge>}
-                  {selectedFacility.capacity >= 100 && <Badge className="bg-[var(--gold)] text-[var(--navy)] hover:bg-[var(--gold)] border-white border shadow-lg">Premium Size</Badge>}
+                  {selectedFacility.capacity >= 100 && <Badge className="bg-[var(--gold)] text-[var(--navy)] dark:text-gray-100 hover:bg-[var(--gold)] border-white border shadow-lg">Premium Size</Badge>}
                 </div>
               </div>
 
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="p-4 sm:p-6 md:p-8 pb-3 flex-1 overflow-y-auto">
                   <DialogHeader className="mb-4 text-left">
-                    <DialogTitle className="font-display text-xl md:text-3xl font-bold text-[var(--navy)] leading-tight">
+                    <DialogTitle className="font-display text-xl md:text-3xl font-bold text-[var(--navy)] dark:text-gray-100 leading-tight">
                       {selectedFacility.name}
                     </DialogTitle>
                     <DialogDescription className="text-sm text-slate-600">
@@ -482,10 +482,10 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
 
                     {selectedFacility.supportedCategories.length > 0 && (
                       <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-[var(--navy)] mb-2">Ideal For</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-[var(--navy)] dark:text-gray-100 mb-2">Ideal For</h4>
                         <div className="flex flex-wrap gap-1.5">
                           {selectedFacility.supportedCategories.map(cat => (
-                            <Badge key={cat} className="bg-[var(--navy)]/10 text-[var(--navy)] hover:bg-[var(--navy)]/20 border-none font-medium text-[11px]">
+                            <Badge key={cat} className="bg-[var(--navy)]/10 text-[var(--navy)] dark:text-gray-100 hover:bg-[var(--navy)]/20 border-none font-medium text-[11px]">
                               {CATEGORY_LABELS[cat] ?? cat}
                             </Badge>
                           ))}
@@ -495,7 +495,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
 
                     {selectedFacility.amenities.length > 0 && (
                       <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-[var(--navy)] mb-2 flex items-center gap-2">
+                        <h4 className="text-xs sm:text-sm font-bold text-[var(--navy)] dark:text-gray-100 mb-2 flex items-center gap-2">
                           <Wifi size={14} className="text-[var(--gold)]" /> Amenities
                         </h4>
                         <div className="flex flex-wrap gap-1.5">

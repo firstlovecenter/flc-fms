@@ -81,7 +81,7 @@ export default function FacilityForm({ facility }: Props) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/upload-cloudinary", {
+      const response = await fetch("/api/upload-media", {
         method: "POST",
         body: formData,
       });

@@ -22,10 +22,10 @@ export default function Topbar({
 
   return (
     <header className="topbar" style={{
-      background: "linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)",
+      background: "var(--white)",
       backdropFilter: "blur(12px)",
-      borderBottom: "1px solid rgba(200, 163, 90, 0.15)",
-      boxShadow: "0 4px 12px rgba(10, 22, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+      borderBottom: "1px solid var(--border)",
+      boxShadow: "var(--shadow-sm)",
     }}>
       {/* Left — hamburger (mobile) + portal label */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -37,8 +37,8 @@ export default function Topbar({
               width: 36,
               height: 36,
               borderRadius: "var(--r-sm)",
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(200, 163, 90, 0.15)",
+              background: "var(--cream-dark)",
+              border: "1px solid var(--border)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -70,8 +70,8 @@ export default function Topbar({
           width: "36px", 
           height: "36px", 
           borderRadius: "var(--r-sm)",
-          background: "rgba(255, 255, 255, 0.08)",
-          border: "1px solid rgba(200, 163, 90, 0.15)",
+          background: "var(--cream-dark)",
+          border: "1px solid var(--border)",
           display: "flex", 
           alignItems: "center", 
           justifyContent: "center",
@@ -81,13 +81,13 @@ export default function Topbar({
           backdropFilter: "blur(8px)",
         }}
         onMouseEnter={(e) => { 
-          (e.currentTarget as HTMLButtonElement).style.background = "rgba(200, 163, 90, 0.15)"; 
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--gold)";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(200, 163, 90, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--cream)"; 
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--navy)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = "var(--shadow-xs)";
           (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
         }}
         onMouseLeave={(e) => { 
-          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255, 255, 255, 0.08)"; 
+          (e.currentTarget as HTMLButtonElement).style.background = "var(--cream-dark)"; 
           (e.currentTarget as HTMLButtonElement).style.color = "var(--slate)";
           (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
           (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
@@ -96,7 +96,7 @@ export default function Topbar({
         </button>
 
         {/* Divider — hidden on very small screens */}
-        <div className="hidden sm:block" style={{ width: "1px", height: "28px", background: "rgba(200, 163, 90, 0.2)" }} />
+        <div className="hidden sm:block" style={{ width: "1px", height: "28px", background: "var(--border)" }} />
 
         {/* User pill */}
         <div style={{ 
@@ -109,8 +109,8 @@ export default function Topbar({
             width: "36px", 
             height: "36px", 
             borderRadius: "50%",
-            background: "linear-gradient(135deg, rgba(200, 163, 90, 0.4) 0%, rgba(200, 163, 90, 0.2) 100%)",
-            border: "1px solid rgba(200, 163, 90, 0.3)",
+            background: "linear-gradient(135deg, rgba(200, 163, 90, 0.25) 0%, rgba(200, 163, 90, 0.12) 100%)",
+            border: "1px solid rgba(200, 163, 90, 0.22)",
             backdropFilter: "blur(8px)",
             display: "flex", 
             alignItems: "center", 

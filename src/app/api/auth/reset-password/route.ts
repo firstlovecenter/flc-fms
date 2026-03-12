@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { redis, rateLimit } from "@/lib/redis";
+import { rateLimit } from "@/lib/redis";
 import bcrypt from "bcryptjs";
 import { notifyPasswordChanged } from "@/lib/notifications/sms";
 import { sendPasswordChangedEmail } from "@/lib/notifications/email";
+import { deletePasswordResetOtp, getPasswordResetOtp } from "@/lib/password-reset";
 
 export async function POST(req: NextRequest) {
   let body: { email?: string; otp?: string; password?: string };
@@ -28,14 +29,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many attempts. Please request a new code." }, { status: 429 });
   }
 
-  // Verify OTP from Redis
-  const storedOtp = await redis.get(`pw-reset:${email}`);
+  // Verify OTP from Redis (with fallback store in development)
+  const storedOtp = await getPasswordResetOtp(email);
   if (!storedOtp || storedOtp !== otp) {
     return NextResponse.json({ error: "Invalid or expired code." }, { status: 400 });
   }
 
   // Delete OTP after successful verification
-  await redis.del(`pw-reset:${email}`);
+  await deletePasswordResetOtp(email);
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {

@@ -1,0 +1,359 @@
+
+> cfms@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.4.2) to .\node_modules\@prisma\client in 1.86s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+  ▲ Next.js 14.2.5
+  - Environments: .env
+
+   Creating an optimized production build ...
+
+[1m[33mwarn[39m[22m - The class `duration-[0.35s]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `duration-&lsqb;0.35s&rsqb;` to silence this warning.
+
+[1m[33mwarn[39m[22m - The class `ease-[cubic-bezier(0.22,1,0.36,1)]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb;` to silence this warning.
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/(auth)/forgot-password/page.tsx
+95:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(auth)/login/page.tsx
+129:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/catalog/facilities/[id]/page.tsx
+89:22  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+94:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+99:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/offline/page.tsx
+7:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/venue/[id]/page.tsx
+89:22  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+94:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+99:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/facilities/FacilityCard.tsx
+62:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/facilities/FacilityForm.tsx
+240:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/FacilityCatalogClient.tsx
+322:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+422:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/ItemsCatalogClient.tsx
+204:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+273:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/PublicSplitShell.tsx
+90:6  Warning: React Hook useEffect has a missing dependency: 'dismissSplash'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+116:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+170:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/super-admin/SuperAdminSidebar.tsx
+28:68  Warning: React Hook useEffect has a missing dependency: 'onClose'. Either include it or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./src/components/theme/global-dark-background.tsx
+35:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+   Generating static pages (0/55) ...
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+   Generating static pages (13/55) 
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+   Generating static pages (27/55) 
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+   Generating static pages (41/55) 
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[ioredis] Unhandled error event: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+ ✓ Generating static pages (55/55)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    47.2 kB         148 kB
+├ ○ /_not-found                          879 B          88.2 kB
+├ ƒ /api/auth/change-password            0 B                0 B
+├ ƒ /api/auth/forgot-password            0 B                0 B
+├ ƒ /api/auth/google                     0 B                0 B
+├ ƒ /api/auth/reset-password             0 B                0 B
+├ ○ /api/facilities/sanity               0 B                0 B
+├ ƒ /api/patron/change-password          0 B                0 B
+├ ƒ /api/patron/profile                  0 B                0 B
+├ ƒ /api/payments/callback               0 B                0 B
+├ ƒ /api/receipts/[receiptNumber]        0 B                0 B
+├ ƒ /api/upload                          0 B                0 B
+├ ƒ /api/upload-media                    0 B                0 B
+├ ƒ /api/webhooks/hubtel                 0 B                0 B
+├ ƒ /api/webhooks/paystack               0 B                0 B
+├ ƒ /audit                               203 B          94.4 kB
+├ ƒ /bookings                            2.05 kB        96.2 kB
+├ ƒ /bookings/[id]                       2.42 kB        96.6 kB
+├ ƒ /bookings/new                        3.73 kB         120 kB
+├ ○ /catalog                             165 B          87.5 kB
+├ ƒ /catalog/facilities/[id]             141 B          97.8 kB
+├ ○ /change-password                     2.34 kB        89.7 kB
+├ ƒ /dashboard                           203 B          94.4 kB
+├ ƒ /events                              1.63 kB        95.8 kB
+├ ƒ /events/[id]                         1.63 kB        95.8 kB
+├ ƒ /events/new                          1.71 kB         111 kB
+├ ƒ /facilities                          203 B          94.4 kB
+├ ƒ /facilities/[id]                     2.82 kB          97 kB
+├ ƒ /facilities/[id]/ceremonies          4.39 kB         105 kB
+├ ƒ /facilities/[id]/edit                144 B           114 kB
+├ ƒ /facilities/[id]/slots               4.91 kB         106 kB
+├ ƒ /facilities/categories               2.52 kB        89.9 kB
+├ ƒ /facilities/new                      143 B           114 kB
+├ ○ /forgot-password                     2.63 kB        96.8 kB
+├ ƒ /guest/book                          9.95 kB         155 kB
+├ ƒ /inventory                           203 B          94.4 kB
+├ ƒ /inventory/items                     203 B          94.4 kB
+├ ƒ /items                               1.96 kB        96.1 kB
+├ ƒ /items/[id]/edit                     190 B          97.3 kB
+├ ƒ /items/bundles/[id]/edit             190 B          98.1 kB
+├ ƒ /items/bundles/new                   176 B          91.2 kB
+├ ƒ /items/new                           177 B          90.5 kB
+├ ○ /login                               3.92 kB        98.1 kB
+├ ƒ /maintenance                         2.16 kB        96.3 kB
+├ ƒ /maintenance/[id]                    978 B          95.1 kB
+├ ƒ /maintenance/new                     2.14 kB         111 kB
+├ ○ /offline                             671 B            88 kB
+├ ƒ /patron/book                         4.96 kB         121 kB
+├ ƒ /patron/bookings                     203 B          94.4 kB
+├ ƒ /patron/bookings/[id]                2.08 kB        96.2 kB
+├ ƒ /patron/dashboard                    203 B          94.4 kB
+├ ○ /patron/login                        165 B          87.5 kB
+├ ƒ /patron/profile                      2.73 kB        90.1 kB
+├ ƒ /patron/receipts                     165 B          87.5 kB
+├ ○ /patron/register                     2.46 kB        96.6 kB
+├ ○ /pay                                 3.34 kB        90.7 kB
+├ ƒ /payments                            3.44 kB         119 kB
+├ ○ /pwa                                 165 B          87.5 kB
+├ ƒ /reports                             105 kB          199 kB
+├ ƒ /staff                               2.38 kB         115 kB
+├ ƒ /staff/[id]                          194 B           120 kB
+├ ƒ /staff/[id]/permissions              3.02 kB        97.2 kB
+├ ƒ /transactions                        1.9 kB         96.1 kB
+├ ƒ /transactions/[id]                   1.9 kB         96.1 kB
+├ ƒ /transactions/new-expense            1.71 kB         111 kB
+├ ƒ /transactions/new-income             1.84 kB         111 kB
+├ ○ /unauthorized                        203 B          94.4 kB
+├ ƒ /users                               165 B          87.5 kB
+└ ƒ /venue/[id]                          142 B          97.8 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/7023-939be63261097f27.js      31.7 kB
+  ├ chunks/fd9d1056-c0e8e2a16991fb04.js  53.6 kB
+  └ other shared chunks (total)          2.02 kB
+
+
+ƒ Middleware                             33.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

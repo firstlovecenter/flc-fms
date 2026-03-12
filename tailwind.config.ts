@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,20 +11,22 @@ const config: Config = {
     extend: {
       colors: {
         navy:  {
-          DEFAULT: "#0A1628",
-          mid:     "#132040",
-          light:   "#1C3058",
+          DEFAULT: "var(--navy)",
+          mid:     "var(--navy-mid)",
+          light:   "var(--navy-light)",
+          glass:   "var(--navy-glass)",
         },
         gold: {
-          DEFAULT: "#C8A35A",
-          bright:  "#E2B96A",
-          pale:    "#F5EAD0",
-          muted:   "#8A6D35",
+          DEFAULT: "var(--gold)",
+          bright:  "var(--gold-bright)",
+          pale:    "var(--gold-pale)",
+          muted:   "var(--gold-muted)",
         },
         cream: {
-          DEFAULT: "#F9F6F0",
-          dark:    "#F1EBE0",
+          DEFAULT: "var(--cream)",
+          dark:    "var(--cream-dark)",
         },
+        white: "var(--white)",
         brand: {
           50:  "#F5EAD0",
           100: "#E2B96A",
@@ -34,38 +37,38 @@ const config: Config = {
           800: "#132040",
           900: "#080F1A",
         },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: "hsl(var(--ui-border))",
+        input: "hsl(var(--ui-input))",
+        ring: "hsl(var(--ui-ring))",
+        background: "hsl(var(--ui-background))",
+        foreground: "hsl(var(--ui-foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "hsl(var(--ui-primary))",
+          foreground: "hsl(var(--ui-primary-foreground))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "hsl(var(--ui-secondary))",
+          foreground: "hsl(var(--ui-secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "hsl(var(--ui-destructive))",
+          foreground: "hsl(var(--ui-destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "hsl(var(--ui-muted))",
+          foreground: "hsl(var(--ui-muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "hsl(var(--ui-accent))",
+          foreground: "hsl(var(--ui-accent-foreground))",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "hsl(var(--ui-popover))",
+          foreground: "hsl(var(--ui-popover-foreground))",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "hsl(var(--ui-card))",
+          foreground: "hsl(var(--ui-card-foreground))",
         },
       },
       fontFamily: {

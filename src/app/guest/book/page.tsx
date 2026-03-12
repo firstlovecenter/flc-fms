@@ -71,13 +71,9 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
       <main className="max-w-5xl mx-auto px-5 md:px-8 py-8 md:py-12 space-y-6">
         {/* Hero card */}
         <section
-          className="card"
+          className="rounded-[20px] border relative overflow-hidden bg-gradient-to-br from-[rgba(10,22,40,0.97)] to-[rgba(28,48,88,0.94)] dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl border-[rgba(200,163,90,0.34)] dark:border-[rgba(255,255,255,0.08)] shadow-xl text-white"
           style={{
             padding: "26px 22px",
-            background: "linear-gradient(135deg, rgba(10,22,40,0.97) 0%, rgba(28,48,88,0.94) 100%)",
-            borderColor: "rgba(200,163,90,0.34)",
-            boxShadow: "var(--shadow-xl)",
-            color: "#fff",
           }}
         >
           <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.65)" }}>
@@ -98,8 +94,8 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
                 <span className="badge" style={{ background: "rgba(200,163,90,0.15)", color: "var(--gold-pale)", border: "1px solid rgba(200,163,90,0.45)" }}>
                   {initialLines.length} item type{initialLines.length !== 1 ? "s" : ""} selected
                 </span>
-                <Link href="/catalog?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
-                  ← Back to catalog
+                <Link href="/?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
+                  ← Back to Home
                 </Link>
               </>
             ) : (
@@ -110,7 +106,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
                 <span className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>
                   Same-day review by staff
                 </span>
-                <Link href="/catalog?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
+                <Link href="/?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
                   Browse items →
                 </Link>
               </>
@@ -120,7 +116,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
 
         <section>
           {isItemBooking ? (
-            <div className="card p-6 md:p-7" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FCFAF6 100%)" }}>
+            <div className="card p-6 md:p-7 bg-gradient-to-b from-[#FFFFFF] to-[#FCFAF6] dark:from-[rgba(15,26,43,0.45)] dark:to-[rgba(15,26,43,0.45)]">
               <GuestItemBookingForm initialLines={initialLines} />
             </div>
           ) : (

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { redis, rateLimit } from "@/lib/redis";
+import { rateLimit } from "@/lib/redis";
 import { randomInt } from "crypto";
 import { sendSMS } from "@/lib/notifications/sms";
-import { sendEmail } from "@/lib/notifications/email";
+import { sendPasswordResetOtpEmail } from "@/lib/notifications/email";
+import { setPasswordResetOtp } from "@/lib/password-reset";
 
 export async function POST(req: NextRequest) {
   let body: { email?: string };
@@ -30,32 +31,26 @@ export async function POST(req: NextRequest) {
   // Generate 6-digit OTP
   const otp = randomInt(100000, 999999).toString();
 
-  // Store OTP in Redis with 15-minute TTL
-  await redis.set(`pw-reset:${email}`, otp, "EX", 900);
+  // Store OTP with Redis-first strategy and local fallback in development.
+  await setPasswordResetOtp(email, otp, 900);
 
-  // Send OTP via SMS (primary) and email (secondary)
+  // Notifications should not break password reset request handling.
+  const notifyTasks: Promise<unknown>[] = [];
   if (user.phone) {
-    await sendSMS({
+    notifyTasks.push(sendSMS({
       to: user.phone,
       message: `[Revival Mgmt] Your password reset code is: ${otp}. This code expires in 15 minutes. If you did not request this, please ignore.`,
-    });
+    }));
   }
 
-  await sendEmail({
+  notifyTasks.push(sendPasswordResetOtpEmail({
     to: email,
-    subject: "Password Reset Code — Revival Mgmt",
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-        <h2 style="color:#1e3a5f;margin-bottom:16px">Password Reset</h2>
-        <p>Hi ${user.name},</p>
-        <p>Your password reset code is:</p>
-        <div style="background:#f3f4f6;border-radius:8px;padding:20px;text-align:center;margin:24px 0">
-          <span style="font-size:2rem;font-weight:700;letter-spacing:0.2em;color:#1e3a5f">${otp}</span>
-        </div>
-        <p style="color:#6b7280;font-size:0.85rem">This code expires in 15 minutes. If you did not request a password reset, you can safely ignore this email.</p>
-      </div>
-    `,
-  });
+    name: user.name,
+    otp,
+    expiresMinutes: 15,
+  }));
+
+  await Promise.allSettled(notifyTasks);
 
   return successResponse;
 }
