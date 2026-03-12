@@ -62,7 +62,7 @@ export default function AddItemForm({ defaultValues, itemId }: {
         <div>
           <label className="label">Unit *</label>
           <input name="unit" className="input" required defaultValue={defaultValues?.unit ?? "piece"} placeholder="piece, set, day, microphone..." />
-          <p className="text-xs text-[var(--muted)] mt-1">What counts as one unit? Shown as "GHS X / {"{unit}"}"</p>
+          <p className="text-xs text-[var(--muted)] mt-1">What counts as one unit? Shown as &quot;GHS X / {"{unit}"}&quot;</p>
         </div>
         <div>
           <label className="label">Price per Unit (GHS) *</label>

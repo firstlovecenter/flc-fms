@@ -180,8 +180,8 @@ export default function PatronBookingForm({
     return (
       <div className="card overflow-hidden">
         {/* Venue selector header */}
-        <div className="px-5 py-4 border-b border-[var(--border)]" style={{ background: "var(--cream)" }}>
-          <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">
+        <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]">
+          <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
             Select Venue
           </label>
           <select
@@ -199,10 +199,10 @@ export default function PatronBookingForm({
         {/* Service name (Calendly-style) */}
         {selectedFacility && (
           <div className="px-5 pt-5 pb-1">
-            <h2 className="font-display font-bold text-[var(--navy)] text-2xl uppercase tracking-tight">
+            <h2 className="font-display font-bold text-[var(--navy)] dark:text-gray-100 text-2xl uppercase tracking-tight">
               {selectedFacility.name}
             </h2>
-            <p className="text-sm text-[var(--muted)] mt-1">Select a date and available time slot</p>
+            <p className="text-sm text-[var(--muted)] dark:text-gray-400 mt-1">Select a date and available time slot</p>
           </div>
         )}
 
@@ -212,7 +212,7 @@ export default function PatronBookingForm({
 
             {/* LEFT — Calendar */}
             <div className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-3">
                 Select a Date
               </p>
               <DayPicker
@@ -233,12 +233,12 @@ export default function PatronBookingForm({
             <div className="p-5">
               {!selectedDate ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-16">
-                  <Clock size={30} className="mb-3 text-[var(--muted)] opacity-25" />
-                  <p className="text-sm text-[var(--muted)]">Select a date to see available times</p>
+                  <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
+                  <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select a date to see available times</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-4">
                     {format(selectedDate, "EEEE, MMMM d")}
                   </p>
 
@@ -289,12 +289,12 @@ export default function PatronBookingForm({
                   {slotsLoading ? (
                     <div className="space-y-2">
                       {[...Array(5)].map((_, i) => (
-                        <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: "#f3f4f6" }} />
+                        <div key={i} className="h-12 rounded-xl animate-pulse bg-[#f3f4f6] dark:bg-[rgba(255,255,255,0.05)]" />
                       ))}
                     </div>
                   ) : slots.length === 0 ? (
                     <div className="text-center py-10">
-                      <p className="text-sm text-[var(--muted)]">No slots available for this day.</p>
+                      <p className="text-sm text-[var(--muted)] dark:text-gray-400">No slots available for this day.</p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -349,7 +349,7 @@ export default function PatronBookingForm({
                               )}
                               {isSelected && <Check size={14} color="#fff" />}
                               {!slot.isAvailable && (
-                                <span className="text-xs text-[var(--muted)]">Full</span>
+                                <span className="text-xs text-[var(--muted)] dark:text-gray-400">Full</span>
                               )}
                             </div>
                           </button>
@@ -362,34 +362,33 @@ export default function PatronBookingForm({
             </div>
 
             {/* RIGHT — Venue Details */}
-            <div className="p-5" style={{ background: "#fafaf8" }}>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-4">
+            <div className="p-5 bg-[#fafaf8] dark:bg-[rgba(15,26,43,0.4)]">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-4">
                 Venue Details
               </p>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-display font-bold text-[var(--navy)] text-sm uppercase leading-snug">
+                  <h3 className="font-display font-bold text-[var(--navy)] dark:text-gray-100 text-sm uppercase leading-snug">
                     {selectedFacility.name}
                   </h3>
                   {selectedFacility.description && (
-                    <p className="text-xs text-[var(--slate)] mt-1 leading-relaxed line-clamp-4">
+                    <p className="text-xs text-[var(--slate)] dark:text-gray-300 mt-1 leading-relaxed line-clamp-4">
                       {selectedFacility.description}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[var(--slate)]">
+                <div className="flex items-center gap-2 text-xs text-[var(--slate)] dark:text-gray-300">
                   <Users size={12} />
                   <span>Up to {selectedFacility.capacity.toLocaleString()} guests</span>
                 </div>
                 {selectedFacility.amenities.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[var(--muted)] mb-1.5">Amenities</p>
+                    <p className="text-xs font-medium text-[var(--muted)] dark:text-gray-400 mb-1.5">Amenities</p>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedFacility.amenities.map((a) => (
                         <span
                           key={a}
-                          className="text-xs rounded-full px-2.5 py-0.5"
-                          style={{ background: "#fff", border: "1px solid var(--border)", color: "var(--navy)" }}
+                          className="text-xs rounded-full px-2.5 py-0.5 bg-white dark:bg-[rgba(15,26,43,0.4)] border border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] text-[var(--navy)] dark:text-gray-200"
                         >
                           {a}
                         </span>
@@ -399,17 +398,17 @@ export default function PatronBookingForm({
                 )}
                 {selectedDate && selectedSlot && (
                   <div className="pt-3 border-t border-[var(--border)]">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
                       Selected
                     </p>
-                    <p className="text-sm font-semibold text-[var(--navy)]">
+                    <p className="text-sm font-semibold text-[var(--navy)] dark:text-gray-100">
                       {format(selectedDate, "MMMM d, yyyy")}
                     </p>
-                    <p className="text-xs text-[var(--slate)] mt-0.5">
+                    <p className="text-xs text-[var(--slate)] dark:text-gray-300 mt-0.5">
                       {formatTime(selectedSlot.startTime)} → {formatTime(selectedSlot.endTime)}
                     </p>
                     {estimatedCost !== null && (
-                      <p className={`text-sm font-bold mt-1.5 ${estimatedCost === 0 ? "text-green-600" : "text-[var(--navy)]"}`}>
+                      <p className={`text-sm font-bold mt-1.5 ${estimatedCost === 0 ? "text-green-600" : "text-[var(--navy)] dark:text-gray-100"}`}>
                         {estimatedCost === 0 ? "FREE" : formatCurrency(estimatedCost)}
                       </p>
                     )}
@@ -423,7 +422,7 @@ export default function PatronBookingForm({
         {/* Footer — Continue button */}
         {selectedFacility && (
           <div className="px-5 py-3.5 border-t border-[var(--border)] flex items-center justify-between bg-white">
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm text-[var(--muted)] dark:text-gray-400">
               {!selectedDate
                 ? "Pick a date to continue"
                 : !selectedSlot
@@ -449,7 +448,7 @@ export default function PatronBookingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Summary card */}
-      <div className="rounded-xl p-4 text-white" style={{ background: "var(--navy)" }}>
+      <div className="rounded-xl p-4 text-white bg-[var(--navy)] dark:bg-[rgba(15,26,43,0.8)] border border-transparent dark:border-[rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p
@@ -484,7 +483,7 @@ export default function PatronBookingForm({
       {/* Event type */}
       {categories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Event Type *</label>
+          <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Event Type *</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -503,7 +502,7 @@ export default function PatronBookingForm({
 
       {/* Booking title */}
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Booking Title *</label>
+        <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Booking Title *</label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -515,7 +514,7 @@ export default function PatronBookingForm({
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Description</label>
+        <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
