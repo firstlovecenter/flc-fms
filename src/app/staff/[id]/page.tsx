@@ -20,6 +20,7 @@ export default async function StaffDetailPage({ params }: Props) {
     where: { id: params.id },
     select: {
       id: true, name: true, email: true, phone: true,
+      profilePicture: true,
       role: true, isActive: true, permissions: true,
       lastLoginAt: true, createdAt: true,
     },

@@ -25,7 +25,7 @@ export async function upsertStaffProfile(
     const client = getSanityWriteClient();
     if (!client) return { success: false, error: "Sanity client unavailable" };
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "staffProfile",
       _id: `staff-${userId}`,
       userId,
@@ -68,7 +68,7 @@ export async function upsertReceipt(
     const client = getSanityWriteClient();
     if (!client) return { success: false, error: "Sanity client unavailable" };
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "receipt",
       _id: `receipt-${receiptNumber}`,
       bookingId,
@@ -117,7 +117,7 @@ export async function upsertFacilityMedia(
       },
     }));
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "facilityMedia",
       _id: `facility-${facilityId}`,
       facilityId,
@@ -159,7 +159,7 @@ export async function upsertBookableItemMedia(
       },
     }));
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "bookableItemMedia",
       _id: `item-${itemId}`,
       itemId,
@@ -201,7 +201,7 @@ export async function upsertBookableBundleMedia(
       },
     }));
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "bookableBundleMedia",
       _id: `bundle-${bundleId}`,
       bundleId,
@@ -243,7 +243,7 @@ export async function upsertInventoryItemMedia(
       },
     }));
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "inventoryItemMedia",
       _id: `inventory-${itemId}`,
       itemId,
@@ -278,7 +278,7 @@ export async function upsertInventoryCategoryIcon(
     const client = getSanityWriteClient();
     if (!client) return { success: false, error: "Sanity client unavailable" };
 
-    const result = await client.upsert({
+    const result = await client.createOrReplace({
       _type: "inventoryCategoryIcon",
       _id: `category-icon-${categoryId}`,
       categoryId,

@@ -10,12 +10,12 @@ export default async function StaffPage() {
   const [activeStaff, inactiveStaff] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true, profilePicture: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
     prisma.user.findMany({
       where: { isActive: false },
-      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true, profilePicture: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
   ]);
