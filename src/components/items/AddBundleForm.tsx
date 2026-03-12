@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBookableBundle, updateBookableBundle } from "@/actions/bookable-items.actions";
 import { Plus, X, Layers } from "lucide-react";
+import MediaUploader from "@/components/ui/MediaUploader";
 
 type AvailableItem = {
   id: string;
@@ -44,6 +45,7 @@ export default function AddBundleForm({
   const [components, setComponents] = useState<ComponentRow[]>(defaultValues?.components ?? [{ itemId: "", quantity: 1, label: "" }]);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(defaultValues?.tags ?? []);
+  const [images, setImages] = useState<string[]>([]);
 
   function addTag() {
     const t = tagInput.trim().toLowerCase();
@@ -83,6 +85,7 @@ export default function AddBundleForm({
       sortOrder:   Number(fd.get("sortOrder") ?? 0),
       isActive:    fd.get("isActive") === "on",
       tags,
+      images,
       components: validComponents.map(c => ({
         itemId:   c.itemId,
         quantity: c.quantity,
@@ -233,6 +236,17 @@ export default function AddBundleForm({
         <input name="isActive" type="checkbox" className="w-4 h-4 accent-[var(--navy)]" defaultChecked={defaultValues?.isActive !== false} />
         <span className="text-sm font-medium text-[var(--navy)]">Show in public catalog (active)</span>
       </label>
+
+      {/* Images */}
+      <MediaUploader
+        mediaType="bundle"
+        mediaId={bundleId}
+        images={images}
+        onImagesChange={setImages}
+        max={4}
+        label="Package Images"
+        showMain
+      />
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={loading} className="btn-gold flex-1" style={{ paddingBlock: 10 }}>

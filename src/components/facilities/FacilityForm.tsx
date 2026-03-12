@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { createFacility, updateFacility } from "@/actions/facility.actions";
-import { X, Upload, ImageIcon, Star } from "lucide-react";
+import MediaUploader from "@/components/ui/MediaUploader";
 
 const schema = z.object({
   name:          z.string().min(2, "Name is required"),
@@ -41,7 +41,6 @@ export default function FacilityForm({ facility }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(facility?.images || []);
-  const [uploading, setUploading] = useState(false);
   const isEdit = !!facility;
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -68,56 +67,6 @@ export default function FacilityForm({ facility }: Props) {
     } else {
       setValue("availableDays", [...current, day].sort());
     }
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload-media", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Upload failed");
-      }
-
-      // Enforce max 2 images — drop the oldest when full
-      setImages((prev) => {
-        const trimmed = prev.length >= 2 ? prev.slice(1) : prev;
-        return [...trimmed, result.url];
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload image");
-    } finally {
-      setUploading(false);
-      // Reset file input
-      e.target.value = "";
-    }
-  }
-
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function setMainImage(index: number) {
-    setImages((prev) => {
-      if (index === 0) return prev;
-      const next = [...prev];
-      const [selected] = next.splice(index, 1);
-      next.unshift(selected);
-      return next;
-    });
   }
 
   async function onSubmit(data: FormData) {
@@ -229,79 +178,15 @@ export default function FacilityForm({ facility }: Props) {
       </div>
 
       {/* Images */}
-      <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-2">Facility Images</label>
-        
-        {/* Image Grid */}
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
-            {images.map((url, index) => (
-              <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
-                <img
-                  src={url}
-                  alt={`Facility image ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                {index === 0 && (
-                  <div className="absolute top-1 left-1 bg-[var(--gold)] text-[var(--navy)] px-2 py-1 rounded text-[10px] font-semibold flex items-center gap-1">
-                    <Star className="w-3 h-3" /> Main
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  title="Remove image"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                {index !== 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setMainImage(index)}
-                    className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-[10px] py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-                    title="Set as main image"
-                  >
-                    Set as Main
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Upload Button */}
-        <div className="flex items-center gap-3">
-          <label className={`btn-secondary cursor-pointer flex items-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            {uploading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-[var(--navy)] border-t-transparent rounded-full animate-spin" />
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                <span>Upload Image</span>
-              </>
-            )}
-            <input
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp"
-              onChange={handleImageUpload}
-              disabled={uploading}
-              className="hidden"
-            />
-          </label>
-          <p className="text-xs text-gray-500">Max 2 images • Oldest replaced automatically • JPEG/PNG/WebP • 5MB each</p>
-        </div>
-        
-        {images.length === 0 && (
-          <div className="mt-3 p-4 border-2 border-dashed border-gray-200 rounded-lg text-center text-gray-400">
-            <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No images uploaded yet</p>
-          </div>
-        )}
-      </div>
+      <MediaUploader
+        mediaType="facility"
+        mediaId={facility?.id}
+        images={images}
+        onImagesChange={setImages}
+        max={4}
+        label="Facility Images"
+        showMain
+      />
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">

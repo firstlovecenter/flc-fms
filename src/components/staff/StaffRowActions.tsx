@@ -13,9 +13,10 @@ interface Props {
   email: string;
   phone: string | null;
   inactive?: boolean;
+  profilePicture?: string | null;
 }
 
-export default function StaffRowActions({ userId, role, name, email, phone, inactive }: Props) {
+export default function StaffRowActions({ userId, role, name, email, phone, inactive, profilePicture }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -120,7 +121,7 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
       <EditStaffModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        staff={{ id: userId, name, email, phone, role }}
+        staff={{ id: userId, name, email, phone, role, profilePicture }}
       />
     </div>
   );

@@ -95,6 +95,7 @@ export default async function StaffDetailPage({ params }: Props) {
             phone={member.phone}
             inactive={!member.isActive}
             role={member.role}
+            profilePicture={member.profilePicture}
           />
         </div>
       </div>

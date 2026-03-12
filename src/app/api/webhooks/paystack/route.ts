@@ -72,7 +72,10 @@ export async function POST(req: NextRequest) {
       data: {
         bookingId:     payment.bookingId,
         paymentId:     payment.id,
-        receiptNumber}});
+        receiptNumber,
+        fileUrl:       `/api/receipts/${receiptNumber}`,
+      },
+    });
 
     // SMS receipt to patron (primary)
     const patron = payment.booking.patron;

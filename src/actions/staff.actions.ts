@@ -136,3 +136,30 @@ export async function getInactiveStaffMembers() {
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
 }
+
+export async function updateStaffProfilePicture(
+  userId: string,
+  profilePicture: string
+) {
+  const session = await requireStaff();
+
+  // A staff member can update their own picture; FM can update anyone's
+  const isSelf = session.sub === userId;
+  const isFM = session.role === "FACILITY_MANAGER" || session.role === "SUPER_ADMIN";
+  if (!isSelf && !isFM) return { error: "Unauthorized" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { profilePicture },
+  });
+
+  auditLog({
+    userId: session.sub,
+    action: "UPDATE_PROFILE_PICTURE",
+    entity: "User",
+    entityId: userId,
+  });
+
+  revalidatePath("/staff");
+  return { success: true };
+}

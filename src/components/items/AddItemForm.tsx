@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBookableItem, updateBookableItem } from "@/actions/bookable-items.actions";
 import { Plus, X } from "lucide-react";
+import MediaUploader from "@/components/ui/MediaUploader";
 
 export default function AddItemForm({ defaultValues, itemId }: {
   defaultValues?: Partial<{
@@ -17,6 +18,7 @@ export default function AddItemForm({ defaultValues, itemId }: {
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(defaultValues?.tags ?? []);
+  const [images, setImages] = useState<string[]>([]);
 
   function addTag() {
     const t = tagInput.trim().toLowerCase();
@@ -38,6 +40,7 @@ export default function AddItemForm({ defaultValues, itemId }: {
       sortOrder:    Number(fd.get("sortOrder") ?? 0),
       isActive:     fd.get("isActive") === "on",
       tags,
+      images,
     };
     const result = itemId ? await updateBookableItem(itemId, data) : await createBookableItem(data);
     setLoading(false);
@@ -115,6 +118,17 @@ export default function AddItemForm({ defaultValues, itemId }: {
         <input name="isActive" type="checkbox" className="w-4 h-4 accent-[var(--navy)]" defaultChecked={defaultValues?.isActive !== false} />
         <span className="text-sm font-medium text-[var(--navy)]">Show in public catalog (active)</span>
       </label>
+
+      {/* Images */}
+      <MediaUploader
+        mediaType="item"
+        mediaId={itemId}
+        images={images}
+        onImagesChange={setImages}
+        max={4}
+        label="Item Images"
+        showMain
+      />
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={loading} className="btn-gold flex-1" style={{ paddingBlock: 10 }}>

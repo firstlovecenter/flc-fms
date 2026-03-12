@@ -153,7 +153,7 @@ export default async function StaffPage() {
                     <span className="badge badge-approved">Active</span>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} />
+                    <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} profilePicture={u.profilePicture} />
                   </td>
                 </tr>
               ))}
@@ -231,7 +231,7 @@ export default async function StaffPage() {
                       <span className="badge badge-cancelled">Inactive</span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} inactive />
+                      <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} profilePicture={u.profilePicture} inactive />
                     </td>
                   </tr>
                 ))}

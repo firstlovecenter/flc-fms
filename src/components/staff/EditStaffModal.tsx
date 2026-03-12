@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X } from "lucide-react";
-import { updateStaffMember } from "@/actions/staff.actions";
+import { updateStaffMember, updateStaffProfilePicture } from "@/actions/staff.actions";
+import MediaUploader from "@/components/ui/MediaUploader";
 
 const schema = z.object({
   name:  z.string().min(2, "Name is required"),
@@ -19,12 +20,15 @@ type FormData = z.infer<typeof schema>;
 interface Props {
   open: boolean;
   onClose: () => void;
-  staff: { id: string; name: string; email: string; phone: string | null; role: string };
+  staff: { id: string; name: string; email: string; phone: string | null; role: string; profilePicture?: string | null };
 }
 
 export default function EditStaffModal({ open, onClose, staff }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [profileImages, setProfileImages] = useState<string[]>(
+    staff.profilePicture ? [staff.profilePicture] : []
+  );
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -32,13 +36,23 @@ export default function EditStaffModal({ open, onClose, staff }: Props) {
   });
 
   useEffect(() => {
-    if (open) reset({ name: staff.name, email: staff.email, phone: staff.phone ?? "" });
+    if (open) {
+      reset({ name: staff.name, email: staff.email, phone: staff.phone ?? "" });
+      setProfileImages(staff.profilePicture ? [staff.profilePicture] : []);
+    }
   }, [open, staff, reset]);
 
   async function onSubmit(data: FormData) {
     setError(null);
     const result = await updateStaffMember(staff.id, data);
     if (result && "error" in result) { setError(result.error as string); return; }
+
+    // If profile picture changed, save it
+    const newPicture = profileImages[0] ?? null;
+    if (newPicture !== (staff.profilePicture ?? null)) {
+      if (newPicture) await updateStaffProfilePicture(staff.id, newPicture);
+    }
+
     router.refresh();
     onClose();
   }
@@ -58,6 +72,16 @@ export default function EditStaffModal({ open, onClose, staff }: Props) {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
           )}
+
+          {/* Profile Picture */}
+          <MediaUploader
+            mediaType="staff"
+            mediaId={staff.id}
+            images={profileImages}
+            onImagesChange={setProfileImages}
+            max={1}
+            label="Profile Picture"
+          />
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
             <input {...register("name")} className="input" />

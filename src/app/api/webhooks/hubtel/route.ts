@@ -80,7 +80,10 @@ export async function POST(req: NextRequest) {
       data: {
         bookingId:     payment.bookingId,
         paymentId:     payment.id,
-        receiptNumber}});
+        receiptNumber,
+        fileUrl:       `/api/receipts/${receiptNumber}`,
+      },
+    });
 
     const patron = payment.booking.patron;
     if (patron?.phone) {
