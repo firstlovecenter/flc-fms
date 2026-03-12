@@ -9,6 +9,7 @@ import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
 import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
+import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -66,6 +67,10 @@ export async function approveExpense(expenseId: string) {
     where: { id: expenseId, status: "PENDING" },
   });
 
+  if (isTransactionLocked(expense.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
+
   const [incomeTotals, totalApprovedExpenses] = await Promise.all([
     getTotalIncomeIncludingBookingRevenue(),
     prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
@@ -101,7 +106,20 @@ export async function approveExpense(expenseId: string) {
 }
 
 export async function rejectExpense(expenseId: string, reason: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const expense = await prisma.expense.update({
+  const session  = await requireStaff("FACILITY_MANAGER");
+  const existing = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    select: { createdAt: true, status: true },
+  });
+
+  if (!existing || existing.status !== "PENDING") {
+    return { error: "Only pending expenses can be rejected." };
+  }
+  if (isTransactionLocked(existing.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
+
+  const expense = await prisma.expense.update({
     where: { id: expenseId, status: "PENDING" },
     data: { status: "REJECTED", approvedById: session.sub, rejectionReason: reason },
     include: { createdBy: true }});
@@ -149,6 +167,16 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
   const session = await requireStaff("FACILITY_MANAGER");
   const validated = UpdateExpenseSchema.parse(data);
 
+  const existing = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    select: { createdAt: true },
+  });
+
+  if (!existing) return { error: "Expense record not found." };
+  if (isTransactionLocked(existing.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
+
   const updated = await prisma.expense.update({
     where: { id: expenseId },
     data: validated,
@@ -161,6 +189,16 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 
 export async function deleteExpense(expenseId: string) {
   const session = await requireStaff("FACILITY_MANAGER");
+
+  const existing = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    select: { createdAt: true },
+  });
+
+  if (!existing) return { error: "Expense record not found." };
+  if (isTransactionLocked(existing.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
 
   await prisma.expense.delete({ where: { id: expenseId } });
 

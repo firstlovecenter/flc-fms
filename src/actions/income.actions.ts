@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
 
 const IncomeSchema = z.object({
   title:      z.string().min(2),
@@ -108,6 +109,16 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
   const session = await requireStaff("FACILITY_MANAGER");
   const validated = UpdateIncomeSchema.parse(data);
 
+  const existing = await prisma.income.findUnique({
+    where: { id: incomeId },
+    select: { createdAt: true },
+  });
+
+  if (!existing) return { error: "Income record not found." };
+  if (isTransactionLocked(existing.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
+
   const updated = await prisma.income.update({
     where: { id: incomeId },
     data: {
@@ -123,6 +134,16 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
 
 export async function deleteIncome(incomeId: string) {
   const session = await requireStaff("FACILITY_MANAGER");
+
+  const existing = await prisma.income.findUnique({
+    where: { id: incomeId },
+    select: { createdAt: true },
+  });
+
+  if (!existing) return { error: "Income record not found." };
+  if (isTransactionLocked(existing.createdAt)) {
+    return { error: transactionLockMessage() };
+  }
 
   await prisma.income.delete({ where: { id: incomeId } });
 

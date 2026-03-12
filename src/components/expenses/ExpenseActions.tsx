@@ -5,12 +5,22 @@ import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { approveExpense, rejectExpense } from "@/actions/expense.actions";
 
-export default function ExpenseActions({ expenseId }: { expenseId: string }) {
+export default function ExpenseActions({
+  expenseId,
+  isLocked,
+}: {
+  expenseId: string;
+  isLocked: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<null | "reject">(null);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (isLocked) {
+    return <span className="text-xs text-[var(--muted)]">Locked</span>;
+  }
 
   async function handleApprove() {
     setLoading(true);
@@ -28,10 +38,14 @@ export default function ExpenseActions({ expenseId }: { expenseId: string }) {
     if (!reason.trim()) return;
     setLoading(true);
     setError(null);
-    await rejectExpense(expenseId, reason);
-    router.refresh();
+    const result = await rejectExpense(expenseId, reason);
+    if (result && "error" in result && result.error) {
+      setError(result.error as string);
+    } else {
+      router.refresh();
+      setMode(null);
+    }
     setLoading(false);
-    setMode(null);
   }
 
   if (mode === "reject") {

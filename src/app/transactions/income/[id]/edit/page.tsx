@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { isTransactionLocked } from "@/lib/transaction-lock";
 import IncomeEditForm from "@/components/expenses/IncomeEditForm";
 
 export default async function EditIncomePage({ params }: { params: { id: string } }) {
@@ -16,10 +17,22 @@ export default async function EditIncomePage({ params }: { params: { id: string 
       category: true,
       source: true,
       receivedAt: true,
+      createdAt: true,
     },
   });
 
   if (!income) notFound();
+
+  if (isTransactionLocked(income.createdAt)) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <h1 className="page-title">Edit Income</h1>
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+          This transaction is locked because it is older than one week.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl space-y-6">

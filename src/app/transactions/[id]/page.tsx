@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText, User, DollarSign, Clock } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { isTransactionLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 
@@ -22,6 +23,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const isPending = expense.status === "PENDING";
+  const isLocked = isTransactionLocked(expense.createdAt);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -83,7 +85,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
       {canManage && isPending && (
         <div className="card p-6">
           <h2 className="font-semibold text-[var(--navy)] mb-4">Review Expense</h2>
-          <ExpenseActions expenseId={expense.id} />
+          <ExpenseActions expenseId={expense.id} isLocked={isLocked} />
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
+import { isTransactionLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 import IncomeRowActions from "@/components/expenses/IncomeRowActions";
@@ -97,6 +98,7 @@ export default async function TransactionsPage({
     source: payment.provider,
     recordedBy: null,
     receivedAt: payment.paidAt ?? payment.createdAt,
+    createdAt: payment.createdAt,
     amount: Number(payment.amount),
   }));
 
@@ -282,7 +284,7 @@ export default async function TransactionsPage({
                         <td className="py-2.5 px-4"><span className={statusBadgeClass(e.status)}>{e.status}</span></td>
                         <td className="py-2.5 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-2.5 px-4">
-                          {e.status === "PENDING" && <ExpenseActions expenseId={e.id} />}
+                          {e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                         </td>
                       </tr>
                     ))}
@@ -339,7 +341,9 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(r.receivedAt)}</td>
                         <td className="py-3 px-4 text-right font-semibold text-green-700">{formatCurrency(Number(r.amount))}</td>
                         <td className="py-3 px-4 text-right">
-                          {!r.id.startsWith("payment-") ? <IncomeRowActions incomeId={r.id} /> : <span className="text-xs text-[var(--muted)]">Auto</span>}
+                          {!r.id.startsWith("payment-")
+                            ? <IncomeRowActions incomeId={r.id} isLocked={isTransactionLocked(r.createdAt)} />
+                            : <span className="text-xs text-[var(--muted)]">Auto</span>}
                         </td>
                       </tr>
                     ))}
@@ -406,8 +410,8 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
-                            {isFM && <ExpenseRowActions expenseId={e.id} />}
-                            {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} />}
+                            {isFM && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
+                            {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>
                             )}
