@@ -295,14 +295,17 @@ function LoginContent() {
               <div className="form-group">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                   <label className="label" style={{ margin: 0 }}>Password</label>
-                  <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
-                    Forgot password?
-                  </Link>
                 </div>
                 <input name="password" type="password" required className="input" placeholder="••••••••" autoComplete="current-password" />
               </div>
 
               <SubmitBtn />
+
+              <div style={{ display: "flex", justifyContent: "center", marginTop: -6 }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
+                  Forgot password?
+                </Link>
+              </div>
 
               <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
                 <Link
