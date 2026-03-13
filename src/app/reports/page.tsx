@@ -65,7 +65,7 @@ export default async function ReportsPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Income",    value: formatCurrency(totalIncome),   color: "text-green-700",  bg: "bg-green-50  border-green-200" },
           { label: "Total Expenses",  value: formatCurrency(totalExpense),  color: "text-red-700",    bg: "bg-red-50    border-red-200" },
@@ -149,7 +149,7 @@ export default async function ReportsPage() {
       {/* Maintenance summary */}
       <div className="card p-6">
         <h2 className="font-semibold text-[var(--navy)] mb-4">Maintenance Summary</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => {
             const count = operational.maintenanceSummary
               .filter((m) => m.status === status)

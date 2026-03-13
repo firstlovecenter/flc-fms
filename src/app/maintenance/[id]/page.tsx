@@ -31,9 +31,9 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
   const isOpen    = ["OPEN", "IN_PROGRESS"].includes(req.status);
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="w-full max-w-3xl space-y-6">
       {/* Back + title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-start sm:items-center gap-3 flex-wrap">
         <Link href="/maintenance" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
@@ -58,7 +58,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
       )}
 
       {/* Meta grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card p-4">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-1">
             <Building2 size={13} /> Facility
@@ -95,7 +95,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
 
       {/* Assigned to */}
       {req.assignedTo && (
-        <div className="card p-4 flex items-center gap-3">
+        <div className="card p-4 flex items-center gap-3 flex-wrap">
           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold">
             {req.assignedTo.name.charAt(0)}
           </div>
@@ -121,7 +121,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
 
       {/* Maintenance lock warning */}
       {isOpen && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start sm:items-center gap-3">
           <AlertTriangle size={18} className="text-orange-500 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-orange-800">Facility is locked for maintenance</p>

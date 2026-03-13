@@ -273,6 +273,8 @@ export default function PaymentFlow() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap",
                     }}
                   >
                     <span style={{ fontWeight: 700, color: "var(--navy)", fontSize: "1.1rem" }}>
@@ -281,7 +283,7 @@ export default function PaymentFlow() {
                     <button
                       onClick={() => handlePay(b.id)}
                       disabled={loading}
-                      className="btn-primary text-sm py-2 px-4 flex items-center gap-1"
+                      className="btn-primary text-sm py-2 px-4 flex items-center gap-1 w-full sm:w-auto justify-center"
                     >
                       {loading ? (
                         <Loader2 size={14} className="animate-spin" />

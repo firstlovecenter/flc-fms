@@ -83,7 +83,7 @@ export default function IncomeForm() {
         {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GHS) *</label>
           <input {...register("amount")} type="number" step="0.01" className="input" placeholder="0.00" />
@@ -99,7 +99,7 @@ export default function IncomeForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Source</label>
           <input {...register("source")} className="input" placeholder="e.g. Church Service, Wire Transfer" />
@@ -126,11 +126,11 @@ export default function IncomeForm() {
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
           {isSubmitting ? "Saving…" : "Record Income"}
         </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
       </div>
     </form>
   );

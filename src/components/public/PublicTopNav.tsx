@@ -12,7 +12,7 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
     <header
       className="sticky top-0 z-20 bg-[rgba(255,255,255,0.88)] backdrop-blur-md border-b border-[rgba(10,22,40,0.08)] dark:bg-[rgba(10,18,30,0.6)] dark:border-[rgba(255,255,255,0.1)]"
     >
-      <nav className="max-w-7xl mx-auto px-5 md:px-8 py-3.5 flex items-center justify-between gap-3">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-5 md:px-8 py-3.5 flex items-center justify-between gap-2 sm:gap-3">
         <Link href="/" className="flex items-center no-underline" aria-label="Home">
           <span
             style={{
@@ -66,9 +66,10 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link 
             href="/login"
+            className="hidden sm:inline-flex"
             style={{
               padding: "8px 16px",
               borderRadius: 10,
@@ -97,6 +98,7 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
           {current !== "guest" && (
             <Link 
               href="/guest/book"
+              className="inline-flex"
               style={{
                 padding: "8px 16px",
                 borderRadius: 10,
@@ -121,7 +123,9 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
                 (e.currentTarget as HTMLElement).style.opacity = "1";
               }}
             >
-              Book Now <ArrowRight size={15} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Book Now</span>
+              <span className="sm:hidden">Book</span>
+              <ArrowRight size={15} strokeWidth={2.5} />
             </Link>
           )}
         </div>

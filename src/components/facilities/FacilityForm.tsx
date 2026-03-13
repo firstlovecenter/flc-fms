@@ -138,7 +138,7 @@ export default function FacilityForm({ facility }: Props) {
       </div>
 
       {/* Available hours */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Available From</label>
           <input {...register("availableFrom")} type="time" className="input" />
@@ -189,11 +189,11 @@ export default function FacilityForm({ facility }: Props) {
       />
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
           {isSubmitting ? "Saving…" : isEdit ? "Update Facility" : "Create Facility"}
         </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary">
+        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">
           Cancel
         </button>
       </div>

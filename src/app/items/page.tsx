@@ -59,7 +59,7 @@ export default async function ItemsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ position: "relative", zIndex: 1 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ position: "relative", zIndex: 1 }}>
         {[
           { label: "Total Items", value: items.length, icon: Package, color: "var(--navy)" },
           { label: "Active Items", value: items.filter(i => i.isActive).length, icon: Package, color: "#16a34a" },
@@ -134,7 +134,7 @@ export default async function ItemsPage() {
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                         {canManage ? (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <Link href={`/items/${item.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
                               <Pencil size={12} /> Edit
                             </Link>
@@ -211,7 +211,7 @@ export default async function ItemsPage() {
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                         {canManage ? (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <Link href={`/items/bundles/${bundle.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
                               <Pencil size={12} /> Edit
                             </Link>

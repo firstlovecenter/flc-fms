@@ -109,12 +109,12 @@ export default function ItemsCatalogClient({
       {/* Floating Cart */}
       {cart.length > 0 && (
         <div
-          className="fixed bottom-6 right-6 z-50"
+          className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-50"
           style={{ filter: "drop-shadow(0 8px 24px rgba(10,22,40,0.22))" }}
         >
           {showCart ? (
             <div
-              className="rounded-2xl overflow-hidden w-80"
+              className="rounded-2xl overflow-hidden w-full sm:w-80"
               style={{ background: "var(--white)", border: "1px solid var(--border)" }}
             >
               {/* Cart header */}
@@ -232,14 +232,14 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
             ))}
           </div>
         )}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2 pt-2 border-t border-[var(--border)]">
           <div>
             <span className="font-bold text-[var(--navy)] text-lg">GHS {Number(item.pricePerUnit).toFixed(2)}</span>
             <span className="text-xs text-[var(--muted)] ml-1">/ {item.unit}</span>
           </div>
           <button
             onClick={onAdd}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors"
             style={{ background: "var(--navy)", color: "#fff" }}
           >
             <Plus size={13} /> Add
@@ -330,14 +330,14 @@ function BundleCard({
           </ul>
         )}
 
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-[var(--border)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto pt-3 border-t border-[var(--border)]">
           <div>
             <span className="font-bold text-[var(--navy)] text-xl">GHS {Number(bundle.price).toFixed(2)}</span>
             <span className="text-xs text-[var(--muted)] ml-1">flat rate</span>
           </div>
           <button
             onClick={onAdd}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
             style={{ background: "var(--navy)", color: "#fff" }}
           >
             <ShoppingCart size={14} /> Select

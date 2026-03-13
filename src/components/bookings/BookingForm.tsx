@@ -188,7 +188,7 @@ export default function BookingForm({
 
       {/* Date + slot picker */}
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Start Date & Time *</label>
             <input {...register("startTime")} type="datetime-local" className="input" />
@@ -245,11 +245,11 @@ export default function BookingForm({
         <textarea {...register("notes")} className="input" rows={2} placeholder="Special requirements…" />
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
           {isSubmitting ? "Creating…" : "Create Booking"}
         </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
       </div>
     </form>
   );

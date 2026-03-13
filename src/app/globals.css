@@ -1071,8 +1071,15 @@
 .campus-main {
   padding: 20px 16px;
 }
+
+.staff-main {
+  padding: 20px 16px;
+  overflow-x: clip;
+}
+
 @media (min-width: 640px) {
   .campus-main { padding: 28px 32px; }
+  .staff-main { padding: 28px 32px; }
 }
 
 /* ─── Page subtitle (alias for page-sub) ─────────────────────────────────── */

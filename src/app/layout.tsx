@@ -5,13 +5,13 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
 
 export const metadata: Metadata = {
-  title: { default: "Revival Mgmt — Facility Management", template: "%s | Revival Mgmt" },
+  title: { default: "FLC FMS — Facility Management", template: "%s | FLC FMS" },
   description: "First Love Center — Facility Management. Bookings, payments, maintenance, and more.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Revival Mgmt",
+    title: "FLC FMS",
   },
   icons: {
     icon: "/favicon.png",

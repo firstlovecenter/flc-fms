@@ -1,6 +1,6 @@
 {
-  "name": "Revival Mgmt",
-  "short_name": "Revival Mgmt",
+  "name": "FLC FMS",
+  "short_name": "FLC FMS",
   "description": "First Love Center — Facility Management",
   "start_url": "/login",
   "display": "standalone",

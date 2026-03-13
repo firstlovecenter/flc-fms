@@ -87,7 +87,7 @@ export default function MaintenanceForm({
         {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Priority *</label>
           <select {...register("priority")} className="input">
@@ -119,7 +119,7 @@ export default function MaintenanceForm({
             <p className="text-xs text-[var(--muted)] leading-relaxed">
               When a window is set, the facility stays bookable <strong>outside</strong> these dates.
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[var(--slate)] mb-1">Start date &amp; time</label>
                 <input {...register("scheduledStart")} type="datetime-local" className="input" />
@@ -141,11 +141,11 @@ export default function MaintenanceForm({
         )}
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
           {isSubmitting ? "Submitting…" : "Submit Request"}
         </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
       </div>
     </form>
   );

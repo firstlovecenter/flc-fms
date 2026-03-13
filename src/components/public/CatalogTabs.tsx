@@ -20,7 +20,7 @@ export default function CatalogTabs({
 }) {
   return (
     <div
-      className="flex gap-1 mb-8 p-1 rounded-2xl"
+      className="flex gap-1 mb-8 p-1 rounded-2xl overflow-x-auto"
       style={{ background: "rgba(10,22,40,0.06)", border: "1px solid var(--border)" }}
     >
       {TABS.map(({ id, label, icon: Icon }) => {
@@ -29,7 +29,7 @@ export default function CatalogTabs({
           <Link
             key={id}
             href={id === "venues" ? "/" : `/?tab=${id}`}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all"
+            className="min-w-[120px] sm:min-w-0 flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all"
             style={{
               background: isActive ? "var(--navy-glass)" : "transparent",
               color: isActive ? "#fff" : "var(--slate)",

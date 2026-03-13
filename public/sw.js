@@ -1,7 +1,7 @@
 const CACHE_VERSION = "v2";
 const STATIC_CACHE = `cfms-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `cfms-runtime-${CACHE_VERSION}`;
-const PRECACHE_URLS = ["/login", "/offline"];
+const PRECACHE_URLS = ["/login", "/offline", "/pwa"];
 
 // Max age for runtime cache entries (24 hours)
 const MAX_CACHE_AGE = 24 * 60 * 60 * 1000;

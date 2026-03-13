@@ -302,7 +302,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
           <button onClick={clearAll} className="text-sm text-[var(--navy)] dark:text-gray-100 font-semibold underline">Clear all filters</button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
           {filtered.map((facility, index) => {
             const isPopular = facility.capacity >= 100 && Number(facility.pricePerHour) <= 50;
             const displayPrice = formatCurrency(Number(facility.pricePerHour)).replace(".00", "");
@@ -386,15 +386,15 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
 
                 <CardFooter className="p-2 sm:p-5 pt-0 border-t border-slate-50 mt-1 sm:mt-4 flex gap-1 sm:gap-2">
                   {facility.underMaintenance ? (
-                    <span className={cn(buttonVariants({ variant: "default" }), "w-full bg-slate-200 text-slate-400 cursor-not-allowed shadow-none rounded-[calc(var(--radius)-2px)] h-7 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium pointer-events-none")}>
+                    <span className={cn(buttonVariants({ variant: "default" }), "w-full bg-slate-200 text-slate-400 cursor-not-allowed shadow-none rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium pointer-events-none")}>
                       Unavailable
                     </span>
                   ) : (
-                    <Link href={`/guest/book?facilityId=${facility.id}`} className={cn(buttonVariants({ variant: "default" }), "w-full bg-[var(--navy)] text-white hover:bg-[var(--navy-light)] shadow-none rounded-[calc(var(--radius)-2px)] h-7 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50")}>
+                    <Link href={`/guest/book?facilityId=${facility.id}`} className={cn(buttonVariants({ variant: "default" }), "w-full bg-[var(--navy)] text-white hover:bg-[var(--navy-light)] shadow-none rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50")}>
                       Book
                     </Link>
                   )}
-                  <Link href={`/catalog/facilities/${facility.id}`} className={cn(buttonVariants({ variant: "outline" }), "shrink-0 text-slate-600 border-slate-200 rounded-[calc(var(--radius)-2px)] h-7 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border bg-background hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50")}>
+                  <Link href={`/catalog/facilities/${facility.id}`} className={cn(buttonVariants({ variant: "outline" }), "shrink-0 text-slate-600 border-slate-200 rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border bg-background hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50")}>
                     Details
                   </Link>
                 </CardFooter>

@@ -42,8 +42,8 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
   const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-4">
+    <div className="space-y-6 w-full max-w-4xl">
+      <div className="flex items-start sm:items-center gap-4 flex-wrap">
         <Link href="/facilities" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
@@ -53,7 +53,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
             <p className="page-subtitle mt-0.5">{facility.description}</p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canManage && (
             <>
               <Link href={`/facilities/${facility.id}/slots`} className="btn-secondary flex items-center gap-1.5">
@@ -180,7 +180,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
                 )}
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {activeDays.map(({ label, slots }) => (
                   <div key={label} className="bg-[var(--cream)] rounded-lg px-3 py-2">
                     <p className="text-xs font-semibold text-[var(--navy)] mb-1">{label}</p>
@@ -205,7 +205,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
         ) : (
           <div className="space-y-2">
             {facility.bookings.map((b) => (
-              <div key={b.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+              <div key={b.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-[var(--border)] last:border-0">
                 <div>
                   <p className="text-sm font-medium text-[var(--navy)]">{b.title}</p>
                   <p className="text-xs text-[var(--muted)]">
@@ -213,7 +213,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
                   </p>
                   <p className="text-xs text-[var(--muted)]">By: {(b.patron ?? b.user)?.name ?? "Unknown"}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-semibold">{formatCurrency(Number(b.totalAmount))}</span>
                   <span className={statusBadgeClass(b.status)}>{b.status}</span>
                 </div>
@@ -229,12 +229,12 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           <h2 className="font-semibold text-orange-800 mb-4">Open Maintenance ({facility.maintenance.length})</h2>
           <div className="space-y-2">
             {facility.maintenance.map((m) => (
-              <div key={m.id} className="flex items-center justify-between py-2 border-b border-orange-100 last:border-0">
+              <div key={m.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-orange-100 last:border-0">
                 <div>
                   <p className="text-sm font-medium">{m.title}</p>
                   <p className="text-xs text-[var(--muted)]">By {m.requestedBy.name}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <span className={statusBadgeClass(m.priority)}>{m.priority}</span>
                   <span className={statusBadgeClass(m.status)}>{m.status}</span>
                 </div>

@@ -28,8 +28,8 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
   const contact   = booking.patron ?? booking.user;
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="w-full max-w-3xl space-y-6">
+      <div className="flex items-start sm:items-center gap-3 flex-wrap">
         <Link href="/bookings" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
@@ -37,7 +37,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
           <h1 className="page-title">{booking.title}</h1>
           {booking.description && <p className="page-subtitle mt-0.5">{booking.description}</p>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
           <span className={statusBadgeClass(booking.paymentStatus)}>{booking.paymentStatus}</span>
         </div>
@@ -90,7 +90,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
         <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
           <CreditCard size={13} /> Payment
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
             {booking.payment && (
@@ -119,7 +119,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         {canManage && booking.status === "PENDING" && (
           <BookingActions bookingId={booking.id} />
         )}

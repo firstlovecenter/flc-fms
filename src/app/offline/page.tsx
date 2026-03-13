@@ -1,20 +1,59 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
 export default function OfflinePage() {
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    setIsOnline(window.navigator.onLine);
+    function handleOnline() {
+      setIsOnline(true);
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FAF8F3", padding: 24 }}>
-      <div style={{ textAlign: "center", maxWidth: 400 }}>
-        <img src="/fl-logo.webp" alt="First Love Center" width={80} height={80} style={{ margin: "0 auto 24px" }} />
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 700, color: "#1e3a5f", marginBottom: 8 }}>You&apos;re Offline</h1>
-        <p style={{ color: "#6b7280", fontSize: "0.9rem", lineHeight: 1.6 }}>
-          Please check your internet connection and try again.
+    <div className="min-h-[100dvh] bg-[var(--cream)] flex items-center justify-center px-4 py-8">
+      <div className="card w-full max-w-md p-6 sm:p-7 text-center">
+        <img src="/fl-logo.webp" alt="First Love Center" width={80} height={80} style={{ margin: "0 auto 20px" }} />
+        <h1 className="text-2xl font-bold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
+          You are offline
+        </h1>
+        <p className="mt-2 text-sm text-[var(--slate)] leading-relaxed">
+          We could not reach the network. You can retry now or continue with cached pages.
         </p>
-        <button
-          onClick={() => window.location.reload()}
-          style={{ marginTop: 24, padding: "10px 24px", background: "#1e3a5f", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}
-        >
-          Retry
-        </button>
+
+        <div className={`mt-4 rounded-xl border px-3 py-2 text-sm font-medium ${isOnline ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
+          {isOnline ? "Connection restored" : "No internet connection"}
+        </div>
+
+        <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
+          {isOnline ? (
+            <Link href="/pwa" className="btn-primary w-full sm:w-auto text-center">
+              Open PWA Hub
+            </Link>
+          ) : (
+            <button onClick={() => window.location.reload()} className="btn-primary w-full sm:w-auto">
+              Retry
+            </button>
+          )}
+          <Link href="/login" className="btn-secondary w-full sm:w-auto text-center">
+            Open Login
+          </Link>
+          <Link href="/" className="btn-secondary w-full sm:w-auto text-center">
+            Open Catalog
+          </Link>
+        </div>
       </div>
     </div>
   );

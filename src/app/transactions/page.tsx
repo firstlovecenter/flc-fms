@@ -180,14 +180,14 @@ export default async function TransactionsPage({
             </p>
           )}
         </div>
-        <div className="flex gap-2" style={{ flexShrink: 0, marginTop: "8px" }}>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto" style={{ flexShrink: 0, marginTop: "8px" }}>
           {isFM && (
-            <Link href="/transactions/new-income" className="btn-gold flex items-center gap-2">
+            <Link href="/transactions/new-income" className="btn-gold flex items-center justify-center gap-2 w-full sm:w-auto">
               <ArrowDownLeft size={16} /> Record Income
             </Link>
           )}
           {canSubmitExpenses && (
-            <Link href="/transactions/new-expense" className="btn-gold flex items-center gap-2">
+            <Link href="/transactions/new-expense" className="btn-gold flex items-center justify-center gap-2 w-full sm:w-auto">
               <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
             </Link>
           )}
@@ -196,7 +196,7 @@ export default async function TransactionsPage({
 
       {/* FM Balance Cards */}
       {isFM && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="card p-4 border-green-200 bg-green-50">
             <p className="text-xs font-medium text-green-700">Total Income</p>
             <p className="text-2xl font-bold text-green-800">{formatCurrency(totalIncome)}</p>
@@ -245,7 +245,7 @@ export default async function TransactionsPage({
               <div className="p-8 text-center text-[var(--muted)]">No income recorded yet.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[560px] text-sm">
                   <tbody>
                     {incomeRecords.slice(0, 5).map((r) => (
                       <tr key={r.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
@@ -273,7 +273,7 @@ export default async function TransactionsPage({
               <div className="p-8 text-center text-[var(--muted)]">No expenses yet.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[620px] text-sm">
                   <tbody>
                     {expenses.slice(0, 5).map((e) => (
                       <tr key={e.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
@@ -300,7 +300,7 @@ export default async function TransactionsPage({
       {tab === "income" && isFM && (
         <>
           {mergedIncomeByCategory.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {mergedIncomeByCategory.map((c) => (
                 <div key={c.category} className="card p-4 bg-green-50 border-green-200">
                   <p className="text-xs font-medium text-green-700 truncate">{c.category}</p>
@@ -316,7 +316,7 @@ export default async function TransactionsPage({
               <div className="p-12 text-center text-[var(--muted)]">No income records yet.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[880px] text-sm">
                   <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
                     <tr>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Title</th>
@@ -378,7 +378,7 @@ export default async function TransactionsPage({
               <div className="p-12 text-center text-[var(--muted)]">No expenses found.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[880px] text-sm">
                   <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
                     <tr>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Title</th>
@@ -408,7 +408,7 @@ export default async function TransactionsPage({
                           <span className={statusBadgeClass(e.status)}>{e.status}</span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
                             {isFM && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                             {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
@@ -426,7 +426,7 @@ export default async function TransactionsPage({
           </div>
 
           {expensePages > 1 && (
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               {page > 1 && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary">Previous</Link>}
               {page < expensePages && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-primary">Next</Link>}
             </div>

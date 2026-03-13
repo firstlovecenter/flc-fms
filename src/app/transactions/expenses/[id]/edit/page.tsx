@@ -23,7 +23,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   if (isTransactionLocked(expense.createdAt)) {
     return (
-      <div className="max-w-2xl space-y-4">
+      <div className="w-full max-w-2xl space-y-4">
         <h1 className="page-title">Edit Expense</h1>
         <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
           This transaction is locked because it is older than one week.
@@ -33,7 +33,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full max-w-2xl space-y-6">
       <div>
         <h1 className="page-title">Edit Expense</h1>
         <p className="text-sm page-subtitle">Update the selected expense record.</p>

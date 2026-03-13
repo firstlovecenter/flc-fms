@@ -27,8 +27,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const durationHrs = (durationMs / 3_600_000).toFixed(1);
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="w-full max-w-3xl space-y-6">
+      <div className="flex items-start sm:items-center gap-3 flex-wrap">
         <Link href="/events" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
@@ -48,7 +48,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { icon: Calendar, label: "Starts",   value: formatDateTime(event.startTime) },
           { icon: Clock,    label: "Duration", value: `${durationHrs} hrs` },
@@ -66,7 +66,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Created by */}
-      <div className="card p-4 flex items-center gap-3">
+      <div className="card p-4 flex items-center gap-3 flex-wrap">
         <div className="w-8 h-8 rounded-full bg-brand-100 text-[var(--navy)] flex items-center justify-center text-sm font-semibold">
           {event.createdBy.name.charAt(0)}
         </div>
@@ -82,7 +82,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <h2 className="font-semibold text-[var(--navy)] mb-4">Linked Bookings ({event.bookings.length})</h2>
           <div className="space-y-2">
             {event.bookings.map((b) => (
-              <div key={b.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+              <div key={b.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-[var(--border)] last:border-0">
                 <div>
                   <p className="text-sm font-medium">{b.patron?.name ?? "Staff booking"}</p>
                   <p className="text-xs text-[var(--muted)]">{b.patron?.email ?? ""}</p>

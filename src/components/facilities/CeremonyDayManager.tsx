@@ -161,7 +161,7 @@ export default function CeremonyDayManager({
           {dayError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{dayError}</div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Date *</label>
               <input
@@ -182,7 +182,7 @@ export default function CeremonyDayManager({
               />
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
             <button onClick={handleAddDay} disabled={isPending || !dayForm.date} className="btn-primary text-sm py-1.5 px-4">
               {isPending ? "Creating…" : "Create"}
             </button>
@@ -257,7 +257,7 @@ export default function CeremonyDayManager({
                   {slotError && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-red-700 text-xs">{slotError}</div>
                   )}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[var(--slate)] mb-1">Ceremony Type *</label>
                       <select
@@ -281,7 +281,7 @@ export default function CeremonyDayManager({
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[var(--slate)] mb-1">Start *</label>
                       <input

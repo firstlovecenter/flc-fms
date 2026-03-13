@@ -116,7 +116,7 @@ export default function GuestItemBookingForm({
         ) : (
           <div className="space-y-2">
             {lines.map(line => (
-              <div key={line.id} className="flex items-center gap-3 text-sm">
+              <div key={line.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 text-sm">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]"
                 >
@@ -130,12 +130,12 @@ export default function GuestItemBookingForm({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button type="button" onClick={() => updateQty(line.id, -1)}
-                    className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
+                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
                     <Minus size={11} />
                   </button>
                   <span className="w-6 text-center font-bold text-sm">{line.qty}</span>
                   <button type="button" onClick={() => updateQty(line.id, 1)}
-                    className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
+                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
                     <Plus size={11} />
                   </button>
                 </div>

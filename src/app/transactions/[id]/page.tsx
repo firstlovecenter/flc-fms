@@ -26,8 +26,8 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   const isLocked = isTransactionLocked(expense.createdAt);
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="w-full max-w-2xl space-y-6">
+      <div className="flex items-start sm:items-center gap-3 flex-wrap">
         <Link href="/transactions?tab=expenses" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
@@ -45,7 +45,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card p-4 col-span-2">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
             <DollarSign size={13} /> Amount

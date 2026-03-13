@@ -76,7 +76,7 @@ export default function EventForm({ facilities }: { facilities: Facility[] }) {
           placeholder="Describe the event…" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Start *</label>
           <input {...register("startTime")} type="datetime-local" className="input" />
@@ -94,7 +94,7 @@ export default function EventForm({ facilities }: { facilities: Facility[] }) {
         <input {...register("maxAttendees")} type="number" className="input" placeholder="Leave blank for unlimited" />
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input {...register("isPublic")} type="checkbox" className="w-4 h-4 rounded accent-brand-500" />
           <span className="text-sm text-[var(--slate)]">Public event (visible to patrons)</span>
@@ -105,11 +105,11 @@ export default function EventForm({ facilities }: { facilities: Facility[] }) {
         </label>
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
           {isSubmitting ? "Creating…" : "Create Event"}
         </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
       </div>
     </form>
   );

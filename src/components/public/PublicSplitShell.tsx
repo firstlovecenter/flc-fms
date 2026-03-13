@@ -31,6 +31,7 @@ function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: s
   return (
     <div
       style={{
+        width: "100%",
         position: "relative",
         maxWidth: 560,
         borderRadius: 24,
@@ -206,7 +207,7 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <Link href="/" className="btn-ghost" style={{ color: current === "home" ? active : idle }}>Home</Link>
               <Link href="/guest/book" className="btn-ghost" style={{ color: current === "guest" ? active : idle }}>Guest Booking</Link>
-              <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 <Link href="/login" className="btn-primary">Sign In</Link>
                 <ThemeModeSwitcher />
               </div>

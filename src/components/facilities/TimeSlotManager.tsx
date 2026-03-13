@@ -120,7 +120,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
         <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded p-2">{error}</p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Slot Label *</label>
           <input

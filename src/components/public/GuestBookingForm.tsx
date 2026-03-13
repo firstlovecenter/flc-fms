@@ -336,9 +336,9 @@ export default function GuestBookingForm({
                               cursor: slot.isAvailable ? "pointer" : "not-allowed",
                             }}
                           >
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-center gap-2 sm:gap-5">
                               <span
-                                className={`text-sm font-semibold tabular-nums min-w-[68px] ${isSelected ? "text-white" : "text-[var(--navy)] dark:text-gray-100"}`}
+                                className={`text-sm font-semibold tabular-nums min-w-[58px] sm:min-w-[68px] ${isSelected ? "text-white" : "text-[var(--navy)] dark:text-gray-100"}`}
                               >
                                 {formatTime(slot.startTime)}
                               </span>
@@ -436,7 +436,7 @@ export default function GuestBookingForm({
 
         {/* Footer — Continue button */}
         {selectedFacility && (
-          <div className="px-5 py-3.5 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] flex items-center justify-between bg-white dark:bg-transparent">
+          <div className="px-5 py-3.5 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-transparent">
             <p className="text-sm text-[var(--muted)] dark:text-gray-400">
               {!selectedDate
                 ? "Pick a date to continue"
@@ -448,7 +448,7 @@ export default function GuestBookingForm({
               type="button"
               onClick={() => setStep(2)}
               disabled={!selectedDate || !selectedSlot}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2"
               style={{ opacity: selectedDate && selectedSlot ? 1 : 0.35 }}
             >
               Next <ArrowRight size={15} />
@@ -575,18 +575,18 @@ export default function GuestBookingForm({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
         <button
           type="button"
           onClick={() => setStep(1)}
-          className="btn-secondary flex items-center gap-2"
+          className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2"
         >
           <ChevronLeft size={16} /> Back
         </button>
         <button
           type="submit"
           disabled={submitting || !title.trim() || !guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || (categories.length > 0 && !category)}
-          className="btn-primary flex-1"
+          className="btn-primary w-full sm:flex-1"
         >
           {submitting ? "Submitting…" : "Submit Booking Request"}
         </button>
