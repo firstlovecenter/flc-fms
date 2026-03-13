@@ -32,7 +32,12 @@ declare global {
 function SubmitBtn() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-primary" style={{ width: "100%", padding: "11px", justifyContent: "center", marginTop: 8 }}>
+    <button
+      type="submit"
+      disabled={pending}
+      className="btn-primary w-full"
+      style={{ minHeight: 44, justifyContent: "center" }}
+    >
       {pending ? "Signing in…" : <><span>Sign In</span> <ArrowRight size={15} /></>}
     </button>
   );
@@ -299,21 +304,20 @@ function LoginContent() {
                 <input name="password" type="password" required className="input" placeholder="••••••••" autoComplete="current-password" />
               </div>
 
-              <SubmitBtn />
-
-              <div style={{ display: "flex", justifyContent: "center", marginTop: -6 }}>
-                <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
-                  Forgot password?
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <SubmitBtn />
+                <Link
+                  href="/patron/register"
+                  className="btn-secondary w-full"
+                  style={{ minHeight: 44, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  Create Account
                 </Link>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-                <Link
-                  href="/patron/register"
-                  className="btn-secondary"
-                  style={{ padding: "8px 14px", fontSize: "0.78rem", textDecoration: "none" }}
-                >
-                  Create Account
+              <div style={{ display: "flex", justifyContent: "center", marginTop: -2 }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
+                  Forgot password?
                 </Link>
               </div>
             </form>
@@ -326,9 +330,9 @@ function LoginContent() {
               <div className="alert alert-error" style={{ marginTop: 10 }}>{googleError}</div>
             )}
 
-            <p style={{ textAlign: "center", marginTop: 10, fontSize: "0.85rem" }}>
-              <Link href="/" style={{ color: "var(--muted)", textDecoration: "none" }}>← Back to Home</Link>
-            </p>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 10 }}>
+              <Link href="/" className="btn-secondary" style={{ fontSize: "0.85rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>← Back to Home</Link>
+            </div>
           </div>
         </div>
       </div>
