@@ -53,6 +53,8 @@ function LoginContent() {
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
+  const [showLaunchSplash, setShowLaunchSplash] = useState(false);
+  const [launchSplashExiting, setLaunchSplashExiting] = useState(false);
 
   const [state, action] = useFormState(
     async (_: unknown, fd: FormData) => loginAnyAccount(fd),
@@ -118,8 +120,80 @@ function LoginContent() {
     };
   }, [from, router]);
 
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    if (!standalone) return;
+
+    setShowLaunchSplash(true);
+    const beginExit = window.setTimeout(() => setLaunchSplashExiting(true), 2100);
+    const finish = window.setTimeout(() => setShowLaunchSplash(false), 2800);
+
+    return () => {
+      window.clearTimeout(beginExit);
+      window.clearTimeout(finish);
+    };
+  }, []);
+
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", position: "relative" }} className="bg-navy dark:bg-transparent">
+    <div style={{ minHeight: "100dvh", display: "flex", position: "relative", background: "var(--cream)" }} className="lg:bg-navy dark:bg-transparent">
+      {showLaunchSplash && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 120,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+            opacity: launchSplashExiting ? 0 : 1,
+            transform: launchSplashExiting ? "translateY(-24px)" : "translateY(0)",
+            pointerEvents: "none",
+          }}
+          aria-hidden="true"
+        >
+          <img
+            src={leftSplitImage}
+            alt=""
+            onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+            <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
+            <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
+          </video>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.86) 0%, rgba(10,22,40,0.68) 100%)" }} />
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+              padding: "0 24px",
+              textAlign: "center",
+            }}
+          >
+            <img src="/fl-logo-white.webp" alt="FLC FMS" style={{ width: 86, height: 86, objectFit: "contain" }} />
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#fff", margin: 0, lineHeight: 1.2 }}>
+              FLC FMS
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.84)", margin: 0, fontSize: "0.84rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              Preparing Sign-In
+            </p>
+            <div style={{ width: 140, height: 2, marginTop: 8, background: "rgba(255,255,255,0.18)", borderRadius: 999, overflow: "hidden" }}>
+              <div style={{ width: "100%", height: "100%", background: "var(--gold)", transformOrigin: "left", animation: "splashBar 2800ms linear forwards" }} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Desktop left panel ─────────────────────────────────────── */}
       <div
         className="hidden lg:flex lg:w-3/5"
