@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { isTransactionLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
+import { hasVicarPermission } from "@/lib/staff-permissions";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 import IncomeRowActions from "@/components/expenses/IncomeRowActions";
 import ExpenseRowActions from "@/components/expenses/ExpenseRowActions";
@@ -16,7 +17,7 @@ export default async function TransactionsPage({
 }) {
   const session = await requireStaff();
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canSubmitExpenses = isFM;
+  const canSubmitExpenses = isFM || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
   const tab = isFM ? (searchParams.tab ?? "overview") : "expenses";
   const page = Number(searchParams.page ?? 1);
   const take = 20;

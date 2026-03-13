@@ -10,6 +10,7 @@ import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
 import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
 import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
+import { requirePermission } from "@/lib/auth/guards";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -26,7 +27,7 @@ const UpdateExpenseSchema = z.object({
 });
 
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
-  const session  = await requireStaff("FACILITY_MANAGER");
+  const session  = await requirePermission("canSubmitExpenses");
   const validated = ExpenseSchema.parse(data);
 
   const expense = await prisma.expense.create({
