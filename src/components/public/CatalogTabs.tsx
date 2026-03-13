@@ -29,7 +29,7 @@ export default function CatalogTabs({
           <Link
             key={id}
             href={id === "venues" ? "/" : `/?tab=${id}`}
-            className="min-w-[120px] sm:min-w-0 flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all"
+            className="min-w-[96px] sm:min-w-0 flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all"
             style={{
               background: isActive ? "var(--navy-glass)" : "transparent",
               color: isActive ? "#fff" : "var(--slate)",

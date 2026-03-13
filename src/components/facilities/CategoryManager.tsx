@@ -8,7 +8,6 @@ interface Category {
   id: string;
   name: string;
   slug: string;
-  isCeremony: boolean;
   isActive: boolean;
   sortOrder: number;
 }
@@ -17,13 +16,13 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   const [categories, setCategories] = useState(initialCategories);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", isCeremony: false });
+  const [form, setForm] = useState({ name: "" });
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function startEdit(cat: Category) {
     setEditingId(cat.id);
-    setForm({ name: cat.name, isCeremony: cat.isCeremony });
+    setForm({ name: cat.name });
     setAdding(false);
     setError(null);
   }
@@ -31,7 +30,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   function startAdd() {
     setAdding(true);
     setEditingId(null);
-    setForm({ name: "", isCeremony: false });
+    setForm({ name: "" });
     setError(null);
   }
 
@@ -86,15 +85,6 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                   placeholder="Category name"
                   autoFocus
                 />
-                <label className="flex items-center gap-1.5 text-sm whitespace-nowrap cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.isCeremony}
-                    onChange={(e) => setForm((f) => ({ ...f, isCeremony: e.target.checked }))}
-                    className="h-4 w-4 rounded"
-                  />
-                  Ceremony
-                </label>
                 <button onClick={handleSave} disabled={isPending} className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
                   <Check size={14} />
                 </button>
@@ -108,11 +98,6 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                   <span className={`text-sm font-medium ${cat.isActive ? "text-[var(--navy)]" : "text-gray-400 line-through"}`}>
                     {cat.name}
                   </span>
-                  {cat.isCeremony && (
-                    <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full">
-                      Ceremony
-                    </span>
-                  )}
                   <span className="text-xs text-[var(--muted)]">{cat.slug}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -149,15 +134,6 @@ export default function CategoryManager({ initialCategories }: { initialCategori
             placeholder="New category name"
             autoFocus
           />
-          <label className="flex items-center gap-1.5 text-sm whitespace-nowrap cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.isCeremony}
-              onChange={(e) => setForm((f) => ({ ...f, isCeremony: e.target.checked }))}
-              className="h-4 w-4 rounded"
-            />
-            Ceremony
-          </label>
           <button onClick={handleSave} disabled={isPending} className="btn-primary text-sm py-1.5 px-4">
             {isPending ? "Saving…" : "Add"}
           </button>

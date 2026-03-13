@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPatronBooking } from "@/actions/booking.actions";
 import { getFacilityCategories, getFacilityAvailability } from "@/actions/availability.actions";
-import { getCeremonyDatesForCategory, getCeremonySlots, CEREMONY_CATEGORIES } from "@/actions/ceremony.actions";
 import { formatCurrency } from "@/lib/utils";
 import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
@@ -71,10 +70,6 @@ export default function PatronBookingForm({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
-  // Ceremony mode state
-  const [ceremonyDates, setCeremonyDates] = useState<{ id: string; date: Date; title: string | null }[]>([]);
-  const [isCeremonyMode, setIsCeremonyMode] = useState(false);
-
   // Step 2 state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -99,24 +94,18 @@ export default function PatronBookingForm({
 
   // When date or category changes, fetch available slots
   useEffect(() => {
-    if (!selectedDate || !facilityId) return;
+    if (!selectedDate || !facilityId || !category) return;
     setSlotsLoading(true);
     setSelectedSlot(null);
 
-    if (isCeremonyMode && category) {
-      getCeremonySlots(facilityId, selectedDate, category)
-        .then((res) => setSlots((res.slots || []).map((s) => ({ ...s, isFlexible: false }))))
-        .finally(() => setSlotsLoading(false));
-    } else {
-      getFacilityAvailability(
-        facilityId,
-        selectedDate,
-        category || undefined
-      )
-        .then((res) => setSlots(res.success ? res.slots || [] : []))
-        .finally(() => setSlotsLoading(false));
-    }
-  }, [selectedDate, facilityId, category, isCeremonyMode]);
+    getFacilityAvailability(
+      facilityId,
+      selectedDate,
+      category
+    )
+      .then((res) => setSlots(res.success ? res.slots || [] : []))
+      .finally(() => setSlotsLoading(false));
+  }, [selectedDate, facilityId, category]);
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
@@ -128,22 +117,12 @@ export default function PatronBookingForm({
     return hours * selectedSlot.effectivePricePerHour;
   })();
 
-  const disabledDays = isCeremonyMode
-    ? [
-        { before: addDays(new Date(), 1) },
-        { dayOfWeek: [1] },
-        (date: Date) => {
-          return !ceremonyDates.some(
-            (cd) => new Date(cd.date).toDateString() === date.toDateString()
-          );
-        },
-      ]
-    : [
-        { before: addDays(new Date(), 1) },
-        { dayOfWeek: [1] },
-        (date: Date) =>
-          !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
-      ];
+  const disabledDays = [
+    { before: addDays(new Date(), 1) },
+    { dayOfWeek: [1] },
+    (date: Date) =>
+      !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,7 +139,7 @@ export default function PatronBookingForm({
 
     const result = await createPatronBooking({
       facilityId: selectedFacility.id,
-      category: (category || "OTHER") as any,
+      category: category as any,
       title,
       description: description || undefined,
       startTime,
@@ -251,38 +230,18 @@ export default function PatronBookingForm({
                           const val = e.target.value;
                           setCategory(val);
                           setSelectedSlot(null);
-                          if (val && CEREMONY_CATEGORIES.includes(val) && facilityId) {
-                            getCeremonyDatesForCategory(facilityId, val).then((dates) => {
-                              if (dates.length > 0) {
-                                setCeremonyDates(dates);
-                                setIsCeremonyMode(true);
-                                setSelectedDate(undefined);
-                                setSlots([]);
-                              } else {
-                                setCeremonyDates([]);
-                                setIsCeremonyMode(false);
-                              }
-                            });
-                          } else {
-                            setCeremonyDates([]);
-                            setIsCeremonyMode(false);
-                          }
+                          setSelectedDate(undefined);
+                          setSlots([]);
                         }}
                         className="input text-sm"
                       >
-                        <option value="">All event types</option>
+                        <option value="">Select event type...</option>
                         {categories.map((c) => (
                           <option key={c.category} value={c.category}>
                             {formatCategoryLabel(c.category)}
                           </option>
                         ))}
                       </select>
-                    </div>
-                  )}
-
-                  {isCeremonyMode && (
-                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
-                      <strong>Ceremony Booking:</strong> Only dates with scheduled ceremony slots are available.
                     </div>
                   )}
 
@@ -423,7 +382,9 @@ export default function PatronBookingForm({
         {selectedFacility && (
           <div className="px-5 py-3.5 border-t border-[var(--border)] flex items-center justify-between bg-white">
             <p className="text-sm text-[var(--muted)] dark:text-gray-400">
-              {!selectedDate
+              {!category
+                ? "Pick an event category"
+                : !selectedDate
                 ? "Pick a date to continue"
                 : !selectedSlot
                 ? "Pick a time slot"
@@ -432,9 +393,9 @@ export default function PatronBookingForm({
             <button
               type="button"
               onClick={() => setStep(2)}
-              disabled={!selectedDate || !selectedSlot}
+              disabled={!category || !selectedDate || !selectedSlot}
               className="btn-primary flex items-center gap-2"
-              style={{ opacity: selectedDate && selectedSlot ? 1 : 0.35 }}
+              style={{ opacity: category && selectedDate && selectedSlot ? 1 : 0.35 }}
             >
               Next <ArrowRight size={15} />
             </button>

@@ -8,7 +8,6 @@ import { auditLog } from "@/lib/audit";
 
 const CategorySchema = z.object({
   name: z.string().min(2).max(100),
-  isCeremony: z.coerce.boolean().default(false),
 });
 
 function slugify(name: string) {
@@ -40,7 +39,6 @@ export async function createBookingCategory(data: z.infer<typeof CategorySchema>
     data: {
       name: validated.name,
       slug,
-      isCeremony: validated.isCeremony,
       sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
     },
   });
@@ -63,7 +61,7 @@ export async function updateBookingCategory(id: string, data: z.infer<typeof Cat
 
   const category = await prisma.bookingCategory.update({
     where: { id },
-    data: { name: validated.name, slug, isCeremony: validated.isCeremony },
+    data: { name: validated.name, slug },
   });
 
   auditLog({ userId: session.sub, action: "UPDATE_BOOKING_CATEGORY", entity: "BookingCategory", entityId: id, after: category });

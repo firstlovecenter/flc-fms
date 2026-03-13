@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const securityHeaders = [
+const productionSecurityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   {
     key: "Strict-Transport-Security",
@@ -26,9 +26,20 @@ const securityHeaders = [
   },
 ];
 
+const developmentSecurityHeaders = [
+  { key: "X-DNS-Prefetch-Control", value: "on" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+];
+
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    const headers =
+      process.env.NODE_ENV === "production"
+        ? productionSecurityHeaders
+        : developmentSecurityHeaders;
+
+    return [{ source: "/(.*)", headers }];
   },
   experimental: {
     serverActions: {

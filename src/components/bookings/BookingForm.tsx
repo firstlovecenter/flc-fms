@@ -66,6 +66,7 @@ export default function BookingForm({
   });
 
   const facilityId = watch("facilityId");
+  const category = watch("category");
   const startTime  = watch("startTime");
   const endTime    = watch("endTime");
 
@@ -103,9 +104,9 @@ export default function BookingForm({
     // If a date is chosen, filter by day of week
     if (startTime) {
       const dayOfWeek = new Date(startTime).getDay();
-      return facility.timeSlots.filter((s) => s.dayOfWeek === dayOfWeek);
+      return facility.timeSlots.filter((s) => s.dayOfWeek === dayOfWeek && s.category === category);
     }
-    return facility.timeSlots;
+    return facility.timeSlots.filter((s) => s.category === category);
   })();
 
   function applySlot(slot: TimeSlot) {
@@ -164,7 +165,7 @@ export default function BookingForm({
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Category *</label>
         <select {...register("category")} className="input">
-          <option value="">Select a category…</option>
+          <option value="">Select a category...</option>
           {categoryOptions.map((c) => (
             <option key={c.category} value={c.category}>
               {c.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
@@ -202,7 +203,7 @@ export default function BookingForm({
         </div>
 
         {/* Available slot chips */}
-        {availableSlots.length > 0 && (
+        {category && availableSlots.length > 0 && (
           <div>
             <p className="text-xs text-[var(--muted)] mb-1.5 flex items-center gap-1">
               <Clock size={12} /> Available time slots — click to apply
@@ -233,7 +234,7 @@ export default function BookingForm({
         )}
       </div>
 
-      {estimatedCost !== null && (
+      {category && estimatedCost !== null && (
         <div className="bg-brand-50 border border-brand-200 rounded-lg p-3 text-sm">
           <span className="text-[var(--navy)]">Estimated cost: </span>
           <span className="font-bold text-[var(--navy)] text-base">{formatCurrency(estimatedCost)}</span>

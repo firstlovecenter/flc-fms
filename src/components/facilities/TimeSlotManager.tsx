@@ -18,7 +18,7 @@ export interface TimeSlot {
   isFree:               boolean;
   pricePerHourOverride: unknown | null;
   maxBookings:          number;
-  category:             string | null;
+  category:             string;
   isActive:             boolean;
 }
 
@@ -61,7 +61,7 @@ function slotToForm(s: TimeSlot): SlotFormState {
     isFree:               s.isFree,
     pricePerHourOverride: s.pricePerHourOverride != null ? String(s.pricePerHourOverride) : "",
     maxBookings:          String(s.maxBookings),
-    category:             s.category ?? "",
+    category:             s.category,
   };
 }
 
@@ -86,6 +86,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.label.trim())          { setError("Label is required"); return; }
+    if (!form.category)              { setError("Category is required"); return; }
     if (form.startTime >= form.endTime) { setError("End time must be after start time"); return; }
 
     const payload = {
@@ -97,7 +98,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
       isFree:               form.isFree,
       pricePerHourOverride: form.pricePerHourOverride ? Number(form.pricePerHourOverride) : null,
       maxBookings:          Number(form.maxBookings) || 1,
-      category:             form.category || null,
+      category:             form.category,
     };
 
     startTransition(async () => {
@@ -145,13 +146,14 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[var(--slate)] mb-1">Category (optional)</label>
+          <label className="block text-xs font-medium text-[var(--slate)] mb-1">Category *</label>
           <select
             className="input text-sm"
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
           >
-            {[{ value: "", label: "All categories" }, ...bookingCategories].map((c) => (
+            <option value="">Select category...</option>
+            {bookingCategories.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>

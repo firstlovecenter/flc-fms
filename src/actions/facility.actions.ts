@@ -118,7 +118,7 @@ const TimeSlotSchema = z.object({
   isFree:              z.boolean().default(false),
   pricePerHourOverride: z.coerce.number().positive().optional().nullable(),
   maxBookings:         z.coerce.number().int().positive().default(1),
-  category:            z.string().optional().nullable(),
+  category:            z.string().min(1, "Category is required"),
 });
 
 export async function getTimeSlots(facilityId: string) {
@@ -141,7 +141,6 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
     data: {
       facilityId,
       ...validated,
-      category: validated.category as any ?? null,
       pricePerHourOverride: validated.pricePerHourOverride ?? null,
     },
   });
@@ -159,7 +158,6 @@ export async function updateTimeSlot(slotId: string, data: Partial<z.infer<typeo
     where: { id: slotId },
     data: {
       ...data,
-      category: data.category as any,
       pricePerHourOverride: data.pricePerHourOverride ?? null,
     },
   });

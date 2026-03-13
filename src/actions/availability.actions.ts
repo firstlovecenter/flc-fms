@@ -25,6 +25,14 @@ export async function getFacilityAvailability(
   category?: string
 ) {
   try {
+    if (!category) {
+      return {
+        success: false,
+        error: "Event category is required.",
+        slots: [],
+      };
+    }
+
     const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
 
     // Mondays are office off-days (Sabbath) — no availability
@@ -58,11 +66,9 @@ export async function getFacilityAvailability(
         where: { id: facilityId },
         select: { underMaintenance: true },
       }),
-      category
-        ? prisma.facilityPricing.findFirst({
-            where: { facilityId, category, isActive: true },
-          })
-        : Promise.resolve(null),
+      prisma.facilityPricing.findFirst({
+        where: { facilityId, category, isActive: true },
+      }),
     ]);
 
     // Hard emergency lock
@@ -92,6 +98,13 @@ export async function getFacilityAvailability(
     }
 
     const categoryPricing2 = categoryPricing;
+    if (!categoryPricing2) {
+      return {
+        success: false,
+        error: "No category pricing configured for this facility.",
+        slots: [],
+      };
+    }
 
     // Get time slots for this day
     const timeSlots = await prisma.facilityTimeSlot.findMany({
@@ -99,14 +112,7 @@ export async function getFacilityAvailability(
         facilityId,
         dayOfWeek,
         isActive: true,
-        ...(category
-          ? {
-              OR: [
-                { category },
-                { category: null },
-              ],
-            }
-          : {}),
+        category,
       },
       orderBy: [{ startTime: "asc" }, { category: "asc" }],
     });
@@ -292,6 +298,143 @@ export async function getFacilityCategories(facilityId: string) {
 }
 
 /**
+ * Get all active booking categories for public booking flows.
+ */
+export async function getPublicBookingCategories() {
+  try {
+    const categories = await prisma.bookingCategory.findMany({
+      where: { isActive: true },
+      select: { slug: true, name: true },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    return {
+      success: true,
+      categories: categories.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching public booking categories:", error);
+    return {
+      success: false,
+      error: "Failed to fetch booking categories",
+      categories: [],
+    };
+  }
+}
+
+/**
+ * Category-first discovery: return only facilities with at least one available slot
+ * for the selected category and date.
+ */
+export async function getBookableFacilitiesByCategoryDate(category: string, date: Date) {
+  try {
+    if (!category) {
+      return { success: false, error: "Event category is required.", facilities: [] };
+    }
+
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 1) {
+      return {
+        success: true,
+        facilities: [],
+        message: "The office is closed on Mondays (Sabbath day).",
+      };
+    }
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const facilities = await prisma.facility.findMany({
+      where: {
+        isActive: true,
+        underMaintenance: false,
+        availableDays: { has: dayOfWeek },
+        pricing: {
+          some: {
+            category,
+            isActive: true,
+          },
+        },
+        timeSlots: {
+          some: {
+            dayOfWeek,
+            isActive: true,
+            category,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        capacity: true,
+        pricePerHour: true,
+        amenities: true,
+        availableDays: true,
+        pricing: {
+          where: { category, isActive: true },
+          select: { pricePerHour: true, freeDays: true },
+          take: 1,
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+
+    const output: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      capacity: number;
+      pricePerHour: number;
+      amenities: string[];
+      availableDays: number[];
+    }> = [];
+
+    for (const facility of facilities) {
+      const maintConflict = await prisma.maintenanceRequest.findFirst({
+        where: {
+          facilityId: facility.id,
+          status: { in: ["OPEN", "IN_PROGRESS"] },
+          scheduledStart: { not: null, lt: endOfDay },
+          scheduledEnd: { not: null, gt: startOfDay },
+        },
+        select: { id: true },
+      });
+      if (maintConflict) continue;
+
+      const availability = await getFacilityAvailability(facility.id, date, category);
+      if (!availability.success) continue;
+      const hasBookableSlot = (availability.slots || []).some((s) => s.isAvailable);
+      if (!hasBookableSlot) continue;
+
+      output.push({
+        id: facility.id,
+        name: facility.name,
+        description: facility.description,
+        capacity: facility.capacity,
+        pricePerHour: Number(facility.pricing[0]?.pricePerHour ?? facility.pricePerHour),
+        amenities: facility.amenities,
+        availableDays: facility.availableDays,
+      });
+    }
+
+    return { success: true, facilities: output };
+  } catch (error) {
+    console.error("Error fetching facilities by category/date:", error);
+    return {
+      success: false,
+      error: "Failed to fetch facilities for this category and date",
+      facilities: [],
+    };
+  }
+}
+
+/**
  * Check if a specific time range is available
  */
 export async function checkTimeRangeAvailability(
@@ -353,6 +496,13 @@ export async function estimateFacilityBookingAmount(
   endTime: Date,
 ) {
   try {
+    if (!category) {
+      return {
+        success: false,
+        error: "Event category is required.",
+      };
+    }
+
     const pricing = await prisma.facilityPricing.findFirst({
       where: {
         facilityId,
@@ -377,15 +527,19 @@ export async function estimateFacilityBookingAmount(
         facilityId,
         dayOfWeek,
         isActive: true,
-        OR: [
-          { category },
-          { category: null },
-        ],
+        category,
         startTime: { lte: start },
         endTime: { gte: end },
       },
-      orderBy: { category: "desc" },
+      orderBy: { startTime: "asc" },
     });
+
+    if (!slot) {
+      return {
+        success: false,
+        error: "No category-specific slot mapping found for the selected date/time",
+      };
+    }
 
     if (slot?.isFree || pricing.freeDays.includes(dayOfWeek)) {
       return {

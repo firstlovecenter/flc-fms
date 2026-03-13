@@ -56,7 +56,7 @@ export default function FacilityAvailabilityCalendar({
 
   // Fetch time slots when date is selected
   useEffect(() => {
-    if (!selectedDate || !facilityId) return;
+    if (!selectedDate || !facilityId || !category) return;
 
     setLoading(true);
     setSelectedSlot(null);
@@ -143,12 +143,17 @@ export default function FacilityAvailabilityCalendar({
         }}>
           📅 Select a Date
         </h3>
+        {!category && (
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "10px" }}>
+            Select an event category first.
+          </p>
+        )}
         <div style={{ display: "flex", justifyContent: "center", animation: "fade-in 0.3s ease-out" }}>
           <DayPicker
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
-            disabled={disabledDays}
+            disabled={[() => !category, ...disabledDays]}
             className="border rounded-lg p-2"
             modifiersClassNames={{
               selected: "bg-brand-500 text-white",

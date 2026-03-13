@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-const securityHeaders = [
+const productionSecurityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   {
     key: "Strict-Transport-Security",
@@ -26,9 +26,20 @@ const securityHeaders = [
   },
 ];
 
+const developmentSecurityHeaders = [
+  { key: "X-DNS-Prefetch-Control", value: "on" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+];
+
 const nextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    const headers =
+      process.env.NODE_ENV === "production"
+        ? productionSecurityHeaders
+        : developmentSecurityHeaders;
+
+    return [{ source: "/(.*)", headers }];
   },
   experimental: {
     // Next.js does NOT support wildcard patterns in allowedOrigins.
@@ -37,8 +48,10 @@ const nextConfig = {
       allowedOrigins: [
         "localhost:3000",
         "localhost:3001",
+        "localhost:3002",
         "127.0.0.1:3000",
         "127.0.0.1:3001",
+        "127.0.0.1:3002",
         "admin.platform.com",
         "accra.platform.com",
         "kumasi.platform.com",

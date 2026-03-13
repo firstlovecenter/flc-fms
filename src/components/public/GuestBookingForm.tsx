@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { createGuestBooking } from "@/actions/booking.actions";
-import { getFacilityCategories, getFacilityAvailability } from "@/actions/availability.actions";
-import { getCeremonyDatesForCategory, getCeremonySlots, CEREMONY_CATEGORIES } from "@/actions/ceremony.actions";
+import {
+  getBookableFacilitiesByCategoryDate,
+  getFacilityCategories,
+  getFacilityAvailability,
+  getPublicBookingCategories,
+} from "@/actions/availability.actions";
 import { formatCurrency } from "@/lib/utils";
 import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
@@ -24,6 +28,11 @@ interface CategoryOption {
   category: string;
   pricePerHour: number;
   description: string | null;
+}
+
+interface PublicCategoryOption {
+  slug: string;
+  name: string;
 }
 
 interface TimeSlot {
@@ -57,21 +66,20 @@ export default function GuestBookingForm({
   facilities: Facility[];
   defaultFacilityId?: string;
 }) {
+  const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1 state — Calendly picker
   const [facilityId, setFacilityId] = useState(defaultFacilityId ?? "");
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [publicCategories, setPublicCategories] = useState<PublicCategoryOption[]>([]);
+  const [bookableFacilities, setBookableFacilities] = useState<Facility[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [category, setCategory] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-
-  // Ceremony mode state
-  const [ceremonyDates, setCeremonyDates] = useState<{ id: string; date: Date; title: string | null }[]>([]);
-  const [isCeremonyMode, setIsCeremonyMode] = useState(false);
 
   // Step 2 state — guest info + booking details
   const [guestName, setGuestName] = useState("");
@@ -83,42 +91,81 @@ export default function GuestBookingForm({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // When facility changes, reset and fetch categories
   useEffect(() => {
-    const f = facilities.find((x) => x.id === facilityId) ?? null;
-    setSelectedFacility(f);
+    getPublicBookingCategories().then((res) => {
+      if (res.success) setPublicCategories(res.categories);
+    });
+  }, []);
+
+  useEffect(() => {
+    setFacilityId(defaultFacilityId ?? "");
+    setSelectedFacility(defaultFacilityId ? facilities.find((f) => f.id === defaultFacilityId) ?? null : null);
     setCategories([]);
     setCategory("");
     setSelectedDate(undefined);
     setSlots([]);
     setSelectedSlot(null);
+    setBookableFacilities([]);
+  }, [bookingMode, defaultFacilityId, facilities]);
+
+  // When facility changes, reset and fetch categories
+  useEffect(() => {
+    const f = facilities.find((x) => x.id === facilityId) ?? null;
+    setSelectedFacility(f);
+    setCategories([]);
+    if (bookingMode === "facility-first") {
+      setSelectedDate(undefined);
+    }
+    setSlots([]);
+    setSelectedSlot(null);
     if (f) {
       getFacilityCategories(f.id).then((res) => {
-        if (res.success) setCategories(res.categories);
+        if (res.success) {
+          setCategories(res.categories);
+          if (bookingMode === "facility-first") {
+            setCategory("");
+          } else if (!res.categories.some((c) => c.category === category)) {
+            setCategory("");
+          }
+        }
       });
+    } else if (bookingMode === "facility-first") {
+      setCategory("");
     }
-  }, [facilityId, facilities]);
+  }, [facilityId, facilities, bookingMode, category]);
+
+  useEffect(() => {
+    if (bookingMode !== "category-first" || !category || !selectedDate) {
+      setBookableFacilities([]);
+      return;
+    }
+
+    getBookableFacilitiesByCategoryDate(category, selectedDate).then((res) => {
+      if (res.success) {
+        setBookableFacilities((res.facilities || []).map((f) => ({
+          ...f,
+          pricePerHour: f.pricePerHour,
+        })));
+      } else {
+        setBookableFacilities([]);
+      }
+    });
+  }, [bookingMode, category, selectedDate]);
 
   // When date or category changes, fetch available slots
   useEffect(() => {
-    if (!selectedDate || !facilityId) return;
+    if (!selectedDate || !facilityId || !category) return;
     setSlotsLoading(true);
     setSelectedSlot(null);
 
-    if (isCeremonyMode && category) {
-      getCeremonySlots(facilityId, selectedDate, category)
-        .then((res) => setSlots((res.slots || []).map((s) => ({ ...s, isFlexible: false }))))
-        .finally(() => setSlotsLoading(false));
-    } else {
-      getFacilityAvailability(
-        facilityId,
-        selectedDate,
-        category || undefined
-      )
-        .then((res) => setSlots(res.success ? res.slots || [] : []))
-        .finally(() => setSlotsLoading(false));
-    }
-  }, [selectedDate, facilityId, category, isCeremonyMode]);
+    getFacilityAvailability(
+      facilityId,
+      selectedDate,
+      category
+    )
+      .then((res) => setSlots(res.success ? res.slots || [] : []))
+      .finally(() => setSlotsLoading(false));
+  }, [selectedDate, facilityId, category]);
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
@@ -130,23 +177,13 @@ export default function GuestBookingForm({
     return hours * selectedSlot.effectivePricePerHour;
   })();
 
-  const disabledDays = isCeremonyMode
-    ? [
-        { before: addDays(new Date(), 1) },
-        { dayOfWeek: [1] },
-        (date: Date) => {
-          // Only allow ceremony dates
-          return !ceremonyDates.some(
-            (cd) => new Date(cd.date).toDateString() === date.toDateString()
-          );
-        },
-      ]
-    : [
-        { before: addDays(new Date(), 1) },
-        { dayOfWeek: [1] },
-        (date: Date) =>
-          !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
-      ];
+  const disabledDays = [
+    () => !category,
+    { before: addDays(new Date(), 1) },
+    { dayOfWeek: [1] },
+    (date: Date) =>
+      !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -163,7 +200,7 @@ export default function GuestBookingForm({
 
     const result = await createGuestBooking({
       facilityId: selectedFacility.id,
-      category: (category || "OTHER") as any,
+      category: category as any,
       title,
       description: description || undefined,
       startTime,
@@ -197,21 +234,77 @@ export default function GuestBookingForm({
   if (step === 1) {
     return (
       <div className="card overflow-hidden">
-        {/* Venue selector header */}
+        {/* Booking mode + selectors */}
         <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]">
-          <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
-            Select Venue
-          </label>
-          <select
-            value={facilityId}
-            onChange={(e) => setFacilityId(e.target.value)}
-            className="input"
-          >
-            <option value="">Choose a venue…</option>
-            {facilities.map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
+          <div className="mb-3 inline-flex rounded-lg border border-[var(--border)] bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setBookingMode("facility-first")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                bookingMode === "facility-first" ? "bg-[var(--navy)] text-white" : "text-[var(--slate)]"
+              }`}
+            >
+              Venue -&gt; Category
+            </button>
+            <button
+              type="button"
+              onClick={() => setBookingMode("category-first")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                bookingMode === "category-first" ? "bg-[var(--navy)] text-white" : "text-[var(--slate)]"
+              }`}
+            >
+              Category -&gt; Venue
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
+                Event Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCategory(val);
+                  setSelectedSlot(null);
+                  setSelectedDate(undefined);
+                  setSlots([]);
+                }}
+                className="input"
+              >
+                <option value="">Select event type...</option>
+                {bookingMode === "facility-first"
+                  ? categories.map((c) => (
+                      <option key={c.category} value={c.category}>
+                        {formatCategoryLabel(c.category)}
+                      </option>
+                    ))
+                  : publicCategories.map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.name}
+                      </option>
+                    ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
+                Select Venue
+              </label>
+              <select
+                value={facilityId}
+                onChange={(e) => setFacilityId(e.target.value)}
+                className="input"
+                disabled={bookingMode === "category-first" && (!category || !selectedDate)}
+              >
+                <option value="">Choose a venue...</option>
+                {(bookingMode === "category-first" ? bookableFacilities : facilities).map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Service name (Calendly-style) */}
@@ -225,7 +318,7 @@ export default function GuestBookingForm({
         )}
 
         {/* 3-column picker */}
-        {selectedFacility && (
+        {(selectedFacility || category) && (
           <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_260px] divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
 
             {/* LEFT — Calendar */}
@@ -249,7 +342,17 @@ export default function GuestBookingForm({
 
             {/* CENTER — Time Slots */}
             <div className="p-5">
-              {!selectedDate ? (
+              {!category ? (
+                <div className="h-full flex flex-col items-center justify-center text-center py-16">
+                  <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
+                  <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select an event category first</p>
+                </div>
+              ) : !selectedFacility ? (
+                <div className="h-full flex flex-col items-center justify-center text-center py-16">
+                  <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
+                  <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select a venue to load available slots</p>
+                </div>
+              ) : !selectedDate ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-16">
                   <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
                   <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select a date to see available times</p>
@@ -259,50 +362,6 @@ export default function GuestBookingForm({
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-4">
                     {format(selectedDate, "EEEE, MMMM d")}
                   </p>
-
-                  {/* Category filter */}
-                  {categories.length > 0 && (
-                    <div className="mb-4">
-                      <select
-                        value={category}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setCategory(val);
-                          setSelectedSlot(null);
-                          if (val && CEREMONY_CATEGORIES.includes(val) && facilityId) {
-                            getCeremonyDatesForCategory(facilityId, val).then((dates) => {
-                              if (dates.length > 0) {
-                                setCeremonyDates(dates);
-                                setIsCeremonyMode(true);
-                                setSelectedDate(undefined);
-                                setSlots([]);
-                              } else {
-                                setCeremonyDates([]);
-                                setIsCeremonyMode(false);
-                              }
-                            });
-                          } else {
-                            setCeremonyDates([]);
-                            setIsCeremonyMode(false);
-                          }
-                        }}
-                        className="input text-sm"
-                      >
-                        <option value="">All event types</option>
-                        {categories.map((c) => (
-                          <option key={c.category} value={c.category}>
-                            {formatCategoryLabel(c.category)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {isCeremonyMode && (
-                    <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                      <strong>Ceremony booking:</strong> Only reserved ceremony dates are available. Select a highlighted date on the calendar.
-                    </div>
-                  )}
 
                   {slotsLoading ? (
                     <div className="space-y-2">
@@ -381,6 +440,9 @@ export default function GuestBookingForm({
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-4">
                 Venue Details
               </p>
+              {!selectedFacility ? (
+                <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select a venue to see details and finalize slot selection.</p>
+              ) : (
               <div className="space-y-4">
                 <div>
                   <h3 className="font-display font-bold text-[var(--navy)] dark:text-gray-100 text-sm uppercase leading-snug">
@@ -430,6 +492,7 @@ export default function GuestBookingForm({
                   </div>
                 )}
               </div>
+              )}
             </div>
           </div>
         )}
@@ -438,7 +501,11 @@ export default function GuestBookingForm({
         {selectedFacility && (
           <div className="px-5 py-3.5 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-transparent">
             <p className="text-sm text-[var(--muted)] dark:text-gray-400">
-              {!selectedDate
+              {!category
+                ? "Pick an event category"
+                : !selectedFacility
+                ? "Pick a venue"
+                : !selectedDate
                 ? "Pick a date to continue"
                 : !selectedSlot
                 ? "Pick a time slot"
@@ -447,9 +514,9 @@ export default function GuestBookingForm({
             <button
               type="button"
               onClick={() => setStep(2)}
-              disabled={!selectedDate || !selectedSlot}
+              disabled={!category || !selectedFacility || !selectedDate || !selectedSlot}
               className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2"
-              style={{ opacity: selectedDate && selectedSlot ? 1 : 0.35 }}
+              style={{ opacity: category && selectedFacility && selectedDate && selectedSlot ? 1 : 0.35 }}
             >
               Next <ArrowRight size={15} />
             </button>

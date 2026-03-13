@@ -49,25 +49,11 @@ async function findApplicableTimeSlot(
   const start = toTimeString(startTime);
   const end = toTimeString(endTime);
 
-  const categorySlot = await prisma.facilityTimeSlot.findFirst({
-    where: {
-      facilityId,
-      dayOfWeek,
-      category,
-      isActive: true,
-      startTime: { lte: start },
-      endTime: { gte: end },
-    },
-    orderBy: { startTime: "asc" },
-  });
-
-  if (categorySlot) return categorySlot;
-
   return prisma.facilityTimeSlot.findFirst({
     where: {
       facilityId,
       dayOfWeek,
-      category: null,
+      category,
       isActive: true,
       startTime: { lte: start },
       endTime: { gte: end },
@@ -93,6 +79,7 @@ async function computeConfiguredBookingAmount(
   if (!pricing) return { error: "No pricing configured for this booking category." as const };
 
   const slot = await findApplicableTimeSlot(facilityId, category, startTime, endTime);
+  if (!slot) return { error: "No category-specific slot mapping found for the selected date/time." as const };
   if (slot?.isFree) return { totalAmount: 0 };
 
   const hours = (endTime.getTime() - startTime.getTime()) / 3_600_000;

@@ -1,5 +1,33 @@
 # Time-Slot Based Pricing System
 
+## Category-First Contract (Current)
+
+This project now uses a strict category-first model.
+
+1. Event category is mandatory for booking.
+2. Availability is category-scoped per facility.
+3. Pricing is category base rate plus slot override/free behavior.
+4. Category + date can drive facility discovery (only currently bookable facilities are returned).
+
+### Canonical flow rules
+
+1. Venue -> Category -> Date/Time (Mode A)
+2. Category -> Date -> Venue -> Time (Mode B)
+3. No category means no availability lookup and no booking submission.
+
+### Pricing resolution order
+
+1. If slot is free, charge 0.
+2. Else if slot override exists, use override.
+3. Else use facility-category base price.
+4. Apply category free-day rules where configured.
+
+### Data integrity rules
+
+1. Slot category cannot be null.
+2. Each slot must map to a parent facility pricing record via (facilityId, category).
+3. Bookings store category and resolved pricing metadata.
+
 ## Overview
 The FLC-FMS booking system now supports time-slot-specific pricing where different times of day can have different prices, free bookings on specific slots/days, and category-specific pricing overrides.
 

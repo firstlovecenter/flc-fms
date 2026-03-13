@@ -22,7 +22,6 @@ model User {
   updatedAt          DateTime               @updatedAt
   auditLogs          AuditLog[]
   bookings           Booking[]
-  ceremonyDays       CeremonyDay[]
   createdEvents      Event[]
   approvedExpenses   Expense[]              @relation("ApprovedExpenses")
   createdExpenses    Expense[]              @relation("CreatedExpenses")
@@ -73,7 +72,6 @@ model Facility {
   maintenanceStartsAt DateTime?
   sortOrder           Int                  @default(0)
   bookings            Booking[]
-  ceremonyDays        CeremonyDay[]
   events              Event[]
   pricing             FacilityPricing[]
   timeSlots           FacilityTimeSlot[]
@@ -95,6 +93,7 @@ model FacilityPricing {
   updatedAt    DateTime @updatedAt
   freeDays     Int[]    @default([])
   facility     Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  timeSlots    FacilityTimeSlot[]
 
   @@unique([facilityId, category])
   @@index([facilityId, isActive])
@@ -104,7 +103,7 @@ model FacilityPricing {
 model FacilityTimeSlot {
   id                   String   @id @default(cuid())
   facilityId           String
-  category             String?
+  category             String
   dayOfWeek            Int
   startTime            String
   endTime              String
@@ -117,47 +116,10 @@ model FacilityTimeSlot {
   isFree               Boolean  @default(false)
   pricePerHourOverride Decimal? @db.Decimal(10, 2)
   facility             Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  pricing              FacilityPricing @relation(fields: [facilityId, category], references: [facilityId, category], onDelete: Cascade)
 
   @@index([facilityId, dayOfWeek, isActive])
   @@map("facility_time_slots")
-}
-
-model CeremonyDay {
-  id          String             @id @default(cuid())
-  facilityId  String
-  date        DateTime           @db.Date
-  title       String?
-  notes       String?
-  isActive    Boolean            @default(true)
-  createdById String
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  createdBy   User               @relation(fields: [createdById], references: [id])
-  facility    Facility           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  timeSlots   CeremonyTimeSlot[]
-
-  @@unique([facilityId, date])
-  @@index([facilityId, date, isActive])
-  @@map("ceremony_days")
-}
-
-model CeremonyTimeSlot {
-  id            String      @id @default(cuid())
-  ceremonyDayId String
-  category      String
-  startTime     String
-  endTime       String
-  label         String
-  maxBookings   Int         @default(1)
-  pricePerHour  Decimal?    @db.Decimal(10, 2)
-  isFree        Boolean     @default(false)
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  ceremonyDay   CeremonyDay @relation(fields: [ceremonyDayId], references: [id], onDelete: Cascade)
-
-  @@index([ceremonyDayId, category, isActive])
-  @@map("ceremony_time_slots")
 }
 
 model Booking {
@@ -174,6 +136,8 @@ model Booking {
   status          BookingStatus     @default(PENDING)
   paymentStatus   PaymentStatus     @default(UNPAID)
   totalAmount     Decimal           @db.Decimal(10, 2)
+  resolvedUnitPrice Decimal         @default(0) @db.Decimal(10, 2)
+  resolvedPricingSource String      @default("CATEGORY_BASE")
   notes           String?
   rejectionReason String?
   createdAt       DateTime          @default(now())
@@ -584,7 +548,6 @@ model BookingCategory {
   id         String   @id @default(cuid())
   name       String   @unique
   slug       String   @unique
-  isCeremony Boolean  @default(false)
   isActive   Boolean  @default(true)
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
