@@ -80,6 +80,7 @@ export default async function PublicHomePage({
 
   return (
     <PublicSplitShell
+      key="home-shell"
       current="home"
       eyebrow="Venues, Items & Packages"
       title="Everything you need for your perfect event"

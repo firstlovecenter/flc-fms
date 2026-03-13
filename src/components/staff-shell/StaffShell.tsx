@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import StaffSidebar from "@/components/staff-shell/StaffSidebar";
 import Topbar from "@/components/ui/Topbar";
+import OfflineQueueBanner from "@/components/layout/OfflineQueueBanner";
 
 export default function StaffShell({
   children,
@@ -22,6 +23,7 @@ export default function StaffShell({
       <StaffSidebar role={role} name={name} isOpen={menuOpen} onClose={close} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         <Topbar name={name} role={role} onMenuToggle={toggle} />
+        <OfflineQueueBanner />
         <main
           className="staff-main"
           style={{ flex: 1, overflowY: "auto" }}

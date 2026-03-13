@@ -66,6 +66,7 @@ export default function PwaEntryPage() {
 
   return (
     <PublicSplitShell
+      key="pwa-shell"
       current="home"
       eyebrow="Progressive Web App"
       title="PWA Launch Hub"

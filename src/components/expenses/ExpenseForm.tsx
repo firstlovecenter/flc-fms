@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { submitExpense } from "@/actions/expense.actions";
+import { useOfflineQueue } from "@/hooks/use-offline-queue";
+import { WifiOff } from "lucide-react";
 
 const schema = z.object({
   title:      z.string().min(2, "Title is required"),
@@ -36,13 +38,34 @@ const CATEGORIES = [
 export default function ExpenseForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [savedOffline, setSavedOffline] = useState(false);
+  const { isOnline, enqueue } = useOfflineQueue();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
   async function onSubmit(data: FormData) {
     setError(null);
+    setSavedOffline(false);
+
+    // If offline, save to IndexedDB queue and show confirmation
+    if (!isOnline) {
+      await enqueue({
+        type: "expense",
+        label: `${data.category} — ${data.title}`,
+        data: {
+          title:     data.title,
+          narration: data.narration,
+          amount:    data.amount,
+          category:  data.category,
+        },
+      });
+      setSavedOffline(true);
+      reset();
+      return;
+    }
+
     const result = await submitExpense({
       title:      data.title,
       narration:  data.narration,
@@ -60,6 +83,19 @@ export default function ExpenseForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+      {!isOnline && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <WifiOff size={15} />
+          <span>You&apos;re offline. Your request will be saved locally and submitted when you reconnect.</span>
+        </div>
+      )}
+
+      {savedOffline && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-700 text-sm">
+          Request saved offline. It will be submitted automatically when your connection is restored. You can also submit it from the banner at the top of the page.
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
       )}
@@ -101,7 +137,9 @@ export default function ExpenseForm() {
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
         <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
-          {isSubmitting ? "Submitting…" : "Submit Request"}
+          {isSubmitting
+            ? isOnline ? "Submitting…" : "Saving offline…"
+            : isOnline ? "Submit Request" : "Save Offline"}
         </button>
         <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
       </div>
