@@ -13,7 +13,7 @@ const schema = z.object({
   name:  z.string().min(2, "Name is required"),
   email: z.string().email("Valid email required"),
   phone: z.string().min(9, "Phone number is required"),
-  role:  z.enum(["FACILITY_MANAGER", "VICAR"]),
+  role:  z.enum(["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -95,10 +95,11 @@ export default function AddStaffModal() {
                   <label className="block text-sm font-medium text-[var(--slate)] mb-1">Role *</label>
                   <select {...register("role")} className="input">
                     <option value="VICAR">Vicar</option>
+                    <option value="BOOKING_MANAGER">Booking Manager</option>
                     <option value="FACILITY_MANAGER">Facility Manager</option>
                   </select>
                   <p className="text-xs text-[var(--muted)] mt-1">
-                    Vicars have granular permissions. Facility Managers have full campus access.
+                    Vicars have granular permissions. Booking Managers handle bookings. Facility Managers have full campus access.
                   </p>
                 </div>
                 <div className="flex gap-3 pt-2">

@@ -38,7 +38,7 @@ const NAV = [
   { href: "/staff", label: "Staff", icon: Users, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
+  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
 ];
 
 const ADMIN_NAV = [
@@ -155,7 +155,7 @@ export default function StaffSidebar({ role, name, isOpen = false, onClose }: St
               marginTop: 3,
             }}
           >
-            {role === "SUPER_ADMIN" ? "Super Admin" : "Staff"}
+            {role === "SUPER_ADMIN" ? "Super Admin" : role === "BOOKING_MANAGER" ? "Booking Manager" : "Staff"}
           </div>
         </div>
         {/* Mobile close button */}

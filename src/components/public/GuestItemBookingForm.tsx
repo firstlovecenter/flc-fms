@@ -125,7 +125,7 @@ export default function GuestItemBookingForm({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[var(--navy)] dark:text-gray-100 truncate">{line.name}</p>
                   <p className="text-xs text-[var(--muted)] dark:text-gray-400">
-                    GHS {line.unitPrice.toFixed(2)} / {line.unit}
+                    GH₵{line.unitPrice.toFixed(2)} / {line.unit}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -140,13 +140,13 @@ export default function GuestItemBookingForm({
                   </button>
                 </div>
                 <span className="text-sm font-semibold text-[var(--navy)] dark:text-gray-100 w-20 text-right">
-                  GHS {(line.unitPrice * line.qty).toFixed(2)}
+                  GH₵{(line.unitPrice * line.qty).toFixed(2)}
                 </span>
               </div>
             ))}
             <div className="flex justify-between pt-3 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] font-bold text-[var(--navy)] dark:text-gray-100">
               <span>Estimated Total</span>
-              <span>GHS {total.toFixed(2)}</span>
+              <span>GH₵{total.toFixed(2)}</span>
             </div>
             <p className="text-xs text-[var(--muted)] dark:text-gray-400">
               * Final price confirmed by staff after review

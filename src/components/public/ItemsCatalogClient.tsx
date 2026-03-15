@@ -135,7 +135,7 @@ export default function ItemsCatalogClient({
                   <div key={line.id} className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--slate)]">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[var(--navy)] truncate">{line.name}</p>
-                      <p className="text-[var(--muted)]">GHS {line.unitPrice.toFixed(2)} / {line.unit}</p>
+                      <p className="text-[var(--muted)]">GH₵{line.unitPrice.toFixed(2)} / {line.unit}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -159,7 +159,7 @@ export default function ItemsCatalogClient({
               <div className="px-4 py-3 border-t border-[var(--border)]">
                 <div className="flex justify-between text-sm font-semibold mb-3">
                   <span>Total estimate</span>
-                  <span style={{ color: "var(--navy)" }}>GHS {total.toFixed(2)}</span>
+                  <span style={{ color: "var(--navy)" }}>GH₵{total.toFixed(2)}</span>
                 </div>
                 <Link
                   href={bookUrl}
@@ -181,7 +181,7 @@ export default function ItemsCatalogClient({
             >
               <ShoppingCart size={16} />
               {cart.reduce((s, l) => s + l.qty, 0)} item{cart.reduce((s, l) => s + l.qty, 0) !== 1 ? "s" : ""}
-              <span style={{ color: "var(--gold)" }}>• GHS {total.toFixed(2)}</span>
+              <span style={{ color: "var(--gold)" }}>• GH₵{total.toFixed(2)}</span>
               <ChevronUp size={16} />
             </button>
           )}
@@ -234,7 +234,7 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
         )}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2 pt-2 border-t border-[var(--border)]">
           <div>
-            <span className="font-bold text-[var(--navy)] text-lg">GHS {Number(item.pricePerUnit).toFixed(2)}</span>
+            <span className="font-bold text-[var(--navy)] text-lg">GH₵{Number(item.pricePerUnit).toFixed(2)}</span>
             <span className="text-xs text-[var(--muted)] ml-1">/ {item.unit}</span>
           </div>
           <button
@@ -332,7 +332,7 @@ function BundleCard({
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto pt-3 border-t border-[var(--border)]">
           <div>
-            <span className="font-bold text-[var(--navy)] text-xl">GHS {Number(bundle.price).toFixed(2)}</span>
+            <span className="font-bold text-[var(--navy)] text-xl">GH₵{Number(bundle.price).toFixed(2)}</span>
             <span className="text-xs text-[var(--muted)] ml-1">flat rate</span>
           </div>
           <button

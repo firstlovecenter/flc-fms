@@ -26,7 +26,7 @@ function esc(value: string) {
 }
 
 function money(amount: number) {
-  return `GHS ${amount.toFixed(2)}`;
+  return `GH₵${amount.toFixed(2)}`;
 }
 
 function dt(value: Date) {
@@ -470,7 +470,8 @@ export async function sendStaffAppointmentEmail(params: {
   tempPassword: string;
   loginUrl: string;
 }) {
-  const roleLabel = params.role === "FACILITY_MANAGER" ? "Facility Manager" : "Vicar";
+  const roleLabelMap: Record<string, string> = { FACILITY_MANAGER: "Facility Manager", BOOKING_MANAGER: "Booking Manager", VICAR: "Vicar" };
+  const roleLabel = roleLabelMap[params.role] ?? params.role;
   await sendEmail({
     to: params.to,
     subject: `You've Been Appointed as ${roleLabel}`,

@@ -480,6 +480,7 @@ model AuditLog {
 enum Role {
   SUPER_ADMIN
   FACILITY_MANAGER
+  BOOKING_MANAGER
   VICAR
 }
 

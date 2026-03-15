@@ -88,7 +88,7 @@ export default function IncomeEditForm({ income }: IncomeEditFormProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GHS) *</label>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GH₵) *</label>
           <input {...register("amount")} type="number" step="0.01" className="input" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>

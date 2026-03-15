@@ -90,18 +90,18 @@ export default async function DashboardPage() {
 
       {/* Primary stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, position: "relative", zIndex: 1 }}>
-        <StatCard label="Active Facilities"  value={totalFacilities} icon={<Building2  size={16} />} />
-        <StatCard label="Pending Bookings"   value={pendingBookings}  icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} />
-        <StatCard label="Active Bookings"    value={activeBookings}   icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" />
-        <StatCard label="Open Maintenance"   value={openMaintenance}  icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} />
+        <StatCard label="Active Facilities"  value={totalFacilities} icon={<Building2  size={16} />} href="/facilities" />
+        <StatCard label="Pending Bookings"   value={pendingBookings}  icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
+        <StatCard label="Active Bookings"    value={activeBookings}   icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
+        <StatCard label="Open Maintenance"   value={openMaintenance}  icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
       </div>
 
       {/* Financial stats — FM only */}
       {isFM && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Income"   value={formatCurrency(incomeTotals.totalIncome)}  icon={<TrendingUp size={16} />} trend="up" />
-          <StatCard label="Total Expenses" value={formatCurrency(Number(expenseTotal._sum.amount ?? 0))} icon={<TrendingDown size={16} />} />
-          <StatCard label="Net Balance"    value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} />
+          <StatCard label="Total Income"   value={formatCurrency(incomeTotals.totalIncome)}  icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" />
+          <StatCard label="Total Expenses" value={formatCurrency(Number(expenseTotal._sum.amount ?? 0))} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" />
+          <StatCard label="Net Balance"    value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
         </div>
       )}
 
