@@ -30,6 +30,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const isProduction = process.env.NODE_ENV === "production";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
@@ -38,11 +40,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </ThemeProvider>
         <Script id="sw-register" strategy="afterInteractive">{`
+          var isProduction = ${JSON.stringify(isProduction)};
           if ('serviceWorker' in navigator) {
+            if (!isProduction) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(reg) { reg.unregister(); });
+              });
+              if ('caches' in window) {
+                caches.keys().then(function(keys) {
+                  keys.forEach(function(key) { caches.delete(key); });
+                });
+              }
+              return;
+            }
+
             navigator.serviceWorker.register('/sw.js').then(function(reg) {
-              // Check for updates periodically
               setInterval(function() { reg.update(); }, 60 * 60 * 1000);
-              // If a new SW is waiting, activate it
               if (reg.waiting) {
                 reg.waiting.postMessage('SKIP_WAITING');
               }

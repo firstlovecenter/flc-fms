@@ -33,6 +33,10 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
         where: { isActive: true },
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
       },
+      pricing: {
+        where: { isActive: true },
+        orderBy: { category: "asc" },
+      },
     },
   });
 
@@ -40,7 +44,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
-
   return (
     <div className="space-y-6 w-full max-w-4xl">
       <div className="flex items-start sm:items-center gap-4 flex-wrap">
@@ -98,19 +101,22 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Pricing */}
+        {/* Category pricing */}
         <div className="card p-5">
-          <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Pricing</h3>
+          <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-3">Category Pricing</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--slate)]">Per Hour</span>
-              <span className="font-semibold">{formatCurrency(Number(facility.pricePerHour))}</span>
+              <span className="text-[var(--slate)]">Active categories</span>
+              <span className="font-semibold">{facility.pricing.length}</span>
             </div>
-            {facility.pricePerDay && (
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--slate)]">Per Day</span>
-                <span className="font-semibold">{formatCurrency(Number(facility.pricePerDay))}</span>
-              </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--slate)]">Active slots</span>
+              <span className="font-semibold">{facility.timeSlots.length}</span>
+            </div>
+            {facility.pricing.length === 0 ? (
+              <p className="text-xs text-[var(--muted)] pt-1">No category mapping yet.</p>
+            ) : (
+              <p className="text-xs text-[var(--muted)] pt-1">{facility.pricing.slice(0, 2).map((p) => p.category.replace(/_/g, " ")).join(", ")}{facility.pricing.length > 2 ? "..." : ""}</p>
             )}
           </div>
         </div>
@@ -240,6 +246,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           </div>
         </div>
       )}
+
     </div>
   );
 }

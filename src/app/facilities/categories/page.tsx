@@ -10,7 +10,7 @@ export default async function CategoriesPage() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="page-title">Booking Categories</h1>
-        <p className="page-subtitle">Manage categories available for facility bookings and pricing.</p>
+        <p className="page-subtitle">Manage categories used in facility create/edit pairing.</p>
       </div>
       <CategoryManager initialCategories={categories} />
     </div>

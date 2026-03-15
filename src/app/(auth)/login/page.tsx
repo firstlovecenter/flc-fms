@@ -4,30 +4,13 @@ import { useFormState, useFormStatus } from "react-dom";
 import { loginAnyAccount } from "@/actions/auth.actions";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
 const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (options: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select?: boolean;
-          }) => void;
-          renderButton: (element: HTMLElement, options: Record<string, string>) => void;
-        };
-      };
-    };
-  }
-}
 
 function SubmitBtn() {
   const { pending } = useFormStatus();
@@ -55,8 +38,6 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
-  const googleButtonRef = useRef<HTMLDivElement | null>(null);
-  const [googleError, setGoogleError] = useState<string | null>(null);
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
   const [launchSplashExiting, setLaunchSplashExiting] = useState(false);
@@ -73,57 +54,6 @@ function LoginContent() {
       router.push(safeFrom ?? fallback);
     }
   }, [state, from, router]);
-
-  useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (!window.google || !googleButtonRef.current) return;
-
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async ({ credential }) => {
-          setGoogleError(null);
-          try {
-            const res = await fetch("/api/auth/google", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ credential, from }),
-            });
-
-            const data = await res.json();
-            if (!res.ok || !data?.success) {
-              setGoogleError(data?.error ?? "Google login failed.");
-              return;
-            }
-
-            router.push(data.redirectTo || "/dashboard");
-          } catch {
-            setGoogleError("Google login failed.");
-          }
-        },
-      });
-
-      googleButtonRef.current.innerHTML = "";
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        text: "signin_with",
-        width: "340",
-      });
-    };
-
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, [from, router]);
 
   useEffect(() => {
     const standalone =
@@ -321,14 +251,6 @@ function LoginContent() {
                 </Link>
               </div>
             </form>
-
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-              <div ref={googleButtonRef} />
-            </div>
-
-            {googleError && (
-              <div className="alert alert-error" style={{ marginTop: 10 }}>{googleError}</div>
-            )}
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 10 }}>
               <Link href="/" className="btn-secondary" style={{ fontSize: "0.85rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>← Back to Home</Link>
