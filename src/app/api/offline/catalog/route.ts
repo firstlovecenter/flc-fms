@@ -15,10 +15,10 @@ export async function GET() {
         where: { isActive: true },
         select: {
           id: true, name: true, description: true, capacity: true,
-          pricePerHour: true, availableFrom: true, availableTo: true,
+          availableFrom: true, availableTo: true,
           amenities: true, images: true, sortOrder: true,
           underMaintenance: true, maintenanceStartsAt: true, maintenanceEndsAt: true,
-          pricing: { select: { category: true }, where: { isActive: true } },
+          pricing: { select: { category: true, price: true }, where: { isActive: true } },
         },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       }),
@@ -42,7 +42,7 @@ export async function GET() {
         return {
           ...f,
           underMaintenance: expired ? false : f.underMaintenance,
-          pricePerHour: f.pricePerHour.toString(),
+          pricePerHour: (f.pricing.length ? Math.min(...f.pricing.map((p) => Number(p.price))) : 0).toString(),
           supportedCategories: f.pricing.map((p) => p.category as string),
           maintenanceStartsAt: f.maintenanceStartsAt?.toISOString() ?? null,
           maintenanceEndsAt: f.maintenanceEndsAt?.toISOString() ?? null,

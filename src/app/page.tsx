@@ -25,9 +25,9 @@ export default async function PublicHomePage({
     select: {
       id: true, name: true, description: true,
       underMaintenance: true, maintenanceStartsAt: true, maintenanceEndsAt: true,
-      capacity: true, pricePerHour: true, availableFrom: true, availableTo: true,
+      capacity: true, availableFrom: true, availableTo: true,
       amenities: true, images: true, sortOrder: true,
-      pricing: { select: { category: true }, where: { isActive: true } },
+      pricing: { select: { category: true, price: true }, where: { isActive: true } },
     },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
@@ -39,7 +39,7 @@ export default async function PublicHomePage({
       return {
         ...f,
         underMaintenance: expired ? false : f.underMaintenance,
-        pricePerHour: f.pricePerHour.toString(),
+        pricePerHour: (f.pricing.length ? Math.min(...f.pricing.map((p) => Number(p.price))) : 0).toString(),
         supportedCategories: f.pricing.map(p => p.category as string),
         maintenanceStartsAt: f.maintenanceStartsAt?.toISOString() ?? null,
         maintenanceEndsAt: f.maintenanceEndsAt?.toISOString() ?? null,
@@ -88,7 +88,7 @@ export default async function PublicHomePage({
         <>
           {facilities.length} premium {facilities.length === 1 ? "venue" : "venues"} •{" "}
           {items.length} bookable {items.length === 1 ? "item" : "items"} •{" "}
-          {bundles.length} curated {bundles.length === 1 ? "package" : "packages"} — starting at {minRate.replace(".00", "")}/hr
+          {bundles.length} curated {bundles.length === 1 ? "package" : "packages"} — starting at {minRate.replace(".00", "")}
         </>
       }
     >
@@ -168,6 +168,9 @@ export default async function PublicHomePage({
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
             <Link href="/guest/book" className="inline-flex items-center justify-center bg-[var(--gold)] text-slate-900 hover:bg-[var(--gold-bright)] shadow-xl font-bold h-14 px-8 rounded-full text-lg transition-colors">
               Guest Booking <ArrowRight size={18} className="ml-2" />
+            </Link>
+            <Link href="/faq" className="inline-flex items-center justify-center bg-white/10 border border-white/25 text-white hover:bg-white/20 h-14 px-8 rounded-full font-medium text-lg transition-colors">
+              FAQs
             </Link>
             <Link href="/patron/register" className="inline-flex items-center justify-center bg-transparent border border-white/20 text-white hover:bg-white/10 dark:border-slate-400/30 dark:hover:bg-slate-200/10 h-14 px-8 rounded-full font-medium text-lg transition-colors">
               Create Account

@@ -9,11 +9,29 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
     where: { isActive: true, underMaintenance: false },
     select: {
       id: true, name: true, description: true, capacity: true,
-      pricePerHour: true, pricePerDay: true, amenities: true,
+      amenities: true,
       availableFrom: true, availableTo: true, availableDays: true,
+      pricing: {
+        where: { isActive: true },
+        select: { price: true },
+        orderBy: { price: "asc" },
+        take: 1,
+      },
     },
     orderBy: { name: "asc" },
   });
+
+  const serialized = facilities.map((f) => ({
+    id: f.id,
+    name: f.name,
+    description: f.description,
+    capacity: f.capacity,
+    amenities: f.amenities,
+    availableFrom: f.availableFrom,
+    availableTo: f.availableTo,
+    availableDays: f.availableDays,
+    pricePerHour: (f.pricing[0]?.price ?? 0).toString(),
+  }));
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -47,7 +65,7 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
           </p>
         </div>
       </div>
-      <PatronBookingForm facilities={facilities} defaultFacilityId={searchParams.facilityId} />
+      <PatronBookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} />
     </div>
   );
 }

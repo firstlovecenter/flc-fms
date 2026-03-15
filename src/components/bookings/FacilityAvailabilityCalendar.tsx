@@ -41,7 +41,7 @@ export default function FacilityAvailabilityCalendar({
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [customStartTime, setCustomStartTime] = useState("");
   const [customEndTime, setCustomEndTime] = useState("");
-  const [pricing, setPricing] = useState<{ pricePerHour: number; pricePerDay: number | null } | null>(null);
+  const [pricing, setPricing] = useState<{ price: number } | null>(null);
 
   // Fetch pricing when category changes
   useEffect(() => {
@@ -109,10 +109,9 @@ export default function FacilityAvailabilityCalendar({
     const end = parseTime(customEndTime);
     if (end <= start) return null;
 
-    const hours = (end - start) / 60;
-    // Use selected slot's effective price if available, otherwise fall back to category default
-    const pricePerHour = selectedSlot?.effectivePricePerHour ?? pricing?.pricePerHour ?? 0;
-    return hours * pricePerHour;
+    // Use selected slot's configured amount if available, otherwise fall back to category default
+    const price = selectedSlot?.effectivePricePerHour ?? pricing?.price ?? 0;
+    return price;
   };
 
   // Disable days that aren't in availableDays
@@ -263,7 +262,7 @@ export default function FacilityAvailabilityCalendar({
                           </span>
                         ) : (
                           <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--gold)" }}>
-                            ⚡ {formatCurrency(slot.effectivePricePerHour)}/hr
+                            ⚡ {formatCurrency(slot.effectivePricePerHour)}
                           </span>
                         )}
                         {slot.isFlexible && (

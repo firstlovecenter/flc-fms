@@ -35,7 +35,7 @@ interface Props {
     amenities: string[]; availableDays: number[]; images: string[];
     pricing?: {
       category: string;
-      pricePerHour: number;
+      price: number;
       freeDays: number[];
       description: string | null;
       isActive: boolean;
@@ -66,7 +66,7 @@ export default function FacilityForm({ facility, categories }: Props) {
       return {
         enabled: !!mapped?.isActive,
         category: c.slug,
-        price: mapped?.pricePerHour != null ? String(mapped.pricePerHour) : "",
+        price: mapped?.price != null ? String(mapped.price) : "",
         freeDays: mapped?.freeDays?.length ? mapped.freeDays.join(",") : "",
         description: mapped?.description ?? "",
       };
@@ -103,8 +103,7 @@ export default function FacilityForm({ facility, categories }: Props) {
       .filter((m) => m.enabled)
       .map((m) => ({
         category: m.category,
-        pricePerHour: Number(m.price),
-        pricePerDay: null,
+        price: Number(m.price),
         freeDays: m.freeDays
           .split(",")
           .map((d) => Number(d.trim()))
@@ -112,7 +111,7 @@ export default function FacilityForm({ facility, categories }: Props) {
         description: m.description.trim() || null,
         isActive: true,
       }))
-      .filter((m) => Number.isFinite(m.pricePerHour) && m.pricePerHour > 0);
+      .filter((m) => Number.isFinite(m.price) && m.price > 0);
 
     if (activeMappings.length === 0) {
       setError("Select at least one category and provide its price.");

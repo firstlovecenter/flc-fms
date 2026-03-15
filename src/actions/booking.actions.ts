@@ -82,12 +82,11 @@ async function computeConfiguredBookingAmount(
   if (!slot) return { error: "No category-specific slot mapping found for the selected date/time." as const };
   if (slot?.isFree) return { totalAmount: 0 };
 
-  const hours = (endTime.getTime() - startTime.getTime()) / 3_600_000;
   const unitPrice =
     slot?.pricePerHourOverride != null
       ? Number(slot.pricePerHourOverride)
-      : Number(pricing.pricePerHour);
-  const totalAmount = pricing.freeDays.includes(startTime.getDay()) ? 0 : unitPrice * hours;
+      : Number(pricing.price);
+  const totalAmount = pricing.freeDays.includes(startTime.getDay()) ? 0 : unitPrice;
 
   return { totalAmount };
 }

@@ -57,8 +57,6 @@ model Facility {
   name                String
   description         String?
   capacity            Int
-  pricePerHour        Decimal              @db.Decimal(10, 2)
-  pricePerDay         Decimal?             @db.Decimal(10, 2)
   amenities           String[]
   images              String[]
   isActive            Boolean              @default(true)
@@ -85,8 +83,7 @@ model FacilityPricing {
   id           String   @id @default(cuid())
   facilityId   String
   category     String
-  pricePerHour Decimal  @db.Decimal(10, 2)
-  pricePerDay  Decimal? @db.Decimal(10, 2)
+  price        Decimal  @db.Decimal(10, 2)
   description  String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
