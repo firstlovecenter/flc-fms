@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
+import PullToRefresh from "@/components/layout/PullToRefresh";
 
 export const metadata: Metadata = {
   title: { default: "FLC FMS — Facility Management", template: "%s | FLC FMS" },
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <GlobalDarkBackground />
+          <PullToRefresh />
           {children}
         </ThemeProvider>
         <Script id="sw-register" strategy="afterInteractive">{`
