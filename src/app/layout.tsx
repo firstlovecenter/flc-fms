@@ -53,25 +53,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   keys.forEach(function(key) { caches.delete(key); });
                 });
               }
-              return;
-            }
-
-            navigator.serviceWorker.register('/sw.js').then(function(reg) {
-              setInterval(function() { reg.update(); }, 60 * 60 * 1000);
-              if (reg.waiting) {
-                reg.waiting.postMessage('SKIP_WAITING');
-              }
-              reg.addEventListener('updatefound', function() {
-                var newSW = reg.installing;
-                if (newSW) {
-                  newSW.addEventListener('statechange', function() {
-                    if (newSW.state === 'activated') {
-                      newSW.postMessage('CLEAN_CACHE');
-                    }
-                  });
+            } else {
+              navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                setInterval(function() { reg.update(); }, 60 * 60 * 1000);
+                if (reg.waiting) {
+                  reg.waiting.postMessage('SKIP_WAITING');
                 }
-              });
-            }).catch(function() {});
+                reg.addEventListener('updatefound', function() {
+                  var newSW = reg.installing;
+                  if (newSW) {
+                    newSW.addEventListener('statechange', function() {
+                      if (newSW.state === 'activated') {
+                        newSW.postMessage('CLEAN_CACHE');
+                      }
+                    });
+                  }
+                });
+              }).catch(function() {});
+            }
           }
         `}</Script>
       </body>
