@@ -7,6 +7,7 @@ const ROLE_LABELS: Record<string, string> = {
   FACILITY_MANAGER: "Facility Manager",
   VICAR:            "Vicar",
   PATRON:           "Patron",
+  BOOKING_MANAGER:  "Booking Manager",
 };
 
 export default function Topbar({

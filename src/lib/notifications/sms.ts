@@ -236,7 +236,8 @@ export async function notifyStaffAppointment(params: {
   tempPassword: string;
   loginUrl: string;
 }) {
-  const roleLabel = params.role === "FACILITY_MANAGER" ? "Facility Manager" : "Vicar";
+  const roleLabelMap: Record<string, string> = { FACILITY_MANAGER: "Facility Manager", BOOKING_MANAGER: "Booking Manager", VICAR: "Vicar" };
+  const roleLabel = roleLabelMap[params.role] ?? params.role;
   await sendSMS({
     to: params.phone,
     message: `Hi ${params.name}, you have been appointed as ${roleLabel}. Login at ${params.loginUrl} with your email and temporary password: ${params.tempPassword} — you will be asked to change it on first login.`,
@@ -263,7 +264,7 @@ export async function notifyFMExpenseSubmitted(params: {
 }) {
   await sendSMS({
     to: params.phone,
-    message: `[Expense Request] ${params.submittedBy} submitted an expense: "${params.title}" (GHS ${params.amount.toFixed(2)}). Review it in your dashboard.`,
+    message: `[Expense Request] ${params.submittedBy} submitted an expense: "${params.title}" (GH₵${params.amount.toFixed(2)}). Review it in your dashboard.`,
   });
 }
 

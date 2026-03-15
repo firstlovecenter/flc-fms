@@ -46,7 +46,7 @@ export async function GET(
   const b  = receipt.booking;
   const p  = receipt.payment;
   const customer = b.patron ?? b.user;
-  const amountStr = `GHS ${Number(p?.amount ?? 0).toFixed(2)}`;
+  const amountStr = `GH₵${Number(p?.amount ?? 0).toFixed(2)}`;
   const paidAt    = p?.paidAt ? format(p.paidAt, "dd MMM yyyy, HH:mm") : "—";
   const fmt       = (d: Date) => format(d, "dd MMM yyyy, HH:mm");
 

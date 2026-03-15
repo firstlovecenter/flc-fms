@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface StatCardProps {
   label: string;
   value: string | number;
@@ -5,6 +7,7 @@ interface StatCardProps {
   sub?: string;
   icon?: React.ReactNode;
   trend?: string;
+  href?: string;
 }
 
 const accentColors: Record<string, string> = {
@@ -16,22 +19,11 @@ const accentColors: Record<string, string> = {
   gray:   "#94A3B8",
 };
 
-export default function StatCard({ label, value, color = "gold", sub, icon }: StatCardProps) {
+export default function StatCard({ label, value, color = "gold", sub, icon, href }: StatCardProps) {
   const accent = accentColors[color] ?? accentColors.gold;
 
-  return (
-    <div style={{
-      background: "rgba(255, 255, 255, 0.12)",
-      backdropFilter: "blur(12px)",
-      border: "1px solid rgba(255, 255, 255, 0.18)",
-      borderRadius: 20,
-      padding: "28px",
-      position: "relative",
-      overflow: "hidden",
-      boxShadow: "0 8px 32px rgba(10, 22, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-      transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-      cursor: "pointer"
-    }}>
+  const content = (
+    <>
       {/* Decorative glow circle */}
       <div style={{
         position: "absolute",
@@ -57,29 +49,29 @@ export default function StatCard({ label, value, color = "gold", sub, icon }: St
 
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ 
-            fontSize: "0.68rem", 
-            fontWeight: 700, 
-            letterSpacing: "0.08em", 
-            textTransform: "uppercase", 
-            color: "rgba(71, 85, 105, 0.7)", 
-            marginBottom: 10 
+          <div style={{
+            fontSize: "0.68rem",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "rgba(71, 85, 105, 0.7)",
+            marginBottom: 10
           }}>
             {label}
           </div>
-          <div style={{ 
-            fontFamily: "var(--font-display)", 
-            fontSize: "2.4rem", 
-            fontWeight: 700, 
-            color: "var(--navy)", 
+          <div style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "2.4rem",
+            fontWeight: 700,
+            color: "var(--navy)",
             lineHeight: 1,
             marginBottom: 8
           }}>
             {value}
           </div>
           {sub && (
-            <div style={{ 
-              fontSize: "0.8rem", 
+            <div style={{
+              fontSize: "0.8rem",
               color: "var(--slate)",
               fontWeight: 500
             }}>
@@ -105,6 +97,29 @@ export default function StatCard({ label, value, color = "gold", sub, icon }: St
           </div>
         )}
       </div>
-    </div>
+    </>
   );
+
+  const baseStyle = {
+      background: "rgba(255, 255, 255, 0.12)",
+      backdropFilter: "blur(12px)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      borderRadius: 20,
+      padding: "28px",
+      position: "relative",
+      overflow: "hidden",
+      boxShadow: "0 8px 32px rgba(10, 22, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+      transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      cursor: href ? "pointer" : "default",
+    } as const;
+
+  if (href) {
+    return (
+      <Link href={href} style={{ ...baseStyle, display: "block", textDecoration: "none" }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div style={baseStyle}>{content}</div>;
 }

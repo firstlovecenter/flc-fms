@@ -11,6 +11,7 @@ interface Props { params: { id: string } }
 const ROLE_LABELS: Record<string, string> = {
   FACILITY_MANAGER: "Facility Manager",
   VICAR:            "Vicar",
+  BOOKING_MANAGER:  "Booking Manager",
 };
 
 export default async function StaffDetailPage({ params }: Props) {

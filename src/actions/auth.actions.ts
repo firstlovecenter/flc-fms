@@ -11,7 +11,7 @@ import { headers } from "next/headers";
 import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
 
-function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "VICAR") {
+function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR") {
   if (role === "PATRON") return "/patron/dashboard";
   return "/dashboard";
 }
@@ -121,20 +121,20 @@ export async function logout() {
   redirect("/login");
 }
 
-// ── Create Staff User (FM or Vicar) ──────────────────────────────────────────
+// ── Create Staff User ────────────────────────────────────────────────────────
 
 const CreateStaffSchema = z.object({
   name:    z.string().min(2),
   email:   z.string().email(),
   phone:   z.string().min(9, "Phone number is required"),
-  role:    z.enum(["FACILITY_MANAGER", "VICAR"]),
+  role:    z.enum(["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
 });
 
 export async function createStaffUser(formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Unauthorized" };
 
-  // Super admin can create FMs; FM can only create vicars
+  // Super admin can create FMs/BMs; FM can only create vicars/booking managers
   if (session.role === "FACILITY_MANAGER" && formData.get("role") === "FACILITY_MANAGER") {
     return { error: "Facility Managers cannot create other Facility Managers." };
   }

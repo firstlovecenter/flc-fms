@@ -81,36 +81,42 @@ export default async function PatronDashboardPage() {
 
 			{/* Stats */}
 			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ position: "relative", zIndex: 1 }}>
-				<div className="card" style={{
+				<Link href="/patron/bookings" className="card" style={{
 					padding: "20px",
 					background: "linear-gradient(135deg, rgba(200,163,90,0.08) 0%, rgba(200,163,90,0.02) 100%)",
-					borderColor: "rgba(200,163,90,0.2)"
+					borderColor: "rgba(200,163,90,0.2)",
+					textDecoration: "none",
+					display: "block"
 				}}>
 					<p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: 600, marginBottom: 8 }}>My Bookings</p>
 					<p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 700, color: "var(--gold)", lineHeight: 1 }}>
 						{bookings.length}
 					</p>
-				</div>
-				<div className="card" style={{
+				</Link>
+				<Link href="/patron/bookings" className="card" style={{
 					padding: "20px",
 					background: "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.02) 100%)",
-					borderColor: "rgba(34,197,94,0.2)"
+					borderColor: "rgba(34,197,94,0.2)",
+					textDecoration: "none",
+					display: "block"
 				}}>
 					<p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: 600, marginBottom: 8 }}>Approved</p>
 					<p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 700, color: "rgb(34,197,94)", lineHeight: 1 }}>
 						{approved}
 					</p>
-				</div>
-				<div className="card" style={{
+				</Link>
+				<Link href="/patron/bookings" className="card" style={{
 					padding: "20px",
 					background: "linear-gradient(135deg, rgba(250,110,0,0.1) 0%, rgba(250,110,0,0.02) 100%)",
-					borderColor: "rgba(250,110,0,0.2)"
+					borderColor: "rgba(250,110,0,0.2)",
+					textDecoration: "none",
+					display: "block"
 				}}>
 					<p style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", fontWeight: 600, marginBottom: 8 }}>Pending</p>
 					<p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 700, color: "rgb(250,110,0)", lineHeight: 1 }}>
 						{pending}
 					</p>
-				</div>
+				</Link>
 			</div>
 
 			{/* Latest Bookings */}

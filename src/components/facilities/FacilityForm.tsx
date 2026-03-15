@@ -36,7 +36,6 @@ interface Props {
     pricing?: {
       category: string;
       pricePerHour: number;
-      pricePerDay: number | null;
       freeDays: number[];
       description: string | null;
       isActive: boolean;
@@ -47,8 +46,7 @@ interface Props {
 type CategoryMappingDraft = {
   enabled: boolean;
   category: string;
-  pricePerHour: string;
-  pricePerDay: string;
+  price: string;
   freeDays: string;
   description: string;
 };
@@ -68,8 +66,7 @@ export default function FacilityForm({ facility, categories }: Props) {
       return {
         enabled: !!mapped?.isActive,
         category: c.slug,
-        pricePerHour: mapped?.pricePerHour != null ? String(mapped.pricePerHour) : "",
-        pricePerDay: mapped?.pricePerDay != null ? String(mapped.pricePerDay) : "",
+        price: mapped?.pricePerHour != null ? String(mapped.pricePerHour) : "",
         freeDays: mapped?.freeDays?.length ? mapped.freeDays.join(",") : "",
         description: mapped?.description ?? "",
       };
@@ -106,8 +103,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       .filter((m) => m.enabled)
       .map((m) => ({
         category: m.category,
-        pricePerHour: Number(m.pricePerHour),
-        pricePerDay: m.pricePerDay ? Number(m.pricePerDay) : null,
+        pricePerHour: Number(m.price),
+        pricePerDay: null,
         freeDays: m.freeDays
           .split(",")
           .map((d) => Number(d.trim()))
@@ -118,7 +115,7 @@ export default function FacilityForm({ facility, categories }: Props) {
       .filter((m) => Number.isFinite(m.pricePerHour) && m.pricePerHour > 0);
 
     if (activeMappings.length === 0) {
-      setError("Select at least one category and provide its hourly price.");
+      setError("Select at least one category and provide its price.");
       return;
     }
 
@@ -254,24 +251,15 @@ export default function FacilityForm({ facility, categories }: Props) {
                   <span className="text-xs text-[var(--muted)]">{mapping.category}</span>
                 </div>
                 {mapping.enabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     <input
                       className="input"
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="Price/hour"
-                      value={mapping.pricePerHour}
-                      onChange={(e) => updateMapping(mapping.category, { pricePerHour: e.target.value })}
-                    />
-                    <input
-                      className="input"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Price/day (optional)"
-                      value={mapping.pricePerDay}
-                      onChange={(e) => updateMapping(mapping.category, { pricePerDay: e.target.value })}
+                      placeholder="Price (GH₵)"
+                      value={mapping.price}
+                      onChange={(e) => updateMapping(mapping.category, { price: e.target.value })}
                     />
                     <input
                       className="input"
@@ -280,7 +268,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                       onChange={(e) => updateMapping(mapping.category, { freeDays: e.target.value })}
                     />
                     <input
-                      className="input md:col-span-3"
+                      className="input md:col-span-2"
                       placeholder="Description (optional)"
                       value={mapping.description}
                       onChange={(e) => updateMapping(mapping.category, { description: e.target.value })}

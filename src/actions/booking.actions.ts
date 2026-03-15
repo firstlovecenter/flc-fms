@@ -466,7 +466,8 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 // ── Approve / Reject ──────────────────────────────────────────────────────────
 
 export async function approveBooking(bookingId: string, waiveBilling = false) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const booking = await prisma.booking.update({
+  const session  = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const booking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
       status: "APPROVED",
@@ -503,7 +504,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 }
 
 export async function rejectBooking(bookingId: string, reason: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
   const [booking] = await prisma.$transaction([
     prisma.booking.update({
@@ -571,7 +572,7 @@ export async function cancelBooking(bookingId: string) {
 }
 
 export async function completeBooking(bookingId: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
   const booking = await prisma.booking.findFirstOrThrow({ where: { id: bookingId } });
   if (booking.status !== "APPROVED") return { error: "Only approved bookings can be marked as completed." };
@@ -587,6 +588,104 @@ export async function completeBooking(bookingId: string) {
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────────
+
+const ManagerBookingUpdateSchema = BookingSchema;
+
+export async function updateBookingByManager(bookingId: string, data: z.input<typeof ManagerBookingUpdateSchema>) {
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const validated = ManagerBookingUpdateSchema.parse(data);
+
+  const existing = await prisma.booking.findFirstOrThrow({ where: { id: bookingId } });
+
+  if (existing.status === "COMPLETED") {
+    return { error: "Completed bookings cannot be edited." };
+  }
+
+  if (validated.startTime.getDay() === 1) {
+    return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
+
+  const facility = await prisma.facility.findFirstOrThrow({
+    where: { id: validated.facilityId, isActive: true },
+  });
+
+  if (facility.underMaintenance) {
+    return { error: "This facility is currently under emergency maintenance and cannot be booked." };
+  }
+
+  const maintConflict = await getFacilityMaintenanceConflict(
+    validated.facilityId,
+    validated.startTime,
+    validated.endTime,
+  );
+  if (maintConflict) {
+    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    return {
+      error: `This facility is scheduled for maintenance from ${fmt(maintConflict.scheduledStart!)} to ${fmt(maintConflict.scheduledEnd!)}. Please choose dates outside this window.`,
+    };
+  }
+
+  const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime, bookingId);
+  if (conflict) return { error: "Facility already has a booking for that time slot." };
+
+  const amountResult = await computeConfiguredBookingAmount(
+    validated.facilityId,
+    validated.category,
+    validated.startTime,
+    validated.endTime,
+  );
+  if ("error" in amountResult) return { error: amountResult.error };
+
+  const booking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      facilityId: validated.facilityId,
+      category: validated.category,
+      title: validated.title,
+      description: validated.description,
+      startTime: validated.startTime,
+      endTime: validated.endTime,
+      notes: validated.notes,
+      totalAmount: amountResult.totalAmount,
+      updatedAt: new Date(),
+    },
+    include: {
+      facility: { select: { name: true } },
+    },
+  });
+
+  auditLog({ userId: session.sub, action: "UPDATE_BOOKING", entity: "Booking", entityId: bookingId, before: existing, after: booking });
+  revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}`);
+  return { success: true, booking };
+}
+
+export async function deleteBookingByManager(bookingId: string) {
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const booking = await prisma.booking.findFirstOrThrow({
+    where: { id: bookingId },
+    include: {
+      payment: { select: { id: true, status: true } },
+      receipt: { select: { id: true } },
+      income: { select: { id: true } },
+    },
+  });
+
+  if (booking.payment || booking.receipt || booking.income) {
+    return { error: "Cannot delete bookings with payment/receipt records. Cancel the booking instead." };
+  }
+
+  if (booking.status === "APPROVED" || booking.status === "COMPLETED") {
+    return { error: "Approved or completed bookings cannot be deleted. Cancel instead." };
+  }
+
+  await prisma.booking.delete({ where: { id: bookingId } });
+
+  auditLog({ userId: session.sub, action: "DELETE_BOOKING", entity: "Booking", entityId: bookingId });
+  revalidatePath("/bookings");
+  return { success: true };
+}
 
 export async function getBookings(filters: {
   status?: string;

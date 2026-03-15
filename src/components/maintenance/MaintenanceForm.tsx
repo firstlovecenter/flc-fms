@@ -98,7 +98,7 @@ export default function MaintenanceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Estimated Cost (GHS)</label>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Estimated Cost (GH₵)</label>
           <input {...register("estimatedCost")} type="number" step="0.01" className="input" placeholder="Optional" />
         </div>
       </div>

@@ -2,9 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { hasVicarPermission } from "@/lib/staff-permissions";
-import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
-import BookingActions from "@/components/bookings/BookingActions";
+import BookingsListClient from "@/components/bookings/BookingsListClient";
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
 
@@ -25,28 +23,72 @@ export default async function BookingsPage({
     ...(status ? { status } : {}),
   };
 
-  const [bookings, total] = await prisma.$transaction([
+  const [bookings, total, facilities, categories] = await prisma.$transaction([
     prisma.booking.findMany({
       where,
       include: {
-        facility: { select: { name: true } },
-        patron:   { select: { name: true, phone: true } },
-        user:     { select: { name: true, phone: true } },
+        facility: { select: { id: true, name: true } },
+        patron:   { select: { name: true, phone: true, email: true } },
+        user:     { select: { name: true, phone: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * take,
       take,
     }),
     prisma.booking.count({ where }),
+    prisma.facility.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        pricing: {
+          where: { isActive: true },
+          select: { category: true },
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    prisma.bookingCategory.findMany({
+      where: { isActive: true },
+      select: { slug: true, name: true },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
   const pages = Math.ceil(total / take);
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
+  const canCreateBookings = canManage;
+
+  const bookingRows = bookings.map((b) => {
+    const booker = b.patron ?? b.user;
+    return {
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      facilityId: b.facilityId,
+      facilityName: b.facility?.name ?? "N/A",
+      category: b.category,
+      status: b.status,
+      paymentStatus: b.paymentStatus,
+      totalAmount: Number(b.totalAmount),
+      startTime: b.startTime.toISOString(),
+      endTime: b.endTime.toISOString(),
+      notes: b.notes,
+      rejectionReason: b.rejectionReason,
+      bookerName: booker?.name ?? "-",
+      bookerPhone: booker?.phone ?? null,
+      bookerEmail: booker?.email ?? null,
+    };
+  });
+
+  const facilityOptions = facilities.map((f) => ({
+    id: f.id,
+    name: f.name,
+    categories: f.pricing.map((p) => p.category),
+  }));
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
@@ -59,7 +101,6 @@ export default async function BookingsPage({
         )}
       </div>
 
-      {/* Status filter pills */}
       <div className="flex gap-2 flex-wrap">
         {STATUSES.map((s) => {
           const active = (searchParams.status ?? "ALL") === s;
@@ -71,44 +112,13 @@ export default async function BookingsPage({
         })}
       </div>
 
-      {/* List */}
-      <div className="space-y-2">
-        {bookings.length === 0 ? (
-          <div className="card p-10 text-center text-[var(--muted)]">No bookings found.</div>
-        ) : bookings.map((b) => {
-          const booker = b.patron ?? b.user;
-          return (
-            <Link key={b.id} href={`/bookings/${b.id}`} className="card block hover:shadow-md transition-shadow" style={{ padding: "12px 16px" }}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-[var(--navy)] text-sm truncate">{b.title}</span>
-                    <span className={`badge text-[0.65rem] ${statusBadgeClass(b.status)}`}>{b.status}</span>
-                    {b.paymentStatus === "PAID" && <span className="badge badge-paid text-[0.65rem]">PAID</span>}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
-                    <span>{booker?.name ?? "—"}</span>
-                    <span>•</span>
-                    <span>{b.facility?.name ?? "N/A"}</span>
-                    <span>•</span>
-                    <span>{formatDateTime(b.startTime)}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-semibold text-[var(--gold)] text-sm">{formatCurrency(Number(b.totalAmount))}</span>
-                  {canManage && b.status === "PENDING" && (
-                    <div onClick={(e) => e.preventDefault()}>
-                      <BookingActions bookingId={b.id} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+      <BookingsListClient
+        initialBookings={bookingRows}
+        canManage={canManage}
+        facilities={facilityOptions}
+        categories={categories}
+      />
 
-      {/* Pagination */}
       {pages > 1 && (
         <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
           <span>Page {page} of {pages}</span>

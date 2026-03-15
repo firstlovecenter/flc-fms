@@ -125,10 +125,10 @@ export default function AddBundleForm({
         </div>
         <div>
           <label className="label">
-            Flat Price (GHS) *
+            Flat Price (GH₵) *
             {suggested > 0 && (
               <span className="ml-2 text-xs font-normal text-[var(--muted)]">
-                (items total: GHS {suggested.toFixed(2)})
+                (items total: GH₵{suggested.toFixed(2)})
               </span>
             )}
           </label>
@@ -161,7 +161,7 @@ export default function AddBundleForm({
                 >
                   <option value="">Select an item…</option>
                   {availableItems.map(i => (
-                    <option key={i.id} value={i.id}>{i.name} (GHS {Number(i.pricePerUnit).toFixed(2)} / {i.unit})</option>
+                    <option key={i.id} value={i.id}>{i.name} (GH₵{Number(i.pricePerUnit).toFixed(2)} / {i.unit})</option>
                   ))}
                 </select>
               </div>
