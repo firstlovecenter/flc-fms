@@ -29,6 +29,7 @@ const UpdateSchema = z.object({
 });
 
 export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema>) {
+  await requireStaff("FACILITY_MANAGER", "VICAR");
   const session   = await requirePermission("canCreateMaintenance");
   const validated = CreateSchema.parse(data);
 
@@ -184,7 +185,7 @@ export async function getMaintenanceRequests(filters: {
   facilityId?: string;
   page?: number;
 } = {}) {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER", "VICAR");
   const page = filters.page ?? 1;
   const take = 20;
 

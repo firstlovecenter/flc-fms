@@ -9,7 +9,7 @@ export default async function MaintenancePage({
 }: {
   searchParams: { status?: string; priority?: string };
 }) {
-  const session  = await requireStaff();
+  const session  = await requireStaff("FACILITY_MANAGER", "VICAR");
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
 
   const where = {

@@ -36,7 +36,7 @@ const NAV = [
   { href: "/items", label: "Items & Packages", icon: Package },
   { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/staff", label: "Staff", icon: Users, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
-  { href: "/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["FACILITY_MANAGER", "VICAR", "SUPER_ADMIN"] },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
 ];
