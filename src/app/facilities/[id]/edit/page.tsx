@@ -14,8 +14,7 @@ export default async function EditFacilityPage({ params }: { params: { id: strin
       pricing: {
         select: {
           category: true,
-          pricePerHour: true,
-          pricePerDay: true,
+          price: true,
           freeDays: true,
           description: true,
           isActive: true,
@@ -27,8 +26,7 @@ export default async function EditFacilityPage({ params }: { params: { id: strin
 
   const pricing = facility.pricing.map((p) => ({
     category: p.category,
-    pricePerHour: Number(p.pricePerHour),
-    pricePerDay: p.pricePerDay != null ? Number(p.pricePerDay) : null,
+    price: Number(p.price),
     freeDays: p.freeDays,
     description: p.description,
     isActive: p.isActive,

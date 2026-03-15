@@ -14,6 +14,10 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
   const facility = await prisma.facility.findFirst({
     where: { id: params.id, isActive: true },
     include: {
+      pricing: {
+        where: { isActive: true },
+        select: { price: true },
+      },
       bookings: {
         where: { status: { in: ["PENDING", "APPROVED"] }, startTime: { gte: new Date() } },
         orderBy: { startTime: "asc" },
@@ -24,6 +28,9 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
   });
 
   if (!facility) notFound();
+  const standardRate = facility.pricing.length
+    ? Math.min(...facility.pricing.map((p) => Number(p.price)))
+    : 0;
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 selection:bg-[var(--gold-pale)]">
@@ -122,8 +129,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
                 </div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Standard Rate</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display text-4xl text-[var(--navy)] font-bold">{formatCurrency(Number(facility.pricePerHour))}</span>
-                  <span className="text-sm text-slate-500 font-medium">/ hour</span>
+                  <span className="font-display text-4xl text-[var(--navy)] font-bold">{formatCurrency(standardRate)}</span>
                 </div>
               </CardContent>
             </Card>

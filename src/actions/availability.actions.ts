@@ -172,7 +172,7 @@ export async function getFacilityAvailability(
 
         const currentBookings = overlappingBookings.length;
         const isAvailable = currentBookings < slot.maxBookings;
-        const basePrice = categoryPricing2 ? Number(categoryPricing2.pricePerHour) : 0;
+        const basePrice = categoryPricing2 ? Number(categoryPricing2.price) : 0;
         const isFreeByDay = categoryPricing2 ? categoryPricing2.freeDays.includes(dayOfWeek) : false;
         const effectivePricePerHour = slot.isFree || isFreeByDay
           ? 0
@@ -241,8 +241,7 @@ export async function getFacilityPricing(
     return {
       success: true,
       pricing: {
-        pricePerHour: isFreeOnSelectedDay ? 0 : Number(pricing.pricePerHour),
-        pricePerDay: pricing.pricePerDay ? Number(pricing.pricePerDay) : null,
+        price: isFreeOnSelectedDay ? 0 : Number(pricing.price),
         freeDays: pricing.freeDays,
         isFreeOnSelectedDay,
         description: pricing.description,
@@ -269,7 +268,7 @@ export async function getFacilityCategories(facilityId: string) {
       },
       select: {
         category: true,
-        pricePerHour: true,
+        price: true,
         freeDays: true,
         description: true,
       },
@@ -282,7 +281,7 @@ export async function getFacilityCategories(facilityId: string) {
       success: true,
       categories: pricingRecords.map((p) => ({
         category: p.category,
-        pricePerHour: Number(p.pricePerHour),
+        price: Number(p.price),
         freeDays: p.freeDays,
         description: p.description,
       })),
@@ -373,12 +372,11 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
         name: true,
         description: true,
         capacity: true,
-        pricePerHour: true,
         amenities: true,
         availableDays: true,
         pricing: {
           where: { category, isActive: true },
-          select: { pricePerHour: true, freeDays: true },
+          select: { price: true, freeDays: true },
           take: 1,
         },
       },
@@ -390,7 +388,7 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
       name: string;
       description: string | null;
       capacity: number;
-      pricePerHour: number;
+      price: number;
       amenities: string[];
       availableDays: number[];
     }> = [];
@@ -417,7 +415,7 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
         name: facility.name,
         description: facility.description,
         capacity: facility.capacity,
-        pricePerHour: Number(facility.pricing[0]?.pricePerHour ?? facility.pricePerHour),
+        price: Number(facility.pricing[0]?.price ?? 0),
         amenities: facility.amenities,
         availableDays: facility.availableDays,
       });
@@ -545,19 +543,19 @@ export async function estimateFacilityBookingAmount(
       return {
         success: true,
         totalAmount: 0,
-        pricePerHour: 0,
+        price: 0,
       };
     }
 
     const unitPrice = slot?.pricePerHourOverride !== null && slot?.pricePerHourOverride !== undefined
       ? Number(slot.pricePerHourOverride)
-      : Number(pricing.pricePerHour);
+      : Number(pricing.price);
     const hours = (endTime.getTime() - startTime.getTime()) / 3_600_000;
 
     return {
       success: true,
       totalAmount: unitPrice * hours,
-      pricePerHour: unitPrice,
+      price: unitPrice,
     };
   } catch (error) {
     console.error("Error estimating booking amount:", error);

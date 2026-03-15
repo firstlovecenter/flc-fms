@@ -28,9 +28,30 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
 
   const facilities = (await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
-    select: { id: true, name: true, description: true, capacity: true, pricePerHour: true, amenities: true, availableDays: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      capacity: true,
+      amenities: true,
+      availableDays: true,
+      pricing: {
+        where: { isActive: true },
+        select: { price: true },
+        orderBy: { price: "asc" },
+        take: 1,
+      },
+    },
     orderBy: { name: "asc" },
-  })).map(f => ({ ...f, pricePerHour: f.pricePerHour.toString() }));
+  })).map(f => ({
+    id: f.id,
+    name: f.name,
+    description: f.description,
+    capacity: f.capacity,
+    amenities: f.amenities,
+    availableDays: f.availableDays,
+    pricePerHour: (f.pricing[0]?.price ?? 0).toString(),
+  }));
 
   // For item bookings: resolve pre-selected lines from URL
   let initialLines: Array<{

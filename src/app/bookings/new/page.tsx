@@ -16,16 +16,26 @@ export default async function NewBookingPage({
       name: true,
       description: true,
       capacity: true,
-      pricePerHour: true,
       amenities: true,
       availableDays: true,
+      pricing: {
+        where: { isActive: true },
+        select: { price: true },
+        orderBy: { price: "asc" },
+        take: 1,
+      },
     },
     orderBy: { name: "asc" },
   });
 
   const serialized = facilities.map((f) => ({
-    ...f,
-    pricePerHour: f.pricePerHour.toString(),
+    id: f.id,
+    name: f.name,
+    description: f.description,
+    capacity: f.capacity,
+    pricePerHour: (f.pricing[0]?.price ?? 0).toString(),
+    amenities: f.amenities,
+    availableDays: f.availableDays,
   }));
 
   return (

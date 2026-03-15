@@ -355,7 +355,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                   ) : (
                     <div className="flex items-baseline gap-1 mb-1 sm:mb-2">
                       <span className="font-display font-bold text-sm sm:text-lg text-[var(--gold)]">{displayPrice}</span>
-                      <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-semibold">/ hr</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-semibold">starting</span>
                     </div>
                   )}
                   <p className="hidden sm:block text-sm text-slate-600 line-clamp-2 mb-3 font-light">
@@ -456,10 +456,9 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
 
                   <div className="space-y-4">
                     <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl flex items-center justify-between border border-slate-100">
-                      <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Hourly Rate</span>
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Starting Price</span>
                       <div className="text-right">
                         <span className="font-display font-bold text-xl sm:text-2xl text-[var(--gold)] block leading-none">{formatCurrency(Number(selectedFacility.pricePerHour))}</span>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block mt-0.5">/ hour</span>
                       </div>
                     </div>
 

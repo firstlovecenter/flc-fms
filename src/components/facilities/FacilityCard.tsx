@@ -14,7 +14,6 @@ interface FacilityCardProps {
     description: string | null;
     capacity: number;
     pricePerHour: number;
-    pricePerDay: number;
     images: string[];
     isActive: boolean;
     underMaintenance: boolean;

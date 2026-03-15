@@ -28,7 +28,7 @@ interface Facility {
 
 interface CategoryOption {
   category: string;
-  pricePerHour: number;
+  price: number;
   description: string | null;
 }
 
@@ -152,7 +152,7 @@ export default function GuestBookingForm({
       if (res.success) {
         setBookableFacilities((res.facilities || []).map((f) => ({
           ...f,
-          pricePerHour: f.pricePerHour,
+          pricePerHour: f.price,
         })));
       } else {
         setBookableFacilities([]);
@@ -179,10 +179,7 @@ export default function GuestBookingForm({
   const estimatedCost = (() => {
     if (!selectedSlot) return null;
     if (selectedSlot.isFree) return 0;
-    const [sh, sm] = selectedSlot.startTime.split(":").map(Number);
-    const [eh, em] = selectedSlot.endTime.split(":").map(Number);
-    const hours = (eh * 60 + em - (sh * 60 + sm)) / 60;
-    return hours * selectedSlot.effectivePricePerHour;
+    return selectedSlot.effectivePricePerHour;
   })();
 
   const disabledDays = [
@@ -444,7 +441,7 @@ export default function GuestBookingForm({
                                 <span
                                   className={`text-xs ${isSelected ? "text-white/65" : "text-[var(--slate)] dark:text-gray-400"}`}
                                 >
-                                  {formatCurrency(slot.effectivePricePerHour)}/hr
+                                  {formatCurrency(slot.effectivePricePerHour)}
                                 </span>
                               )}
                               {isSelected && <Check size={14} color="#fff" />}
@@ -638,7 +635,7 @@ export default function GuestBookingForm({
             <option value="">Select event type…</option>
             {categories.map((c) => (
               <option key={c.category} value={c.category}>
-                {formatCategoryLabel(c.category)} — {formatCurrency(c.pricePerHour)}/hr
+                {formatCategoryLabel(c.category)} — {formatCurrency(c.price)}
               </option>
             ))}
           </select>
@@ -669,7 +666,7 @@ export default function GuestBookingForm({
         />
       </div>
 
-      <BookingTermsAndFaq title="Booking Terms, Fender Use, and FAQs" />
+      <BookingTermsAndFaq title="Booking Terms and Fender Use" />
 
       <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
         <input
@@ -680,8 +677,8 @@ export default function GuestBookingForm({
           required
         />
         <span>
-          I have read, understood, and agree to the Terms and Conditions, Fender Use terms,
-          and FAQs for bookings.
+          I have read, understood, and agree to the Terms and Conditions and Fender Use terms
+          for bookings.
         </span>
       </label>
 
