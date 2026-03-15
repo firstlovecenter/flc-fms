@@ -56,7 +56,7 @@ export default async function BookingsPage({
   ]);
 
   const pages = Math.ceil(total / take);
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canCreateBookings = canManage;
 
   const bookingRows = bookings.map((b) => {

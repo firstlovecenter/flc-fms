@@ -2,7 +2,7 @@ import { requireStaff } from "@/lib/auth/guards";
 import AddItemForm from "@/components/items/AddItemForm";
 
 export default async function NewItemPage() {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div

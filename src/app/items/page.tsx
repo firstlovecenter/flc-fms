@@ -8,7 +8,7 @@ import DeleteItemButton from "@/components/items/DeleteItemButton";
 export default async function ItemsPage() {
   const session = await requireStaff();
   const [items, bundles] = await Promise.all([getBookableItems(), getBookableBundles()]);
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
 
   return (
     <div className="space-y-6 animate-fade-in" style={{ position: "relative" }}>

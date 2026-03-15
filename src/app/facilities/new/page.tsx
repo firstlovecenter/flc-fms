@@ -3,7 +3,7 @@ import FacilityForm from "@/components/facilities/FacilityForm";
 import { getBookingCategories } from "@/actions/category.actions";
 
 export default async function NewFacilityPage() {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const categories = await getBookingCategories(false);
   return (
     <div className="max-w-2xl space-y-6">

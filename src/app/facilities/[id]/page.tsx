@@ -42,7 +42,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
 
   if (!facility) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
   return (
     <div className="space-y-6 w-full max-w-4xl">

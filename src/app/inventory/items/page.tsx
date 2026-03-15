@@ -35,7 +35,7 @@ export default async function InventoryItemsPage({
   searchParams: { categoryId?: string; status?: string; search?: string; page?: string };
 }) {
   const session = await requireStaff();
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
 
   const page = Number(searchParams.page ?? 1);
   const [{ items, total, pages }, categories] = await Promise.all([

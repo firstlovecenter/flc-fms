@@ -5,7 +5,7 @@ import FacilityForm from "@/components/facilities/FacilityForm";
 import { getBookingCategories } from "@/actions/category.actions";
 
 export default async function EditFacilityPage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const categories = await getBookingCategories(false);
 
   const facility = await prisma.facility.findFirst({

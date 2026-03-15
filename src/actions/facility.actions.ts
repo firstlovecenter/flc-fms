@@ -126,7 +126,7 @@ export async function updateFacility(id: string, data: Partial<z.input<typeof Fa
 }
 
 export async function deleteFacility(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   await prisma.facility.update({
     where: { id },
     data: { isActive: false }
