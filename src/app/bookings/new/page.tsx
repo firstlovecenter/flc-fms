@@ -12,29 +12,20 @@ export default async function NewBookingPage({
   const facilities = await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
     select: {
-      id: true, name: true, pricePerHour: true, capacity: true,
-      timeSlots: {
-        where: { isActive: true },
-        select: {
-          id: true, facilityId: true, label: true,
-          dayOfWeek: true, startTime: true, endTime: true,
-          isFlexible: true, isFree: true,
-          pricePerHourOverride: true, maxBookings: true, category: true,
-        },
-        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
-      },
+      id: true,
+      name: true,
+      description: true,
+      capacity: true,
+      pricePerHour: true,
+      amenities: true,
+      availableDays: true,
     },
     orderBy: { name: "asc" },
   });
 
-  // Serialize Decimal for client boundary
   const serialized = facilities.map((f) => ({
     ...f,
     pricePerHour: f.pricePerHour.toString(),
-    timeSlots: f.timeSlots.map((s) => ({
-      ...s,
-      pricePerHourOverride: s.pricePerHourOverride != null ? s.pricePerHourOverride.toString() : null,
-    })),
   }));
 
   return (

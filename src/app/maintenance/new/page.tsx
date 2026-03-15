@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import MaintenanceForm from "@/components/maintenance/MaintenanceForm";
 
 export default async function NewMaintenancePage() {
-  await requireStaff();
+  await requireStaff("FACILITY_MANAGER", "VICAR");
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true },

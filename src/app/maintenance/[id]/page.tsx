@@ -14,7 +14,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 export default async function MaintenanceDetailPage({ params }: { params: { id: string } }) {
-  const session  = await requireStaff();
+  const session  = await requireStaff("FACILITY_MANAGER", "VICAR");
 
   const req = await prisma.maintenanceRequest.findFirst({
     where: { id: params.id },

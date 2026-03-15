@@ -17,7 +17,10 @@ export default async function TransactionsPage({
 }) {
   const session = await requireStaff();
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canSubmitExpenses = isFM || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
+  const canSubmitExpenses =
+    isFM ||
+    session.role === "BOOKING_MANAGER" ||
+    (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
   const tab = isFM ? (searchParams.tab ?? "overview") : "expenses";
   const page = Number(searchParams.page ?? 1);
   const take = 20;
@@ -28,7 +31,7 @@ export default async function TransactionsPage({
 
   const expenseWhere = {
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(session.role === "VICAR" ? { createdById: session.sub } : {}),
+    ...(["VICAR", "BOOKING_MANAGER"].includes(session.role) ? { createdById: session.sub } : {}),
   };
 
   // Fetch data in parallel

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createGuestBooking } from "@/actions/booking.actions";
+import { useRouter } from "next/navigation";
+import { createGuestBooking, createPatronBooking, createStaffBooking } from "@/actions/booking.actions";
 import {
   getBookableFacilitiesByCategoryDate,
   getFacilityCategories,
@@ -12,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
+import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 import "react-day-picker/dist/style.css";
 
 interface Facility {
@@ -59,13 +61,18 @@ function formatTime(time: string): string {
   return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
 }
 
+type BookingMode = "guest" | "patron" | "staff";
+
 export default function GuestBookingForm({
   facilities,
   defaultFacilityId,
+  mode = "guest",
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
+  mode?: BookingMode;
 }) {
+  const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -87,6 +94,7 @@ export default function GuestBookingForm({
   const [guestPhone, setGuestPhone] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -187,7 +195,9 @@ export default function GuestBookingForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim() || !guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) return;
+    if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
+    if (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) return;
+
     setSubmitting(true);
     setError(null);
 
@@ -198,24 +208,40 @@ export default function GuestBookingForm({
     const endTime = new Date(selectedDate);
     endTime.setHours(eh, em, 0, 0);
 
-    const result = await createGuestBooking({
+    const bookingPayload = {
       facilityId: selectedFacility.id,
       category: category as any,
       title,
       description: description || undefined,
       startTime,
       endTime,
-      guestName,
-      guestEmail,
-      guestPhone,
-    });
+    };
+
+    const result =
+      mode === "guest"
+        ? await createGuestBooking({
+            ...bookingPayload,
+            guestName,
+            guestEmail,
+            guestPhone,
+          })
+        : mode === "patron"
+          ? await createPatronBooking(bookingPayload)
+          : await createStaffBooking(bookingPayload);
 
     setSubmitting(false);
     if ("error" in result && result.error) {
       setError(result.error as string);
       return;
     }
-    setSuccessMessage("Booking request submitted successfully! You can create a patron account to track status and payment.");
+
+    if (mode === "guest") {
+      setSuccessMessage("Booking request submitted successfully! You can create a patron account to track status and payment.");
+      return;
+    }
+
+    router.push(mode === "patron" ? "/patron/bookings" : "/bookings");
+    router.refresh();
   }
 
   if (successMessage) {
@@ -560,42 +586,44 @@ export default function GuestBookingForm({
       )}
 
       {/* Guest information */}
-      <div className="card p-5 space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Guest Information</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Full Name *</label>
-            <input
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              className="input"
-              placeholder="John Doe"
-              required
-            />
+      {mode === "guest" && (
+        <div className="card p-5 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Guest Information</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Full Name *</label>
+              <input
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                className="input"
+                placeholder="John Doe"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
+              <input
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                type="email"
+                className="input"
+                placeholder="john@example.com"
+                required
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Phone *</label>
             <input
-              value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
-              type="email"
+              value={guestPhone}
+              onChange={(e) => setGuestPhone(e.target.value)}
               className="input"
-              placeholder="john@example.com"
+              placeholder="0201234567"
               required
             />
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Phone *</label>
-          <input
-            value={guestPhone}
-            onChange={(e) => setGuestPhone(e.target.value)}
-            className="input"
-            placeholder="0201234567"
-            required
-          />
-        </div>
-      </div>
+      )}
 
       {/* Event type */}
       {categories.length > 0 && (
@@ -641,6 +669,22 @@ export default function GuestBookingForm({
         />
       </div>
 
+      <BookingTermsAndFaq title="Booking Terms, Fender Use, and FAQs" />
+
+      <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+          required
+        />
+        <span>
+          I have read, understood, and agree to the Terms and Conditions, Fender Use terms,
+          and FAQs for bookings.
+        </span>
+      </label>
+
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3">
         <button
@@ -652,10 +696,16 @@ export default function GuestBookingForm({
         </button>
         <button
           type="submit"
-          disabled={submitting || !title.trim() || !guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || (categories.length > 0 && !category)}
+          disabled={
+            submitting ||
+            !title.trim() ||
+            (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) ||
+            (categories.length > 0 && !category) ||
+            !agreedToTerms
+          }
           className="btn-primary w-full sm:flex-1"
         >
-          {submitting ? "Submitting…" : "Submit Booking Request"}
+          {submitting ? "Submitting…" : mode === "guest" ? "Submit Booking Request" : "Create Booking"}
         </button>
       </div>
     </form>

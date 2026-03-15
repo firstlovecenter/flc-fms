@@ -146,8 +146,8 @@ export async function getExpenses(filters: { status?: string; page?: number } = 
 
   const where: Record<string, unknown> = {};
   if (filters.status) where.status = filters.status;
-  // Vicars see only their own
-  if (session.role === "VICAR") where.createdById = session.sub;
+  // Vicars and Booking Managers see only their own
+  if (["VICAR", "BOOKING_MANAGER"].includes(session.role)) where.createdById = session.sub;
 
   const [expenses, total] = await prisma.$transaction([
     prisma.expense.findMany({
