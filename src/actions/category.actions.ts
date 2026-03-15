@@ -24,7 +24,7 @@ export async function getBookingCategories(includeInactive = false) {
 
 /** Create a new booking category (FM / Super Admin) */
 export async function createBookingCategory(data: z.infer<typeof CategorySchema>) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
 
@@ -50,7 +50,7 @@ export async function createBookingCategory(data: z.infer<typeof CategorySchema>
 
 /** Update a booking category */
 export async function updateBookingCategory(id: string, data: z.infer<typeof CategorySchema>) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
 
@@ -71,7 +71,7 @@ export async function updateBookingCategory(id: string, data: z.infer<typeof Cat
 
 /** Toggle a category active/inactive */
 export async function toggleBookingCategory(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const cat = await prisma.bookingCategory.findUniqueOrThrow({ where: { id } });
   const updated = await prisma.bookingCategory.update({
     where: { id },

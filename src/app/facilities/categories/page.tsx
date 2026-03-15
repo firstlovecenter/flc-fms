@@ -3,7 +3,7 @@ import { getBookingCategories } from "@/actions/category.actions";
 import CategoryManager from "@/components/facilities/CategoryManager";
 
 export default async function CategoriesPage() {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const categories = await getBookingCategories(true);
 
   return (

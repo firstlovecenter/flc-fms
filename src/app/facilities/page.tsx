@@ -20,7 +20,7 @@ export default async function FacilitiesPage() {
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
-  const canManage = ["FACILITY_MANAGER","SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER","BOOKING_MANAGER","SUPER_ADMIN"].includes(session.role);
 
   return (
     <div className="space-y-4 animate-fade-in">

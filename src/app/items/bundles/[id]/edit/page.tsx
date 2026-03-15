@@ -7,7 +7,7 @@ import { getBookableItems } from "@/actions/bookable-items.actions";
 import AddBundleForm from "@/components/items/AddBundleForm";
 
 export default async function EditBundlePage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
   const [bundle, availableItems] = await Promise.all([
     prisma.bookableBundle.findUnique({

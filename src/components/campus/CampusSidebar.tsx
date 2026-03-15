@@ -32,13 +32,13 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/facilities", label: "Facilities", icon: Building2 },
-  { href: "/facilities/categories", label: "Category/Pricing", icon: Tags, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
+  { href: "/facilities/categories", label: "Category/Pricing", icon: Tags, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
   { href: "/items", label: "Items & Packages", icon: Package },
   { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/staff", label: "Staff", icon: Users, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
+  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
 ];
 
 const ADMIN_NAV = [

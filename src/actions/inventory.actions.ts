@@ -16,7 +16,7 @@ const CategorySchema = z.object({
 });
 
 export async function createInventoryCategory(data: z.infer<typeof CategorySchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
 
   const category = await prisma.inventoryCategory.create({ data: validated });
@@ -26,7 +26,7 @@ export async function createInventoryCategory(data: z.infer<typeof CategorySchem
 }
 
 export async function updateInventoryCategory(id: string, data: z.infer<typeof CategorySchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
 
   const category = await prisma.inventoryCategory.update({ where: { id }, data: validated });
@@ -36,7 +36,7 @@ export async function updateInventoryCategory(id: string, data: z.infer<typeof C
 }
 
 export async function deleteInventoryCategory(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   await prisma.inventoryCategory.delete({ where: { id } });
   auditLog({ userId: session.sub, action: "DELETE_INVENTORY_CATEGORY", entity: "InventoryCategory", entityId: id });
   revalidatePath("/inventory");
@@ -72,7 +72,7 @@ const ItemSchema = z.object({
 });
 
 export async function createInventoryItem(data: z.infer<typeof ItemSchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = ItemSchema.parse(data);
 
   const item = await prisma.inventoryItem.create({
@@ -87,7 +87,7 @@ export async function createInventoryItem(data: z.infer<typeof ItemSchema>) {
 }
 
 export async function updateInventoryItem(id: string, data: Partial<z.infer<typeof ItemSchema>>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = ItemSchema.partial().parse(data);
 
   const item = await prisma.inventoryItem.update({ where: { id }, data: validated });
@@ -97,7 +97,7 @@ export async function updateInventoryItem(id: string, data: Partial<z.infer<type
 }
 
 export async function deleteInventoryItem(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   await prisma.inventoryItem.update({ where: { id }, data: { isActive: false } });
   auditLog({ userId: session.sub, action: "DEACTIVATE_INVENTORY_ITEM", entity: "InventoryItem", entityId: id });
   revalidatePath("/inventory");
@@ -322,7 +322,7 @@ export async function updateInventoryMaintenance(
   id: string,
   data: z.infer<typeof InvMaintUpdateSchema>
 ) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = InvMaintUpdateSchema.parse(data);
 
   const maintenance = await prisma.inventoryMaintenance.update({

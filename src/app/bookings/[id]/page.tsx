@@ -24,7 +24,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
 
   if (!booking) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const contact   = booking.patron ?? booking.user;
 
   return (

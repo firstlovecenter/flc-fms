@@ -9,7 +9,7 @@ function formatCurrency(n: number) {
 
 export default async function InventoryPage() {
   const session = await requireStaff();
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
 
   const [summary, { items }, { checkouts }, { logs }] = await Promise.all([
     getInventorySummary(),
