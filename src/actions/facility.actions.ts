@@ -10,20 +10,53 @@ const FacilitySchema = z.object({
   name:           z.string().min(2).max(100),
   description:    z.string().optional(),
   capacity:       z.coerce.number().int().positive(),
-  pricePerHour:   z.coerce.number().positive(),
-  pricePerDay:    z.coerce.number().positive().optional(),
+  pricePerHour:   z.coerce.number().nonnegative().default(0),
+  pricePerDay:    z.coerce.number().nonnegative().optional().nullable(),
   amenities:      z.array(z.string()).default([]),
   images:         z.array(z.string()).default([]),
   availableFrom:  z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
   availableTo:    z.string().regex(/^\d{2}:\d{2}$/).default("22:00"),
-  availableDays:  z.array(z.coerce.number().int().min(0).max(6)).default([0,1,2,3,4,5,6])});
+  availableDays:  z.array(z.coerce.number().int().min(0).max(6)).default([0,1,2,3,4,5,6]),
+  categoryMappings: z.array(z.object({
+    category: z.string().min(1),
+    pricePerHour: z.coerce.number().positive(),
+    pricePerDay: z.coerce.number().nonnegative().optional().nullable(),
+    freeDays: z.array(z.coerce.number().int().min(0).max(6)).default([]),
+    description: z.string().max(500).optional().nullable(),
+    isActive: z.boolean().default(true),
+  })).default([]),
+});
 
-export async function createFacility(data: z.infer<typeof FacilitySchema>) {
+const UpdateFacilitySchema = FacilitySchema.partial();
+
+export async function createFacility(data: z.input<typeof FacilitySchema>) {
   const session = await requirePermission("canManageFacilities");
   const validated = FacilitySchema.parse(data);
 
-  const facility = await prisma.facility.create({
-    data: validated
+  const { categoryMappings, ...facilityData } = validated;
+  if (categoryMappings.length === 0) {
+    return { error: "Add at least one category mapping before saving the facility." };
+  }
+
+  const facility = await prisma.$transaction(async (tx) => {
+    const created = await tx.facility.create({
+      data: facilityData,
+    });
+
+    await tx.facilityPricing.createMany({
+      data: categoryMappings.map((m) => ({
+        facilityId: created.id,
+        category: m.category,
+        pricePerHour: m.pricePerHour,
+        pricePerDay: m.pricePerDay ?? null,
+        freeDays: m.freeDays,
+        description: m.description ?? null,
+        isActive: m.isActive,
+      })),
+      skipDuplicates: true,
+    });
+
+    return created;
   });
 
   auditLog({ userId: session.sub, action: "CREATE_FACILITY", entity: "Facility", entityId: facility.id, after: facility });
@@ -31,16 +64,64 @@ export async function createFacility(data: z.infer<typeof FacilitySchema>) {
   return { success: true, facility };
 }
 
-export async function updateFacility(id: string, data: Partial<z.infer<typeof FacilitySchema>>) {
+export async function updateFacility(id: string, data: Partial<z.input<typeof FacilitySchema>>) {
   const session = await requirePermission("canManageFacilities");
+  const validated = UpdateFacilitySchema.parse(data);
+  const { categoryMappings, ...facilityData } = validated;
   const before = await prisma.facility.findFirstOrThrow({ where: { id } });
-  const facility = await prisma.facility.update({
-    where: { id },
-    data
+
+  const facility = await prisma.$transaction(async (tx) => {
+    const updated = await tx.facility.update({
+      where: { id },
+      data: facilityData,
+    });
+
+    if (categoryMappings) {
+      if (categoryMappings.length === 0) {
+        return updated;
+      }
+
+      const incoming = new Set(categoryMappings.map((m) => m.category));
+
+      await tx.facilityPricing.updateMany({
+        where: { facilityId: id, category: { notIn: Array.from(incoming) } },
+        data: { isActive: false },
+      });
+
+      for (const mapping of categoryMappings) {
+        await tx.facilityPricing.upsert({
+          where: {
+            facilityId_category: {
+              facilityId: id,
+              category: mapping.category,
+            },
+          },
+          create: {
+            facilityId: id,
+            category: mapping.category,
+            pricePerHour: mapping.pricePerHour,
+            pricePerDay: mapping.pricePerDay ?? null,
+            freeDays: mapping.freeDays,
+            description: mapping.description ?? null,
+            isActive: mapping.isActive,
+          },
+          update: {
+            pricePerHour: mapping.pricePerHour,
+            pricePerDay: mapping.pricePerDay ?? null,
+            freeDays: mapping.freeDays,
+            description: mapping.description ?? null,
+            isActive: mapping.isActive,
+          },
+        });
+      }
+    }
+
+    return updated;
   });
 
   auditLog({ userId: session.sub, action: "UPDATE_FACILITY", entity: "Facility", entityId: id, before, after: facility });
   revalidatePath(`/facilities/${id}`);
+  revalidatePath(`/facilities/${id}/slots`);
   return { success: true, facility };
 }
 
@@ -137,13 +218,34 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
     return { error: "End time must be after start time" };
   }
 
-  const slot = await prisma.facilityTimeSlot.create({
-    data: {
+  const mappedCategory = await prisma.facilityPricing.findFirst({
+    where: {
       facilityId,
-      ...validated,
-      pricePerHourOverride: validated.pricePerHourOverride ?? null,
+      category: validated.category,
+      isActive: true,
     },
+    select: { id: true },
   });
+
+  if (!mappedCategory) {
+    return {
+      error:
+        "This category is not mapped to the facility. Add category pairing in Facility Edit before creating slots.",
+    };
+  }
+
+  let slot;
+  try {
+    slot = await prisma.facilityTimeSlot.create({
+      data: {
+        facilityId,
+        ...validated,
+        pricePerHourOverride: validated.pricePerHourOverride ?? null,
+      },
+    });
+  } catch {
+    return { error: "Unable to create slot. Ensure the selected category is paired with this facility." };
+  }
 
   auditLog({ userId: session.sub, action: "CREATE_TIME_SLOT", entity: "FacilityTimeSlot", entityId: slot.id, after: slot });
   revalidatePath(`/facilities/${facilityId}`);
@@ -154,13 +256,44 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
 export async function updateTimeSlot(slotId: string, data: Partial<z.infer<typeof TimeSlotSchema>>) {
   const session = await requirePermission("canManageFacilities");
 
-  const slot = await prisma.facilityTimeSlot.update({
+  const existing = await prisma.facilityTimeSlot.findUnique({
     where: { id: slotId },
-    data: {
-      ...data,
-      pricePerHourOverride: data.pricePerHourOverride ?? null,
-    },
+    select: { facilityId: true, category: true },
   });
+
+  if (!existing) {
+    return { error: "Time slot not found." };
+  }
+
+  const targetCategory = data.category ?? existing.category;
+  const mappedCategory = await prisma.facilityPricing.findFirst({
+    where: {
+      facilityId: existing.facilityId,
+      category: targetCategory,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  if (!mappedCategory) {
+    return {
+      error:
+        "This category is not mapped to the facility. Add category pairing in Facility Edit before updating slots.",
+    };
+  }
+
+  let slot;
+  try {
+    slot = await prisma.facilityTimeSlot.update({
+      where: { id: slotId },
+      data: {
+        ...data,
+        pricePerHourOverride: data.pricePerHourOverride ?? null,
+      },
+    });
+  } catch {
+    return { error: "Unable to update slot. Ensure the selected category is paired with this facility." };
+  }
 
   auditLog({ userId: session.sub, action: "UPDATE_TIME_SLOT", entity: "FacilityTimeSlot", entityId: slotId, after: slot });
   revalidatePath(`/facilities/${slot.facilityId}/slots`);

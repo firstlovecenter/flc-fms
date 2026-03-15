@@ -12,8 +12,6 @@ const schema = z.object({
   name:          z.string().min(2, "Name is required"),
   description:   z.string().optional(),
   capacity:      z.coerce.number().int().positive("Capacity must be positive"),
-  pricePerHour:  z.coerce.number().positive("Price is required"),
-  pricePerDay:   z.coerce.number().positive().optional().or(z.literal("")),
   availableFrom: z.string().default("08:00"),
   availableTo:   z.string().default("22:00"),
   amenities:     z.string().optional(), // comma-separated
@@ -29,19 +27,54 @@ const DAYS = [
 ];
 
 interface Props {
+  categories: { slug: string; name: string }[];
   facility?: {
     id: string; name: string; description: string | null;
-    capacity: number; pricePerHour: unknown; pricePerDay: unknown;
+    capacity: number;
     availableFrom: string; availableTo: string;
     amenities: string[]; availableDays: number[]; images: string[];
+    pricing?: {
+      category: string;
+      pricePerHour: number;
+      pricePerDay: number | null;
+      freeDays: number[];
+      description: string | null;
+      isActive: boolean;
+    }[];
   };
 }
 
-export default function FacilityForm({ facility }: Props) {
+type CategoryMappingDraft = {
+  enabled: boolean;
+  category: string;
+  pricePerHour: string;
+  pricePerDay: string;
+  freeDays: string;
+  description: string;
+};
+
+export default function FacilityForm({ facility, categories }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(facility?.images || []);
   const isEdit = !!facility;
+  const [categoryMappings, setCategoryMappings] = useState<CategoryMappingDraft[]>(() => {
+    const existing = new Map(
+      (facility?.pricing ?? []).map((p) => [p.category, p])
+    );
+
+    return categories.map((c) => {
+      const mapped = existing.get(c.slug);
+      return {
+        enabled: !!mapped?.isActive,
+        category: c.slug,
+        pricePerHour: mapped?.pricePerHour != null ? String(mapped.pricePerHour) : "",
+        pricePerDay: mapped?.pricePerDay != null ? String(mapped.pricePerDay) : "",
+        freeDays: mapped?.freeDays?.length ? mapped.freeDays.join(",") : "",
+        description: mapped?.description ?? "",
+      };
+    });
+  });
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -49,8 +82,6 @@ export default function FacilityForm({ facility }: Props) {
       name:          facility.name,
       description:   facility.description ?? "",
       capacity:      facility.capacity,
-      pricePerHour:  Number(facility.pricePerHour),
-      pricePerDay:   facility.pricePerDay ? Number(facility.pricePerDay) : undefined,
       availableFrom: facility.availableFrom,
       availableTo:   facility.availableTo,
       amenities:     facility.amenities.join(", "),
@@ -71,6 +102,26 @@ export default function FacilityForm({ facility }: Props) {
 
   async function onSubmit(data: FormData) {
     setError(null);
+    const activeMappings = categoryMappings
+      .filter((m) => m.enabled)
+      .map((m) => ({
+        category: m.category,
+        pricePerHour: Number(m.pricePerHour),
+        pricePerDay: m.pricePerDay ? Number(m.pricePerDay) : null,
+        freeDays: m.freeDays
+          .split(",")
+          .map((d) => Number(d.trim()))
+          .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+        description: m.description.trim() || null,
+        isActive: true,
+      }))
+      .filter((m) => Number.isFinite(m.pricePerHour) && m.pricePerHour > 0);
+
+    if (activeMappings.length === 0) {
+      setError("Select at least one category and provide its hourly price.");
+      return;
+    }
+
     const amenities = data.amenities
       ? data.amenities.split(",").map((a) => a.trim()).filter(Boolean)
       : [];
@@ -79,13 +130,12 @@ export default function FacilityForm({ facility }: Props) {
       name:          data.name,
       description:   data.description,
       capacity:      data.capacity,
-      pricePerHour:  data.pricePerHour,
-      pricePerDay:   data.pricePerDay || undefined,
       availableFrom: data.availableFrom,
       availableTo:   data.availableTo,
       amenities,
       images,
       availableDays: data.availableDays,
+      categoryMappings: activeMappings,
     };
 
     const result = isEdit
@@ -98,6 +148,10 @@ export default function FacilityForm({ facility }: Props) {
       router.push("/facilities");
       router.refresh();
     }
+  }
+
+  function updateMapping(category: string, patch: Partial<CategoryMappingDraft>) {
+    setCategoryMappings((prev) => prev.map((m) => (m.category === category ? { ...m, ...patch } : m)));
   }
 
   return (
@@ -119,21 +173,12 @@ export default function FacilityForm({ facility }: Props) {
         <textarea {...register("description")} className="input" rows={3} placeholder="Brief description…" />
       </div>
 
-      {/* Capacity + Pricing */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Capacity */}
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Capacity *</label>
           <input {...register("capacity")} type="number" className="input" placeholder="500" />
           {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity.message}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Price/Hour (GHS) *</label>
-          <input {...register("pricePerHour")} type="number" step="0.01" className="input" placeholder="150.00" />
-          {errors.pricePerHour && <p className="text-red-500 text-xs mt-1">{errors.pricePerHour.message}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Price/Day (GHS)</label>
-          <input {...register("pricePerDay")} type="number" step="0.01" className="input" placeholder="800.00" />
         </div>
       </div>
 
@@ -187,6 +232,66 @@ export default function FacilityForm({ facility }: Props) {
         label="Facility Images"
         showMain
       />
+
+      {/* Category mappings */}
+      <div className="space-y-3 pt-1">
+        <h3 className="text-sm font-semibold text-[var(--slate)] uppercase tracking-wide">Category Pairing *</h3>
+        <p className="text-xs text-[var(--muted)]">Enable one or more categories and set pricing for this facility.</p>
+        <div className="space-y-2">
+          {categoryMappings.map((mapping) => {
+            const categoryName = categories.find((c) => c.slug === mapping.category)?.name ?? mapping.category;
+            return (
+              <div key={mapping.category} className="rounded-xl border border-[var(--border)] p-3 bg-white">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--navy)]">
+                    <input
+                      type="checkbox"
+                      checked={mapping.enabled}
+                      onChange={(e) => updateMapping(mapping.category, { enabled: e.target.checked })}
+                    />
+                    {categoryName}
+                  </label>
+                  <span className="text-xs text-[var(--muted)]">{mapping.category}</span>
+                </div>
+                {mapping.enabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Price/hour"
+                      value={mapping.pricePerHour}
+                      onChange={(e) => updateMapping(mapping.category, { pricePerHour: e.target.value })}
+                    />
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Price/day (optional)"
+                      value={mapping.pricePerDay}
+                      onChange={(e) => updateMapping(mapping.category, { pricePerDay: e.target.value })}
+                    />
+                    <input
+                      className="input"
+                      placeholder="Free days e.g. 0,6"
+                      value={mapping.freeDays}
+                      onChange={(e) => updateMapping(mapping.category, { freeDays: e.target.value })}
+                    />
+                    <input
+                      className="input md:col-span-3"
+                      placeholder="Description (optional)"
+                      value={mapping.description}
+                      onChange={(e) => updateMapping(mapping.category, { description: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">

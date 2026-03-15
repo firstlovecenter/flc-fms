@@ -363,6 +363,7 @@ function DayPanel({
   const [adding, setAdding]   = useState(false);
 
   const daySlots = slots.filter((s) => s.dayOfWeek === day);
+  const canAddSlots = bookingCategories.length > 0;
 
   return (
     <div className="space-y-2">
@@ -388,13 +389,21 @@ function DayPanel({
           bookingCategories={bookingCategories}
         />
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-2 text-sm text-[var(--navy)] hover:text-[var(--gold)] transition-colors py-1"
-        >
-          <Plus size={15} />
-          Add slot for {DAYS[day]}
-        </button>
+        <>
+          <button
+            onClick={() => setAdding(true)}
+            disabled={!canAddSlots}
+            className="flex items-center gap-2 text-sm text-[var(--navy)] hover:text-[var(--gold)] transition-colors py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus size={15} />
+            Add slot for {DAYS[day]}
+          </button>
+          {!canAddSlots && (
+            <p className="text-xs text-[var(--muted)]">
+              No mapped categories found. Add category pairing in the facility edit page first.
+            </p>
+          )}
+        </>
       )}
     </div>
   );

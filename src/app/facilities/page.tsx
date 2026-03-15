@@ -2,14 +2,21 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { formatCurrency } from "@/lib/utils";
 
 export default async function FacilitiesPage() {
   const session  = await requireStaff();
 
   const facilities = await prisma.facility.findMany({
     where: {},
-    include: { _count: { select: { bookings: { where: { status: { in: ["PENDING","APPROVED"] } } } } } },
+    include: {
+      _count: {
+        select: {
+          bookings: { where: { status: { in: ["PENDING","APPROVED"] } } },
+          pricing: { where: { isActive: true } },
+          timeSlots: { where: { isActive: true } },
+        },
+      },
+    },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
@@ -59,7 +66,9 @@ export default async function FacilitiesPage() {
                 <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
                   <span>Cap: {f.capacity.toLocaleString()}</span>
                   <span>•</span>
-                  <span>{formatCurrency(Number(f.pricePerHour))}/hr</span>
+                  <span>{f._count.pricing} active categor{f._count.pricing === 1 ? "y" : "ies"}</span>
+                  <span>•</span>
+                  <span>{f._count.timeSlots} active slots</span>
                   <span>•</span>
                   <span>{f._count.bookings} active booking{f._count.bookings !== 1 ? "s" : ""}</span>
                 </div>

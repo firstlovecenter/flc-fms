@@ -16,13 +16,20 @@ export default async function FacilitySlotsPage({ params }: { params: { id: stri
         where: { isActive: true },
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
       },
+      pricing: {
+        where: { isActive: true },
+        select: { category: true },
+      },
     },
   });
 
   if (!facility) notFound();
 
   const allCategories = await getBookingCategories();
-  const bookingCategories = allCategories.map((c) => ({
+  const mappedCategories = new Set(facility.pricing.map((p) => p.category));
+  const bookingCategories = allCategories
+    .filter((c) => mappedCategories.has(c.slug))
+    .map((c) => ({
     value: c.slug,
     label: c.name.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
   }));
