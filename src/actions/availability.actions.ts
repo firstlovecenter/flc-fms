@@ -15,7 +15,7 @@ interface TimeSlotAvailability {
   isAvailable: boolean;
 }
 
-const DEFAULT_LEAD_TIME_HOURS = 18;
+const DEFAULT_LEAD_TIME_HOURS = 168; // 7 days for week-ahead booking window
 
 function isWeekday(dayOfWeek: number) {
   return dayOfWeek >= 1 && dayOfWeek <= 5;

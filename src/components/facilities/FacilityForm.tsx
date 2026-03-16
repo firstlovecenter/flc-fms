@@ -15,8 +15,6 @@ const schema = z.object({
   acUsageFee:    z.coerce.number().min(0, "AC usage fee cannot be negative"),
   requiresBookingTerms: z.boolean().default(true),
   requiresItemBookingTerms: z.boolean().default(false),
-  availableFrom: z.string().default("08:00"),
-  availableTo:   z.string().default("22:00"),
   amenities:     z.string().optional(), // comma-separated
   availableDays: z.array(z.coerce.number()).min(1, "Select at least one day"),
 });
@@ -37,7 +35,6 @@ interface Props {
     acUsageFee: number;
     requiresBookingTerms: boolean;
     requiresItemBookingTerms: boolean;
-    availableFrom: string; availableTo: string;
     amenities: string[]; availableDays: number[]; images: string[];
     pricing?: {
       category: string;
@@ -88,14 +85,10 @@ export default function FacilityForm({ facility, categories }: Props) {
       acUsageFee:    facility.acUsageFee,
       requiresBookingTerms: facility.requiresBookingTerms,
       requiresItemBookingTerms: facility.requiresItemBookingTerms,
-      availableFrom: facility.availableFrom,
-      availableTo:   facility.availableTo,
       amenities:     facility.amenities.join(", "),
       availableDays: facility.availableDays,
     } : {
       availableDays: [0,1,2,3,4,5,6],
-      availableFrom: "08:00",
-      availableTo: "22:00",
       acUsageFee: 0,
       requiresBookingTerms: true,
       requiresItemBookingTerms: false,
@@ -145,8 +138,6 @@ export default function FacilityForm({ facility, categories }: Props) {
       acUsageFee:    data.acUsageFee,
       requiresBookingTerms: data.requiresBookingTerms,
       requiresItemBookingTerms: data.requiresItemBookingTerms,
-      availableFrom: data.availableFrom,
-      availableTo:   data.availableTo,
       amenities,
       images,
       availableDays: data.availableDays,
@@ -200,18 +191,6 @@ export default function FacilityForm({ facility, categories }: Props) {
           <input {...register("acUsageFee")} type="number" min="0" step="0.01" className="input" placeholder="0" />
           {errors.acUsageFee && <p className="text-red-500 text-xs mt-1">{errors.acUsageFee.message}</p>}
           <p className="text-xs text-[var(--muted)] mt-1">Applied only when a booker selects air conditioner usage.</p>
-        </div>
-      </div>
-
-      {/* Available hours */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Available From</label>
-          <input {...register("availableFrom")} type="time" className="input" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Available To</label>
-          <input {...register("availableTo")} type="time" className="input" />
         </div>
       </div>
 
@@ -288,7 +267,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                   <span className="text-xs text-[var(--muted)]">{mapping.category}</span>
                 </div>
                 {mapping.enabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-3 mt-3">
                     <input
                       className="input"
                       type="number"
@@ -298,14 +277,36 @@ export default function FacilityForm({ facility, categories }: Props) {
                       value={mapping.price}
                       onChange={(e) => updateMapping(mapping.category, { price: e.target.value })}
                     />
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--slate)] mb-2">Free Days of the Week</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {DAYS.map(({ label, value }) => {
+                          const freeDayNumbers = mapping.freeDays.split(",").map(d => Number(d.trim())).filter(d => Number.isInteger(d) && d >= 0 && d <= 6);
+                          const isSelected = freeDayNumbers.includes(value);
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => {
+                                let updated = freeDayNumbers.includes(value)
+                                  ? freeDayNumbers.filter(d => d !== value)
+                                  : [...freeDayNumbers, value].sort();
+                                updateMapping(mapping.category, { freeDays: updated.join(",") });
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                                isSelected
+                                  ? "bg-[var(--navy)] text-white border-brand-500"
+                                  : "bg-white text-[var(--slate)] border-gray-300 hover:bg-[var(--cream)]"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                     <input
                       className="input"
-                      placeholder="Free days e.g. 0,6"
-                      value={mapping.freeDays}
-                      onChange={(e) => updateMapping(mapping.category, { freeDays: e.target.value })}
-                    />
-                    <input
-                      className="input md:col-span-2"
                       placeholder="Description (optional)"
                       value={mapping.description}
                       onChange={(e) => updateMapping(mapping.category, { description: e.target.value })}

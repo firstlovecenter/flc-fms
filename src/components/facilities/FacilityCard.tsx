@@ -90,12 +90,6 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
           <h3 className="font-display font-bold text-xl text-[var(--navy)] leading-tight line-clamp-2">
             {f.name}
           </h3>
-          <div className="text-right shrink-0">
-            <span className="font-display font-bold text-lg text-[var(--gold)] block">
-              {formatCurrency(f.pricePerHour)}
-            </span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">/ hour</span>
-          </div>
         </div>
 
         <p className="text-sm text-slate-600 line-clamp-2 mb-4 font-light">
