@@ -7,23 +7,25 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X } from "lucide-react";
-import { updateStaffMember, updateStaffProfilePicture } from "@/actions/staff.actions";
+import { updateStaffMember, updateStaffProfilePicture, updateStaffRole } from "@/actions/staff.actions";
 import MediaUploader from "@/components/ui/MediaUploader";
 
 const schema = z.object({
   name:  z.string().min(2, "Name is required"),
   email: z.string().email("Valid email required"),
   phone: z.string().min(9, "Phone number is required"),
+  role: z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
 });
 type FormData = z.infer<typeof schema>;
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  currentUserRole: string;
   staff: { id: string; name: string; email: string; phone: string | null; role: string; profilePicture?: string | null };
 }
 
-export default function EditStaffModal({ open, onClose, staff }: Props) {
+export default function EditStaffModal({ open, onClose, currentUserRole, staff }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [profileImages, setProfileImages] = useState<string[]>(
@@ -32,20 +34,46 @@ export default function EditStaffModal({ open, onClose, staff }: Props) {
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: staff.name, email: staff.email, phone: staff.phone ?? "" },
+    defaultValues: { name: staff.name, email: staff.email, phone: staff.phone ?? "", role: staff.role as FormData["role"] },
   });
+
+  const roleOptions: FormData["role"][] =
+    currentUserRole === "SUPER_ADMIN"
+      ? ["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]
+      : ["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"];
 
   useEffect(() => {
     if (open) {
-      reset({ name: staff.name, email: staff.email, phone: staff.phone ?? "" });
+      reset({
+        name: staff.name,
+        email: staff.email,
+        phone: staff.phone ?? "",
+        role: staff.role as FormData["role"],
+      });
       setProfileImages(staff.profilePicture ? [staff.profilePicture] : []);
     }
   }, [open, staff, reset]);
 
   async function onSubmit(data: FormData) {
     setError(null);
-    const result = await updateStaffMember(staff.id, data);
-    if (result && "error" in result) { setError(result.error as string); return; }
+
+    const detailsResult = await updateStaffMember(staff.id, {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+    });
+    if (detailsResult && "error" in detailsResult) {
+      setError(detailsResult.error as string);
+      return;
+    }
+
+    if (data.role !== staff.role) {
+      const roleResult = await updateStaffRole(staff.id, data.role);
+      if (roleResult && "error" in roleResult && roleResult.error) {
+        setError(roleResult.error as string);
+        return;
+      }
+    }
 
     // If profile picture changed, save it
     const newPicture = profileImages[0] ?? null;
@@ -97,8 +125,18 @@ export default function EditStaffModal({ open, onClose, staff }: Props) {
             <input {...register("phone")} className="input" />
             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
           </div>
-          <div className="text-xs text-[var(--muted)]">
-            Role: <strong>{staff.role.replace("_", " ")}</strong> — Role changes are not supported via edit.
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Role *</label>
+            <select {...register("role")} className="input">
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role.replace("_", " ")}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Facility Manager and Super Admin can update staff roles from this form.
+            </p>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">

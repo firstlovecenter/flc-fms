@@ -8,6 +8,7 @@ import { auditLog } from "@/lib/audit";
 import type { VicarPermissions } from "@/lib/staff-permissions";
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
+import type { Role } from "@prisma/client";
 
 export async function getStaffMembers() {
   const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
@@ -109,6 +110,8 @@ const UpdateStaffSchema = z.object({
   phone: z.string().min(9).optional(),
 });
 
+const StaffRoleSchema = z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]);
+
 export async function updateStaffMember(
   userId: string,
   data: z.infer<typeof UpdateStaffSchema>
@@ -157,6 +160,57 @@ export async function getInactiveStaffMembers() {
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
+}
+
+export async function updateStaffRole(userId: string, nextRoleInput: string) {
+  const session = await requireStaff("FACILITY_MANAGER");
+  const nextRole = StaffRoleSchema.parse(nextRoleInput) as Role;
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isActive: true },
+  });
+
+  if (!target) return { error: "Staff member not found." };
+  if (!target.isActive) return { error: "Cannot change role for an inactive staff member." };
+  if (session.sub === userId) return { error: "You cannot change your own role." };
+
+  if (target.role === "SUPER_ADMIN" && session.role !== "SUPER_ADMIN") {
+    return { error: "Only Super Admin can modify another Super Admin role." };
+  }
+
+  if (nextRole === "SUPER_ADMIN" && session.role !== "SUPER_ADMIN") {
+    return { error: "Only Super Admin can assign the Super Admin role." };
+  }
+
+  if (nextRole === target.role) return { success: true };
+
+  if (target.role === "SUPER_ADMIN" && nextRole !== "SUPER_ADMIN") {
+    const superAdminCount = await prisma.user.count({
+      where: { role: "SUPER_ADMIN", isActive: true },
+    });
+
+    if (superAdminCount <= 1) {
+      return { error: "Cannot demote the only active Super Admin." };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role: nextRole },
+  });
+
+  auditLog({
+    userId: session.sub,
+    action: "UPDATE_STAFF_ROLE",
+    entity: "User",
+    entityId: userId,
+    before: { role: target.role },
+    after: { role: nextRole },
+  });
+
+  revalidatePath("/staff");
+  return { success: true };
 }
 
 export async function updateStaffProfilePicture(

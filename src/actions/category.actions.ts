@@ -82,3 +82,40 @@ export async function toggleBookingCategory(id: string) {
   revalidatePath("/facilities");
   return { success: true, category: updated };
 }
+
+/** Delete a booking category (only when not in active use) */
+export async function deleteBookingCategory(id: string) {
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const category = await prisma.bookingCategory.findUnique({ where: { id } });
+  if (!category) return { error: "Category not found." };
+
+  const [pricingCount, bookingCount] = await Promise.all([
+    prisma.facilityPricing.count({ where: { category: category.slug } }),
+    prisma.booking.count({ where: { category: category.slug, deletedAt: null } }),
+  ]);
+
+  if (pricingCount > 0 || bookingCount > 0) {
+    return {
+      error:
+        "This category is in use by facility pricing or bookings. Deactivate it instead of deleting.",
+    };
+  }
+
+  await prisma.bookingCategory.update({
+    where: { id },
+    data: { isActive: false },
+  });
+
+  auditLog({
+    userId: session.sub,
+    action: "DELETE_BOOKING_CATEGORY",
+    entity: "BookingCategory",
+    entityId: id,
+    before: category,
+  });
+
+  revalidatePath("/facilities");
+  revalidatePath("/facilities/categories");
+  return { success: true };
+}

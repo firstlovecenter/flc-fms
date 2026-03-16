@@ -127,16 +127,20 @@ const CreateStaffSchema = z.object({
   name:    z.string().min(2),
   email:   z.string().email(),
   phone:   z.string().min(9, "Phone number is required"),
-  role:    z.enum(["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
+  role:    z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
 });
 
 export async function createStaffUser(formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Unauthorized" };
 
-  // Super admin can create FMs/BMs; FM can only create vicars/booking managers
-  if (session.role === "FACILITY_MANAGER" && formData.get("role") === "FACILITY_MANAGER") {
-    return { error: "Facility Managers cannot create other Facility Managers." };
+  // Super admin can create all staff roles; FM can only create vicars/booking managers
+  const requestedRole = formData.get("role");
+  if (session.role === "FACILITY_MANAGER" && ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(String(requestedRole))) {
+    return { error: "Facility Managers can only create Booking Managers or Vicars." };
+  }
+  if (session.role !== "SUPER_ADMIN" && requestedRole === "SUPER_ADMIN") {
+    return { error: "Only Super Admin can create another Super Admin." };
   }
   if (!["SUPER_ADMIN", "FACILITY_MANAGER"].includes(session.role)) {
     return { error: "Unauthorized" };

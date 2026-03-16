@@ -6,7 +6,7 @@ export async function getTotalIncomeIncludingBookingRevenue(): Promise<{
   totalIncome: number;
 }> {
   const linkedBookingIncome = await prisma.income.findMany({
-    where: { bookingId: { not: null } },
+    where: { bookingId: { not: null }, deletedAt: null },
     select: { bookingId: true },
   });
 
@@ -15,7 +15,7 @@ export async function getTotalIncomeIncludingBookingRevenue(): Promise<{
     .filter((bookingId): bookingId is string => Boolean(bookingId));
 
   const [incomeAgg, bookingPaymentAgg] = await Promise.all([
-    prisma.income.aggregate({ _sum: { amount: true } }),
+    prisma.income.aggregate({ where: { deletedAt: null }, _sum: { amount: true } }),
     prisma.payment.aggregate({
       where: {
         status: "PAID",

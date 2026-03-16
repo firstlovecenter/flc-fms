@@ -5,7 +5,7 @@ import AddStaffModal from "@/components/staff/AddStaffModal";
 import StaffRowActions from "@/components/staff/StaffRowActions";
 
 export default async function StaffPage() {
-  await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER");
 
   const [activeStaff, inactiveStaff] = await Promise.all([
     prisma.user.findMany({
@@ -85,7 +85,7 @@ export default async function StaffPage() {
           </p>
         </div>
         <div style={{ marginTop: 4 }}>
-          <AddStaffModal />
+          <AddStaffModal canAssignSuperAdmin={session.role === "SUPER_ADMIN"} />
         </div>
       </div>
 
@@ -153,7 +153,15 @@ export default async function StaffPage() {
                     <span className="badge badge-approved">Active</span>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} profilePicture={u.profilePicture} />
+                    <StaffRowActions
+                      userId={u.id}
+                      role={u.role}
+                      name={u.name}
+                      email={u.email}
+                      phone={u.phone}
+                      profilePicture={u.profilePicture}
+                      currentUserRole={session.role}
+                    />
                   </td>
                 </tr>
               ))}
@@ -231,7 +239,16 @@ export default async function StaffPage() {
                       <span className="badge badge-cancelled">Inactive</span>
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <StaffRowActions userId={u.id} role={u.role} name={u.name} email={u.email} phone={u.phone} profilePicture={u.profilePicture} inactive />
+                      <StaffRowActions
+                        userId={u.id}
+                        role={u.role}
+                        name={u.name}
+                        email={u.email}
+                        phone={u.phone}
+                        profilePicture={u.profilePicture}
+                        currentUserRole={session.role}
+                        inactive
+                      />
                     </td>
                   </tr>
                 ))}

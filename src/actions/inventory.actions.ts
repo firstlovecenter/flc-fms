@@ -29,6 +29,8 @@ export async function updateInventoryCategory(id: string, data: z.infer<typeof C
   const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
 
+  await prisma.inventoryCategory.findFirstOrThrow({ where: { id, deletedAt: null } });
+
   const category = await prisma.inventoryCategory.update({ where: { id }, data: validated });
   auditLog({ userId: session.sub, action: "UPDATE_INVENTORY_CATEGORY", entity: "InventoryCategory", entityId: id });
   revalidatePath("/inventory");
@@ -37,7 +39,7 @@ export async function updateInventoryCategory(id: string, data: z.infer<typeof C
 
 export async function deleteInventoryCategory(id: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
-  await prisma.inventoryCategory.delete({ where: { id } });
+  await prisma.inventoryCategory.update({ where: { id }, data: { deletedAt: new Date() } });
   auditLog({ userId: session.sub, action: "DELETE_INVENTORY_CATEGORY", entity: "InventoryCategory", entityId: id });
   revalidatePath("/inventory");
   return { success: true };
@@ -46,6 +48,7 @@ export async function deleteInventoryCategory(id: string) {
 export async function getInventoryCategories() {
   await requireStaff();
   return prisma.inventoryCategory.findMany({
+    where: { deletedAt: null },
     include: { _count: { select: { items: true } } },
     orderBy: { name: "asc" },
   });
