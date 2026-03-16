@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
+import { Phone, MessageCircle } from "lucide-react";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
@@ -41,6 +42,14 @@ type CategoryOption = {
 function labelForCategory(slug: string, categories: CategoryOption[]) {
   const hit = categories.find((c) => c.slug === slug);
   return hit ? hit.name : slug.replace(/_/g, " ");
+}
+
+function normalizeTel(phone: string) {
+  return phone.replace(/[^\d+]/g, "");
+}
+
+function normalizeWhatsApp(phone: string) {
+  return phone.replace(/\D/g, "");
 }
 
 export default function BookingsListClient({
@@ -190,6 +199,26 @@ export default function BookingsListClient({
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
                     <span>{b.bookerName || "-"}</span>
+                    {b.bookerPhone && (
+                      <span className="inline-flex items-center gap-2">
+                        <a
+                          href={`tel:${normalizeTel(b.bookerPhone)}`}
+                          className="inline-flex items-center gap-1 text-[var(--navy)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Phone size={12} /> Call
+                        </a>
+                        <a
+                          href={`https://wa.me/${normalizeWhatsApp(b.bookerPhone)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-green-700 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MessageCircle size={12} /> WhatsApp
+                        </a>
+                      </span>
+                    )}
                     <span>•</span>
                     <span>{b.facilityName}</span>
                     <span>•</span>
@@ -238,7 +267,27 @@ export default function BookingsListClient({
                   </div>
 
                   <div className="text-sm">
-                    <p><strong>Booked By:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}</p>
+                    <p>
+                      <strong>Booked By:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}
+                    </p>
+                    {selected.bookerPhone && (
+                      <div className="flex items-center gap-3 mt-1.5 mb-1">
+                        <a
+                          href={`tel:${normalizeTel(selected.bookerPhone)}`}
+                          className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
+                        >
+                          <Phone size={12} /> Call Booker
+                        </a>
+                        <a
+                          href={`https://wa.me/${normalizeWhatsApp(selected.bookerPhone)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-green-700 hover:underline"
+                        >
+                          <MessageCircle size={12} /> WhatsApp Booker
+                        </a>
+                      </div>
+                    )}
                     <p><strong>Start:</strong> {formatDateTime(new Date(selected.startTime))}</p>
                     <p><strong>End:</strong> {formatDateTime(new Date(selected.endTime))}</p>
                     <p><strong>Duration:</strong> {durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours</p>

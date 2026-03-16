@@ -285,7 +285,16 @@ export default async function TransactionsPage({
                           <p className="font-medium text-[var(--navy)]">{e.title}</p>
                           <p className="text-xs text-[var(--muted)]">{e.category} · {e.createdBy.name}</p>
                         </td>
-                        <td className="py-2.5 px-4"><span className={statusBadgeClass(e.status)}>{e.status}</span></td>
+                        <td className="py-2.5 px-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={statusBadgeClass(e.status)}>{e.status}</span>
+                            {e.status === "APPROVED" && !e.receiptUrl && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                Receipt Missing
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2.5 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-2.5 px-4">
                           {e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
@@ -409,11 +418,23 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(e.createdAt)}</td>
                         <td className="py-3 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-3 px-4">
-                          <span className={statusBadgeClass(e.status)}>{e.status}</span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={statusBadgeClass(e.status)}>{e.status}</span>
+                            {e.status === "APPROVED" && !e.receiptUrl && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                Receipt Missing
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
+                            {e.status === "APPROVED" && e.createdById === session.sub && !isFM && (
+                              <Link href={`/transactions/expenses/${e.id}/edit`} className="text-xs text-[var(--navy)] hover:underline">
+                                Upload Receipt
+                              </Link>
+                            )}
                             {isFM && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                             {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                             {e.approvedBy && (
