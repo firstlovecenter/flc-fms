@@ -4,7 +4,7 @@ import CategoryManager from "@/components/facilities/CategoryManager";
 
 export default async function CategoriesPage() {
   await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
-  const categories = await getBookingCategories(true);
+  const categories = await getBookingCategories(false);
 
   return (
     <div className="space-y-6 max-w-2xl">

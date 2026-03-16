@@ -12,6 +12,7 @@ const schema = z.object({
   name:          z.string().min(2, "Name is required"),
   description:   z.string().optional(),
   capacity:      z.coerce.number().int().positive("Capacity must be positive"),
+  acUsageFee:    z.coerce.number().min(0, "AC usage fee cannot be negative"),
   availableFrom: z.string().default("08:00"),
   availableTo:   z.string().default("22:00"),
   amenities:     z.string().optional(), // comma-separated
@@ -31,6 +32,7 @@ interface Props {
   facility?: {
     id: string; name: string; description: string | null;
     capacity: number;
+    acUsageFee: number;
     availableFrom: string; availableTo: string;
     amenities: string[]; availableDays: number[]; images: string[];
     pricing?: {
@@ -79,11 +81,12 @@ export default function FacilityForm({ facility, categories }: Props) {
       name:          facility.name,
       description:   facility.description ?? "",
       capacity:      facility.capacity,
+      acUsageFee:    facility.acUsageFee,
       availableFrom: facility.availableFrom,
       availableTo:   facility.availableTo,
       amenities:     facility.amenities.join(", "),
       availableDays: facility.availableDays,
-    } : { availableDays: [0,1,2,3,4,5,6], availableFrom: "08:00", availableTo: "22:00" },
+    } : { availableDays: [0,1,2,3,4,5,6], availableFrom: "08:00", availableTo: "22:00", acUsageFee: 0 },
   });
 
   const selectedDays = watch("availableDays") ?? [];
@@ -126,6 +129,7 @@ export default function FacilityForm({ facility, categories }: Props) {
       name:          data.name,
       description:   data.description,
       capacity:      data.capacity,
+      acUsageFee:    data.acUsageFee,
       availableFrom: data.availableFrom,
       availableTo:   data.availableTo,
       amenities,
@@ -170,11 +174,17 @@ export default function FacilityForm({ facility, categories }: Props) {
       </div>
 
       {/* Capacity */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Capacity *</label>
           <input {...register("capacity")} type="number" className="input" placeholder="500" />
           {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity.message}</p>}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[var(--slate)] mb-1">AC Usage Fee (Optional Add-on)</label>
+          <input {...register("acUsageFee")} type="number" min="0" step="0.01" className="input" placeholder="0" />
+          {errors.acUsageFee && <p className="text-red-500 text-xs mt-1">{errors.acUsageFee.message}</p>}
+          <p className="text-xs text-[var(--muted)] mt-1">Applied only when a booker selects air conditioner usage.</p>
         </div>
       </div>
 

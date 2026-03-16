@@ -2,14 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const PULL_THRESHOLD = 80;
-const MAX_PULL_DISTANCE = 140;
+const PULL_THRESHOLD = 108;
+const MAX_PULL_DISTANCE = 170;
+const MIN_PULL_START = 18;
+const VERTICAL_DOMINANCE = 10;
 
 export default function PullToRefresh() {
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const startYRef = useRef(0);
+  const startXRef = useRef(0);
   const pullingRef = useRef(false);
+  const pullActivatedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -23,26 +27,39 @@ export default function PullToRefresh() {
       if (event.touches.length !== 1) return;
 
       startYRef.current = event.touches[0].clientY;
+      startXRef.current = event.touches[0].clientX;
       pullingRef.current = true;
+      pullActivatedRef.current = false;
     };
 
     const onTouchMove = (event: TouchEvent) => {
       if (!pullingRef.current || refreshing) return;
       if (event.touches.length !== 1) return;
 
-      const delta = event.touches[0].clientY - startYRef.current;
-      if (delta <= 0) {
+      const deltaY = event.touches[0].clientY - startYRef.current;
+      const deltaX = Math.abs(event.touches[0].clientX - startXRef.current);
+
+      if (deltaY <= 0) {
         setPullDistance(0);
+        pullActivatedRef.current = false;
         return;
+      }
+
+      if (!pullActivatedRef.current) {
+        if (deltaY < MIN_PULL_START) return;
+        if (deltaY <= deltaX + VERTICAL_DOMINANCE) return;
+        pullActivatedRef.current = true;
       }
 
       if (window.scrollY > 0) {
         pullingRef.current = false;
+        pullActivatedRef.current = false;
         setPullDistance(0);
         return;
       }
 
-      const distance = Math.min(MAX_PULL_DISTANCE, delta * 0.6);
+      const effectiveDelta = Math.max(0, deltaY - MIN_PULL_START);
+      const distance = Math.min(MAX_PULL_DISTANCE, effectiveDelta * 0.52);
       setPullDistance(distance);
       event.preventDefault();
     };
@@ -51,6 +68,13 @@ export default function PullToRefresh() {
       if (!pullingRef.current || refreshing) return;
 
       pullingRef.current = false;
+      const isActivated = pullActivatedRef.current;
+      pullActivatedRef.current = false;
+
+      if (!isActivated) {
+        setPullDistance(0);
+        return;
+      }
 
       if (pullDistance >= PULL_THRESHOLD) {
         setRefreshing(true);

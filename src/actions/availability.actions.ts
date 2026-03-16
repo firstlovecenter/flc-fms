@@ -15,6 +15,23 @@ interface TimeSlotAvailability {
   isAvailable: boolean;
 }
 
+const DEFAULT_LEAD_TIME_HOURS = 18;
+
+function isWeekday(dayOfWeek: number) {
+  return dayOfWeek >= 1 && dayOfWeek <= 5;
+}
+
+function addHours(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 3_600_000);
+}
+
+function slotStartsBeforeLeadTime(date: Date, slotStartTime: string, leadTimeHours: number) {
+  const [h, m] = slotStartTime.split(":").map(Number);
+  const slotStart = new Date(date);
+  slotStart.setHours(h, m, 0, 0);
+  return slotStart.getTime() < addHours(new Date(), leadTimeHours).getTime();
+}
+
 /**
  * Get available time slots for a facility on a specific date.
  * Returns empty slots + a maintenanceWindow if the date falls within scheduled maintenance.
@@ -22,7 +39,11 @@ interface TimeSlotAvailability {
 export async function getFacilityAvailability(
   facilityId: string,
   date: Date,
-  category?: string
+  category?: string,
+  options?: {
+    allowMonday?: boolean;
+    leadTimeHours?: number;
+  }
 ) {
   try {
     if (!category) {
@@ -34,9 +55,11 @@ export async function getFacilityAvailability(
     }
 
     const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
+    const allowMonday = options?.allowMonday ?? false;
+    const leadTimeHours = options?.leadTimeHours ?? DEFAULT_LEAD_TIME_HOURS;
 
     // Mondays are office off-days (Sabbath) — no availability
-    if (dayOfWeek === 1) {
+    if (dayOfWeek === 1 && !allowMonday) {
       return {
         success: true,
         slots: [],
@@ -52,7 +75,7 @@ export async function getFacilityAvailability(
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [maintConflict, facility, categoryPricing] = await Promise.all([
+    const [maintConflict, facility, categoryPricing, activeCategory] = await Promise.all([
       prisma.maintenanceRequest.findFirst({
         where: {
           facilityId,
@@ -69,7 +92,19 @@ export async function getFacilityAvailability(
       prisma.facilityPricing.findFirst({
         where: { facilityId, category, isActive: true },
       }),
+      prisma.bookingCategory.findFirst({
+        where: { slug: category, isActive: true },
+        select: { id: true },
+      }),
     ]);
+
+    if (!activeCategory) {
+      return {
+        success: false,
+        error: "This booking category is no longer available.",
+        slots: [],
+      };
+    }
 
     // Hard emergency lock
     if (facility?.underMaintenance) {
@@ -129,6 +164,7 @@ export async function getFacilityAvailability(
     const existingBookings = await prisma.booking.findMany({
       where: {
         facilityId,
+        deletedAt: null,
         status: { in: ["PENDING", "APPROVED"] },
         OR: [
           {
@@ -171,10 +207,12 @@ export async function getFacilityAvailability(
         });
 
         const currentBookings = overlappingBookings.length;
-        const isAvailable = currentBookings < slot.maxBookings;
+        const blockedByLeadTime = slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours);
+        const isAvailable = currentBookings < slot.maxBookings && !blockedByLeadTime;
         const basePrice = categoryPricing2 ? Number(categoryPricing2.price) : 0;
         const isFreeByDay = categoryPricing2 ? categoryPricing2.freeDays.includes(dayOfWeek) : false;
-        const effectivePricePerHour = slot.isFree || isFreeByDay
+        const isFreeByWeekday = isWeekday(dayOfWeek);
+        const effectivePricePerHour = slot.isFree || isFreeByDay || isFreeByWeekday
           ? 0
           : slot.pricePerHourOverride !== null
           ? Number(slot.pricePerHourOverride)
@@ -261,10 +299,16 @@ export async function getFacilityPricing(
  */
 export async function getFacilityCategories(facilityId: string) {
   try {
+    const activeCategorySlugs = await prisma.bookingCategory.findMany({
+      where: { isActive: true },
+      select: { slug: true },
+    });
+
     const pricingRecords = await prisma.facilityPricing.findMany({
       where: {
         facilityId,
         isActive: true,
+        category: { in: activeCategorySlugs.map((c) => c.slug) },
       },
       select: {
         category: true,
@@ -328,14 +372,23 @@ export async function getPublicBookingCategories() {
  * Category-first discovery: return only facilities with at least one available slot
  * for the selected category and date.
  */
-export async function getBookableFacilitiesByCategoryDate(category: string, date: Date) {
+export async function getBookableFacilitiesByCategoryDate(
+  category: string,
+  date: Date,
+  options?: {
+    allowMonday?: boolean;
+    leadTimeHours?: number;
+  }
+) {
   try {
     if (!category) {
       return { success: false, error: "Event category is required.", facilities: [] };
     }
 
     const dayOfWeek = date.getDay();
-    if (dayOfWeek === 1) {
+    const allowMonday = options?.allowMonday ?? false;
+    const leadTimeHours = options?.leadTimeHours ?? DEFAULT_LEAD_TIME_HOURS;
+    if (dayOfWeek === 1 && !allowMonday) {
       return {
         success: true,
         facilities: [],
@@ -372,6 +425,7 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
         name: true,
         description: true,
         capacity: true,
+        acUsageFee: true,
         amenities: true,
         availableDays: true,
         pricing: {
@@ -391,6 +445,7 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
       price: number;
       amenities: string[];
       availableDays: number[];
+      acUsageFee: number;
     }> = [];
 
     for (const facility of facilities) {
@@ -405,7 +460,10 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
       });
       if (maintConflict) continue;
 
-      const availability = await getFacilityAvailability(facility.id, date, category);
+      const availability = await getFacilityAvailability(facility.id, date, category, {
+        allowMonday,
+        leadTimeHours,
+      });
       if (!availability.success) continue;
       const hasBookableSlot = (availability.slots || []).some((s) => s.isAvailable);
       if (!hasBookableSlot) continue;
@@ -416,6 +474,7 @@ export async function getBookableFacilitiesByCategoryDate(category: string, date
         description: facility.description,
         capacity: facility.capacity,
         price: Number(facility.pricing[0]?.price ?? 0),
+        acUsageFee: Number(facility.acUsageFee ?? 0),
         amenities: facility.amenities,
         availableDays: facility.availableDays,
       });
@@ -445,6 +504,7 @@ export async function checkTimeRangeAvailability(
     const conflictingBookings = await prisma.booking.findMany({
       where: {
         facilityId,
+        deletedAt: null,
         id: excludeBookingId ? { not: excludeBookingId } : undefined,
         status: { in: ["PENDING", "APPROVED"] },
         OR: [
@@ -492,6 +552,7 @@ export async function estimateFacilityBookingAmount(
   category: string,
   startTime: Date,
   endTime: Date,
+  useAirConditioner = false,
 ) {
   try {
     if (!category) {
@@ -501,13 +562,26 @@ export async function estimateFacilityBookingAmount(
       };
     }
 
-    const pricing = await prisma.facilityPricing.findFirst({
-      where: {
-        facilityId,
-        category,
-        isActive: true,
-      },
-    });
+    const [pricing, facility] = await Promise.all([
+      prisma.facilityPricing.findFirst({
+        where: {
+          facilityId,
+          category,
+          isActive: true,
+        },
+      }),
+      prisma.facility.findUnique({
+        where: { id: facilityId },
+        select: { acUsageFee: true },
+      }),
+    ]);
+
+    if (!facility) {
+      return {
+        success: false,
+        error: "Facility not found",
+      };
+    }
 
     if (!pricing) {
       return {
@@ -539,23 +613,27 @@ export async function estimateFacilityBookingAmount(
       };
     }
 
-    if (slot?.isFree || pricing.freeDays.includes(dayOfWeek)) {
+    const weekdayFree = isWeekday(dayOfWeek);
+    if (slot?.isFree || pricing.freeDays.includes(dayOfWeek) || weekdayFree) {
+      const acFee = useAirConditioner ? Number(facility.acUsageFee ?? 0) : 0;
       return {
         success: true,
-        totalAmount: 0,
+        totalAmount: acFee,
         price: 0,
+        acUsageFee: acFee,
       };
     }
 
     const unitPrice = slot?.pricePerHourOverride !== null && slot?.pricePerHourOverride !== undefined
       ? Number(slot.pricePerHourOverride)
       : Number(pricing.price);
-    const hours = (endTime.getTime() - startTime.getTime()) / 3_600_000;
+    const acFee = useAirConditioner ? Number(facility.acUsageFee ?? 0) : 0;
 
     return {
       success: true,
-      totalAmount: unitPrice * hours,
+      totalAmount: unitPrice + acFee,
       price: unitPrice,
+      acUsageFee: acFee,
     };
   } catch (error) {
     console.error("Error estimating booking amount:", error);

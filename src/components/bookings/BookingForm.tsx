@@ -7,6 +7,7 @@ type Facility = {
   name: string;
   description: string | null;
   capacity: number;
+  acUsageFee: number;
   pricePerHour: unknown;
   amenities: string[];
   availableDays: number[];
@@ -15,9 +16,11 @@ type Facility = {
 export default function BookingForm({
   facilities,
   defaultFacilityId,
+  currentUserRole,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
+  currentUserRole?: string;
 }) {
-  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="staff" />;
+  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="staff" currentUserRole={currentUserRole} />;
 }

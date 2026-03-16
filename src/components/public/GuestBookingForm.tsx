@@ -21,6 +21,7 @@ interface Facility {
   name: string;
   description: string | null;
   capacity: number;
+  acUsageFee: number;
   pricePerHour: unknown;
   amenities: string[];
   availableDays: number[];
@@ -67,10 +68,12 @@ export default function GuestBookingForm({
   facilities,
   defaultFacilityId,
   mode = "guest",
+  currentUserRole,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
   mode?: BookingMode;
+  currentUserRole?: string;
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
@@ -87,6 +90,12 @@ export default function GuestBookingForm({
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [useAirConditioner, setUseAirConditioner] = useState(false);
+  const canBookMondays =
+    mode === "staff" && ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(currentUserRole ?? "");
+
+  const bypassLeadTime = canBookMondays;
+
 
   // Step 2 state — guest info + booking details
   const [guestName, setGuestName] = useState("");
@@ -148,17 +157,21 @@ export default function GuestBookingForm({
       return;
     }
 
-    getBookableFacilitiesByCategoryDate(category, selectedDate).then((res) => {
+    getBookableFacilitiesByCategoryDate(category, selectedDate, {
+      allowMonday: canBookMondays,
+      leadTimeHours: bypassLeadTime ? 0 : 18,
+    }).then((res) => {
       if (res.success) {
         setBookableFacilities((res.facilities || []).map((f) => ({
           ...f,
           pricePerHour: f.price,
+          acUsageFee: f.acUsageFee ?? 0,
         })));
       } else {
         setBookableFacilities([]);
       }
     });
-  }, [bookingMode, category, selectedDate]);
+  }, [bookingMode, category, selectedDate, canBookMondays, bypassLeadTime]);
 
   // When date or category changes, fetch available slots
   useEffect(() => {
@@ -169,23 +182,28 @@ export default function GuestBookingForm({
     getFacilityAvailability(
       facilityId,
       selectedDate,
-      category
+      category,
+      {
+        allowMonday: canBookMondays,
+        leadTimeHours: bypassLeadTime ? 0 : 18,
+      }
     )
       .then((res) => setSlots(res.success ? res.slots || [] : []))
       .finally(() => setSlotsLoading(false));
-  }, [selectedDate, facilityId, category]);
+  }, [selectedDate, facilityId, category, canBookMondays, bypassLeadTime]);
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
     if (!selectedSlot) return null;
-    if (selectedSlot.isFree) return 0;
-    return selectedSlot.effectivePricePerHour;
+    const base = selectedSlot.isFree ? 0 : selectedSlot.effectivePricePerHour;
+    const ac = useAirConditioner ? Number(selectedFacility?.acUsageFee ?? 0) : 0;
+    return base + ac;
   })();
 
   const disabledDays = [
     () => !category,
     { before: addDays(new Date(), 1) },
-    { dayOfWeek: [1] },
+    ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
     (date: Date) =>
       !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
   ];
@@ -212,6 +230,7 @@ export default function GuestBookingForm({
       description: description || undefined,
       startTime,
       endTime,
+      useAirConditioner,
     };
 
     const result =
@@ -424,11 +443,6 @@ export default function GuestBookingForm({
                               >
                                 {formatTime(slot.startTime)}
                               </span>
-                              <span
-                                className={`text-xs ${isSelected ? "text-white/55" : "text-[var(--muted)] dark:text-gray-400"}`}
-                              >
-                                {formatTime(slot.endTime)}
-                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               {slot.isFree ? (
@@ -505,7 +519,7 @@ export default function GuestBookingForm({
                       {format(selectedDate, "MMMM d, yyyy")}
                     </p>
                     <p className="text-xs text-[var(--slate)] dark:text-gray-300 mt-0.5">
-                      {formatTime(selectedSlot.startTime)} → {formatTime(selectedSlot.endTime)}
+                      Starts at {formatTime(selectedSlot.startTime)}
                     </p>
                     {estimatedCost !== null && (
                       <p className={`text-sm font-bold mt-1.5 ${estimatedCost === 0 ? "text-green-600" : "text-[var(--navy)] dark:text-gray-100"}`}>
@@ -564,7 +578,7 @@ export default function GuestBookingForm({
             </p>
             <p className="text-sm mt-0.5 text-white/65">
               {selectedSlot &&
-                `${formatTime(selectedSlot.startTime)} – ${formatTime(selectedSlot.endTime)}`}
+                `Starts at ${formatTime(selectedSlot.startTime)}`}
             </p>
           </div>
           {estimatedCost !== null && (
@@ -654,6 +668,22 @@ export default function GuestBookingForm({
         />
       </div>
 
+      {selectedFacility && Number(selectedFacility.acUsageFee ?? 0) > 0 && (
+        <div className="card p-4">
+          <label className="flex items-start gap-3 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useAirConditioner}
+              onChange={(e) => setUseAirConditioner(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+            />
+            <span>
+              Add air conditioner usage for this booking (+{formatCurrency(Number(selectedFacility.acUsageFee))}).
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* Description */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Description</label>
@@ -666,7 +696,7 @@ export default function GuestBookingForm({
         />
       </div>
 
-      <BookingTermsAndFaq title="Booking Terms and Fender Use" />
+      <BookingTermsAndFaq title="Booking Terms and Conditions" />
 
       <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
         <input
@@ -677,8 +707,7 @@ export default function GuestBookingForm({
           required
         />
         <span>
-          I have read, understood, and agree to the Terms and Conditions and Fender Use terms
-          for bookings.
+          I have read, understood, and agree to the booking Terms and Conditions.
         </span>
       </label>
 

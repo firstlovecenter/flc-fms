@@ -39,7 +39,7 @@ export default async function EditFacilityPage({ params }: { params: { id: strin
         <p className="text-sm page-subtitle">{facility.name}</p>
       </div>
       <FacilityForm
-        facility={{ ...facility, pricing }}
+        facility={{ ...facility, acUsageFee: Number(facility.acUsageFee), pricing }}
         categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
       />
     </div>

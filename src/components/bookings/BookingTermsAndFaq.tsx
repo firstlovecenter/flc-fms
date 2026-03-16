@@ -3,7 +3,7 @@ type BookingTermsAndFaqProps = {
 };
 
 export default function BookingTermsAndFaq({
-  title = "Booking Terms and Fender Use",
+  title = "Booking Terms and Conditions",
 }: BookingTermsAndFaqProps) {
   return (
     <details className="card p-4" open={false}>
@@ -110,32 +110,6 @@ export default function BookingTermsAndFaq({
               these terms, do not proceed with the booking.
             </li>
           </ol>
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="font-semibold text-[var(--navy)]">Fender Use - Terms and Conditions</h3>
-          <ol className="list-decimal pl-5 space-y-2">
-            <li>
-              The Fender may be collected no earlier than five minutes before approved booking time.
-              Where Fender use is outside church premises, notify the Front Office immediately after
-              booking by email.
-            </li>
-            <li>
-              The Fender must be handled with utmost care and returned in the same condition received.
-            </li>
-            <li>
-              The booking group or individual is fully responsible for the Fender during booking.
-              Any loss, damage, or misuse is the user responsibility.
-            </li>
-            <li>
-              At booking end, the Fender must be returned immediately to the Front Office for
-              inspection, then returned to its designated storage location, the Creative Storeroom.
-            </li>
-          </ol>
-          <p>
-            Failure to comply may result in restrictions on future bookings or other appropriate
-            action.
-          </p>
         </section>
 
       </div>
