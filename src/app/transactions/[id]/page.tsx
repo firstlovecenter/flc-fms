@@ -22,6 +22,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   if (["VICAR", "BOOKING_MANAGER"].includes(session.role) && expense.createdById !== session.sub) notFound();
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canUploadReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
   const isPending = expense.status === "PENDING";
   const isLocked = isTransactionLocked(expense.createdAt);
 
@@ -79,6 +80,33 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
             <FileText size={13} /> Description
           </div>
           <p className="text-gray-800 whitespace-pre-wrap text-sm">{expense.narration}</p>
+        </div>
+      )}
+
+      {expense.receiptUrl && (
+        <div className="card p-5">
+          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
+            <FileText size={13} /> Receipt
+          </div>
+          <a
+            href={expense.receiptUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-[var(--navy)] hover:underline"
+          >
+            View attached receipt
+          </a>
+        </div>
+      )}
+
+      {(canManage || canUploadReceiptOnly) && (
+        <div className="flex">
+          <Link
+            href={`/transactions/expenses/${expense.id}/edit`}
+            className="btn-secondary"
+          >
+            {canUploadReceiptOnly && !canManage ? "Upload / Update Receipt" : "Edit Expense"}
+          </Link>
         </div>
       )}
 

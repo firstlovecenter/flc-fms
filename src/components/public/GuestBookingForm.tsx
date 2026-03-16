@@ -127,41 +127,46 @@ export default function GuestBookingForm({
   }, []);
 
   useEffect(() => {
-    setFacilityId(defaultFacilityId ?? "");
-    setSelectedFacility(defaultFacilityId ? facilities.find((f) => f.id === defaultFacilityId) ?? null : null);
-    setCategories([]);
-    setCategory("");
-    setSelectedDate(undefined);
-    setSlots([]);
-    setSelectedSlot(null);
-    setBookableFacilities([]);
-  }, [bookingMode, defaultFacilityId, facilities]);
+    setFacilityId((prev) => {
+      if (defaultFacilityId && facilities.some((f) => f.id === defaultFacilityId)) {
+        return defaultFacilityId;
+      }
+      if (prev && facilities.some((f) => f.id === prev)) {
+        return prev;
+      }
+      return "";
+    });
+  }, [defaultFacilityId, facilities]);
 
   // When facility changes, reset and fetch categories
   useEffect(() => {
     const f = facilities.find((x) => x.id === facilityId) ?? null;
     setSelectedFacility(f);
-    setCategories([]);
-    if (bookingMode === "facility-first") {
-      setSelectedDate(undefined);
+
+    if (f) {
+      setSelectedDate((prev) => {
+        if (!prev) return prev;
+        return f.availableDays.includes(prev.getDay()) ? prev : undefined;
+      });
     }
+
     setSlots([]);
     setSelectedSlot(null);
+
     if (f) {
       getFacilityCategories(f.id).then((res) => {
         if (res.success) {
           setCategories(res.categories);
-          if (bookingMode === "facility-first") {
-            setCategory("");
-          } else if (!res.categories.some((c) => c.category === category)) {
-            setCategory("");
-          }
+          setCategory((prev) =>
+            prev && res.categories.some((c) => c.category === prev) ? prev : ""
+          );
         }
       });
-    } else if (bookingMode === "facility-first") {
+    } else {
+      setCategories([]);
       setCategory("");
     }
-  }, [facilityId, facilities, bookingMode, category]);
+  }, [facilityId, facilities]);
 
   useEffect(() => {
     if (bookingMode !== "category-first" || !category || !selectedDate) {
@@ -327,7 +332,6 @@ export default function GuestBookingForm({
                   const val = e.target.value;
                   setCategory(val);
                   setSelectedSlot(null);
-                  setSelectedDate(undefined);
                   setSlots([]);
                 }}
                 className="input"

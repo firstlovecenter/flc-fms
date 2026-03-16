@@ -1,12 +1,20 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Building2, User, CreditCard, FileText } from "lucide-react";
+import { ArrowLeft, Clock, Building2, User, CreditCard, FileText, Phone, MessageCircle } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
+
+function normalizeTel(phone: string) {
+  return phone.replace(/[^\d+]/g, "");
+}
+
+function normalizeWhatsApp(phone: string) {
+  return phone.replace(/\D/g, "");
+}
 
 export default async function BookingDetailPage({ params }: { params: { id: string } }) {
   const session  = await requireStaff();
@@ -16,7 +24,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
     include: {
       facility: true,
       patron:   true,
-      user:     { select: { name: true, email: true, role: true } },
+      user:     { select: { name: true, email: true, role: true, phone: true } },
       payment:  true,
       receipt:  true,
     },
@@ -81,7 +89,27 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
           </div>
           <p className="font-semibold text-[var(--navy)]">{contact?.name}</p>
           <p className="text-sm page-subtitle">{contact?.email}</p>
-          {booking.patron?.phone && <p className="text-xs text-[var(--muted)] mt-1">{booking.patron.phone}</p>}
+          {contact?.phone && (
+            <>
+              <p className="text-xs text-[var(--muted)] mt-1">{contact.phone}</p>
+              <div className="flex items-center gap-3 mt-2">
+                <a
+                  href={`tel:${normalizeTel(contact.phone)}`}
+                  className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
+                >
+                  <Phone size={12} /> Call
+                </a>
+                <a
+                  href={`https://wa.me/${normalizeWhatsApp(contact.phone)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-green-700 hover:underline"
+                >
+                  <MessageCircle size={12} /> WhatsApp
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

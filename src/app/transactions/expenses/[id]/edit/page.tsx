@@ -5,7 +5,7 @@ import { isTransactionLocked } from "@/lib/transaction-lock";
 import ExpenseEditForm from "@/components/expenses/ExpenseEditForm";
 
 export default async function EditExpensePage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff();
 
   const expense = await prisma.expense.findUnique({
     where: { id: params.id },
@@ -15,13 +15,23 @@ export default async function EditExpensePage({ params }: { params: { id: string
       narration: true,
       amount: true,
       category: true,
+      status: true,
+      createdById: true,
+      receiptUrl: true,
       createdAt: true,
     },
   });
 
   if (!expense) notFound();
 
-  if (isTransactionLocked(expense.createdAt)) {
+  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const requesterReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
+
+  if (!canManage && !requesterReceiptOnly) {
+    notFound();
+  }
+
+  if (isTransactionLocked(expense.createdAt) && !requesterReceiptOnly) {
     return (
       <div className="w-full max-w-2xl space-y-4">
         <h1 className="page-title">Edit Expense</h1>
@@ -35,13 +45,19 @@ export default async function EditExpensePage({ params }: { params: { id: string
   return (
     <div className="w-full max-w-2xl space-y-6">
       <div>
-        <h1 className="page-title">Edit Expense</h1>
-        <p className="text-sm page-subtitle">Update the selected expense record.</p>
+        <h1 className="page-title">{requesterReceiptOnly ? "Upload Expense Receipt" : "Edit Expense"}</h1>
+        <p className="text-sm page-subtitle">
+          {requesterReceiptOnly
+            ? "This expense is approved. You can only upload or replace the receipt file."
+            : "Update the selected expense record."}
+        </p>
       </div>
       <ExpenseEditForm
+        receiptOnly={requesterReceiptOnly}
         expense={{
           ...expense,
           amount: Number(expense.amount),
+          receiptUrl: expense.receiptUrl ?? undefined,
         }}
       />
     </div>

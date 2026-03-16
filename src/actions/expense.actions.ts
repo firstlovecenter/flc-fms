@@ -17,6 +17,7 @@ const ExpenseSchema = z.object({
   narration:  z.string().min(10),
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
+  receiptUrl: z.string().url().optional(),
 });
 
 const UpdateExpenseSchema = z.object({
@@ -24,6 +25,11 @@ const UpdateExpenseSchema = z.object({
   narration:  z.string().min(10),
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
+  receiptUrl: z.string().url().optional(),
+});
+
+const ReceiptOnlyUpdateSchema = z.object({
+  receiptUrl: z.string().url().optional(),
 });
 
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
@@ -165,25 +171,53 @@ export async function getExpenses(filters: { status?: string; page?: number } = 
 }
 
 export async function updateExpense(expenseId: string, data: z.infer<typeof UpdateExpenseSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER");
-  const validated = UpdateExpenseSchema.parse(data);
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized." };
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true },
+    select: { createdAt: true, status: true, createdById: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
-  if (isTransactionLocked(existing.createdAt)) {
-    return { error: transactionLockMessage() };
+
+  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const isRequesterReceiptOnly =
+    existing.status === "APPROVED" && existing.createdById === session.sub;
+
+  if (!canManage && !isRequesterReceiptOnly) {
+    return { error: "You are not allowed to edit this expense." };
   }
+
+  if (canManage) {
+    const validated = UpdateExpenseSchema.parse(data);
+    if (isTransactionLocked(existing.createdAt)) {
+      return { error: transactionLockMessage() };
+    }
+
+    const updated = await prisma.expense.update({
+      where: { id: expenseId },
+      data: validated,
+    });
+
+    auditLog({ userId: session.sub, action: "UPDATE_EXPENSE", entity: "Expense", entityId: expenseId });
+    revalidatePath("/transactions");
+    return { success: true, expense: updated };
+  }
+
+  const validated = ReceiptOnlyUpdateSchema.parse({ receiptUrl: data?.receiptUrl });
 
   const updated = await prisma.expense.update({
     where: { id: expenseId },
-    data: validated,
+    data: { receiptUrl: validated.receiptUrl ?? null },
   });
 
-  auditLog({ userId: session.sub, action: "UPDATE_EXPENSE", entity: "Expense", entityId: expenseId });
+  auditLog({
+    userId: session.sub,
+    action: "UPDATE_EXPENSE_RECEIPT",
+    entity: "Expense",
+    entityId: expenseId,
+  });
   revalidatePath("/transactions");
   return { success: true, expense: updated };
 }
