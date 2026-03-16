@@ -10,6 +10,8 @@ import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingReje
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 
+type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
+
 const BookingSchema = z.object({
   facilityId:  z.string().min(1, "Facility is required"),
   category:    z.string().min(1, "Category is required"),
@@ -19,6 +21,9 @@ const BookingSchema = z.object({
   endTime:     z.coerce.date(),
   useAirConditioner: z.boolean().optional().default(false),
   notes:       z.string().optional(),
+  acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
+    .optional()
+    .default([]),
 }).refine(d => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"],
@@ -36,6 +41,21 @@ function canBypassLeadTime(role: string) {
 
 function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
   return startTime.getTime() < Date.now() + hours * 3_600_000;
+}
+
+function getMissingFacilityTerms(
+  facility: { requiresBookingTerms: boolean; requiresItemBookingTerms: boolean },
+  acceptedTerms: AgreementTerm[]
+) {
+  const accepted = new Set(acceptedTerms);
+  const missing: AgreementTerm[] = [];
+  if (facility.requiresBookingTerms && !accepted.has("BOOKING_TERMS")) {
+    missing.push("BOOKING_TERMS");
+  }
+  if (facility.requiresItemBookingTerms && !accepted.has("ITEM_BOOKING_TERMS")) {
+    missing.push("ITEM_BOOKING_TERMS");
+  }
+  return missing;
 }
 
 async function checkConflict(facilityId: string, startTime: Date, endTime: Date, excludeId?: string) {
@@ -139,6 +159,14 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true },
   });
+
+  const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
+  if (missingTerms.includes("BOOKING_TERMS")) {
+    return { error: "You must agree to Booking Terms and Conditions before creating this booking." };
+  }
+  if (missingTerms.includes("ITEM_BOOKING_TERMS")) {
+    return { error: "You must agree to Item Booking Terms before creating this booking." };
+  }
 
   // Hard-lock: emergency maintenance (no scheduled window)
   if (facility.underMaintenance) {
@@ -264,6 +292,14 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     where: { id: validated.facilityId, isActive: true },
   });
 
+  const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
+  if (missingTerms.includes("BOOKING_TERMS")) {
+    return { error: "You must agree to Booking Terms and Conditions before creating this booking." };
+  }
+  if (missingTerms.includes("ITEM_BOOKING_TERMS")) {
+    return { error: "You must agree to Item Booking Terms before creating this booking." };
+  }
+
   // Hard-lock: emergency maintenance (no scheduled window)
   if (facility.underMaintenance) {
     return { error: "This facility is currently under emergency maintenance and cannot be booked." };
@@ -376,7 +412,11 @@ const GuestBookingSchema = z.object({
   notes: z.string().optional(),
   guestName: z.string().min(2).max(120),
   guestEmail: z.string().email(),
-  guestPhone: z.string().min(9, "Phone number is required")}).refine((d) => d.endTime > d.startTime, {
+  guestPhone: z.string().min(9, "Phone number is required"),
+  acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
+    .optional()
+    .default([]),
+}).refine((d) => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"]});
 
@@ -394,6 +434,14 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true }});
+
+  const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
+  if (missingTerms.includes("BOOKING_TERMS")) {
+    return { error: "You must agree to Booking Terms and Conditions before creating this booking." };
+  }
+  if (missingTerms.includes("ITEM_BOOKING_TERMS")) {
+    return { error: "You must agree to Item Booking Terms before creating this booking." };
+  }
 
   if (facility.underMaintenance) {
     return { error: "Facility is under maintenance and cannot be booked." };

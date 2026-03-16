@@ -13,6 +13,8 @@ const schema = z.object({
   description:   z.string().optional(),
   capacity:      z.coerce.number().int().positive("Capacity must be positive"),
   acUsageFee:    z.coerce.number().min(0, "AC usage fee cannot be negative"),
+  requiresBookingTerms: z.boolean().default(true),
+  requiresItemBookingTerms: z.boolean().default(false),
   availableFrom: z.string().default("08:00"),
   availableTo:   z.string().default("22:00"),
   amenities:     z.string().optional(), // comma-separated
@@ -33,6 +35,8 @@ interface Props {
     id: string; name: string; description: string | null;
     capacity: number;
     acUsageFee: number;
+    requiresBookingTerms: boolean;
+    requiresItemBookingTerms: boolean;
     availableFrom: string; availableTo: string;
     amenities: string[]; availableDays: number[]; images: string[];
     pricing?: {
@@ -82,11 +86,20 @@ export default function FacilityForm({ facility, categories }: Props) {
       description:   facility.description ?? "",
       capacity:      facility.capacity,
       acUsageFee:    facility.acUsageFee,
+      requiresBookingTerms: facility.requiresBookingTerms,
+      requiresItemBookingTerms: facility.requiresItemBookingTerms,
       availableFrom: facility.availableFrom,
       availableTo:   facility.availableTo,
       amenities:     facility.amenities.join(", "),
       availableDays: facility.availableDays,
-    } : { availableDays: [0,1,2,3,4,5,6], availableFrom: "08:00", availableTo: "22:00", acUsageFee: 0 },
+    } : {
+      availableDays: [0,1,2,3,4,5,6],
+      availableFrom: "08:00",
+      availableTo: "22:00",
+      acUsageFee: 0,
+      requiresBookingTerms: true,
+      requiresItemBookingTerms: false,
+    },
   });
 
   const selectedDays = watch("availableDays") ?? [];
@@ -130,6 +143,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       description:   data.description,
       capacity:      data.capacity,
       acUsageFee:    data.acUsageFee,
+      requiresBookingTerms: data.requiresBookingTerms,
+      requiresItemBookingTerms: data.requiresItemBookingTerms,
       availableFrom: data.availableFrom,
       availableTo:   data.availableTo,
       amenities,
@@ -226,6 +241,19 @@ export default function FacilityForm({ facility, categories }: Props) {
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amenities (comma-separated)</label>
         <input {...register("amenities")} className="input" placeholder="AC, Projector, Sound System, Whiteboard" />
+      </div>
+
+      <div className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-4">
+        <h3 className="text-sm font-semibold text-[var(--slate)] uppercase tracking-wide">Terms Mapping</h3>
+        <p className="text-xs text-[var(--muted)]">Choose which agreement sections this facility requires at booking time.</p>
+        <label className="flex items-center gap-2 text-sm text-[var(--navy)]">
+          <input type="checkbox" {...register("requiresBookingTerms")} />
+          Require Booking Terms and Conditions
+        </label>
+        <label className="flex items-center gap-2 text-sm text-[var(--navy)]">
+          <input type="checkbox" {...register("requiresItemBookingTerms")} />
+          Require Item Booking Terms
+        </label>
       </div>
 
       {/* Images */}

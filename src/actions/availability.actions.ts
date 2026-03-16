@@ -425,6 +425,8 @@ export async function getBookableFacilitiesByCategoryDate(
         name: true,
         description: true,
         capacity: true,
+        requiresBookingTerms: true,
+        requiresItemBookingTerms: true,
         acUsageFee: true,
         amenities: true,
         availableDays: true,
@@ -446,6 +448,8 @@ export async function getBookableFacilitiesByCategoryDate(
       amenities: string[];
       availableDays: number[];
       acUsageFee: number;
+      requiresBookingTerms: boolean;
+      requiresItemBookingTerms: boolean;
     }> = [];
 
     for (const facility of facilities) {
@@ -477,6 +481,8 @@ export async function getBookableFacilitiesByCategoryDate(
         acUsageFee: Number(facility.acUsageFee ?? 0),
         amenities: facility.amenities,
         availableDays: facility.availableDays,
+        requiresBookingTerms: facility.requiresBookingTerms,
+        requiresItemBookingTerms: facility.requiresItemBookingTerms,
       });
     }
 

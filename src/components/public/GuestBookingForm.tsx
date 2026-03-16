@@ -14,6 +14,7 @@ import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
+import ItemBookingTerms from "@/components/items/ItemBookingTerms";
 import "react-day-picker/dist/style.css";
 
 interface Facility {
@@ -21,6 +22,8 @@ interface Facility {
   name: string;
   description: string | null;
   capacity: number;
+  requiresBookingTerms: boolean;
+  requiresItemBookingTerms: boolean;
   acUsageFee: number;
   pricePerHour: unknown;
   amenities: string[];
@@ -107,6 +110,14 @@ export default function GuestBookingForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const requiresBookingTerms = Boolean(selectedFacility?.requiresBookingTerms);
+  const requiresItemTerms = Boolean(selectedFacility?.requiresItemBookingTerms);
+  const requiredTerms = [
+    ...(requiresBookingTerms ? (["BOOKING_TERMS"] as const) : []),
+    ...(requiresItemTerms ? (["ITEM_BOOKING_TERMS"] as const) : []),
+  ];
+  const termsRequired = requiredTerms.length > 0;
 
   useEffect(() => {
     getPublicBookingCategories().then((res) => {
@@ -212,6 +223,10 @@ export default function GuestBookingForm({
     e.preventDefault();
     if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
     if (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) return;
+    if (termsRequired && !agreedToTerms) {
+      setError("Please agree to the required terms before submitting.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -231,6 +246,7 @@ export default function GuestBookingForm({
       startTime,
       endTime,
       useAirConditioner,
+      acceptedTerms: agreedToTerms ? requiredTerms : [],
     };
 
     const result =
@@ -696,20 +712,23 @@ export default function GuestBookingForm({
         />
       </div>
 
-      <BookingTermsAndFaq title="Booking Terms and Conditions" />
+      {requiresBookingTerms && <BookingTermsAndFaq title="Booking Terms and Conditions" />}
+      {requiresItemTerms && <ItemBookingTerms />}
 
-      <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={agreedToTerms}
-          onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-[var(--border)]"
-          required
-        />
-        <span>
-          I have read, understood, and agree to the booking Terms and Conditions.
-        </span>
-      </label>
+      {termsRequired && (
+        <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+            required
+          />
+          <span>
+            I have read, understood, and agree to the required terms for this booking.
+          </span>
+        </label>
+      )}
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3">
@@ -727,7 +746,7 @@ export default function GuestBookingForm({
             !title.trim() ||
             (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) ||
             (categories.length > 0 && !category) ||
-            !agreedToTerms
+            (termsRequired && !agreedToTerms)
           }
           className="btn-primary w-full sm:flex-1"
         >

@@ -33,6 +33,8 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
       name: true,
       description: true,
       capacity: true,
+      requiresBookingTerms: true,
+      requiresItemBookingTerms: true,
       acUsageFee: true,
       amenities: true,
       availableDays: true,
@@ -49,6 +51,8 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     name: f.name,
     description: f.description,
     capacity: f.capacity,
+    requiresBookingTerms: f.requiresBookingTerms,
+    requiresItemBookingTerms: f.requiresItemBookingTerms,
     acUsageFee: Number(f.acUsageFee),
     amenities: f.amenities,
     availableDays: f.availableDays,
@@ -63,6 +67,8 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     unitPrice: number;
     unit: string;
     qty: number;
+    requiresBookingTerms: boolean;
+    requiresItemBookingTerms: boolean;
   }> = [];
 
   if (isItemBooking) {
@@ -70,10 +76,32 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     for (const seg of parsed) {
       if (seg.type === "item") {
         const item = await prisma.bookableItem.findUnique({ where: { id: seg.id } });
-        if (item) initialLines.push({ type: "item", id: item.id, name: item.name, unitPrice: Number(item.pricePerUnit), unit: item.unit, qty: seg.qty });
+        if (item) {
+          initialLines.push({
+            type: "item",
+            id: item.id,
+            name: item.name,
+            unitPrice: Number(item.pricePerUnit),
+            unit: item.unit,
+            qty: seg.qty,
+            requiresBookingTerms: item.requiresBookingTerms,
+            requiresItemBookingTerms: item.requiresItemBookingTerms,
+          });
+        }
       } else {
         const bundle = await prisma.bookableBundle.findUnique({ where: { id: seg.id } });
-        if (bundle) initialLines.push({ type: "bundle", id: bundle.id, name: bundle.name, unitPrice: Number(bundle.price), unit: "package", qty: seg.qty });
+        if (bundle) {
+          initialLines.push({
+            type: "bundle",
+            id: bundle.id,
+            name: bundle.name,
+            unitPrice: Number(bundle.price),
+            unit: "package",
+            qty: seg.qty,
+            requiresBookingTerms: bundle.requiresBookingTerms,
+            requiresItemBookingTerms: bundle.requiresItemBookingTerms,
+          });
+        }
       }
     }
   }

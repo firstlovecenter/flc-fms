@@ -11,6 +11,8 @@ const FacilitySchema = z.object({
   description:    z.string().optional(),
   capacity:       z.coerce.number().int().positive(),
   acUsageFee:     z.coerce.number().min(0).default(0),
+  requiresBookingTerms: z.boolean().default(true),
+  requiresItemBookingTerms: z.boolean().default(false),
   amenities:      z.array(z.string()).default([]),
   images:         z.array(z.string()).default([]),
   availableFrom:  z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
