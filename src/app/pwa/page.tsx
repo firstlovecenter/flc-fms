@@ -10,8 +10,10 @@ type InstallPromptEvent = Event & {
 };
 
 export default function PwaEntryPage() {
-  const PULL_THRESHOLD = 78;
-  const MAX_PULL = 132;
+  const PULL_THRESHOLD = 108;
+  const MAX_PULL = 170;
+  const MIN_PULL_START = 18;
+  const VERTICAL_DOMINANCE = 10;
 
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -24,7 +26,9 @@ export default function PwaEntryPage() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const pullStartY = useRef<number | null>(null);
+  const pullStartX = useRef<number | null>(null);
   const isPulling = useRef(false);
+  const pullActivated = useRef(false);
   const hasHapticFired = useRef(false);
 
   useEffect(() => {
@@ -101,22 +105,33 @@ export default function PwaEntryPage() {
       return;
     }
     pullStartY.current = event.touches[0].clientY;
+    pullStartX.current = event.touches[0].clientX;
     isPulling.current = true;
+    pullActivated.current = false;
     hasHapticFired.current = false;
   }
 
   function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
     if (!isPulling.current || pullStartY.current == null || refreshing) return;
     const currentY = event.touches[0].clientY;
+    const currentX = event.touches[0].clientX;
     const delta = currentY - pullStartY.current;
+    const deltaX = Math.abs(currentX - (pullStartX.current ?? currentX));
 
     if (delta <= 0) {
       setPullDistance(0);
+      pullActivated.current = false;
       return;
     }
 
+    if (!pullActivated.current) {
+      if (delta < MIN_PULL_START) return;
+      if (delta <= deltaX + VERTICAL_DOMINANCE) return;
+      pullActivated.current = true;
+    }
+
     // Dampen gesture so pull feels natural and doesn't jump too fast.
-    const nextDistance = Math.min(MAX_PULL, delta * 0.56);
+    const nextDistance = Math.min(MAX_PULL, Math.max(0, delta - MIN_PULL_START) * 0.52);
     setPullDistance(nextDistance);
 
     if (nextDistance >= PULL_THRESHOLD && !hasHapticFired.current) {
@@ -135,6 +150,15 @@ export default function PwaEntryPage() {
     if (!isPulling.current || refreshing) return;
     isPulling.current = false;
     pullStartY.current = null;
+    pullStartX.current = null;
+
+    const isActivated = pullActivated.current;
+    pullActivated.current = false;
+    if (!isActivated) {
+      setPullDistance(0);
+      hasHapticFired.current = false;
+      return;
+    }
 
     if (pullDistance >= PULL_THRESHOLD) {
       setRefreshing(true);

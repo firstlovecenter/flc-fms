@@ -7,6 +7,7 @@ type Facility = {
   name: string;
   description: string | null;
   capacity: number;
+  acUsageFee: number;
   pricePerHour: unknown;
   amenities: string[];
   availableDays: number[];

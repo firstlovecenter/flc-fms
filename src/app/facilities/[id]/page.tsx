@@ -135,6 +135,10 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
               <Calendar size={14} />
               <span>{facility.availableDays.map((d) => DAYS[d]).join(", ")}</span>
             </div>
+            <div className="flex items-center gap-2 text-[var(--slate)]">
+              <span>AC add-on:</span>
+              <span className="font-semibold text-[var(--navy)]">{formatCurrency(Number(facility.acUsageFee ?? 0))}</span>
+            </div>
           </div>
         </div>
 

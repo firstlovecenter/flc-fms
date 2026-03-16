@@ -9,6 +9,7 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
     where: { isActive: true, underMaintenance: false },
     select: {
       id: true, name: true, description: true, capacity: true,
+      acUsageFee: true,
       amenities: true,
       availableFrom: true, availableTo: true, availableDays: true,
       pricing: {
@@ -26,6 +27,7 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
     name: f.name,
     description: f.description,
     capacity: f.capacity,
+    acUsageFee: Number(f.acUsageFee),
     amenities: f.amenities,
     availableFrom: f.availableFrom,
     availableTo: f.availableTo,

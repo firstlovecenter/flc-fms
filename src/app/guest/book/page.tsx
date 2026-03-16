@@ -33,6 +33,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
       name: true,
       description: true,
       capacity: true,
+      acUsageFee: true,
       amenities: true,
       availableDays: true,
       pricing: {
@@ -48,6 +49,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     name: f.name,
     description: f.description,
     capacity: f.capacity,
+    acUsageFee: Number(f.acUsageFee),
     amenities: f.amenities,
     availableDays: f.availableDays,
     pricePerHour: (f.pricing[0]?.price ?? 0).toString(),

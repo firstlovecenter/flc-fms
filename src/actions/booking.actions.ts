@@ -17,11 +17,26 @@ const BookingSchema = z.object({
   description: z.string().optional(),
   startTime:   z.coerce.date(),
   endTime:     z.coerce.date(),
+  useAirConditioner: z.boolean().optional().default(false),
   notes:       z.string().optional(),
 }).refine(d => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"],
 });
+
+const LEAD_TIME_HOURS = 18;
+
+function canBookMondays(role: string) {
+  return ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(role);
+}
+
+function canBypassLeadTime(role: string) {
+  return canBookMondays(role);
+}
+
+function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
+  return startTime.getTime() < Date.now() + hours * 3_600_000;
+}
 
 async function checkConflict(facilityId: string, startTime: Date, endTime: Date, excludeId?: string) {
   return prisma.booking.findFirst({
@@ -68,26 +83,40 @@ async function computeConfiguredBookingAmount(
   category: string,
   startTime: Date,
   endTime: Date,
+  useAirConditioner = false,
 ) {
-  const pricing = await prisma.facilityPricing.findFirst({
-    where: {
-      facilityId,
-      category,
-      isActive: true,
-    },
-  });
+  const [pricing, facility, activeCategory] = await Promise.all([
+    prisma.facilityPricing.findFirst({
+      where: {
+        facilityId,
+        category,
+        isActive: true,
+      },
+    }),
+    prisma.facility.findUnique({ where: { id: facilityId }, select: { acUsageFee: true } }),
+    prisma.bookingCategory.findFirst({ where: { slug: category, isActive: true }, select: { id: true } }),
+  ]);
+
+  if (!activeCategory) return { error: "This booking category is no longer available." as const };
 
   if (!pricing) return { error: "No pricing configured for this booking category." as const };
 
   const slot = await findApplicableTimeSlot(facilityId, category, startTime, endTime);
   if (!slot) return { error: "No category-specific slot mapping found for the selected date/time." as const };
-  if (slot?.isFree) return { totalAmount: 0 };
+  if (slot?.isFree) {
+    const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
+    return { totalAmount: acFee };
+  }
 
   const unitPrice =
     slot?.pricePerHourOverride != null
       ? Number(slot.pricePerHourOverride)
       : Number(pricing.price);
-  const totalAmount = pricing.freeDays.includes(startTime.getDay()) ? 0 : unitPrice;
+  const day = startTime.getDay();
+  const weekdayFree = day >= 1 && day <= 5;
+  const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
+  const baseAmount = pricing.freeDays.includes(day) || weekdayFree ? 0 : unitPrice;
+  const totalAmount = baseAmount + acFee;
 
   return { totalAmount };
 }
@@ -98,9 +127,13 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   const session  = await requirePermission("canCreateBookings");
   const validated = BookingSchema.parse(data);
 
-  // Mondays are office off-days (Sabbath) — no bookings allowed
-  if (validated.startTime.getDay() === 1) {
+  // Mondays are restricted for non-manager roles
+  if (validated.startTime.getDay() === 1 && !canBookMondays(session.role)) {
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
+
+  if (violatesLeadTime(validated.startTime) && !canBypassLeadTime(session.role)) {
+    return { error: `Bookings must be made at least ${LEAD_TIME_HOURS} hours before the selected time slot.` };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -133,6 +166,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     validated.category,
     validated.startTime,
     validated.endTime,
+    validated.useAirConditioner,
   );
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
@@ -146,7 +180,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
       description: validated.description,
       startTime:   validated.startTime,
       endTime:     validated.endTime,
-      notes:       validated.notes,
+      notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
       totalAmount,
       status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
       paymentStatus: "UNPAID",
@@ -222,6 +256,10 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
   }
 
+  if (violatesLeadTime(validated.startTime)) {
+    return { error: `Bookings must be made at least ${LEAD_TIME_HOURS} hours before the selected time slot.` };
+  }
+
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true },
   });
@@ -252,6 +290,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     validated.category,
     validated.startTime,
     validated.endTime,
+    validated.useAirConditioner,
   );
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
@@ -265,7 +304,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
       description: validated.description,
       startTime:   validated.startTime,
       endTime:     validated.endTime,
-      notes:       validated.notes,
+      notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
       totalAmount,
       status:       "PENDING",
       paymentStatus: "UNPAID",
@@ -333,6 +372,7 @@ const GuestBookingSchema = z.object({
   description: z.string().optional(),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
+  useAirConditioner: z.boolean().optional().default(false),
   notes: z.string().optional(),
   guestName: z.string().min(2).max(120),
   guestEmail: z.string().email(),
@@ -346,6 +386,10 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   // Mondays are office off-days (Sabbath) — no bookings allowed
   if (validated.startTime.getDay() === 1) {
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
+  }
+
+  if (violatesLeadTime(validated.startTime)) {
+    return { error: `Bookings must be made at least ${LEAD_TIME_HOURS} hours before the selected time slot.` };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -375,6 +419,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     validated.category,
     validated.startTime,
     validated.endTime,
+    validated.useAirConditioner,
   );
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
@@ -403,6 +448,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   }
 
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;
+  const acMeta = validated.useAirConditioner ? "AC_REQUESTED" : undefined;
 
   const booking = await prisma.booking.create({
     data: {
@@ -413,7 +459,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       description: validated.description,
       startTime: validated.startTime,
       endTime: validated.endTime,
-      notes: [validated.notes, guestMeta].filter(Boolean).join("\n"),
+      notes: [validated.notes, guestMeta, acMeta].filter(Boolean).join("\n"),
       totalAmount,
       status: "PENDING",
       paymentStatus: "UNPAID",
@@ -604,10 +650,6 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
     return { error: "Completed bookings cannot be edited." };
   }
 
-  if (validated.startTime.getDay() === 1) {
-    return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
-  }
-
   const facility = await prisma.facility.findFirstOrThrow({
     where: { id: validated.facilityId, isActive: true },
   });
@@ -636,6 +678,7 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
     validated.category,
     validated.startTime,
     validated.endTime,
+    validated.useAirConditioner,
   );
   if ("error" in amountResult) return { error: amountResult.error };
 
@@ -648,7 +691,7 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
       description: validated.description,
       startTime: validated.startTime,
       endTime: validated.endTime,
-      notes: validated.notes,
+      notes: [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
       totalAmount: amountResult.totalAmount,
       updatedAt: new Date(),
     },

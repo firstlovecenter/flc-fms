@@ -18,6 +18,7 @@ import {
   CreditCard,
   ShieldAlert,
   Package,
+  FileText,
 } from "lucide-react";
 import { logout } from "@/actions/auth.actions";
 
@@ -31,6 +32,7 @@ type StaffSidebarProps = {
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
+  { href: "/bookings/content", label: "Booking Content", icon: FileText, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
   { href: "/facilities", label: "Facilities", icon: Building2 },
   { href: "/facilities/categories", label: "Category/Pricing", icon: Tags, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
   { href: "/items", label: "Items & Packages", icon: Package },

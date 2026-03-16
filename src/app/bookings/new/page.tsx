@@ -7,7 +7,7 @@ export default async function NewBookingPage({
 }: {
   searchParams: { facilityId?: string };
 }) {
-  await requirePermission("canCreateBookings");
+  const session = await requirePermission("canCreateBookings");
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
@@ -16,6 +16,7 @@ export default async function NewBookingPage({
       name: true,
       description: true,
       capacity: true,
+      acUsageFee: true,
       amenities: true,
       availableDays: true,
       pricing: {
@@ -33,6 +34,7 @@ export default async function NewBookingPage({
     name: f.name,
     description: f.description,
     capacity: f.capacity,
+    acUsageFee: Number(f.acUsageFee),
     pricePerHour: (f.pricing[0]?.price ?? 0).toString(),
     amenities: f.amenities,
     availableDays: f.availableDays,
@@ -44,7 +46,7 @@ export default async function NewBookingPage({
         <h1 className="page-title">New Booking</h1>
         <p className="text-sm page-subtitle">Schedule a facility for staff use.</p>
       </div>
-      <BookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} />
+      <BookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} currentUserRole={session.role} />
     </div>
   );
 }

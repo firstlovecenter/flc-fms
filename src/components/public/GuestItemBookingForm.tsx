@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createGuestItemBooking } from "@/actions/bookable-items.actions";
 import { Package, Layers, Minus, Plus, CheckCircle2 } from "lucide-react";
+import ItemBookingTerms from "@/components/items/ItemBookingTerms";
 
 const schema = z.object({
   guestName:   z.string().min(2, "Name is required"),
@@ -37,6 +38,7 @@ export default function GuestItemBookingForm({
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [serverError, setServerError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const {
     register,
@@ -58,6 +60,10 @@ export default function GuestItemBookingForm({
     setServerError(null);
     if (lines.length === 0) {
       setServerError("You have no items in your selection.");
+      return;
+    }
+    if (!agreedToTerms) {
+      setServerError("Please accept the Special Item Use Terms and Conditions before submitting.");
       return;
     }
     const result = await createGuestItemBooking({
@@ -211,9 +217,24 @@ export default function GuestItemBookingForm({
         </div>
       </div>
 
+      <ItemBookingTerms />
+
+      <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+          required
+        />
+        <span>
+          I have read, understood, and agree to the Special Item Use Terms and Conditions.
+        </span>
+      </label>
+
       <button
         type="submit"
-        disabled={isSubmitting || lines.length === 0}
+        disabled={isSubmitting || lines.length === 0 || !agreedToTerms}
         className="btn-gold w-full"
         style={{ paddingBlock: 12 }}
       >

@@ -63,6 +63,7 @@ model Facility {
   underMaintenance    Boolean              @default(false)
   availableFrom       String               @default("08:00")
   availableTo         String               @default("22:00")
+  acUsageFee          Decimal              @default(0) @db.Decimal(10, 2)
   availableDays       Int[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
