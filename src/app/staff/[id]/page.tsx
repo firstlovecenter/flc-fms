@@ -9,13 +9,14 @@ import StaffRowActions from "@/components/staff/StaffRowActions";
 interface Props { params: { id: string } }
 
 const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN:      "Super Admin",
   FACILITY_MANAGER: "Facility Manager",
   VICAR:            "Vicar",
   BOOKING_MANAGER:  "Booking Manager",
 };
 
 export default async function StaffDetailPage({ params }: Props) {
-  await requireStaff("FACILITY_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER");
 
   const member = await prisma.user.findFirst({
     where: { id: params.id },
@@ -98,6 +99,7 @@ export default async function StaffDetailPage({ params }: Props) {
             inactive={!member.isActive}
             role={member.role}
             profilePicture={member.profilePicture}
+            currentUserRole={session.role}
           />
         </div>
       </div>

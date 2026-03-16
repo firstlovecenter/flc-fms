@@ -137,6 +137,7 @@ model Booking {
   resolvedPricingSource String      @default("CATEGORY_BASE")
   notes           String?
   rejectionReason String?
+  deletedAt       DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   isBillingWaived Boolean           @default(false)
@@ -279,6 +280,7 @@ model Expense {
   status          ExpenseStatus @default(PENDING)
   receiptUrl      String?
   rejectionReason String?
+  deletedAt       DateTime?
   createdAt       DateTime      @default(now())
   approvedAt      DateTime?
   updatedAt       DateTime      @updatedAt
@@ -300,6 +302,7 @@ model Income {
   receivedAt   DateTime
   createdAt    DateTime @default(now())
   bookingId    String?  @unique
+  deletedAt    DateTime?
   booking      Booking? @relation(fields: [bookingId], references: [id])
   recordedBy   User?    @relation(fields: [recordedById], references: [id])
 
@@ -337,6 +340,7 @@ model InventoryCategory {
   name        String
   description String?
   icon        String?
+  deletedAt   DateTime?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   items       InventoryItem[]
@@ -430,6 +434,7 @@ model Event {
   recurrenceRule String?
   maxAttendees   Int?
   isPublic       Boolean   @default(true)
+  deletedAt      DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   bookings       Booking[]

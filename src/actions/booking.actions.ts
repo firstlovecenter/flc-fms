@@ -27,6 +27,7 @@ async function checkConflict(facilityId: string, startTime: Date, endTime: Date,
   return prisma.booking.findFirst({
     where: {
       facilityId,
+      deletedAt: null,
       status: { in: ["PENDING", "APPROVED"] },
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
       AND: [
@@ -466,6 +467,8 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 
 export async function approveBooking(bookingId: string, waiveBilling = false) {
   const session  = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
+
   const booking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
@@ -504,6 +507,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 
 export async function rejectBooking(bookingId: string, reason: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
 
   const [booking] = await prisma.$transaction([
     prisma.booking.update({
@@ -545,7 +549,7 @@ export async function cancelBooking(bookingId: string) {
   if (!session) return { error: "Unauthorized" };
 
   const booking = await prisma.booking.findFirstOrThrow({
-    where: { id: bookingId },
+    where: { id: bookingId, deletedAt: null },
   });
 
   if (session.role === "PATRON" && booking.patronId !== session.sub) {
@@ -573,7 +577,7 @@ export async function cancelBooking(bookingId: string) {
 export async function completeBooking(bookingId: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
-  const booking = await prisma.booking.findFirstOrThrow({ where: { id: bookingId } });
+  const booking = await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
   if (booking.status !== "APPROVED") return { error: "Only approved bookings can be marked as completed." };
 
   await prisma.booking.update({
@@ -594,7 +598,7 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = ManagerBookingUpdateSchema.parse(data);
 
-  const existing = await prisma.booking.findFirstOrThrow({ where: { id: bookingId } });
+  const existing = await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
 
   if (existing.status === "COMPLETED") {
     return { error: "Completed bookings cannot be edited." };
@@ -663,7 +667,7 @@ export async function deleteBookingByManager(bookingId: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
   const booking = await prisma.booking.findFirstOrThrow({
-    where: { id: bookingId },
+    where: { id: bookingId, deletedAt: null },
     include: {
       payment: { select: { id: true, status: true } },
       receipt: { select: { id: true } },
@@ -679,7 +683,10 @@ export async function deleteBookingByManager(bookingId: string) {
     return { error: "Approved or completed bookings cannot be deleted. Cancel instead." };
   }
 
-  await prisma.booking.delete({ where: { id: bookingId } });
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "CANCELLED", deletedAt: new Date() },
+  });
 
   auditLog({ userId: session.sub, action: "DELETE_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");
@@ -697,7 +704,7 @@ export async function getBookings(filters: {
   if (!session) return { bookings: [], total: 0 };  const page = filters.page ?? 1;
   const take = 20;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { deletedAt: null };
   if (filters.status)     where.status = filters.status;
   if (filters.facilityId) where.facilityId = filters.facilityId;
   if (session.role === "PATRON") where.patronId = session.sub;

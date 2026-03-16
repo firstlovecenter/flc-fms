@@ -13,11 +13,15 @@ const schema = z.object({
   name:  z.string().min(2, "Name is required"),
   email: z.string().email("Valid email required"),
   phone: z.string().min(9, "Phone number is required"),
-  role:  z.enum(["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
+  role:  z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
 });
 type FormData = z.infer<typeof schema>;
 
-export default function AddStaffModal() {
+interface Props {
+  canAssignSuperAdmin?: boolean;
+}
+
+export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [created, setCreated] = useState(false);
@@ -97,6 +101,7 @@ export default function AddStaffModal() {
                     <option value="VICAR">Vicar</option>
                     <option value="BOOKING_MANAGER">Booking Manager</option>
                     <option value="FACILITY_MANAGER">Facility Manager</option>
+                    {canAssignSuperAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
                   </select>
                   <p className="text-xs text-[var(--muted)] mt-1">
                     Vicars have granular permissions. Booking Managers handle bookings. Facility Managers have full campus access.

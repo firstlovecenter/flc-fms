@@ -68,7 +68,10 @@ export async function createEvent(data: z.infer<typeof EventSchema>) {
 }
 
 export async function updateEvent(id: string, data: Partial<z.infer<typeof EventSchema>>) {
-  const session  = await requirePermission("canCreateEvents");  const event = await prisma.event.update({
+  const session  = await requirePermission("canCreateEvents");
+  await prisma.event.findFirstOrThrow({ where: { id, deletedAt: null } });
+
+  const event = await prisma.event.update({
     where: { id },
     data});
 
@@ -78,7 +81,8 @@ export async function updateEvent(id: string, data: Partial<z.infer<typeof Event
 }
 
 export async function deleteEvent(id: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  await prisma.event.delete({ where: { id } });
+  const session  = await requireStaff("FACILITY_MANAGER");
+  await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
 
   auditLog({ userId: session.sub, action: "DELETE_EVENT", entity: "Event", entityId: id });
   revalidatePath("/events");
@@ -87,6 +91,7 @@ export async function deleteEvent(id: string) {
 
 export async function getEvents(upcoming = true) {  return prisma.event.findMany({
     where: {
+  deletedAt: null,
       ...(upcoming ? { startTime: { gte: new Date() } } : {})},
     include: {
       facility:  { select: { name: true } },

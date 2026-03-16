@@ -64,8 +64,8 @@ export async function approveExpense(expenseId: string) {
   const session  = await requireStaff("FACILITY_MANAGER");
 
   // Check account balance before approving
-  const expense = await prisma.expense.findUniqueOrThrow({
-    where: { id: expenseId, status: "PENDING" },
+  const expense = await prisma.expense.findFirstOrThrow({
+    where: { id: expenseId, status: "PENDING", deletedAt: null },
   });
 
   if (isTransactionLocked(expense.createdAt)) {
@@ -74,7 +74,7 @@ export async function approveExpense(expenseId: string) {
 
   const [incomeTotals, totalApprovedExpenses] = await Promise.all([
     getTotalIncomeIncludingBookingRevenue(),
-    prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
   ]);
 
   const balance =
@@ -88,7 +88,7 @@ export async function approveExpense(expenseId: string) {
   }
 
   const updated = await prisma.expense.update({
-    where: { id: expenseId, status: "PENDING" },
+    where: { id: expenseId },
     data: { status: "APPROVED", approvedById: session.sub, approvedAt: new Date() },
     include: { createdBy: true }});
 
@@ -108,8 +108,8 @@ export async function approveExpense(expenseId: string) {
 
 export async function rejectExpense(expenseId: string, reason: string) {
   const session  = await requireStaff("FACILITY_MANAGER");
-  const existing = await prisma.expense.findUnique({
-    where: { id: expenseId },
+  const existing = await prisma.expense.findFirst({
+    where: { id: expenseId, deletedAt: null },
     select: { createdAt: true, status: true },
   });
 
@@ -121,7 +121,7 @@ export async function rejectExpense(expenseId: string, reason: string) {
   }
 
   const expense = await prisma.expense.update({
-    where: { id: expenseId, status: "PENDING" },
+    where: { id: expenseId },
     data: { status: "REJECTED", approvedById: session.sub, rejectionReason: reason },
     include: { createdBy: true }});
 
@@ -144,7 +144,7 @@ export async function getExpenses(filters: { status?: string; page?: number } = 
   if (!session) return { expenses: [], total: 0 };  const page = filters.page ?? 1;
   const take = 20;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { deletedAt: null };
   if (filters.status) where.status = filters.status;
   // Vicars and Booking Managers see only their own
   if (["VICAR", "BOOKING_MANAGER"].includes(session.role)) where.createdById = session.sub;
@@ -168,8 +168,8 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
   const session = await requireStaff("FACILITY_MANAGER");
   const validated = UpdateExpenseSchema.parse(data);
 
-  const existing = await prisma.expense.findUnique({
-    where: { id: expenseId },
+  const existing = await prisma.expense.findFirst({
+    where: { id: expenseId, deletedAt: null },
     select: { createdAt: true },
   });
 
@@ -191,8 +191,8 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 export async function deleteExpense(expenseId: string) {
   const session = await requireStaff("FACILITY_MANAGER");
 
-  const existing = await prisma.expense.findUnique({
-    where: { id: expenseId },
+  const existing = await prisma.expense.findFirst({
+    where: { id: expenseId, deletedAt: null },
     select: { createdAt: true },
   });
 
@@ -201,7 +201,10 @@ export async function deleteExpense(expenseId: string) {
     return { error: transactionLockMessage() };
   }
 
-  await prisma.expense.delete({ where: { id: expenseId } });
+  await prisma.expense.update({
+    where: { id: expenseId },
+    data: { deletedAt: new Date() },
+  });
 
   auditLog({ userId: session.sub, action: "DELETE_EXPENSE", entity: "Expense", entityId: expenseId });
   revalidatePath("/transactions");

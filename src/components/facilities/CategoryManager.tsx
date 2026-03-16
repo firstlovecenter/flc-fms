@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Pencil, Check, X } from "lucide-react";
-import { createBookingCategory, updateBookingCategory, toggleBookingCategory } from "@/actions/category.actions";
+import { Plus, Pencil, Check, X, Trash2 } from "lucide-react";
+import {
+  createBookingCategory,
+  updateBookingCategory,
+  toggleBookingCategory,
+  deleteBookingCategory,
+} from "@/actions/category.actions";
 
 interface Category {
   id: string;
@@ -67,6 +72,25 @@ export default function CategoryManager({ initialCategories }: { initialCategori
     });
   }
 
+  function handleDelete(cat: Category) {
+    const confirmed = window.confirm(
+      `Delete category \"${cat.name}\"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteBookingCategory(cat.id);
+      if ("error" in result && result.error) {
+        setError(result.error);
+        return;
+      }
+
+      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+      if (editingId === cat.id) cancel();
+    });
+  }
+
   return (
     <div className="card p-6 space-y-4">
       {error && (
@@ -117,6 +141,14 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                     className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)]"
                   >
                     <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(cat)}
+                    disabled={isPending}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-[var(--muted)] hover:text-red-600 disabled:opacity-50"
+                    title="Delete category"
+                  >
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </>

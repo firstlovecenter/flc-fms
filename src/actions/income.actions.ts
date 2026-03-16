@@ -28,6 +28,38 @@ const UpdateIncomeSchema = z.object({
 export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
   const session  = await requireStaff("FACILITY_MANAGER");  const validated = IncomeSchema.parse(data);
 
+  if (validated.bookingId) {
+    const existingLinked = await prisma.income.findUnique({ where: { bookingId: validated.bookingId } });
+    if (existingLinked && !existingLinked.deletedAt) {
+      return { error: "An income record is already linked to this booking." };
+    }
+    if (existingLinked?.deletedAt) {
+      const restored = await prisma.income.update({
+        where: { id: existingLinked.id },
+        data: {
+          recordedById: session.sub,
+          title: validated.title,
+          narration: validated.narration,
+          amount: validated.amount,
+          category: validated.category,
+          source: validated.source,
+          receivedAt: validated.receivedAt,
+          deletedAt: null,
+        },
+      });
+
+      await prisma.booking.update({
+        where: { id: validated.bookingId },
+        data: { paymentStatus: "PAID" },
+      });
+
+      auditLog({ userId: session.sub, action: "RESTORE_INCOME", entity: "Income", entityId: restored.id });
+      revalidatePath("/transactions");
+      revalidatePath("/bookings");
+      return { success: true, income: restored };
+    }
+  }
+
   const income = await prisma.income.create({
     data: { recordedById: session.sub, ...validated }});
 
@@ -55,7 +87,22 @@ export async function autoRecordPaymentIncome(opts: {
 }) {
   // Skip if income already recorded for this booking
   const existing = await prisma.income.findUnique({ where: { bookingId: opts.bookingId } });
-  if (existing) return existing;
+  if (existing && !existing.deletedAt) return existing;
+  if (existing?.deletedAt) {
+    const restored = await prisma.income.update({
+      where: { id: existing.id },
+      data: {
+        title: `Facility Hire — ${opts.bookingTitle}`,
+        narration: `Payment received for booking via ${opts.provider}${opts.facilityName ? ` (${opts.facilityName})` : ""}`,
+        amount: opts.amount,
+        category: "Facility Hire",
+        source: opts.provider,
+        receivedAt: new Date(),
+        deletedAt: null,
+      },
+    });
+    return restored;
+  }
 
   const income = await prisma.income.create({
     data: {
@@ -78,6 +125,7 @@ export async function getBookingsForIncomeLink() {
   // Return bookings that don't already have a linked income record
   const bookings = await prisma.booking.findMany({
     where: {
+      deletedAt: null,
       income: null,
       status: { in: ["APPROVED", "COMPLETED"] },
     },
@@ -91,13 +139,13 @@ export async function getBookingsForIncomeLink() {
 export async function getIncomeSummary() {
   await requireStaff("FACILITY_MANAGER");  const [records, monthly] = await Promise.all([
     prisma.income.findMany({
-      where: {},
+      where: { deletedAt: null },
       include: { recordedBy: { select: { name: true } } },
       orderBy: { receivedAt: "desc" },
       take: 50}),
     prisma.income.groupBy({
       by: ["category"],
-      where: {},
+      where: { deletedAt: null },
       _sum: { amount: true },
       _count: true}),
   ]);
@@ -109,8 +157,8 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
   const session = await requireStaff("FACILITY_MANAGER");
   const validated = UpdateIncomeSchema.parse(data);
 
-  const existing = await prisma.income.findUnique({
-    where: { id: incomeId },
+  const existing = await prisma.income.findFirst({
+    where: { id: incomeId, deletedAt: null },
     select: { createdAt: true },
   });
 
@@ -135,8 +183,8 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
 export async function deleteIncome(incomeId: string) {
   const session = await requireStaff("FACILITY_MANAGER");
 
-  const existing = await prisma.income.findUnique({
-    where: { id: incomeId },
+  const existing = await prisma.income.findFirst({
+    where: { id: incomeId, deletedAt: null },
     select: { createdAt: true },
   });
 
@@ -145,7 +193,10 @@ export async function deleteIncome(incomeId: string) {
     return { error: transactionLockMessage() };
   }
 
-  await prisma.income.delete({ where: { id: incomeId } });
+  await prisma.income.update({
+    where: { id: incomeId },
+    data: { deletedAt: new Date() },
+  });
 
   auditLog({ userId: session.sub, action: "DELETE_INCOME", entity: "Income", entityId: incomeId });
   revalidatePath("/transactions");
