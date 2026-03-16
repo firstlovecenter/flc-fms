@@ -94,8 +94,9 @@ export default function GuestBookingForm({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [useAirConditioner, setUseAirConditioner] = useState(false);
+  // Allow FM, Booking Manager, and Super Admin to book on Mondays (all booking modes)
   const canBookMondays =
-    mode === "staff" && ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(currentUserRole ?? "");
+    ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(currentUserRole ?? "");
 
   const bypassLeadTime = canBookMondays;
 
