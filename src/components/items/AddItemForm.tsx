@@ -10,6 +10,7 @@ export default function AddItemForm({ defaultValues, itemId }: {
   defaultValues?: Partial<{
     name: string; description: string; unit: string; pricePerUnit: string;
     quantity: number; tags: string[]; isActive: boolean; sortOrder: number;
+    requiresBookingTerms: boolean; requiresItemBookingTerms: boolean;
   }>;
   itemId?: string;
 }) {
@@ -39,6 +40,8 @@ export default function AddItemForm({ defaultValues, itemId }: {
       quantity:     Number(fd.get("quantity")),
       sortOrder:    Number(fd.get("sortOrder") ?? 0),
       isActive:     fd.get("isActive") === "on",
+      requiresBookingTerms: fd.get("requiresBookingTerms") === "on",
+      requiresItemBookingTerms: fd.get("requiresItemBookingTerms") === "on",
       tags,
       images,
     };
@@ -118,6 +121,26 @@ export default function AddItemForm({ defaultValues, itemId }: {
         <input name="isActive" type="checkbox" className="w-4 h-4 accent-[var(--navy)]" defaultChecked={defaultValues?.isActive !== false} />
         <span className="text-sm font-medium text-[var(--navy)]">Show in public catalog (active)</span>
       </label>
+
+      <div className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-4">
+        <p className="text-xs uppercase tracking-wide font-semibold text-[var(--muted)]">Terms Mapping</p>
+        <label className="flex items-center gap-2 text-sm text-[var(--navy)]">
+          <input
+            name="requiresBookingTerms"
+            type="checkbox"
+            defaultChecked={defaultValues?.requiresBookingTerms === true}
+          />
+          Require Booking Terms and Conditions
+        </label>
+        <label className="flex items-center gap-2 text-sm text-[var(--navy)]">
+          <input
+            name="requiresItemBookingTerms"
+            type="checkbox"
+            defaultChecked={defaultValues?.requiresItemBookingTerms ?? true}
+          />
+          Require Item Booking Terms
+        </label>
+      </div>
 
       {/* Images */}
       <MediaUploader

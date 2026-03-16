@@ -57,6 +57,8 @@ model Facility {
   name                String
   description         String?
   capacity            Int
+  requiresBookingTerms Boolean             @default(true)
+  requiresItemBookingTerms Boolean         @default(false)
   amenities           String[]
   images              String[]
   isActive            Boolean              @default(true)
@@ -161,6 +163,8 @@ model BookableItem {
   name             String
   description      String?
   unit             String            @default("piece")
+  requiresBookingTerms Boolean       @default(false)
+  requiresItemBookingTerms Boolean   @default(true)
   pricePerUnit     Decimal           @db.Decimal(10, 2)
   quantity         Int               @default(1)
   images           String[]
@@ -181,6 +185,8 @@ model BookableBundle {
   name         String
   description  String?
   tagline      String?
+  requiresBookingTerms Boolean   @default(false)
+  requiresItemBookingTerms Boolean @default(true)
   price        Decimal           @db.Decimal(10, 2)
   images       String[]
   tags         String[]

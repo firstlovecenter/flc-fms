@@ -23,6 +23,8 @@ export default async function EditBundlePage({ params }: { params: { id: string 
     name:        bundle.name,
     tagline:     bundle.tagline ?? "",
     description: bundle.description ?? "",
+    requiresBookingTerms: bundle.requiresBookingTerms,
+    requiresItemBookingTerms: bundle.requiresItemBookingTerms,
     price:       bundle.price.toString(),
     sortOrder:   bundle.sortOrder,
     isActive:    bundle.isActive,

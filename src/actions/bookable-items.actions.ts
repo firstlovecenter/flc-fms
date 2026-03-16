@@ -12,6 +12,8 @@ const ItemSchema = z.object({
   name:         z.string().min(2).max(120),
   description:  z.string().optional(),
   unit:         z.string().min(1).max(40).default("piece"),
+  requiresBookingTerms: z.boolean().default(false),
+  requiresItemBookingTerms: z.boolean().default(true),
   pricePerUnit: z.coerce.number().min(0),
   quantity:     z.coerce.number().int().min(1).default(1),
   tags:         z.array(z.string()).default([]),
@@ -30,6 +32,8 @@ const BundleSchema = z.object({
   name:        z.string().min(2).max(120),
   description: z.string().optional(),
   tagline:     z.string().optional(),
+  requiresBookingTerms: z.boolean().default(false),
+  requiresItemBookingTerms: z.boolean().default(true),
   price:       z.coerce.number().min(0),
   tags:        z.array(z.string()).default([]),
   images:      z.array(z.string()).default([]),
@@ -52,6 +56,9 @@ const GuestItemBookingSchema = z.object({
     bundleId: z.string().optional(),
     quantity: z.coerce.number().int().min(1),
   })).min(1, "At least one item or bundle is required"),
+  acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
+    .optional()
+    .default([]),
 }).refine(d => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"],
@@ -126,6 +133,34 @@ export async function createGuestItemBooking(raw: unknown) {
     } else {
       return { error: "Each line must reference an item or bundle" };
     }
+  }
+
+  const requiredTerms = new Set<"BOOKING_TERMS" | "ITEM_BOOKING_TERMS">();
+  for (const line of lineData) {
+    if (line.itemId) {
+      const item = await prisma.bookableItem.findUnique({
+        where: { id: line.itemId },
+        select: { requiresBookingTerms: true, requiresItemBookingTerms: true },
+      });
+      if (item?.requiresBookingTerms) requiredTerms.add("BOOKING_TERMS");
+      if (item?.requiresItemBookingTerms) requiredTerms.add("ITEM_BOOKING_TERMS");
+    }
+    if (line.bundleId) {
+      const bundle = await prisma.bookableBundle.findUnique({
+        where: { id: line.bundleId },
+        select: { requiresBookingTerms: true, requiresItemBookingTerms: true },
+      });
+      if (bundle?.requiresBookingTerms) requiredTerms.add("BOOKING_TERMS");
+      if (bundle?.requiresItemBookingTerms) requiredTerms.add("ITEM_BOOKING_TERMS");
+    }
+  }
+
+  const accepted = new Set(data.acceptedTerms ?? []);
+  if (requiredTerms.has("BOOKING_TERMS") && !accepted.has("BOOKING_TERMS")) {
+    return { error: "You must agree to Booking Terms and Conditions before submitting." };
+  }
+  if (requiredTerms.has("ITEM_BOOKING_TERMS") && !accepted.has("ITEM_BOOKING_TERMS")) {
+    return { error: "You must agree to Item Booking Terms before submitting." };
   }
 
   // Find or create guest patron

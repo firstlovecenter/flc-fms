@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createGuestItemBooking } from "@/actions/bookable-items.actions";
 import { Package, Layers, Minus, Plus, CheckCircle2 } from "lucide-react";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
+import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 
 const schema = z.object({
   guestName:   z.string().min(2, "Name is required"),
@@ -28,6 +29,8 @@ type Line = {
   unitPrice: number;
   unit: string;
   qty: number;
+  requiresBookingTerms: boolean;
+  requiresItemBookingTerms: boolean;
 };
 
 export default function GuestItemBookingForm({
@@ -55,6 +58,13 @@ export default function GuestItemBookingForm({
   }
 
   const total = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
+  const requiresBookingTerms = lines.some((line) => line.requiresBookingTerms);
+  const requiresItemTerms = lines.some((line) => line.requiresItemBookingTerms);
+  const requiredTerms = [
+    ...(requiresBookingTerms ? (["BOOKING_TERMS"] as const) : []),
+    ...(requiresItemTerms ? (["ITEM_BOOKING_TERMS"] as const) : []),
+  ];
+  const termsRequired = requiredTerms.length > 0;
 
   async function onSubmit(data: FormData) {
     setServerError(null);
@@ -62,8 +72,8 @@ export default function GuestItemBookingForm({
       setServerError("You have no items in your selection.");
       return;
     }
-    if (!agreedToTerms) {
-      setServerError("Please accept the Special Item Use Terms and Conditions before submitting.");
+    if (termsRequired && !agreedToTerms) {
+      setServerError("Please accept the required terms before submitting.");
       return;
     }
     const result = await createGuestItemBooking({
@@ -80,6 +90,7 @@ export default function GuestItemBookingForm({
         bundleId: l.type === "bundle" ? l.id : undefined,
         quantity: l.qty,
       })),
+      acceptedTerms: agreedToTerms ? requiredTerms : [],
     });
 
     if ("error" in result && result.error) {
@@ -217,24 +228,27 @@ export default function GuestItemBookingForm({
         </div>
       </div>
 
-      <ItemBookingTerms />
+      {requiresBookingTerms && <BookingTermsAndFaq title="Booking Terms and Conditions" />}
+      {requiresItemTerms && <ItemBookingTerms />}
 
-      <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={agreedToTerms}
-          onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-[var(--border)]"
-          required
-        />
-        <span>
-          I have read, understood, and agree to the Special Item Use Terms and Conditions.
-        </span>
-      </label>
+      {termsRequired && (
+        <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+            required
+          />
+          <span>
+            I have read, understood, and agree to the required terms for this request.
+          </span>
+        </label>
+      )}
 
       <button
         type="submit"
-        disabled={isSubmitting || lines.length === 0 || !agreedToTerms}
+        disabled={isSubmitting || lines.length === 0 || (termsRequired && !agreedToTerms)}
         className="btn-gold w-full"
         style={{ paddingBlock: 12 }}
       >

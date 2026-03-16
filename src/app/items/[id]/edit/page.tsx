@@ -15,6 +15,8 @@ export default async function EditItemPage({ params }: { params: { id: string } 
     name:         item.name,
     description:  item.description ?? "",
     unit:         item.unit,
+    requiresBookingTerms: item.requiresBookingTerms,
+    requiresItemBookingTerms: item.requiresItemBookingTerms,
     pricePerUnit: item.pricePerUnit.toString(),
     quantity:     item.quantity,
     sortOrder:    item.sortOrder,
