@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const PULL_THRESHOLD = 108;
-const MAX_PULL_DISTANCE = 170;
-const MIN_PULL_START = 18;
-const VERTICAL_DOMINANCE = 10;
+const PULL_THRESHOLD = 120;
+const MAX_PULL_DISTANCE = 180;
+const MIN_PULL_START = 50;   // px of deliberate downward travel before gesture registers
+const VERTICAL_DOMINANCE = 25; // vertical must exceed horizontal by this much to count
 
 export default function PullToRefresh() {
   const [pullDistance, setPullDistance] = useState(0);
@@ -59,7 +59,7 @@ export default function PullToRefresh() {
       }
 
       const effectiveDelta = Math.max(0, deltaY - MIN_PULL_START);
-      const distance = Math.min(MAX_PULL_DISTANCE, effectiveDelta * 0.52);
+      const distance = Math.min(MAX_PULL_DISTANCE, effectiveDelta * 0.38);
       setPullDistance(distance);
       event.preventDefault();
     };

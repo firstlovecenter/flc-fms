@@ -277,22 +277,24 @@ model PaymentConfig {
 }
 
 model Expense {
-  id              String        @id @default(cuid())
-  createdById     String
-  approvedById    String?
-  title           String
-  narration       String
-  amount          Decimal       @db.Decimal(10, 2)
-  category        String
-  status          ExpenseStatus @default(PENDING)
-  receiptUrl      String?
-  rejectionReason String?
-  deletedAt       DateTime?
-  createdAt       DateTime      @default(now())
-  approvedAt      DateTime?
-  updatedAt       DateTime      @updatedAt
-  approvedBy      User?         @relation("ApprovedExpenses", fields: [approvedById], references: [id])
-  createdBy       User          @relation("CreatedExpenses", fields: [createdById], references: [id])
+  id                   String               @id @default(cuid())
+  createdById          String
+  approvedById         String?
+  title                String
+  narration            String
+  amount               Decimal              @db.Decimal(10, 2)
+  category             String
+  status               ExpenseStatus        @default(PENDING)
+  receiptUrl           String?
+  rejectionReason      String?
+  deletedAt            DateTime?
+  createdAt            DateTime             @default(now())
+  approvedAt           DateTime?
+  updatedAt            DateTime             @updatedAt
+  maintenanceRequestId String?              @unique
+  approvedBy           User?                @relation("ApprovedExpenses", fields: [approvedById], references: [id])
+  createdBy            User                 @relation("CreatedExpenses", fields: [createdById], references: [id])
+  maintenanceRequest   MaintenanceRequest?  @relation(fields: [maintenanceRequestId], references: [id])
 
   @@index([status])
   @@map("expenses")
@@ -337,6 +339,7 @@ model MaintenanceRequest {
   assignedTo     User?               @relation("AssignedMaint", fields: [assignedToId], references: [id])
   facility       Facility?           @relation(fields: [facilityId], references: [id])
   requestedBy    User                @relation("RequestedMaint", fields: [requestedById], references: [id])
+  expense        Expense?
 
   @@index([status, priority])
   @@map("maintenance_requests")

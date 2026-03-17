@@ -43,7 +43,7 @@ export default async function MaintenancePage({
     ...r,
     estimatedCost: r.estimatedCost ? Number(r.estimatedCost) : null,
     actualCost: r.actualCost ? Number(r.actualCost) : null,
-  })).filter((r): r is typeof r & { facility: { name: string; } } => r.facility !== null);
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in" style={{ position: "relative" }}>

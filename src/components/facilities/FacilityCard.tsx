@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Clock, AlertTriangle, MapPin, ChevronUp, ChevronDown } from "lucide-react";
+import { Users, AlertTriangle, MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import ToggleMaintenanceButton from "@/components/facilities/ToggleMaintenanceButton";
 import { updateFacilitySortOrder } from "@/actions/facility.actions";
 import { useRouter } from "next/navigation";
@@ -29,16 +29,6 @@ interface FacilityCardProps {
   totalCount: number;
 }
 
-// Format currency locally
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
 export default function FacilityCard({ facility: f, canManage, index: idx, totalCount }: FacilityCardProps) {
   const router = useRouter();
   const [moving, setMoving] = useState(false);
@@ -53,10 +43,14 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
 
   return (
     <div
-      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full"
-      style={{ animation: `fade-in 0.4s ease-out ${idx * 0.05}s backwards`, opacity: f.isActive ? 1 : 0.8 }}
+      className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-white dark:bg-[rgba(15,26,43,0.7)] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full"
+      style={{
+        animation: `fadeIn 0.4s ease-out ${idx * 0.05}s backwards`,
+        opacity: f.isActive ? 1 : 0.75,
+      }}
     >
-      <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
+      {/* Image */}
+      <div className="relative aspect-[4/3] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
         {f.images && f.images.length > 0 ? (
           <img
             src={f.images[0]}
@@ -65,59 +59,59 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-            <MapPin size={30} className="opacity-50 mb-2" />
-            <span className="text-xs font-semibold uppercase tracking-widest">No Image</span>
+            <MapPin size={30} className="opacity-40 mb-2" />
+            <span className="text-xs font-semibold uppercase tracking-widest opacity-60">No Image</span>
           </div>
         )}
 
-        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+        {/* Status overlays */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {f.underMaintenance && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-700">
-              <AlertTriangle size={11} /> Maintenance
+            <span className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50/95 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-orange-700">
+              <AlertTriangle size={10} /> Maintenance
             </span>
           )}
           {!f.isActive && (
-            <span className="inline-flex rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700">
+            <span className="inline-flex rounded-md border border-red-200 bg-red-50/95 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-red-700">
               Inactive
             </span>
           )}
         </div>
-      </div>
-    );
 
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex justify-between items-start mb-2 gap-2">
-          <h3 className="font-display font-bold text-xl text-[var(--navy)] leading-tight line-clamp-2">
-            {f.name}
-          </h3>
-        </div>
-
-        <p className="text-sm text-slate-600 line-clamp-2 mb-4 font-light">
-          {f.description || "A versatile venue space managed by your campus team."}
-        </p>
-
-        <div className="mt-auto grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-medium text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <Users size={14} className="text-slate-400" />
-            <span>{f.capacity.toLocaleString()} cap</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} className="text-slate-400" />
-            <span>{f.availableFrom} - {f.availableTo}</span>
-          </div>
-        </div>
-
+        {/* Booking count pill */}
         {f._count.bookings > 0 && (
-          <p className="mt-3 text-xs text-[var(--gold)] font-semibold">
-            {f._count.bookings} active booking{f._count.bookings !== 1 ? "s" : ""}
-          </p>
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center rounded-full bg-[var(--navy)]/80 backdrop-blur-sm px-2.5 py-1 text-[10px] font-semibold text-[var(--gold)]">
+              {f._count.bookings} booking{f._count.bookings !== 1 ? "s" : ""}
+            </span>
+          </div>
         )}
       </div>
 
-      <div className="p-5 pt-0 border-t border-slate-100 mt-4 flex items-center gap-2">
+      {/* Card body */}
+      <div className="p-5 flex-1 flex flex-col gap-3">
+        <div>
+          <h3 className="font-bold text-lg text-[var(--navy)] leading-tight line-clamp-1" style={{ fontFamily: "var(--font-display)" }}>
+            {f.name}
+          </h3>
+          <p className="text-sm text-[var(--slate)] line-clamp-2 mt-1 font-light leading-relaxed">
+            {f.description || "A versatile venue space managed by your campus team."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs font-medium text-[var(--muted)] mt-auto">
+          <div className="flex items-center gap-1.5">
+            <Users size={13} className="text-[var(--muted)]" />
+            <span>{f.capacity.toLocaleString()} capacity</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card footer */}
+      <div className="px-5 pb-5 pt-0 border-t border-[var(--border)] mt-auto flex items-center gap-2 pt-4">
         <Link
           href={`/facilities/${f.id}`}
-          className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-4 h-9 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex-1"
+          className="inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-white dark:bg-transparent px-4 h-9 text-sm font-medium text-[var(--slate)] hover:bg-[var(--cream)] hover:text-[var(--navy)] hover:border-[var(--border-dark)] transition-colors flex-1"
         >
           Manage
         </Link>
@@ -133,18 +127,18 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
               <button
                 onClick={() => moveOrder("up")}
                 disabled={moving || idx === 0}
-                title="Move up in listing order"
-                className="p-0.5 rounded text-slate-400 hover:text-[var(--navy)] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Move up"
+                className="p-1 rounded text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--cream-dark)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronUp size={14} />
+                <ChevronUp size={13} />
               </button>
               <button
                 onClick={() => moveOrder("down")}
                 disabled={moving || idx === totalCount - 1}
-                title="Move down in listing order"
-                className="p-0.5 rounded text-slate-400 hover:text-[var(--navy)] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Move down"
+                className="p-1 rounded text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--cream-dark)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronDown size={14} />
+                <ChevronDown size={13} />
               </button>
             </div>
           </>
