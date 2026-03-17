@@ -10,6 +10,7 @@ import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
 import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
+import { DEFAULT_VICAR_PERMISSIONS } from "@/lib/staff-permissions";
 
 function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR") {
   if (role === "PATRON") return "/patron/dashboard";
@@ -158,7 +159,13 @@ export async function createStaffUser(formData: FormData) {
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
   const user = await prisma.user.create({
-    data: { ...parsed.data, passwordHash, mustChangePassword: true },
+    data: {
+      ...parsed.data,
+      passwordHash,
+      mustChangePassword: true,
+      // Always store explicit permissions for Vicars so they're auditable in the DB.
+      ...(parsed.data.role === "VICAR" ? { permissions: { ...DEFAULT_VICAR_PERMISSIONS } } : {}),
+    },
   });
 
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`;

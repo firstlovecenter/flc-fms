@@ -157,6 +157,10 @@ export async function initiatePublicPayment(bookingId: string, sessionToken: str
   const patronId = await redis.get(`pay_session:${sessionToken}`);
   if (!patronId) return { error: "Session expired. Please verify again." };
 
+  // Rate limit: 5 payment initiations per patron per 10 minutes
+  const { allowed } = await rateLimit(`pay_initiate:${patronId}`, 5, 600);
+  if (!allowed) return { error: "Too many payment attempts. Please wait a few minutes." };
+
   const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
