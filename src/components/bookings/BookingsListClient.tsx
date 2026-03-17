@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
+import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
 import { Phone, MessageCircle } from "lucide-react";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
@@ -194,8 +195,8 @@ export default function BookingsListClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-[var(--navy)] text-sm truncate">{b.title}</span>
-                    <span className={`badge text-[0.65rem] ${statusBadgeClass(b.status as never)}`}>{b.status}</span>
-                    {b.paymentStatus === "PAID" && <span className="badge badge-paid text-[0.65rem]">PAID</span>}
+                    <StatusBadge status={b.status} size="xs" />
+                    {b.paymentStatus === "PAID" && <StatusBadge status="PAID" size="xs" />}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
                     <span>{b.bookerName || "-"}</span>
@@ -253,12 +254,12 @@ export default function BookingsListClient({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="card p-3">
-                      <p className="text-xs text-[var(--muted)]">Status</p>
-                      <p className={statusBadgeClass(selected.status as never)}>{selected.status}</p>
+                      <p className="text-xs text-[var(--muted)] mb-1.5">Status</p>
+                      <StatusBadge status={selected.status} size="sm" />
                     </div>
                     <div className="card p-3">
-                      <p className="text-xs text-[var(--muted)]">Payment</p>
-                      <p className={statusBadgeClass(selected.paymentStatus as never)}>{selected.paymentStatus}</p>
+                      <p className="text-xs text-[var(--muted)] mb-1.5">Payment</p>
+                      <StatusBadge status={selected.paymentStatus} size="sm" />
                     </div>
                     <div className="card p-3">
                       <p className="text-xs text-[var(--muted)]">Amount</p>

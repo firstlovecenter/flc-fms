@@ -9,24 +9,45 @@ import { notifyMaintenanceUpdate, notifyFMMaintenanceRequested } from "@/lib/not
 import { sendMaintenanceOpenedEmail, sendExpenseNotificationEmail } from "@/lib/notifications/email";
 
 const CreateSchema = z.object({
-  facilityId:    z.string().optional(),
-  title:         z.string().min(2).max(200),
-  description:   z.string().min(5),
-  priority:      z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
-  // If provided → scheduled maintenance: facility only blocked within this window
+  facilityId:     z.string().optional(),
+  title:          z.string().min(2).max(200),
+  description:    z.string().min(5),
+  priority:       z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   scheduledStart: z.coerce.date().optional(),
   scheduledEnd:   z.coerce.date().optional(),
-  estimatedCost: z.coerce.number().positive().optional(),
+  estimatedCost:  z.coerce.number().positive().optional(),
 }).refine(
   (d) => !d.scheduledStart || !d.scheduledEnd || d.scheduledEnd > d.scheduledStart,
   { message: "Scheduled end must be after scheduled start", path: ["scheduledEnd"] }
 );
 
 const UpdateSchema = z.object({
-  status:        z.enum(["IN_PROGRESS", "RESOLVED", "CLOSED"]),
-  assignedToId:  z.string().min(1).optional(),
-  actualCost:    z.coerce.number().positive().optional(),
+  status:       z.enum(["IN_PROGRESS", "RESOLVED", "CLOSED"]),
+  assignedToId: z.string().min(1).optional(),
+  actualCost:   z.coerce.number().positive().optional(),
 });
+
+/** Shared helper — builds the expense title from facility name */
+function expenseTitle(facilityName: string | null | undefined) {
+  return `Maintenance — ${facilityName ?? "General"}`;
+}
+
+/** Shared helper — notifies all active FMs about a new/updated expense */
+async function notifyFMsNewExpense(
+  expenseTitle: string,
+  amount: number,
+  fms: Array<{ email: string; name: string }>
+) {
+  for (const mgr of fms) {
+    await sendExpenseNotificationEmail({
+      to: mgr.email,
+      name: mgr.name,
+      expenseTitle,
+      amount,
+      type: "SUBMITTED",
+    });
+  }
+}
 
 export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema>) {
   await requireStaff("FACILITY_MANAGER", "VICAR");
@@ -50,7 +71,7 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     },
   });
 
-  // Only hard-lock the facility for emergency (un-scheduled) maintenance on a facility
+  // Only hard-lock the facility for unscheduled (emergency) maintenance
   if (validated.facilityId && isEmergency) {
     await prisma.facility.update({
       where: { id: validated.facilityId },
@@ -58,7 +79,7 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     });
   }
 
-  // Notify FMs by SMS (always) and email (only when tied to a facility)
+  // Fetch FMs, facility name, reporter name in parallel
   const [fms, facility, reporter] = await Promise.all([
     prisma.user.findMany({
       where:  { role: "FACILITY_MANAGER", isActive: true },
@@ -70,6 +91,7 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
   ]);
 
+  // Notify FMs via SMS + email
   for (const fm of fms) {
     if (fm.phone) {
       await notifyFMMaintenanceRequested({
@@ -92,8 +114,36 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     }
   }
 
+  // ── Auto-create a PENDING expense when an estimated cost is provided ──────
+  // This puts the cost into the expense approval queue immediately, so the FM
+  // can see it under Transactions → Expenses before the work is completed.
+  if (validated.estimatedCost && validated.estimatedCost > 0) {
+    const title = expenseTitle(facility?.name);
+    const expense = await prisma.expense.create({
+      data: {
+        createdById:         session.sub,
+        maintenanceRequestId: request.id,
+        status:              "PENDING",
+        title,
+        narration:           `Estimated cost for maintenance request: ${validated.title} (ID: ${request.id})`,
+        amount:              validated.estimatedCost,
+        category:            "Maintenance & Repairs",
+      },
+    });
+
+    await notifyFMsNewExpense(title, validated.estimatedCost, fms);
+    auditLog({
+      userId: session.sub,
+      action: "AUTO_CREATE_EXPENSE",
+      entity: "Expense",
+      entityId: expense.id,
+      after: { maintenanceRequestId: request.id, trigger: "estimatedCost" },
+    });
+  }
+
   auditLog({ userId: session.sub, action: "CREATE_MAINTENANCE", entity: "MaintenanceRequest", entityId: request.id });
   revalidatePath("/maintenance");
+  revalidatePath("/transactions");
   return { success: true, request };
 }
 
@@ -107,7 +157,9 @@ export async function updateMaintenanceRequest(
   const request = await prisma.maintenanceRequest.update({
     where: { id: requestId },
     data: {
-      ...validated,
+      status:     validated.status,
+      assignedToId: validated.assignedToId,
+      actualCost: validated.actualCost ?? undefined,
       resolvedAt: validated.status === "RESOLVED" ? new Date() : undefined,
       closedAt:   validated.status === "CLOSED"   ? new Date() : undefined,
     },
@@ -117,15 +169,15 @@ export async function updateMaintenanceRequest(
     },
   });
 
-  // Unlock facility emergency-lock when resolved/closed
+  // Unlock facility hard-lock when resolved or closed
   if (["RESOLVED", "CLOSED"].includes(validated.status) && request.facility) {
-    // Only clear the hard-lock; scheduled maintenance is handled via date-range checks
     await prisma.facility.update({
       where: { id: request.facility.id },
       data:  { underMaintenance: false },
     });
   }
 
+  // Notify assigned staff
   if (request.assignedTo?.phone && request.facility) {
     await notifyMaintenanceUpdate({
       phone:        request.assignedTo.phone,
@@ -135,37 +187,44 @@ export async function updateMaintenanceRequest(
     });
   }
 
-  // Auto-create expense request when actualCost is set
+  // ── Upsert expense when actualCost is confirmed ───────────────────────────
+  // If an expense was already created from the estimatedCost, update its
+  // amount to reflect the real cost. If none exists yet, create one now.
   if (validated.actualCost && validated.actualCost > 0) {
-    const existing = await prisma.expense.findFirst({
-      where: { title: { startsWith: `Maintenance — ` }, narration: { contains: requestId } },
-    });
-    if (!existing) {
-      const expense = await prisma.expense.create({
-        data: {
-          createdById: session.sub,
-          status:      "PENDING",
-          title:       `Maintenance — ${request.facility?.name ?? "General"}`,
-          narration:   `Auto-generated expense for maintenance request: ${request.title} (ID: ${requestId})`,
-          amount:      validated.actualCost,
-          category:    "Maintenance & Repairs",
-        },
-      });
+    const title = expenseTitle(request.facility?.name);
+    const narration = `Actual cost for maintenance request: ${request.title} (ID: ${requestId})`;
 
-      // Notify all FMs about the new expense
-      const managers = await prisma.user.findMany({
-        where: { role: "FACILITY_MANAGER", isActive: true },
+    const expense = await prisma.expense.upsert({
+      where:  { maintenanceRequestId: requestId },
+      update: { amount: validated.actualCost, narration },
+      create: {
+        createdById:         session.sub,
+        maintenanceRequestId: requestId,
+        status:              "PENDING",
+        title,
+        narration,
+        amount:              validated.actualCost,
+        category:            "Maintenance & Repairs",
+      },
+    });
+
+    // Notify FMs if a brand-new expense was just created (no estimatedCost was set before)
+    const wasJustCreated = expense.createdAt.getTime() > Date.now() - 5000;
+    if (wasJustCreated) {
+      const fms = await prisma.user.findMany({
+        where:  { role: "FACILITY_MANAGER", isActive: true },
         select: { email: true, name: true },
       });
-      for (const mgr of managers) {
-        await sendExpenseNotificationEmail({
-          to: mgr.email, name: mgr.name,
-          expenseTitle: expense.title, amount: validated.actualCost, type: "SUBMITTED",
-        });
-      }
-
-      auditLog({ userId: session.sub, action: "AUTO_CREATE_EXPENSE", entity: "Expense", entityId: expense.id, after: { maintenanceRequestId: requestId } });
+      await notifyFMsNewExpense(title, validated.actualCost, fms);
     }
+
+    auditLog({
+      userId: session.sub,
+      action: "UPSERT_MAINTENANCE_EXPENSE",
+      entity: "Expense",
+      entityId: expense.id,
+      after: { maintenanceRequestId: requestId, actualCost: validated.actualCost },
+    });
   }
 
   auditLog({
@@ -176,6 +235,7 @@ export async function updateMaintenanceRequest(
     after: validated,
   });
   revalidatePath("/maintenance");
+  revalidatePath("/transactions");
   return { success: true, request };
 }
 
@@ -201,6 +261,7 @@ export async function getMaintenanceRequests(filters: {
         facility:    { select: { name: true } },
         requestedBy: { select: { name: true } },
         assignedTo:  { select: { name: true } },
+        expense:     { select: { id: true, status: true, amount: true } },
       },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * take,
@@ -214,7 +275,6 @@ export async function getMaintenanceRequests(filters: {
 
 /**
  * Check whether a facility has scheduled maintenance overlapping a proposed booking window.
- * Returns the conflicting maintenance request (with its window) or null.
  */
 export async function getFacilityMaintenanceConflict(
   facilityId: string,
@@ -240,4 +300,3 @@ export async function getFacilityMaintenanceConflict(
     },
   });
 }
-

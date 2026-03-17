@@ -1107,3 +1107,96 @@
   .stat-value { font-size: clamp(1.4rem, 6vw, 2rem); }
 }
 
+/* ─── Focus-visible accessibility ring ──────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(200, 163, 90, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(200, 163, 90, 0.7);
+  outline-offset: 2px;
+}
+
+/* ─── Micro-interaction: button press ───────────────────────────────────── */
+.btn:active:not(:disabled) {
+  transform: scale(0.97) translateY(0) !important;
+  transition-duration: 0.08s !important;
+}
+
+/* ─── Skeleton shimmer (dark-mode aware) ─────────────────────────────────── */
+.dark .skeleton,
+.dark [data-slot="skeleton"] {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ─── Thin scrollbar utility ─────────────────────────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ─── Slide-in animation for dropdowns / drawers ─────────────────────────── */
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-in-down { animation: slideInDown 0.18s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ─── Card interactive press state ───────────────────────────────────────── */
+.card-hover:active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: 0.08s;
+}
+
+/* ─── Table row hover — smoother with navy ink ───────────────────────────── */
+.data-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+/* ─── Dark mode: data table header ───────────────────────────────────────── */
+.dark .data-table thead th {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(200, 220, 255, 0.8);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark .data-table tbody td {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  color: rgba(180, 200, 230, 0.85);
+}
+.dark .data-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e8f0ff;
+}
+
+/* ─── Dark mode: input fields ────────────────────────────────────────────── */
+.dark .input {
+  background: var(--field-bg);
+  color: var(--field-fg);
+  border-color: var(--field-border);
+}
+.dark .input:focus {
+  border-color: var(--gold);
+  background: var(--field-bg-focus);
+}
+
+/* ─── Link with gold underline on hover ──────────────────────────────────── */
+.link-gold {
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.link-gold:hover { color: var(--gold-bright); }
+

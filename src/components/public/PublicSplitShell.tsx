@@ -90,6 +90,15 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!splashDone) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [splashDone]);
+
   return (
     <div style={{ height: "100vh", display: "flex", position: "relative", overflow: "hidden" }} className="bg-navy dark:bg-transparent">
 

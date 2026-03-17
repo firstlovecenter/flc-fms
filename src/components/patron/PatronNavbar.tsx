@@ -5,6 +5,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { logout } from "@/actions/auth.actions";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface PatronNavbarProps {
   initials: string;
@@ -13,18 +14,17 @@ interface PatronNavbarProps {
 
 const NAV = [
   { href: "/patron/dashboard", label: "Dashboard" },
-  { href: "/patron/book", label: "Book" },
-  { href: "/patron/bookings", label: "My Bookings" },
-  { href: "/patron/receipts", label: "Receipts" },
-  { href: "/patron/profile", label: "Profile" },
+  { href: "/patron/book",      label: "Book" },
+  { href: "/patron/bookings",  label: "My Bookings" },
+  { href: "/patron/receipts",  label: "Receipts" },
+  { href: "/patron/profile",   label: "Profile" },
 ];
 
 export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   async function handleLogout() {
@@ -34,239 +34,114 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
 
   return (
     <>
-      <nav
-        style={{
-          background: "var(--white)",
-          backdropFilter: "blur(16px) saturate(1.5)",
-          borderBottom: "1px solid var(--border)",
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 20px",
-            height: 60,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+      <nav className="sticky top-0 z-40 bg-white dark:bg-[rgba(10,17,29,0.88)] border-b border-[var(--border)] backdrop-blur-[16px] shadow-[var(--shadow-xs)]">
+        <div className="max-w-[1100px] mx-auto px-5 h-[60px] flex items-center justify-between">
+
           {/* Logo */}
-          <Link
-            href="/patron/dashboard"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              textDecoration: "none",
-            }}
-          >
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "var(--navy)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
+          <Link href="/patron/dashboard" className="flex items-center gap-2.5 no-underline group">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 group-hover:bg-[var(--navy-mid)]"
+              style={{ background: "var(--navy)" }}
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--gold)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "1rem",
-                fontWeight: 700,
-                color: "var(--navy)",
-              }}
-            >
+            <span className="font-bold text-[var(--navy)] leading-none" style={{ fontFamily: "var(--font-display)", fontSize: "1rem" }}>
               <span className="hidden sm:inline">First Love Center</span>
               <span className="sm:hidden">FLC</span>
             </span>
           </Link>
 
-          {/* Center nav — desktop only */}
-          <div className="hidden md:flex" style={{ gap: 4 }}>
-            {NAV.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: 100,
-                  fontSize: "0.82rem",
-                  fontWeight: pathname === href ? 600 : 500,
-                  color: pathname === href ? "var(--navy)" : "var(--slate)",
-                  background: pathname === href ? "var(--cream-dark)" : "transparent",
-                  textDecoration: "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                {label}
-              </Link>
-            ))}
+          {/* Center nav — desktop */}
+          <div className="hidden md:flex items-center gap-0.5">
+            {NAV.map(({ href, label }) => {
+              const isActive = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "relative px-3.5 py-1.5 rounded-full text-[0.82rem] transition-all duration-150 no-underline",
+                    isActive
+                      ? "font-semibold text-[var(--navy)] bg-[var(--cream-dark)]"
+                      : "font-medium text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)]"
+                  )}
+                >
+                  {label}
+                  {isActive && (
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--gold)]" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right side */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Right */}
+          <div className="flex items-center gap-2">
             {/* User + logout — desktop */}
-            <div className="hidden md:flex" style={{ alignItems: "center", gap: 8 }}>
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: "50%",
-                  background: "var(--navy)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  color: "var(--gold-bright)",
-                }}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.7rem] font-bold flex-shrink-0"
+                style={{ background: "var(--navy)", color: "var(--gold-bright)" }}
               >
                 {initials}
               </div>
-              <span
-                style={{
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  color: "var(--navy)",
-                }}
-              >
-                {name.split(" ")[0]}
-              </span>
+              <span className="text-[0.82rem] font-semibold text-[var(--navy)]">{name.split(" ")[0]}</span>
             </div>
-            <div className="hidden md:block" style={{ width: 1, height: 20, background: "var(--border)" }} />
+            <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
             <button
               onClick={handleLogout}
-              className="hidden md:flex"
-              style={{
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 12px",
-                borderRadius: 8,
-                fontSize: "0.8rem",
-                fontWeight: 500,
-                color: "var(--muted)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8rem] font-medium text-[var(--muted)] hover:text-[var(--slate)] hover:bg-[var(--cream-dark)] transition-colors border-0 bg-transparent cursor-pointer"
             >
-              <LogOut size={14} /> Sign Out
+              <LogOut size={13} /> Sign Out
             </button>
 
             {/* Hamburger — mobile */}
             <button
-              className="md:hidden"
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--navy)] cursor-pointer"
               onClick={() => setMobileOpen((o) => !o)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: "var(--cream-dark)",
-                border: "1px solid var(--border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "var(--navy)",
-              }}
               aria-label="Toggle menu"
             >
-              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              {mobileOpen ? <X size={17} /> : <Menu size={17} />}
             </button>
           </div>
         </div>
 
         {/* Mobile dropdown */}
         {mobileOpen && (
-          <div
-            className="md:hidden"
-            style={{
-              borderTop: "1px solid var(--border)",
-              padding: "12px 20px 16px",
-              background: "var(--white)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-            }}
-          >
-            {NAV.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  fontSize: "0.9rem",
-                  fontWeight: pathname === href ? 600 : 400,
-                  color: pathname === href ? "var(--navy)" : "var(--slate)",
-                  background: pathname === href ? "var(--cream-dark)" : "transparent",
-                  textDecoration: "none",
-                }}
-              >
-                {label}
-              </Link>
-            ))}
-            <div style={{ height: 1, background: "var(--border)", margin: "8px 0" }} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "var(--navy)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color: "var(--gold-bright)",
-                  }}
+          <div className="md:hidden border-t border-[var(--border)] px-5 pb-4 pt-3 bg-white dark:bg-[rgba(10,17,29,0.95)] flex flex-col gap-0.5 animate-fade-in">
+            {NAV.map(({ href, label }) => {
+              const isActive = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center px-3.5 py-2.5 rounded-lg text-[0.9rem] no-underline transition-colors",
+                    isActive
+                      ? "font-semibold text-[var(--navy)] bg-[var(--cream-dark)] border-l-2 border-l-[var(--gold)] pl-3"
+                      : "font-normal text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)]"
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+            <div className="h-px bg-[var(--border)] my-2" />
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[0.65rem] font-bold flex-shrink-0"
+                  style={{ background: "var(--navy)", color: "var(--gold-bright)" }}
                 >
                   {initials}
                 </div>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--navy)" }}>{name}</span>
+                <span className="text-[0.85rem] font-semibold text-[var(--navy)]">{name}</span>
               </div>
               <button
                 onClick={handleLogout}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  fontSize: "0.8rem",
-                  fontWeight: 500,
-                  color: "var(--muted)",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8rem] font-medium text-[var(--muted)] hover:text-[var(--slate)] bg-transparent border-0 cursor-pointer"
               >
-                <LogOut size={14} /> Sign Out
+                <LogOut size={13} /> Sign Out
               </button>
             </div>
           </div>

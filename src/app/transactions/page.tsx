@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Wrench } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { isTransactionLocked } from "@/lib/transaction-lock";
-import { formatCurrency, formatDate, statusBadgeClass } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { hasVicarPermission } from "@/lib/staff-permissions";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 import IncomeRowActions from "@/components/expenses/IncomeRowActions";
@@ -42,8 +43,9 @@ export default async function TransactionsPage({
     prisma.expense.findMany({
       where: expenseWhere,
       include: {
-        createdBy: { select: { name: true, role: true } },
+        createdBy:  { select: { name: true, role: true } },
         approvedBy: { select: { name: true } },
+        maintenanceRequest: { select: { id: true, title: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * take,
@@ -287,7 +289,7 @@ export default async function TransactionsPage({
                         </td>
                         <td className="py-2.5 px-4">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className={statusBadgeClass(e.status)}>{e.status}</span>
+                            <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                                 Receipt Missing
@@ -407,8 +409,21 @@ export default async function TransactionsPage({
                     {expenses.map((e) => (
                       <tr key={e.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
                         <td className="py-3 px-4">
-                          <p className="font-medium text-[var(--navy)]">{e.title}</p>
-                          <p className="text-xs text-[var(--muted)] line-clamp-1 mt-0.5">{e.narration}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-[var(--navy)]">{e.title}</p>
+                            {e.maintenanceRequest && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                                <Wrench size={9} /> Maintenance
+                              </span>
+                            )}
+                          </div>
+                          {e.maintenanceRequest ? (
+                            <Link href={`/maintenance/${e.maintenanceRequest.id}`} className="text-xs text-[var(--gold)] hover:underline mt-0.5 block">
+                              ↩ {e.maintenanceRequest.title}
+                            </Link>
+                          ) : (
+                            <p className="text-xs text-[var(--muted)] line-clamp-1 mt-0.5">{e.narration}</p>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-[var(--slate)]">{e.category}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">
@@ -419,7 +434,7 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className={statusBadgeClass(e.status)}>{e.status}</span>
+                            <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                                 Receipt Missing

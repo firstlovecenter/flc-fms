@@ -31,7 +31,7 @@ interface MaintenanceRequestCardProps {
     createdAt: Date;
     estimatedCost: number | null;
     actualCost: number | null;
-    facility: { name: string };
+    facility: { name: string } | null;
     requestedBy: { name: string };
     assignedTo: { name: string } | null;
   };
@@ -103,7 +103,7 @@ export default function MaintenanceRequestCard({
           </div>
           <p style={{ fontSize: "0.9rem", color: "var(--slate)", marginBottom: "12px" }}>{r.description}</p>
           <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", fontSize: "0.8rem", color: "var(--slate)" }}>
-            <span>📍 {r.facility.name}</span>
+            {r.facility && <span>📍 {r.facility.name}</span>}
             <span>👤 {r.requestedBy.name}</span>
             {r.assignedTo && <span>🔧 Assigned to {r.assignedTo.name}</span>}
             <span>📅 {formatDate(r.createdAt)}</span>
