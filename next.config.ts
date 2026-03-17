@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const productionSecurityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -60,4 +61,21 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Suppress Sentry CLI output in CI / local dev
+  silent: !process.env.CI,
+
+  // Automatically instrument Server Actions, API routes, and middleware
+  autoInstrumentServerFunctions: true,
+
+  // Upload source maps only in CI/production to avoid leaking source in dev
+  disableLogger: true,
+
+  // Tunnel Sentry requests through your own domain to avoid ad-blockers
+  tunnelRoute: "/monitoring",
+
+  // Only upload source maps when SENTRY_AUTH_TOKEN is present
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+});

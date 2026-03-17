@@ -1,3 +1,4 @@
+import "server-only";
 import crypto from "crypto";
 
 const ALG = "aes-256-gcm";

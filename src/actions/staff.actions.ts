@@ -8,7 +8,8 @@ import { auditLog } from "@/lib/audit";
 import type { VicarPermissions } from "@/lib/staff-permissions";
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
-import type { Role } from "@prisma/client";
+import { type Role, Prisma } from "@prisma/client";
+import { DEFAULT_VICAR_PERMISSIONS } from "@/lib/staff-permissions";
 
 export async function getStaffMembers() {
   const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
@@ -197,7 +198,14 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
 
   await prisma.user.update({
     where: { id: userId },
-    data: { role: nextRole },
+    data: {
+      role: nextRole,
+      // When promoting to Vicar, always seed explicit default permissions so
+      // the DB state is auditable and queryable without runtime defaulting.
+      ...(nextRole === "VICAR" ? { permissions: { ...DEFAULT_VICAR_PERMISSIONS } } : {}),
+      // When demoting from Vicar, clear the permissions JSON.
+      ...(target.role === "VICAR" && nextRole !== "VICAR" ? { permissions: Prisma.JsonNull } : {}),
+    },
   });
 
   auditLog({

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getSession } from "@/lib/auth/session";
 import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { rateLimit } from "@/lib/redis";
+import { headers } from "next/headers";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
@@ -68,13 +70,26 @@ async function checkConflict(facilityId: string, startTime: Date, endTime: Date,
   return prisma.booking.findFirst({
     where: {
       facilityId,
-      deletedAt: null,
+      // deletedAt handled by Prisma middleware — no need to specify here
       status: { in: ["PENDING", "APPROVED"] },
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
       AND: [
         { startTime: { lt: endTime } },
         { endTime:   { gt: startTime } },
       ]}});
+}
+
+/**
+ * Acquires a PostgreSQL advisory lock scoped to a facility for the duration
+ * of the current transaction. Prevents concurrent bookings racing past the
+ * conflict check on the same facility.
+ */
+async function acquireFacilityLock(tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0], facilityId: string) {
+  // Convert facilityId string into a deterministic 64-bit integer for pg_advisory_xact_lock.
+  // We fold the first 8 bytes of the CUID/UUID into an int8 via BigInt to avoid collisions.
+  const hash = facilityId.split("").reduce((acc, ch) => (acc * 31n + BigInt(ch.charCodeAt(0))) & 0xFFFFFFFFFFFFFFFFn, 0n);
+  const lockId = BigInt.asIntN(64, hash);
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockId})`;
 }
 
 function toTimeString(date: Date) {
@@ -153,6 +168,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   const session  = await requirePermission("canCreateBookings");
   const validated = BookingSchema.parse(data);
 
+  // Rate limit: 20 booking creations per staff member per 10 minutes
+  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const { allowed: rlAllowed } = await rateLimit(`booking_create:${session.sub}:${ip}`, 20, 600);
+  if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
+
   // Mondays are restricted for non-manager roles
   if (validated.startTime.getDay() === 1 && !canBookMondays(session.role)) {
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
@@ -192,9 +212,6 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     };
   }
 
-  const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-  if (conflict) return { error: "Facility already has a booking for that time slot." };
-
   const amountResult = await computeConfiguredBookingAmount(
     validated.facilityId,
     validated.category,
@@ -205,22 +222,32 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
 
-  const booking = await prisma.booking.create({
-    data: {
-      facilityId:  validated.facilityId,
-      userId:      session.sub,
-      category:    validated.category,
-      title:       validated.title,
-      description: validated.description,
-      startTime:   validated.startTime,
-      endTime:     validated.endTime,
-      notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
-      totalAmount,
-      status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
-      paymentStatus: "UNPAID",
-    },
-    include: { facility: true, user: true },
+  // Wrap conflict check + booking creation in a transaction with an advisory lock
+  // to prevent concurrent requests from racing past the conflict check.
+  const booking = await prisma.$transaction(async (tx) => {
+    await acquireFacilityLock(tx, validated.facilityId);
+    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
+    if (conflict) return null;
+
+    return tx.booking.create({
+      data: {
+        facilityId:  validated.facilityId,
+        userId:      session.sub,
+        category:    validated.category,
+        title:       validated.title,
+        description: validated.description,
+        startTime:   validated.startTime,
+        endTime:     validated.endTime,
+        notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
+        totalAmount,
+        status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
+        paymentStatus: "UNPAID",
+      },
+      include: { facility: true, user: true },
+    });
   });
+
+  if (!booking) return { error: "Facility already has a booking for that time slot." };
 
   if (booking.user?.phone) {
     await notifyBookingConfirmation({
@@ -242,39 +269,26 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
-  auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
-    if (booking.user?.email) {
-      await sendBookingConfirmationEmail({
-        to:            booking.user.email,
-        name:          booking.user.name,
-        bookingTitle:  booking.title,
-        facilityName:  booking.facility?.name ?? "N/A",
-        startTime:     booking.startTime,
-        endTime:       booking.endTime,
-        totalAmount:   Number(booking.totalAmount),
-      });
-    }
-
-    // Alert FMs for pending bookings (FM self-bookings are auto-approved, no alert needed)
-    if (booking.status === "PENDING") {
-      const fms = await prisma.user.findMany({
-        where: { role: "FACILITY_MANAGER", isActive: true },
-        select: { phone: true },
-      });
-      for (const fm of fms) {
-        if (fm.phone) {
-          await notifyFMBookingPending({
-            phone:        fm.phone,
-            bookedBy:     booking.user?.name ?? "Staff",
-            bookingTitle: booking.title,
-            facilityName: booking.facility?.name ?? "N/A",
-            startTime:    booking.startTime,
-          });
-        }
+  // Alert FMs for pending bookings (FM self-bookings are auto-approved, no alert needed)
+  if (booking.status === "PENDING") {
+    const fms = await prisma.user.findMany({
+      where: { role: "FACILITY_MANAGER", isActive: true },
+      select: { phone: true },
+    });
+    for (const fm of fms) {
+      if (fm.phone) {
+        await notifyFMBookingPending({
+          phone:        fm.phone,
+          bookedBy:     booking.user?.name ?? "Staff",
+          bookingTitle: booking.title,
+          facilityName: booking.facility?.name ?? "N/A",
+          startTime:    booking.startTime,
+        });
       }
     }
+  }
 
-    auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
+  auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
   revalidatePath("/bookings");
   return { success: true, booking };
 }
@@ -284,6 +298,20 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
 export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   const session  = await requirePatron();
   const validated = BookingSchema.parse(data);
+
+  // Rate limit: 10 booking creations per patron per 10 minutes
+  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const { allowed: rlAllowed } = await rateLimit(`booking_create:${session.sub}:${ip}`, 10, 600);
+  if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
+
+  // Require email verification before allowing bookings
+  const patron = await prisma.patron.findUnique({
+    where: { id: session.sub },
+    select: { isVerified: true },
+  });
+  if (!patron?.isVerified) {
+    return { error: "Please verify your email address before making a booking." };
+  }
 
   // Mondays are office off-days (Sabbath) — no bookings allowed
   if (validated.startTime.getDay() === 1) {
@@ -324,9 +352,6 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     };
   }
 
-  const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-  if (conflict) return { error: "Facility already has a booking for that time slot." };
-
   const amountResult = await computeConfiguredBookingAmount(
     validated.facilityId,
     validated.category,
@@ -337,22 +362,31 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   if ("error" in amountResult) return { error: amountResult.error };
   const totalAmount = amountResult.totalAmount;
 
-  const booking = await prisma.booking.create({
-    data: {
-      facilityId:  validated.facilityId,
-      patronId:    session.sub,
-      category:    validated.category,
-      title:       validated.title,
-      description: validated.description,
-      startTime:   validated.startTime,
-      endTime:     validated.endTime,
-      notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
-      totalAmount,
-      status:       "PENDING",
-      paymentStatus: "UNPAID",
-    },
-    include: { facility: true, patron: true },
+  // Wrap conflict check + booking creation in a transaction with an advisory lock
+  const booking = await prisma.$transaction(async (tx) => {
+    await acquireFacilityLock(tx, validated.facilityId);
+    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
+    if (conflict) return null;
+
+    return tx.booking.create({
+      data: {
+        facilityId:  validated.facilityId,
+        patronId:    session.sub,
+        category:    validated.category,
+        title:       validated.title,
+        description: validated.description,
+        startTime:   validated.startTime,
+        endTime:     validated.endTime,
+        notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
+        totalAmount,
+        status:       "PENDING",
+        paymentStatus: "UNPAID",
+      },
+      include: { facility: true, patron: true },
+    });
   });
+
+  if (!booking) return { error: "Facility already has a booking for that time slot." };
 
   if (booking.patron?.phone) {
     await notifyBookingConfirmation({
@@ -370,39 +404,28 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
       facilityName:  booking.facility?.name ?? "N/A",
       startTime:     booking.startTime,
       endTime:       booking.endTime,
-      totalAmount:   Number(booking.totalAmount)});
+      totalAmount:   Number(booking.totalAmount),
+    });
+  }
+
+  // Alert all FMs about the new pending patron booking
+  const patronFMs = await prisma.user.findMany({
+    where: { role: "FACILITY_MANAGER", isActive: true },
+    select: { phone: true },
+  });
+  for (const fm of patronFMs) {
+    if (fm.phone) {
+      await notifyFMBookingPending({
+        phone:        fm.phone,
+        bookedBy:     booking.patron?.name ?? "Patron",
+        bookingTitle: booking.title,
+        facilityName: booking.facility?.name ?? "N/A",
+        startTime:    booking.startTime,
+      });
+    }
   }
 
   auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
-    if (booking.patron?.email) {
-      await sendBookingConfirmationEmail({
-        to:            booking.patron.email,
-        name:          booking.patron.name,
-        bookingTitle:  booking.title,
-        facilityName:  booking.facility?.name ?? "N/A",
-        startTime:     booking.startTime,
-        endTime:       booking.endTime,
-        totalAmount:   Number(booking.totalAmount)});
-    }
-
-    // Alert all FMs about the new pending patron booking
-    const patronFMs = await prisma.user.findMany({
-      where: { role: "FACILITY_MANAGER", isActive: true },
-      select: { phone: true },
-    });
-    for (const fm of patronFMs) {
-      if (fm.phone) {
-        await notifyFMBookingPending({
-          phone:        fm.phone,
-          bookedBy:     booking.patron?.name ?? "Patron",
-          bookingTitle: booking.title,
-          facilityName: booking.facility?.name ?? "N/A",
-          startTime:    booking.startTime,
-        });
-      }
-    }
-
-    auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
   revalidatePath("/bookings");
   return { success: true, booking };
 }
@@ -428,6 +451,11 @@ const GuestBookingSchema = z.object({
 
 export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema>) {
   const validated = GuestBookingSchema.parse(data);
+
+  // Rate limit: 5 guest bookings per IP per 10 minutes
+  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const { allowed: rlAllowed } = await rateLimit(`guest_booking:${ip}`, 5, 600);
+  if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 
   // Mondays are office off-days (Sabbath) — no bookings allowed
   if (validated.startTime.getDay() === 1) {
@@ -465,9 +493,6 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     };
   }
 
-  const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-  if (conflict) return { error: "Facility already has a booking for that time slot." };
-
   const amountResult = await computeConfiguredBookingAmount(
     validated.facilityId,
     validated.category,
@@ -504,22 +529,31 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;
   const acMeta = validated.useAirConditioner ? "AC_REQUESTED" : undefined;
 
-  const booking = await prisma.booking.create({
-    data: {
-      facilityId: validated.facilityId,
-      patronId: patron.id,
-      category: validated.category,
-      title: validated.title,
-      description: validated.description,
-      startTime: validated.startTime,
-      endTime: validated.endTime,
-      notes: [validated.notes, guestMeta, acMeta].filter(Boolean).join("\n"),
-      totalAmount,
-      status: "PENDING",
-      paymentStatus: "UNPAID",
-    },
-    include: { facility: true },
+  // Wrap conflict check + booking creation in a transaction with an advisory lock
+  const booking = await prisma.$transaction(async (tx) => {
+    await acquireFacilityLock(tx, validated.facilityId);
+    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
+    if (conflict) return null;
+
+    return tx.booking.create({
+      data: {
+        facilityId: validated.facilityId,
+        patronId: patron!.id,
+        category: validated.category,
+        title: validated.title,
+        description: validated.description,
+        startTime: validated.startTime,
+        endTime: validated.endTime,
+        notes: [validated.notes, guestMeta, acMeta].filter(Boolean).join("\n"),
+        totalAmount,
+        status: "PENDING",
+        paymentStatus: "UNPAID",
+      },
+      include: { facility: true },
+    });
   });
+
+  if (!booking) return { error: "Facility already has a booking for that time slot." };
 
   await notifyBookingConfirmation({
     phone:        validated.guestPhone,
