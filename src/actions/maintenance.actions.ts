@@ -169,12 +169,26 @@ export async function updateMaintenanceRequest(
     },
   });
 
-  // Unlock facility hard-lock when resolved or closed
-  if (["RESOLVED", "CLOSED"].includes(validated.status) && request.facility) {
-    await prisma.facility.update({
-      where: { id: request.facility.id },
-      data:  { underMaintenance: false },
+  // Unlock facility hard-lock when an emergency (unscheduled) maintenance request
+  // is resolved or closed — but only if no other emergency maintenance is still open.
+  // Scheduled maintenance requests do not set underMaintenance, so they must not
+  // clear a lock that was set by an emergency request or a manual toggle.
+  const isEmergencyRequest = !request.scheduledStart && !request.scheduledEnd;
+  if (["RESOLVED", "CLOSED"].includes(validated.status) && request.facility && isEmergencyRequest) {
+    const otherActiveEmergencies = await prisma.maintenanceRequest.count({
+      where: {
+        facilityId:     request.facility.id,
+        id:             { not: requestId },
+        status:         { in: ["OPEN", "IN_PROGRESS"] },
+        scheduledStart: null,
+      },
     });
+    if (otherActiveEmergencies === 0) {
+      await prisma.facility.update({
+        where: { id: request.facility.id },
+        data:  { underMaintenance: false },
+      });
+    }
   }
 
   // Notify assigned staff

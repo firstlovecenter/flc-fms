@@ -67,6 +67,7 @@ model Facility {
   availableTo         String               @default("22:00")
   acUsageFee          Decimal              @default(0) @db.Decimal(10, 2)
   availableDays       Int[]
+  deletedAt           DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   maintenanceEndsAt   DateTime?

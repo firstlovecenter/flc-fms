@@ -401,6 +401,7 @@ export async function getBookableFacilitiesByCategoryDate(
     const facilities = await prisma.facility.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         underMaintenance: false,
         availableDays: { has: dayOfWeek },
         pricing: {
