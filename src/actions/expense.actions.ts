@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
@@ -84,7 +85,7 @@ export async function approveExpense(expenseId: string) {
   // Run the balance check + approval inside a transaction protected by an advisory lock.
   // pg_advisory_xact_lock releases when the transaction commits, so by the time the next
   // concurrent approval acquires the lock it will see the updated approved-expense total.
-  type TxResult = { updated: { createdBy: { email: string; name: string; phone: string | null }; title: string; amount: import("@prisma/client").Decimal } } | { error: string };
+  type TxResult = { updated: { createdBy: { email: string; name: string; phone: string | null }; title: string; amount: Prisma.Decimal } } | { error: string };
 
   const txResult: TxResult = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;

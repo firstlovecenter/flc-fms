@@ -251,7 +251,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; user: { name: string; phone: string | null; email: string } | null } }
     | { error: string };
 
-  const txResult: TxResult = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
     // Recompute price inside the lock so it reflects any pricing changes
@@ -264,7 +264,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error };
+    if ("error" in amountResult) return { error: amountResult.error! };
 
     // Check capacity: count overlapping bookings and compare to slot's maxBookings
     const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
@@ -406,7 +406,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; patron: { name: string; phone: string | null; email: string } | null } }
     | { error: string };
 
-  const txResult: TxResult = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
     const amountResult = await computeConfiguredBookingAmount(
@@ -417,7 +417,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error };
+    if ("error" in amountResult) return { error: amountResult.error! };
 
     const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
     const maxAllowed = slot?.maxBookings ?? 1;
@@ -585,7 +585,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null } }
     | { error: string };
 
-  const txResult: TxResult = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
     const amountResult = await computeConfiguredBookingAmount(
@@ -596,7 +596,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error };
+    if ("error" in amountResult) return { error: amountResult.error! };
 
     const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
     const maxAllowed = slot?.maxBookings ?? 1;
@@ -844,10 +844,10 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
 
   // Wrap conflict check + price computation + update in a transaction with advisory lock
   type TxResult =
-    | { booking: Awaited<ReturnType<typeof prisma.booking.update>> & { facility: { name: true } | null } }
+    | { booking: Awaited<ReturnType<typeof prisma.booking.update>> & { facility: { name: string } | null } }
     | { error: string };
 
-  const txResult: TxResult = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
     // Check capacity respecting maxBookings
@@ -867,7 +867,7 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error };
+    if ("error" in amountResult) return { error: amountResult.error! };
 
     const booking = await tx.booking.update({
       where: { id: bookingId },
