@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const STATIC_CACHE  = `cfms-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `cfms-runtime-${CACHE_VERSION}`;
 const DATA_CACHE    = `cfms-data-${CACHE_VERSION}`;
@@ -148,7 +148,7 @@ self.addEventListener("fetch", (event) => {
       caches.open(RUNTIME_CACHE).then((cache) =>
         cache.match(request).then((cached) => {
           const fetchPromise = fetch(request).then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.status === 200) cache.put(request, response.clone());
             return response;
           }).catch(() => cached);
           return cached || fetchPromise;
@@ -163,7 +163,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetchWithTimeout(request, 5000)
         .then((response) => {
-          if (response.ok) {
+          if (response.status === 200) {
             const clone = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone));
           }
@@ -182,7 +182,7 @@ self.addEventListener("fetch", (event) => {
       cache.match(request).then((cached) => {
         const fetchPromise = fetch(request)
           .then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.status === 200) cache.put(request, response.clone());
             return response;
           })
           .catch(() => cached);
