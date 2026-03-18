@@ -118,7 +118,7 @@ model FacilityTimeSlot {
   facility             Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   pricing              FacilityPricing @relation(fields: [facilityId, category], references: [facilityId, category], onDelete: Cascade)
 
-  @@index([facilityId, dayOfWeek, isActive])
+  @@index([facilityId, category, dayOfWeek, isActive])
   @@map("facility_time_slots")
 }
 
@@ -139,6 +139,7 @@ model Booking {
   resolvedUnitPrice Decimal         @default(0) @db.Decimal(10, 2)
   resolvedPricingSource String      @default("CATEGORY_BASE")
   notes           String?
+  acRequested     Boolean           @default(false)
   rejectionReason String?
   deletedAt       DateTime?
   createdAt       DateTime          @default(now())
@@ -155,6 +156,7 @@ model Booking {
 
   @@index([facilityId, startTime, endTime])
   @@index([status])
+  @@index([category])
   @@map("bookings")
 }
 

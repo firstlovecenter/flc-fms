@@ -66,37 +66,59 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   return { success: true, expense };
 }
 
-export async function approveExpense(expenseId: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");
+// Advisory lock key for financial operations. Serialises concurrent expense approvals
+// so the balance check and the approval update are always atomic with respect to each other.
+const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
-  // Check account balance before approving
-  const expense = await prisma.expense.findFirstOrThrow({
+export async function approveExpense(expenseId: string) {
+  const session = await requireStaff("FACILITY_MANAGER");
+
+  // Quick pre-flight: verify existence + lock window before entering the serialised path
+  const preCheck = await prisma.expense.findFirst({
     where: { id: expenseId, status: "PENDING", deletedAt: null },
+    select: { createdAt: true, amount: true },
+  });
+  if (!preCheck) return { error: "Expense not found or is no longer pending." };
+  if (isTransactionLocked(preCheck.createdAt)) return { error: transactionLockMessage() };
+
+  // Run the balance check + approval inside a transaction protected by an advisory lock.
+  // pg_advisory_xact_lock releases when the transaction commits, so by the time the next
+  // concurrent approval acquires the lock it will see the updated approved-expense total.
+  type TxResult = { updated: { createdBy: { email: string; name: string; phone: string | null }; title: string; amount: import("@prisma/client").Decimal } } | { error: string };
+
+  const txResult: TxResult = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
+
+    // Re-verify inside the lock — another request may have approved it while we waited
+    const current = await tx.expense.findFirst({
+      where: { id: expenseId, status: "PENDING", deletedAt: null },
+      select: { amount: true },
+    });
+    if (!current) return { error: "This expense has already been processed." };
+
+    // Compute available balance inside the lock using committed data
+    const [incomeTotals, totalApprovedExpenses] = await Promise.all([
+      getTotalIncomeIncludingBookingRevenue(),
+      tx.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
+    ]);
+
+    const balance = incomeTotals.totalIncome - Number(totalApprovedExpenses._sum.amount ?? 0);
+    if (Number(current.amount) > balance) {
+      return {
+        error: `Insufficient balance. Available: GH₵${balance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`,
+      };
+    }
+
+    const updated = await tx.expense.update({
+      where: { id: expenseId },
+      data: { status: "APPROVED", approvedById: session.sub, approvedAt: new Date() },
+      include: { createdBy: true },
+    });
+    return { updated };
   });
 
-  if (isTransactionLocked(expense.createdAt)) {
-    return { error: transactionLockMessage() };
-  }
-
-  const [incomeTotals, totalApprovedExpenses] = await Promise.all([
-    getTotalIncomeIncludingBookingRevenue(),
-    prisma.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
-  ]);
-
-  const balance =
-    incomeTotals.totalIncome -
-    Number(totalApprovedExpenses._sum.amount ?? 0);
-
-  if (Number(expense.amount) > balance) {
-    return {
-      error: `Insufficient balance. Available: GH₵${balance.toFixed(2)}, Expense: GH₵${Number(expense.amount).toFixed(2)}`,
-    };
-  }
-
-  const updated = await prisma.expense.update({
-    where: { id: expenseId },
-    data: { status: "APPROVED", approvedById: session.sub, approvedAt: new Date() },
-    include: { createdBy: true }});
+  if ("error" in txResult) return { error: txResult.error };
+  const { updated } = txResult;
 
   if (updated.createdBy.email) {
     await sendExpenseNotificationEmail({ to: updated.createdBy.email, name: updated.createdBy.name,

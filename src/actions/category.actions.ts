@@ -28,6 +28,10 @@ export async function createBookingCategory(data: z.infer<typeof CategorySchema>
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
 
+  if (!slug) {
+    return { error: "Category name must contain at least one letter or digit." };
+  }
+
   const existing = await prisma.bookingCategory.findFirst({
     where: { OR: [{ name: validated.name }, { slug }] },
   });
@@ -35,13 +39,23 @@ export async function createBookingCategory(data: z.infer<typeof CategorySchema>
 
   const maxOrder = await prisma.bookingCategory.aggregate({ _max: { sortOrder: true } });
 
-  const category = await prisma.bookingCategory.create({
-    data: {
-      name: validated.name,
-      slug,
-      sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
-    },
-  });
+  let category;
+  try {
+    category = await prisma.bookingCategory.create({
+      data: {
+        name: validated.name,
+        slug,
+        sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
+      },
+    });
+  } catch (e: unknown) {
+    // Handle DB unique constraint violation from a concurrent request
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("Unique constraint")) {
+      return { error: "A category with that name already exists." };
+    }
+    throw e;
+  }
 
   auditLog({ userId: session.sub, action: "CREATE_BOOKING_CATEGORY", entity: "BookingCategory", entityId: category.id, after: category });
   revalidatePath("/facilities");
@@ -53,6 +67,10 @@ export async function updateBookingCategory(id: string, data: z.infer<typeof Cat
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
+
+  if (!slug) {
+    return { error: "Category name must contain at least one letter or digit." };
+  }
 
   const conflict = await prisma.bookingCategory.findFirst({
     where: { OR: [{ name: validated.name }, { slug }], NOT: { id } },
@@ -90,15 +108,16 @@ export async function deleteBookingCategory(id: string) {
   const category = await prisma.bookingCategory.findUnique({ where: { id } });
   if (!category) return { error: "Category not found." };
 
-  const [pricingCount, bookingCount] = await Promise.all([
+  const [pricingCount, bookingCount, timeSlotCount] = await Promise.all([
     prisma.facilityPricing.count({ where: { category: category.slug } }),
     prisma.booking.count({ where: { category: category.slug, deletedAt: null } }),
+    prisma.facilityTimeSlot.count({ where: { category: category.slug, isActive: true } }),
   ]);
 
-  if (pricingCount > 0 || bookingCount > 0) {
+  if (pricingCount > 0 || bookingCount > 0 || timeSlotCount > 0) {
     return {
       error:
-        "This category is in use by facility pricing or bookings. Deactivate it instead of deleting.",
+        "This category is in use by facility pricing, time slots, or bookings. Deactivate it instead of deleting.",
     };
   }
 

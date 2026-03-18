@@ -215,6 +215,24 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
     return { error: "End time must be after start time" };
   }
 
+  // Prevent overlapping time slots for the same facility/category/day
+  const overlappingSlot = await prisma.facilityTimeSlot.findFirst({
+    where: {
+      facilityId,
+      dayOfWeek: validated.dayOfWeek,
+      category: validated.category,
+      isActive: true,
+      startTime: { lt: validated.endTime },
+      endTime: { gt: validated.startTime },
+    },
+    select: { label: true, startTime: true, endTime: true },
+  });
+  if (overlappingSlot) {
+    return {
+      error: `This slot overlaps with an existing slot "${overlappingSlot.label}" (${overlappingSlot.startTime}–${overlappingSlot.endTime}). Adjust the times or deactivate the conflicting slot first.`,
+    };
+  }
+
   const mappedCategory = await prisma.facilityPricing.findFirst({
     where: {
       facilityId,
