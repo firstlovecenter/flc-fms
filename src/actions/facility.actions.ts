@@ -123,10 +123,10 @@ export async function updateFacility(id: string, data: Partial<z.input<typeof Fa
 }
 
 export async function deleteFacility(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePermission("canManageFacilities");
   await prisma.facility.update({
     where: { id },
-    data: { isActive: false }
+    data: { isActive: false, deletedAt: new Date() },
   });
 
   auditLog({ userId: session.sub, action: "DEACTIVATE_FACILITY", entity: "Facility", entityId: id });
@@ -176,7 +176,9 @@ export async function updateFacilitySortOrder(facilityId: string, sortOrder: num
 
 export async function getFacilities(includeInactive = false) {
   return prisma.facility.findMany({
-    where: includeInactive ? {} : { isActive: true },
+    where: includeInactive
+      ? { deletedAt: null }
+      : { isActive: true, deletedAt: null },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 }
@@ -213,6 +215,24 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
 
   if (validated.startTime >= validated.endTime) {
     return { error: "End time must be after start time" };
+  }
+
+  // Prevent overlapping time slots for the same facility/category/day
+  const overlappingSlot = await prisma.facilityTimeSlot.findFirst({
+    where: {
+      facilityId,
+      dayOfWeek: validated.dayOfWeek,
+      category: validated.category,
+      isActive: true,
+      startTime: { lt: validated.endTime },
+      endTime: { gt: validated.startTime },
+    },
+    select: { label: true, startTime: true, endTime: true },
+  });
+  if (overlappingSlot) {
+    return {
+      error: `This slot overlaps with an existing slot "${overlappingSlot.label}" (${overlappingSlot.startTime}–${overlappingSlot.endTime}). Adjust the times or deactivate the conflicting slot first.`,
+    };
   }
 
   const mappedCategory = await prisma.facilityPricing.findFirst({

@@ -17,10 +17,6 @@ interface TimeSlotAvailability {
 
 const DEFAULT_LEAD_TIME_HOURS = 168; // 7 days for week-ahead booking window
 
-function isWeekday(dayOfWeek: number) {
-  return dayOfWeek >= 1 && dayOfWeek <= 5;
-}
-
 function addHours(date: Date, hours: number) {
   return new Date(date.getTime() + hours * 3_600_000);
 }
@@ -210,9 +206,10 @@ export async function getFacilityAvailability(
         const blockedByLeadTime = slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours);
         const isAvailable = currentBookings < slot.maxBookings && !blockedByLeadTime;
         const basePrice = categoryPricing2 ? Number(categoryPricing2.price) : 0;
+        // Zero out price only if explicitly configured: slot.isFree or the day is in freeDays.
+        // Weekdays are NOT automatically free — pricing is determined solely by slot/category config.
         const isFreeByDay = categoryPricing2 ? categoryPricing2.freeDays.includes(dayOfWeek) : false;
-        const isFreeByWeekday = isWeekday(dayOfWeek);
-        const effectivePricePerHour = slot.isFree || isFreeByDay || isFreeByWeekday
+        const effectivePricePerHour = slot.isFree || isFreeByDay
           ? 0
           : slot.pricePerHourOverride !== null
           ? Number(slot.pricePerHourOverride)
@@ -404,6 +401,7 @@ export async function getBookableFacilitiesByCategoryDate(
     const facilities = await prisma.facility.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         underMaintenance: false,
         availableDays: { has: dayOfWeek },
         pricing: {
@@ -619,8 +617,9 @@ export async function estimateFacilityBookingAmount(
       };
     }
 
-    const weekdayFree = isWeekday(dayOfWeek);
-    if (slot?.isFree || pricing.freeDays.includes(dayOfWeek) || weekdayFree) {
+    // Zero out price only if explicitly configured: slot.isFree or day is in freeDays.
+    // Weekdays are NOT automatically free.
+    if (slot?.isFree || pricing.freeDays.includes(dayOfWeek)) {
       const acFee = useAirConditioner ? Number(facility.acUsageFee ?? 0) : 0;
       return {
         success: true,

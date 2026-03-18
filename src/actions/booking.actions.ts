@@ -14,6 +14,9 @@ import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
+// Prisma interactive-transaction client type
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 const BookingSchema = z.object({
   facilityId:  z.string().min(1, "Facility is required"),
   category:    z.string().min(1, "Category is required"),
@@ -66,25 +69,12 @@ function getMissingFacilityTerms(
   return missing;
 }
 
-async function checkConflict(facilityId: string, startTime: Date, endTime: Date, excludeId?: string) {
-  return prisma.booking.findFirst({
-    where: {
-      facilityId,
-      // deletedAt handled by Prisma middleware — no need to specify here
-      status: { in: ["PENDING", "APPROVED"] },
-      ...(excludeId ? { NOT: { id: excludeId } } : {}),
-      AND: [
-        { startTime: { lt: endTime } },
-        { endTime:   { gt: startTime } },
-      ]}});
-}
-
 /**
  * Acquires a PostgreSQL advisory lock scoped to a facility for the duration
  * of the current transaction. Prevents concurrent bookings racing past the
  * conflict check on the same facility.
  */
-async function acquireFacilityLock(tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0], facilityId: string) {
+async function acquireFacilityLock(tx: Tx, facilityId: string) {
   // Convert facilityId string into a deterministic 64-bit integer for pg_advisory_xact_lock.
   // We fold the first 8 bytes of the CUID/UUID into an int8 via BigInt to avoid collisions.
   const hash = facilityId.split("").reduce((acc, ch) => (acc * 31n + BigInt(ch.charCodeAt(0))) & 0xFFFFFFFFFFFFFFFFn, 0n);
@@ -97,6 +87,7 @@ function toTimeString(date: Date) {
 }
 
 async function findApplicableTimeSlot(
+  db: Tx | typeof prisma,
   facilityId: string,
   category: string,
   startTime: Date,
@@ -106,7 +97,7 @@ async function findApplicableTimeSlot(
   const start = toTimeString(startTime);
   const end = toTimeString(endTime);
 
-  return prisma.facilityTimeSlot.findFirst({
+  return db.facilityTimeSlot.findFirst({
     where: {
       facilityId,
       dayOfWeek,
@@ -119,7 +110,19 @@ async function findApplicableTimeSlot(
   });
 }
 
+/**
+ * Computes the booking amount for a facility + category + time range.
+ * Accepts either the global prisma client or a transaction client so it can
+ * be called both inside and outside of a transaction.
+ *
+ * Pricing resolution order:
+ *  1. slot.isFree → $0 base (+ optional AC fee)
+ *  2. slot.pricePerHourOverride → use override rate
+ *  3. FacilityPricing.price → use category base rate
+ *  4. FacilityPricing.freeDays → zero out if booking day is in freeDays
+ */
 async function computeConfiguredBookingAmount(
+  db: Tx | typeof prisma,
   facilityId: string,
   category: string,
   startTime: Date,
@@ -127,39 +130,69 @@ async function computeConfiguredBookingAmount(
   useAirConditioner = false,
 ) {
   const [pricing, facility, activeCategory] = await Promise.all([
-    prisma.facilityPricing.findFirst({
+    db.facilityPricing.findFirst({
       where: {
         facilityId,
         category,
         isActive: true,
       },
     }),
-    prisma.facility.findUnique({ where: { id: facilityId }, select: { acUsageFee: true } }),
-    prisma.bookingCategory.findFirst({ where: { slug: category, isActive: true }, select: { id: true } }),
+    db.facility.findUnique({ where: { id: facilityId }, select: { acUsageFee: true } }),
+    db.bookingCategory.findFirst({ where: { slug: category, isActive: true }, select: { id: true } }),
   ]);
 
   if (!activeCategory) return { error: "This booking category is no longer available." as const };
-
   if (!pricing) return { error: "No pricing configured for this booking category." as const };
 
-  const slot = await findApplicableTimeSlot(facilityId, category, startTime, endTime);
+  const slot = await findApplicableTimeSlot(db, facilityId, category, startTime, endTime);
   if (!slot) return { error: "No category-specific slot mapping found for the selected date/time." as const };
-  if (slot?.isFree) {
-    const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
-    return { totalAmount: acFee };
+
+  const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
+
+  if (slot.isFree) {
+    return { totalAmount: acFee, unitPrice: 0, pricingSource: "SLOT_FREE" as const };
   }
 
+  const day = startTime.getDay();
   const unitPrice =
-    slot?.pricePerHourOverride != null
+    slot.pricePerHourOverride != null
       ? Number(slot.pricePerHourOverride)
       : Number(pricing.price);
-  const day = startTime.getDay();
-  const weekdayFree = day >= 1 && day <= 5;
-  const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
-  const baseAmount = pricing.freeDays.includes(day) || weekdayFree ? 0 : unitPrice;
-  const totalAmount = baseAmount + acFee;
 
-  return { totalAmount };
+  // Zero out base amount only for explicitly configured free days (per-category setting).
+  // NOTE: Weekdays are NOT automatically free — pricing must be configured via freeDays
+  // or a slot-level isFree/pricePerHourOverride.
+  const baseAmount = pricing.freeDays.includes(day) ? 0 : unitPrice;
+  const totalAmount = baseAmount + acFee;
+  const pricingSource = slot.pricePerHourOverride != null ? "SLOT_OVERRIDE" as const : "CATEGORY_BASE" as const;
+
+  return { totalAmount, unitPrice: baseAmount, pricingSource };
+}
+
+/**
+ * Inside a transaction (after acquiring the advisory lock), count how many
+ * active bookings already overlap with the requested time window.
+ * Returns the count. Caller compares against the slot's maxBookings.
+ */
+async function countOverlappingBookings(
+  tx: Tx,
+  facilityId: string,
+  startTime: Date,
+  endTime: Date,
+  excludeId?: string,
+) {
+  return tx.booking.count({
+    where: {
+      facilityId,
+      deletedAt: null,
+      status: { in: ["PENDING", "APPROVED"] },
+      ...(excludeId ? { NOT: { id: excludeId } } : {}),
+      AND: [
+        { startTime: { lt: endTime } },
+        { endTime:   { gt: startTime } },
+      ],
+    },
+  });
 }
 
 // ── Create booking (staff) ────────────────────────────────────────────────────
@@ -212,42 +245,59 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     };
   }
 
-  const amountResult = await computeConfiguredBookingAmount(
-    validated.facilityId,
-    validated.category,
-    validated.startTime,
-    validated.endTime,
-    validated.useAirConditioner,
-  );
-  if ("error" in amountResult) return { error: amountResult.error };
-  const totalAmount = amountResult.totalAmount;
+  // Wrap conflict check + pricing computation + booking creation in a single transaction
+  // with an advisory lock to prevent race conditions on concurrent bookings.
+  type TxResult =
+    | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; user: { name: string; phone: string | null; email: string } | null } }
+    | { error: string };
 
-  // Wrap conflict check + booking creation in a transaction with an advisory lock
-  // to prevent concurrent requests from racing past the conflict check.
-  const booking = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
-    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-    if (conflict) return null;
 
-    return tx.booking.create({
+    // Recompute price inside the lock so it reflects any pricing changes
+    // that may have occurred between the pre-flight checks above and now.
+    const amountResult = await computeConfiguredBookingAmount(
+      tx,
+      validated.facilityId,
+      validated.category,
+      validated.startTime,
+      validated.endTime,
+      validated.useAirConditioner,
+    );
+    if ("error" in amountResult) return { error: amountResult.error! };
+
+    // Check capacity: count overlapping bookings and compare to slot's maxBookings
+    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+    const maxAllowed = slot?.maxBookings ?? 1;
+    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
+    if (overlapCount >= maxAllowed) {
+      return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
+    }
+
+    const booking = await tx.booking.create({
       data: {
-        facilityId:  validated.facilityId,
-        userId:      session.sub,
-        category:    validated.category,
-        title:       validated.title,
-        description: validated.description,
-        startTime:   validated.startTime,
-        endTime:     validated.endTime,
-        notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
-        totalAmount,
+        facilityId:   validated.facilityId,
+        userId:       session.sub,
+        category:     validated.category,
+        title:        validated.title,
+        description:  validated.description,
+        startTime:    validated.startTime,
+        endTime:      validated.endTime,
+        acRequested:  validated.useAirConditioner,
+        notes:        validated.notes ?? null,
+        totalAmount:  amountResult.totalAmount,
+        resolvedUnitPrice: amountResult.unitPrice,
+        resolvedPricingSource: amountResult.pricingSource,
         status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
         paymentStatus: "UNPAID",
       },
       include: { facility: true, user: true },
     });
+    return { booking };
   });
 
-  if (!booking) return { error: "Facility already has a booking for that time slot." };
+  if ("error" in txResult) return { error: txResult.error };
+  const { booking } = txResult;
 
   if (booking.user?.phone) {
     await notifyBookingConfirmation({
@@ -352,41 +402,54 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     };
   }
 
-  const amountResult = await computeConfiguredBookingAmount(
-    validated.facilityId,
-    validated.category,
-    validated.startTime,
-    validated.endTime,
-    validated.useAirConditioner,
-  );
-  if ("error" in amountResult) return { error: amountResult.error };
-  const totalAmount = amountResult.totalAmount;
+  type TxResult =
+    | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; patron: { name: string; phone: string | null; email: string } | null } }
+    | { error: string };
 
-  // Wrap conflict check + booking creation in a transaction with an advisory lock
-  const booking = await prisma.$transaction(async (tx) => {
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
-    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-    if (conflict) return null;
 
-    return tx.booking.create({
+    const amountResult = await computeConfiguredBookingAmount(
+      tx,
+      validated.facilityId,
+      validated.category,
+      validated.startTime,
+      validated.endTime,
+      validated.useAirConditioner,
+    );
+    if ("error" in amountResult) return { error: amountResult.error! };
+
+    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+    const maxAllowed = slot?.maxBookings ?? 1;
+    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
+    if (overlapCount >= maxAllowed) {
+      return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
+    }
+
+    const booking = await tx.booking.create({
       data: {
-        facilityId:  validated.facilityId,
-        patronId:    session.sub,
-        category:    validated.category,
-        title:       validated.title,
-        description: validated.description,
-        startTime:   validated.startTime,
-        endTime:     validated.endTime,
-        notes:       [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
-        totalAmount,
+        facilityId:   validated.facilityId,
+        patronId:     session.sub,
+        category:     validated.category,
+        title:        validated.title,
+        description:  validated.description,
+        startTime:    validated.startTime,
+        endTime:      validated.endTime,
+        acRequested:  validated.useAirConditioner,
+        notes:        validated.notes ?? null,
+        totalAmount:  amountResult.totalAmount,
+        resolvedUnitPrice: amountResult.unitPrice,
+        resolvedPricingSource: amountResult.pricingSource,
         status:       "PENDING",
         paymentStatus: "UNPAID",
       },
       include: { facility: true, patron: true },
     });
+    return { booking };
   });
 
-  if (!booking) return { error: "Facility already has a booking for that time slot." };
+  if ("error" in txResult) return { error: txResult.error };
+  const { booking } = txResult;
 
   if (booking.patron?.phone) {
     await notifyBookingConfirmation({
@@ -493,16 +556,6 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     };
   }
 
-  const amountResult = await computeConfiguredBookingAmount(
-    validated.facilityId,
-    validated.category,
-    validated.startTime,
-    validated.endTime,
-    validated.useAirConditioner,
-  );
-  if ("error" in amountResult) return { error: amountResult.error };
-  const totalAmount = amountResult.totalAmount;
-
   // Find or create a Patron for the guest so booking is payable
   let patron = await prisma.patron.findFirst({
     where: {
@@ -527,33 +580,55 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   }
 
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;
-  const acMeta = validated.useAirConditioner ? "AC_REQUESTED" : undefined;
 
-  // Wrap conflict check + booking creation in a transaction with an advisory lock
-  const booking = await prisma.$transaction(async (tx) => {
+  type TxResult =
+    | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null } }
+    | { error: string };
+
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
-    const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime);
-    if (conflict) return null;
 
-    return tx.booking.create({
+    const amountResult = await computeConfiguredBookingAmount(
+      tx,
+      validated.facilityId,
+      validated.category,
+      validated.startTime,
+      validated.endTime,
+      validated.useAirConditioner,
+    );
+    if ("error" in amountResult) return { error: amountResult.error! };
+
+    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+    const maxAllowed = slot?.maxBookings ?? 1;
+    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
+    if (overlapCount >= maxAllowed) {
+      return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
+    }
+
+    const booking = await tx.booking.create({
       data: {
-        facilityId: validated.facilityId,
-        patronId: patron!.id,
-        category: validated.category,
-        title: validated.title,
-        description: validated.description,
-        startTime: validated.startTime,
-        endTime: validated.endTime,
-        notes: [validated.notes, guestMeta, acMeta].filter(Boolean).join("\n"),
-        totalAmount,
+        facilityId:   validated.facilityId,
+        patronId:     patron!.id,
+        category:     validated.category,
+        title:        validated.title,
+        description:  validated.description,
+        startTime:    validated.startTime,
+        endTime:      validated.endTime,
+        acRequested:  validated.useAirConditioner,
+        notes:        [validated.notes, guestMeta].filter(Boolean).join("\n") || null,
+        totalAmount:  amountResult.totalAmount,
+        resolvedUnitPrice: amountResult.unitPrice,
+        resolvedPricingSource: amountResult.pricingSource,
         status: "PENDING",
         paymentStatus: "UNPAID",
       },
       include: { facility: true },
     });
+    return { booking };
   });
 
-  if (!booking) return { error: "Facility already has a booking for that time slot." };
+  if ("error" in txResult) return { error: txResult.error };
+  const { booking } = txResult;
 
   await notifyBookingConfirmation({
     phone:        validated.guestPhone,
@@ -724,7 +799,7 @@ export async function completeBooking(bookingId: string) {
   return { success: true };
 }
 
-// ── Queries ───────────────────────────────────────────────────────────────────
+// ── Manager Update ────────────────────────────────────────────────────────────
 
 const ManagerBookingUpdateSchema = BookingSchema;
 
@@ -742,6 +817,15 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
     where: { id: validated.facilityId, isActive: true },
   });
 
+  // Re-validate terms whenever the facility may have changed
+  const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
+  if (missingTerms.includes("BOOKING_TERMS")) {
+    return { error: "You must agree to Booking Terms and Conditions before updating this booking." };
+  }
+  if (missingTerms.includes("ITEM_BOOKING_TERMS")) {
+    return { error: "You must agree to Item Booking Terms before updating this booking." };
+  }
+
   if (facility.underMaintenance) {
     return { error: "This facility is currently under emergency maintenance and cannot be booked." };
   }
@@ -758,35 +842,58 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
     };
   }
 
-  const conflict = await checkConflict(validated.facilityId, validated.startTime, validated.endTime, bookingId);
-  if (conflict) return { error: "Facility already has a booking for that time slot." };
+  // Wrap conflict check + price computation + update in a transaction with advisory lock
+  type TxResult =
+    | { booking: Awaited<ReturnType<typeof prisma.booking.update>> & { facility: { name: string } | null } }
+    | { error: string };
 
-  const amountResult = await computeConfiguredBookingAmount(
-    validated.facilityId,
-    validated.category,
-    validated.startTime,
-    validated.endTime,
-    validated.useAirConditioner,
-  );
-  if ("error" in amountResult) return { error: amountResult.error };
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
+    await acquireFacilityLock(tx, validated.facilityId);
 
-  const booking = await prisma.booking.update({
-    where: { id: bookingId },
-    data: {
-      facilityId: validated.facilityId,
-      category: validated.category,
-      title: validated.title,
-      description: validated.description,
-      startTime: validated.startTime,
-      endTime: validated.endTime,
-      notes: [validated.notes, validated.useAirConditioner ? "AC_REQUESTED" : undefined].filter(Boolean).join("\n"),
-      totalAmount: amountResult.totalAmount,
-      updatedAt: new Date(),
-    },
-    include: {
-      facility: { select: { name: true } },
-    },
+    // Check capacity respecting maxBookings
+    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+    const maxAllowed = slot?.maxBookings ?? 1;
+    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime, bookingId);
+    if (overlapCount >= maxAllowed) {
+      return { error: "Facility already has a booking for that time slot." };
+    }
+
+    // Recompute price inside the lock
+    const amountResult = await computeConfiguredBookingAmount(
+      tx,
+      validated.facilityId,
+      validated.category,
+      validated.startTime,
+      validated.endTime,
+      validated.useAirConditioner,
+    );
+    if ("error" in amountResult) return { error: amountResult.error! };
+
+    const booking = await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        facilityId:   validated.facilityId,
+        category:     validated.category,
+        title:        validated.title,
+        description:  validated.description,
+        startTime:    validated.startTime,
+        endTime:      validated.endTime,
+        acRequested:  validated.useAirConditioner,
+        notes:        validated.notes ?? null,
+        totalAmount:  amountResult.totalAmount,
+        resolvedUnitPrice: amountResult.unitPrice,
+        resolvedPricingSource: amountResult.pricingSource,
+        updatedAt:    new Date(),
+      },
+      include: {
+        facility: { select: { name: true } },
+      },
+    });
+    return { booking };
   });
+
+  if ("error" in txResult) return { error: txResult.error };
+  const { booking } = txResult;
 
   auditLog({ userId: session.sub, action: "UPDATE_BOOKING", entity: "Booking", entityId: bookingId, before: existing, after: booking });
   revalidatePath("/bookings");
