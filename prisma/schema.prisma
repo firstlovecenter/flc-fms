@@ -28,10 +28,12 @@ model User {
   createdIncome      Income[]
   inventoryCheckouts InventoryCheckout[]    @relation("CheckedOutBy")
   inventoryReturns   InventoryCheckout[]    @relation("ReturnedBy")
-  invMaintAssigned   InventoryMaintenance[] @relation("InvMaintAssigned")
-  invMaintRequested  InventoryMaintenance[] @relation("InvMaintRequested")
-  assignedMaint      MaintenanceRequest[]   @relation("AssignedMaint")
-  requestedMaint     MaintenanceRequest[]   @relation("RequestedMaint")
+  invMaintAssigned     InventoryMaintenance[] @relation("InvMaintAssigned")
+  invMaintRequested    InventoryMaintenance[] @relation("InvMaintRequested")
+  assignedMaint        MaintenanceRequest[]   @relation("AssignedMaint")
+  requestedMaint       MaintenanceRequest[]   @relation("RequestedMaint")
+  facilityCheckIns     FacilityCheckIn[]      @relation("FacilityCheckIns")
+  facilityCheckOuts    FacilityCheckIn[]      @relation("FacilityCheckOuts")
 
   @@index([role])
   @@map("users")
@@ -73,11 +75,12 @@ model Facility {
   maintenanceEndsAt   DateTime?
   maintenanceStartsAt DateTime?
   sortOrder           Int                  @default(0)
-  bookings            Booking[]
-  events              Event[]
-  pricing             FacilityPricing[]
-  timeSlots           FacilityTimeSlot[]
-  maintenance         MaintenanceRequest[]
+  bookings              Booking[]
+  events                Event[]
+  pricing               FacilityPricing[]
+  timeSlots             FacilityTimeSlot[]
+  maintenance           MaintenanceRequest[]
+  inventoryRequirements FacilityInventoryRequirement[]
 
   @@index([isActive])
   @@map("facilities")
@@ -154,6 +157,7 @@ model Booking {
   income          Income?
   payment         Payment?
   receipt         Receipt?
+  checkIn         FacilityCheckIn?
 
   @@index([facilityId, startTime, endTime])
   @@index([status])
@@ -381,9 +385,10 @@ model InventoryItem {
   isActive        Boolean                @default(true)
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
-  checkouts       InventoryCheckout[]
-  category        InventoryCategory?     @relation(fields: [categoryId], references: [id])
-  maintenanceLogs InventoryMaintenance[]
+  checkouts             InventoryCheckout[]
+  category              InventoryCategory?     @relation(fields: [categoryId], references: [id])
+  maintenanceLogs       InventoryMaintenance[]
+  facilityRequirements  FacilityInventoryRequirement[]
 
   @@index([status, isActive])
   @@map("inventory_items")
@@ -571,4 +576,45 @@ model BookingCategory {
 
   @@index([isActive, sortOrder])
   @@map("booking_categories")
+}
+
+// ─── Facility Inventory Requirements ─────────────────────────────────────────
+// Defines which inventory items a facility needs when in use.
+// Used to allocate / reserve items automatically when a booking is approved.
+
+model FacilityInventoryRequirement {
+  id         String        @id @default(cuid())
+  facilityId String
+  itemId     String
+  quantity   Int           @default(1)
+  isRequired Boolean       @default(true)  // false = optional / nice-to-have
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  facility   Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  item       InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@unique([facilityId, itemId])
+  @@index([facilityId])
+  @@map("facility_inventory_requirements")
+}
+
+// ─── Facility Check-In / Check-Out ───────────────────────────────────────────
+// Tracks the physical presence of a patron / user at a facility for a booking.
+// One record per booking; checkedOutAt is NULL until the occupant leaves.
+
+model FacilityCheckIn {
+  id             String    @id @default(cuid())
+  bookingId      String    @unique
+  checkedInById  String    // staff member who performed the check-in
+  checkedOutById String?   // staff member who performed the check-out
+  checkedInAt    DateTime  @default(now())
+  checkedOutAt   DateTime?
+  notes          String?
+  booking        Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  checkedInBy    User      @relation("FacilityCheckIns",  fields: [checkedInById],  references: [id])
+  checkedOutBy   User?     @relation("FacilityCheckOuts", fields: [checkedOutById], references: [id])
+
+  @@index([checkedInAt])
+  @@map("facility_check_ins")
 }
