@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Layers } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
@@ -34,6 +34,9 @@ export default async function FacilitiesPage() {
           <div className="flex items-center gap-2">
             <Link href="/facilities/categories" className="btn-secondary text-sm">
               Categories
+            </Link>
+            <Link href="/facilities/bulk-slots" className="btn-secondary text-sm">
+              <Layers size={15} /> Bulk Slots
             </Link>
             <Link href="/facilities/new" className="btn-primary text-sm">
               <Plus size={15} /> Add Facility

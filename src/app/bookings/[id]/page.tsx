@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Building2, User, CreditCard, FileText, Phone, MessageCircle } from "lucide-react";
+import { ArrowLeft, Clock, Building2, User, CreditCard, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
@@ -27,6 +27,12 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
       user:     { select: { name: true, email: true, role: true, phone: true } },
       payment:  true,
       receipt:  true,
+      checkIn:  {
+        include: {
+          checkedInBy:  { select: { name: true } },
+          checkedOutBy: { select: { name: true } },
+        },
+      },
     },
   });
 
@@ -143,6 +149,32 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
             <FileText size={13} /> Notes
           </div>
           <p className="text-sm text-[var(--slate)]">{booking.notes}</p>
+        </div>
+      )}
+
+      {/* Check-In / Check-Out Status */}
+      {(booking.checkIn || booking.checkInRequested) && (
+        <div className={`card p-5 ${booking.checkIn ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-2 text-[var(--muted)]">
+            <LogIn size={13} /> Check-In Status
+          </div>
+          {booking.checkIn ? (
+            <div className="text-sm space-y-1">
+              <p className="text-green-800">
+                <strong>Checked in</strong> by {booking.checkIn.checkedInBy.name} at {formatDateTime(booking.checkIn.checkedInAt)}
+              </p>
+              {booking.checkIn.checkedOutAt && booking.checkIn.checkedOutBy && (
+                <p className="text-gray-700">
+                  <strong>Checked out</strong> by {booking.checkIn.checkedOutBy.name} at {formatDateTime(booking.checkIn.checkedOutAt)}
+                </p>
+              )}
+              {booking.checkIn.notes && (
+                <p className="text-xs text-gray-600 mt-1 whitespace-pre-line"><strong>Notes:</strong> {booking.checkIn.notes}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-amber-800">Patron has requested check-in. <a href="/checkin" className="underline font-semibold">Go to Check-In page →</a></p>
+          )}
         </div>
       )}
 

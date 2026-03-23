@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
+import { timeRangeContains } from "@/lib/time-utils";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
@@ -97,17 +98,21 @@ async function findApplicableTimeSlot(
   const start = toTimeString(startTime);
   const end = toTimeString(endTime);
 
-  return db.facilityTimeSlot.findFirst({
+  // Fetch all active slots for this day/category, then check containment in JS
+  // so overnight slots (e.g. 22:00→04:00) are handled correctly.
+  const candidates = await db.facilityTimeSlot.findMany({
     where: {
       facilityId,
       dayOfWeek,
       category,
       isActive: true,
-      startTime: { lte: start },
-      endTime: { gte: end },
     },
     orderBy: { startTime: "asc" },
   });
+
+  return candidates.find((slot) =>
+    timeRangeContains(slot.startTime, slot.endTime, start, end),
+  ) ?? null;
 }
 
 /**

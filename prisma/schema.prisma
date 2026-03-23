@@ -144,6 +144,8 @@ model Booking {
   resolvedPricingSource String      @default("CATEGORY_BASE")
   notes           String?
   acRequested     Boolean           @default(false)
+  checkInRequested   Boolean        @default(false)
+  checkInRequestedAt DateTime?
   rejectionReason String?
   deletedAt       DateTime?
   createdAt       DateTime          @default(now())

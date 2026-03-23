@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
 import PayNowButton from "@/components/patron/PayNowButton";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
+import CheckInRequestButton from "@/components/patron/CheckInRequestButton";
 
 export default async function PatronBookingDetailPage({ params, searchParams }: { params: { id: string }; searchParams: { payment?: string } }) {
   const session = await getSession();
@@ -20,6 +21,7 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
       lineItems: {
         include: { item: true, bundle: true },
       },
+      checkIn: true,
     },
   });
 
@@ -143,9 +145,29 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
         </div>
       )}
 
+      {/* Check-in status */}
+      {booking.checkIn && (
+        <div className="card p-5 bg-green-50 border-green-200">
+          <p className="text-sm font-semibold text-green-800">✓ Checked in{booking.checkIn.checkedOutAt ? " & Checked out" : ""}</p>
+          <p className="text-xs text-green-700 mt-1">
+            Checked in at {formatDateTime(booking.checkIn.checkedInAt)}
+            {booking.checkIn.checkedOutAt && ` · Checked out at ${formatDateTime(booking.checkIn.checkedOutAt)}`}
+          </p>
+        </div>
+      )}
+      {booking.checkInRequested && !booking.checkIn && (
+        <div className="card p-5 bg-amber-50 border-amber-200">
+          <p className="text-sm font-semibold text-amber-800">Check-in requested</p>
+          <p className="text-xs text-amber-700 mt-1">Waiting for staff to approve your check-in.</p>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex gap-3">
         {canPay && <PayNowButton bookingId={booking.id} />}
+        {booking.status === "APPROVED" && !booking.checkInRequested && !booking.checkIn && (
+          <CheckInRequestButton bookingId={booking.id} />
+        )}
         {["PENDING", "APPROVED"].includes(booking.status) && (
           <CancelBookingButton bookingId={booking.id} />
         )}

@@ -87,7 +87,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
     e.preventDefault();
     if (!form.label.trim())          { setError("Label is required"); return; }
     if (!form.category)              { setError("Category is required"); return; }
-    if (form.startTime >= form.endTime) { setError("End time must be after start time"); return; }
+    if (form.startTime === form.endTime) { setError("Start and end time cannot be the same"); return; }
 
     const payload = {
       label:                form.label.trim(),

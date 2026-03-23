@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db/prisma";
+import { bookingOverlapsSlot, toMinutes } from "@/lib/time-utils";
 
 interface TimeSlotAvailability {
   id: string;
@@ -186,20 +187,15 @@ export async function getFacilityAvailability(
     // Calculate availability for each slot
     const slotsWithAvailability: TimeSlotAvailability[] = timeSlots.map(
       (slot) => {
-        // Count bookings that overlap with this slot
-        const slotStart = parseTime(slot.startTime);
-        const slotEnd = parseTime(slot.endTime);
+        // Count bookings that overlap with this slot (overnight-aware)
+        const slotStartMin = toMinutes(slot.startTime);
+        const slotEndMin = toMinutes(slot.endTime);
 
         const overlappingBookings = existingBookings.filter((booking) => {
-          const bookingStart = booking.startTime.getHours() * 60 + booking.startTime.getMinutes();
-          const bookingEnd = booking.endTime.getHours() * 60 + booking.endTime.getMinutes();
+          const bookingStartMin = booking.startTime.getHours() * 60 + booking.startTime.getMinutes();
+          const bookingEndMin = booking.endTime.getHours() * 60 + booking.endTime.getMinutes();
 
-          // Check if booking overlaps with slot
-          return (
-            (bookingStart >= slotStart && bookingStart < slotEnd) ||
-            (bookingEnd > slotStart && bookingEnd <= slotEnd) ||
-            (bookingStart <= slotStart && bookingEnd >= slotEnd)
-          );
+          return bookingOverlapsSlot(bookingStartMin, bookingEndMin, slotStartMin, slotEndMin);
         });
 
         const currentBookings = overlappingBookings.length;

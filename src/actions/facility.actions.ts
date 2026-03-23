@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { timeRangesOverlap } from "@/lib/time-utils";
 
 const FacilitySchema = z.object({
   name:           z.string().min(2).max(100),
@@ -20,7 +21,7 @@ const FacilitySchema = z.object({
   availableDays:  z.array(z.coerce.number().int().min(0).max(6)).default([0,1,2,3,4,5,6]),
   categoryMappings: z.array(z.object({
     category: z.string().min(1),
-    price: z.coerce.number().positive(),
+    price: z.coerce.number().min(0),
     freeDays: z.array(z.coerce.number().int().min(0).max(6)).default([]),
     description: z.string().max(500).optional().nullable(),
     isActive: z.boolean().default(true),
@@ -196,7 +197,7 @@ const TimeSlotSchema = z.object({
   endTime:             z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format"),
   isFlexible:          z.boolean().default(true),
   isFree:              z.boolean().default(false),
-  pricePerHourOverride: z.coerce.number().positive().optional().nullable(),
+  pricePerHourOverride: z.coerce.number().min(0).optional().nullable(),
   maxBookings:         z.coerce.number().int().positive().default(1),
   category:            z.string().min(1, "Category is required"),
 });
@@ -213,22 +214,24 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
   const session = await requirePermission("canManageFacilities");
   const validated = TimeSlotSchema.parse(data);
 
-  if (validated.startTime >= validated.endTime) {
-    return { error: "End time must be after start time" };
+  if (validated.startTime === validated.endTime) {
+    return { error: "Start and end time cannot be the same" };
   }
 
   // Prevent overlapping time slots for the same facility/category/day
-  const overlappingSlot = await prisma.facilityTimeSlot.findFirst({
+  // Fetch candidates and check in JS to handle overnight slots correctly
+  const candidateSlots = await prisma.facilityTimeSlot.findMany({
     where: {
       facilityId,
       dayOfWeek: validated.dayOfWeek,
       category: validated.category,
       isActive: true,
-      startTime: { lt: validated.endTime },
-      endTime: { gt: validated.startTime },
     },
     select: { label: true, startTime: true, endTime: true },
   });
+  const overlappingSlot = candidateSlots.find((s) =>
+    timeRangesOverlap(s.startTime, s.endTime, validated.startTime, validated.endTime),
+  );
   if (overlappingSlot) {
     return {
       error: `This slot overlaps with an existing slot "${overlappingSlot.label}" (${overlappingSlot.startTime}–${overlappingSlot.endTime}). Adjust the times or deactivate the conflicting slot first.`,
@@ -335,4 +338,223 @@ export async function getPublicTimeSlots(facilityId: string) {
     where: { facilityId, isActive: true },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
   });
+}
+
+// ─── Bulk Time Slot Actions ───────────────────────────────────────────────────
+
+const BulkSlotSchema = z.object({
+  facilityIds: z.array(z.string().min(1)).min(1, "Select at least one facility"),
+  slot: TimeSlotSchema,
+});
+
+export async function bulkCreateTimeSlots(
+  facilityIds: string[],
+  slotData: z.infer<typeof TimeSlotSchema>,
+) {
+  const session = await requirePermission("canManageFacilities");
+  const { facilityIds: validIds, slot: validated } = BulkSlotSchema.parse({
+    facilityIds,
+    slot: slotData,
+  });
+
+  if (validated.startTime >= validated.endTime) {
+    return { error: "End time must be after start time" };
+  }
+
+  const created: { facilityId: string; facilityName: string; slotId: string }[] = [];
+  const skipped: { facilityId: string; facilityName: string; reason: string }[] = [];
+
+  // Load facility names for reporting
+  const facilities = await prisma.facility.findMany({
+    where: { id: { in: validIds }, isActive: true },
+    select: { id: true, name: true },
+  });
+  const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
+
+  for (const facilityId of validIds) {
+    const name = facilityMap.get(facilityId) ?? facilityId;
+
+    if (!facilityMap.has(facilityId)) {
+      skipped.push({ facilityId, facilityName: name, reason: "Facility not found or inactive" });
+      continue;
+    }
+
+    // Check category mapping
+    const mapping = await prisma.facilityPricing.findFirst({
+      where: { facilityId, category: validated.category, isActive: true },
+      select: { id: true },
+    });
+    if (!mapping) {
+      skipped.push({ facilityId, facilityName: name, reason: `Category "${validated.category}" not mapped to this facility` });
+      continue;
+    }
+
+    // Check overlapping slot (fetch candidates, check in JS for overnight support)
+    const existingSlots = await prisma.facilityTimeSlot.findMany({
+      where: {
+        facilityId,
+        dayOfWeek: validated.dayOfWeek,
+        category: validated.category,
+        isActive: true,
+      },
+      select: { label: true, startTime: true, endTime: true },
+    });
+    const overlap = existingSlots.find((s) =>
+      timeRangesOverlap(s.startTime, s.endTime, validated.startTime, validated.endTime),
+    );
+    if (overlap) {
+      skipped.push({
+        facilityId,
+        facilityName: name,
+        reason: `Overlaps with "${overlap.label}" (${overlap.startTime}–${overlap.endTime})`,
+      });
+      continue;
+    }
+
+    try {
+      const slot = await prisma.facilityTimeSlot.create({
+        data: {
+          facilityId,
+          ...validated,
+          pricePerHourOverride: validated.pricePerHourOverride ?? null,
+        },
+      });
+      created.push({ facilityId, facilityName: name, slotId: slot.id });
+      auditLog({
+        userId: session.sub,
+        action: "CREATE_TIME_SLOT",
+        entity: "FacilityTimeSlot",
+        entityId: slot.id,
+        after: slot,
+      });
+      revalidatePath(`/facilities/${facilityId}`);
+      revalidatePath(`/facilities/${facilityId}/slots`);
+    } catch {
+      skipped.push({ facilityId, facilityName: name, reason: "Database error creating slot" });
+    }
+  }
+
+  revalidatePath("/facilities");
+  return { success: true, created, skipped };
+}
+
+export async function copyTimeSlotsToFacilities(
+  sourceFacilityId: string,
+  targetFacilityIds: string[],
+) {
+  const session = await requirePermission("canManageFacilities");
+
+  if (!sourceFacilityId) return { error: "Source facility is required" };
+  if (targetFacilityIds.length === 0) return { error: "Select at least one target facility" };
+
+  const sourceSlots = await prisma.facilityTimeSlot.findMany({
+    where: { facilityId: sourceFacilityId, isActive: true },
+    orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+  });
+
+  if (sourceSlots.length === 0) {
+    return { error: "Source facility has no active time slots to copy" };
+  }
+
+  // Filter out source from targets
+  const targets = targetFacilityIds.filter((id) => id !== sourceFacilityId);
+  if (targets.length === 0) return { error: "Select at least one target facility other than the source" };
+
+  const facilities = await prisma.facility.findMany({
+    where: { id: { in: targets }, isActive: true },
+    select: { id: true, name: true },
+  });
+  const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
+
+  const created: { facilityId: string; facilityName: string; slotId: string; label: string }[] = [];
+  const skipped: { facilityId: string; facilityName: string; slotLabel: string; reason: string }[] = [];
+
+  for (const targetId of targets) {
+    const name = facilityMap.get(targetId) ?? targetId;
+
+    if (!facilityMap.has(targetId)) {
+      skipped.push({ facilityId: targetId, facilityName: name, slotLabel: "(all)", reason: "Facility not found or inactive" });
+      continue;
+    }
+
+    // Pre-load category mappings and existing slots for this target
+    const [mappings, existingSlots] = await Promise.all([
+      prisma.facilityPricing.findMany({
+        where: { facilityId: targetId, isActive: true },
+        select: { category: true },
+      }),
+      prisma.facilityTimeSlot.findMany({
+        where: { facilityId: targetId, isActive: true },
+        select: { dayOfWeek: true, category: true, startTime: true, endTime: true },
+      }),
+    ]);
+    const mappedCategories = new Set(mappings.map((m) => m.category));
+
+    for (const src of sourceSlots) {
+      if (!mappedCategories.has(src.category)) {
+        skipped.push({
+          facilityId: targetId,
+          facilityName: name,
+          slotLabel: src.label,
+          reason: `Category "${src.category}" not mapped`,
+        });
+        continue;
+      }
+
+      // Check overlap with existing slots (overnight-aware)
+      const hasOverlap = existingSlots.some(
+        (e) =>
+          e.dayOfWeek === src.dayOfWeek &&
+          e.category === src.category &&
+          timeRangesOverlap(e.startTime, e.endTime, src.startTime, src.endTime),
+      );
+      if (hasOverlap) {
+        skipped.push({
+          facilityId: targetId,
+          facilityName: name,
+          slotLabel: src.label,
+          reason: "Overlaps with existing slot",
+        });
+        continue;
+      }
+
+      try {
+        const slot = await prisma.facilityTimeSlot.create({
+          data: {
+            facilityId: targetId,
+            label: src.label,
+            dayOfWeek: src.dayOfWeek,
+            startTime: src.startTime,
+            endTime: src.endTime,
+            isFlexible: src.isFlexible,
+            isFree: src.isFree,
+            pricePerHourOverride: src.pricePerHourOverride,
+            maxBookings: src.maxBookings,
+            category: src.category,
+          },
+        });
+        created.push({ facilityId: targetId, facilityName: name, slotId: slot.id, label: src.label });
+        auditLog({
+          userId: session.sub,
+          action: "CREATE_TIME_SLOT",
+          entity: "FacilityTimeSlot",
+          entityId: slot.id,
+          after: slot,
+        });
+      } catch {
+        skipped.push({
+          facilityId: targetId,
+          facilityName: name,
+          slotLabel: src.label,
+          reason: "Database error creating slot",
+        });
+      }
+    }
+
+    revalidatePath(`/facilities/${targetId}`);
+    revalidatePath(`/facilities/${targetId}/slots`);
+  }
+
+  revalidatePath("/facilities");
+  return { success: true, created, skipped, sourceSlotCount: sourceSlots.length };
 }

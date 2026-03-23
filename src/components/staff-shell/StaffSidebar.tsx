@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   Package,
   FileText,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
@@ -41,6 +42,7 @@ const NAV_GROUPS = [
     label: "Bookings",
     items: [
       { href: "/bookings", label: "Bookings", icon: CalendarDays },
+      { href: "/checkin", label: "Check-In", icon: ClipboardCheck },
       { href: "/bookings/content", label: "Booking Content", icon: FileText, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
     ],
   },
