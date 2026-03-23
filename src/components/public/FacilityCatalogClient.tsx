@@ -305,7 +305,6 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
           {filtered.map((facility, index) => {
             const isPopular = facility.capacity >= 100 && Number(facility.pricePerHour) <= 50;
-            const displayPrice = formatCurrency(Number(facility.pricePerHour)).replace(".00", "");
 
             return (
               <Card
@@ -352,12 +351,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                           : " (maintenance)"}
                       </span>
                     </div>
-                  ) : (
-                    <div className="flex items-baseline gap-1 mb-1 sm:mb-2">
-                      <span className="font-display font-bold text-sm sm:text-lg text-[var(--gold)]">{displayPrice}</span>
-                      <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-semibold">starting</span>
-                    </div>
-                  )}
+                  ) : null}
                   <p className="hidden sm:block text-sm text-slate-600 line-clamp-2 mb-3 font-light">
                     {facility.description || "A versatile space ready to host your next successful event or gathering."}
                   </p>
@@ -455,12 +449,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                   </DialogHeader>
 
                   <div className="space-y-4">
-                    <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl flex items-center justify-between border border-slate-100">
-                      <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Starting Price</span>
-                      <div className="text-right">
-                        <span className="font-display font-bold text-xl sm:text-2xl text-[var(--gold)] block leading-none">{formatCurrency(Number(selectedFacility.pricePerHour))}</span>
-                      </div>
-                    </div>
+
 
                     <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-sky-50/50 border border-sky-100/50 text-sky-800">
