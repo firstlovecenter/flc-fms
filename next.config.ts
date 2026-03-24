@@ -17,12 +17,12 @@ const productionSecurityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.paystack.co",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' blob: data: *.cloudfront.net cdn.sanity.io",
-      "connect-src 'self' *.paystack.co api.paystack.co bms.codeslaw.dev",
-      "frame-src *.paystack.co",
+      "connect-src 'self' bms.codeslaw.dev",
+      "frame-src 'self'",
     ].join("; "),
   },
 ];

@@ -211,38 +211,9 @@ export async function sendBookingConfirmationEmail(params: {
           ${bulletList([
             "Your request will be reviewed by a facility manager.",
             "You will receive an approval or rejection update by email and SMS.",
-            "If approved, a payment link will be shared when payment is required.",
           ])}
         </div>
       `,
-    }),
-  });
-}
-
-export async function sendPaymentReceiptEmail(params: {
-  to: string;
-  name: string;
-  receiptNumber: string;
-  amount: number;
-  bookingTitle: string;
-  receiptUrl?: string;
-}) {
-  await sendEmail({
-    to: params.to,
-    subject: `Payment Receipt #${params.receiptNumber}`,
-    html: renderEmailTemplate({
-      preheader: `Payment confirmed for ${params.bookingTitle}.`,
-      badge: "Payment Receipt",
-      title: "Payment confirmed",
-      intro: `Hi ${esc(params.name)}, your payment has been successfully processed and recorded.`,
-      rows: [
-        { label: "Receipt number", value: `#${esc(params.receiptNumber)}` },
-        { label: "Booking", value: esc(params.bookingTitle) },
-        { label: "Amount paid", value: esc(money(params.amount)) },
-      ],
-      ctaLabel: params.receiptUrl ? "Download receipt" : undefined,
-      ctaUrl: params.receiptUrl,
-      ctaAltText: params.receiptUrl ? "If the button does not work, copy and open the receipt link from your booking history in the app." : undefined,
     }),
   });
 }
@@ -293,7 +264,6 @@ export async function sendBookingApprovedEmail(params: {
   facilityName: string;
   startTime: Date;
   totalAmount: number;
-  paymentUrl?: string;
 }) {
   const isWaived = params.totalAmount === 0;
 
@@ -314,9 +284,6 @@ export async function sendBookingApprovedEmail(params: {
       detailsHtml: isWaived
         ? `<p style="margin-top:14px;color:#166534;font-size:14px;font-weight:700">Billing has been waived for this booking.</p>`
         : undefined,
-      ctaLabel: !isWaived && params.paymentUrl ? `Pay now (${money(params.totalAmount)})` : undefined,
-      ctaUrl: !isWaived ? params.paymentUrl : undefined,
-      ctaAltText: !isWaived ? "Complete payment as soon as possible to secure your booking slot." : undefined,
     }),
   });
 }

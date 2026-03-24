@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
+import SendSMSButton from "@/components/bookings/SendSMSButton";
 import { deleteBookingByManager, updateBookingByManager } from "@/actions/booking.actions";
 
 type BookingItem = {
@@ -18,7 +19,6 @@ type BookingItem = {
   facilityName: string;
   category: string;
   status: string;
-  paymentStatus: string;
   totalAmount: number;
   startTime: string;
   endTime: string;
@@ -150,7 +150,6 @@ export default function BookingsListClient({
                 notes: updated.notes ?? null,
                 totalAmount: Number(updated.totalAmount),
                 status: updated.status,
-                paymentStatus: updated.paymentStatus,
               }
             : b,
         ),
@@ -196,7 +195,6 @@ export default function BookingsListClient({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-[var(--navy)] text-sm truncate">{b.title}</span>
                     <StatusBadge status={b.status} size="xs" />
-                    {b.paymentStatus === "PAID" && <StatusBadge status="PAID" size="xs" />}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
                     <span>{b.bookerName || "-"}</span>
@@ -258,10 +256,6 @@ export default function BookingsListClient({
                       <StatusBadge status={selected.status} size="sm" />
                     </div>
                     <div className="card p-3">
-                      <p className="text-xs text-[var(--muted)] mb-1.5">Payment</p>
-                      <StatusBadge status={selected.paymentStatus} size="sm" />
-                    </div>
-                    <div className="card p-3">
                       <p className="text-xs text-[var(--muted)]">Amount</p>
                       <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
                     </div>
@@ -302,6 +296,14 @@ export default function BookingsListClient({
                     {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
                     {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
                     {["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
+                    {canManage && selected.bookerPhone && (
+                      <SendSMSButton
+                        bookingId={selected.id}
+                        bookingTitle={selected.title}
+                        bookerName={selected.bookerName}
+                        bookerPhone={selected.bookerPhone}
+                      />
+                    )}
                     {canManage && <button type="button" className="btn-danger" disabled={isPending} onClick={deleteBooking}>Delete</button>}
                   </div>
                 </>

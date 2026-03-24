@@ -163,37 +163,6 @@ export default async function ReportsPage() {
           })}
         </div>
       </div>
-
-      {/* Recent payments */}
-      <div className="card p-6">
-        <h2 className="font-semibold text-[var(--navy)] mb-4">Recent Payments</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="text-left py-2 px-3 font-medium text-[var(--muted)]">Patron</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--muted)]">Booking</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--muted)]">Provider</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--muted)]">Date</th>
-                <th className="text-right py-2 px-3 font-medium text-[var(--muted)]">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.recentPaid.map((p) => (
-                <tr key={p.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
-                  <td className="py-2.5 px-3 font-medium text-gray-800">{p.patron?.name ?? "—"}</td>
-                  <td className="py-2.5 px-3 text-[var(--slate)]">{p.booking.title}</td>
-                  <td className="py-2.5 px-3 text-[var(--muted)]">{p.provider}</td>
-                  <td className="py-2.5 px-3 text-[var(--muted)]">{p.paidAt ? formatDateTime(p.paidAt) : "—"}</td>
-                  <td className="py-2.5 px-3 text-right font-semibold text-green-700">
-                    {formatCurrency(Number(p.amount))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }

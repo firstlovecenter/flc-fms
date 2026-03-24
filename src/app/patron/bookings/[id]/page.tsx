@@ -1,14 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Building2, CreditCard, FileText } from "lucide-react";
+import { ArrowLeft, Clock, Building2, FileText } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
-import PayNowButton from "@/components/patron/PayNowButton";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CheckInRequestButton from "@/components/patron/CheckInRequestButton";
 
-export default async function PatronBookingDetailPage({ params, searchParams }: { params: { id: string }; searchParams: { payment?: string } }) {
+export default async function PatronBookingDetailPage({ params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session || session.role !== "PATRON") redirect("/patron/login");
 
@@ -16,8 +15,6 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
     where: { id: params.id, patronId: session.sub },
     include: {
       facility: true,
-      payment: true,
-      receipt: true,
       lineItems: {
         include: { item: true, bundle: true },
       },
@@ -27,26 +24,8 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
 
   if (!booking) notFound();
 
-  const canPay =
-    ["APPROVED", "COMPLETED"].includes(booking.status) &&
-    booking.paymentStatus !== "PAID" &&
-    !booking.isBillingWaived &&
-    Number(booking.totalAmount) > 0;
-
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Payment status toast */}
-      {searchParams.payment === "processing" && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
-          <strong>Payment received!</strong> We&apos;re verifying your payment. This page will update shortly.
-        </div>
-      )}
-      {searchParams.payment === "success" && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800 text-sm">
-          <strong>Payment confirmed!</strong> Your booking has been paid successfully.
-        </div>
-      )}
-
       <div className="flex items-center gap-3">
         <Link href="/patron/bookings" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
           <ArrowLeft size={20} />
@@ -57,7 +36,6 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
         </div>
         <div className="flex gap-2">
           <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
-          <span className={statusBadgeClass(booking.paymentStatus)}>{booking.paymentStatus}</span>
         </div>
       </div>
 
@@ -109,10 +87,10 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
         </div>
       )}
 
-      {/* Payment summary */}
+      {/* Amount summary */}
       <div className="card p-6">
         <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-          <CreditCard size={13} /> Payment
+          <FileText size={13} /> Booking Amount
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -120,19 +98,7 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
             {booking.isBillingWaived && (
               <p className="text-sm text-green-600 font-medium mt-1">Billing waived</p>
             )}
-            {booking.payment && (
-              <p className="text-sm text-[var(--muted)] mt-1">
-                Via {booking.payment.provider}
-                {booking.payment.paidAt && ` · Paid ${formatDateTime(booking.payment.paidAt)}`}
-              </p>
-            )}
           </div>
-          {booking.receipt && (
-            <div className="text-right">
-              <p className="text-xs text-[var(--muted)]">Receipt</p>
-              <p className="font-mono font-semibold text-[var(--slate)]">#{booking.receipt.receiptNumber}</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -164,7 +130,6 @@ export default async function PatronBookingDetailPage({ params, searchParams }: 
 
       {/* Actions */}
       <div className="flex gap-3">
-        {canPay && <PayNowButton bookingId={booking.id} />}
         {booking.status === "APPROVED" && !booking.checkInRequested && !booking.checkIn && (
           <CheckInRequestButton bookingId={booking.id} />
         )}

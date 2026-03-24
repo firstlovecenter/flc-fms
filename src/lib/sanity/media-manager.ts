@@ -51,50 +51,6 @@ export async function upsertStaffProfile(
 }
 
 /**
- * Creates or updates a receipt document in Sanity
- */
-export async function upsertReceipt(
-  bookingId: string,
-  paymentId: string,
-  receiptNumber: string,
-  receiptFileUrl: string,
-  issuedAt: string
-): Promise<MediaUploadResult> {
-  if (!isSanityWriteEnabled()) {
-    return { success: false, error: "Sanity not configured" };
-  }
-
-  try {
-    const client = getSanityWriteClient();
-    if (!client) return { success: false, error: "Sanity client unavailable" };
-
-    const result = await client.createOrReplace({
-      _type: "receipt",
-      _id: `receipt-${receiptNumber}`,
-      bookingId,
-      paymentId,
-      receiptNumber,
-      receiptFile: {
-        _type: "file",
-        asset: {
-          _ref: receiptFileUrl.split("/").pop()?.split(".")[0] || "",
-        },
-      },
-      issuedAt,
-    });
-
-    return {
-      success: true,
-      assetId: result._id,
-      assetUrl: receiptFileUrl,
-    };
-  } catch (error) {
-    console.error("Error creating receipt:", error);
-    return { success: false, error: String(error) };
-  }
-}
-
-/**
  * Creates or updates facility media document in Sanity
  */
 export async function upsertFacilityMedia(

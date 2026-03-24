@@ -18,14 +18,11 @@ export async function getFinancialReport(months = 6) {
         prisma.expense.aggregate({
           where: { status: "APPROVED", createdAt: { gte: start, lte: end } },
           _sum: { amount: true }}),
-        prisma.payment.aggregate({
-          where: { status: "PAID", paidAt: { gte: start, lte: end } },
-          _sum: { amount: true }}),
-      ]).then(([inc, exp, pay]) => ({
+      ]).then(([inc, exp]) => ({
         label,
         income:   Number(inc._sum.amount ?? 0),
         expenses: Number(exp._sum.amount ?? 0),
-        bookingRevenue: Number(pay._sum.amount ?? 0)}));
+        bookingRevenue: 0}));
     })
   );
 
@@ -34,7 +31,7 @@ export async function getFinancialReport(months = 6) {
 }
 
 export async function getBookingReport() {
-  await requireStaff("FACILITY_MANAGER");  const [statusBreakdown, facilityBreakdown, recentPaid] = await Promise.all([
+  await requireStaff("FACILITY_MANAGER");  const [statusBreakdown, facilityBreakdown] = await Promise.all([
     prisma.booking.groupBy({
       by: ["status"],
       _count: { _all: true },
@@ -45,11 +42,6 @@ export async function getBookingReport() {
       _sum: { totalAmount: true },
       orderBy: { _count: { facilityId: "desc" } },
       take: 5}),
-    prisma.payment.findMany({
-      where: { status: "PAID" },
-      include: { booking: { select: { title: true } }, patron: { select: { name: true } } },
-      orderBy: { paidAt: "desc" },
-      take: 10}),
   ]);
 
   // Hydrate facility names
@@ -67,7 +59,7 @@ export async function getBookingReport() {
         ...f,
         facilityName: facilityMap[f.facilityId] ?? "Unknown"
       })),
-    recentPaid
+    recentPaid: []
   };
 }
 

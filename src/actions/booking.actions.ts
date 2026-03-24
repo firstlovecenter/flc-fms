@@ -294,7 +294,6 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
         resolvedUnitPrice: amountResult.unitPrice,
         resolvedPricingSource: amountResult.pricingSource,
         status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
-        paymentStatus: "UNPAID",
       },
       include: { facility: true, user: true },
     });
@@ -446,7 +445,6 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
         resolvedUnitPrice: amountResult.unitPrice,
         resolvedPricingSource: amountResult.pricingSource,
         status:       "PENDING",
-        paymentStatus: "UNPAID",
       },
       include: { facility: true, patron: true },
     });
@@ -625,7 +623,6 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
         resolvedUnitPrice: amountResult.unitPrice,
         resolvedPricingSource: amountResult.pricingSource,
         status: "PENDING",
-        paymentStatus: "UNPAID",
       },
       include: { facility: true },
     });
@@ -687,21 +684,18 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
     where: { id: bookingId },
     data: {
       status: "APPROVED",
-      ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0, paymentStatus: "PAID" } : {}),
+      ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0 } : {}),
     },
     include: { patron: true, user: true, facility: true }});
 
   const contact = booking.patron ?? booking.user;
-  const paymentUrl = !waiveBilling && Number(booking.totalAmount) > 0
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/pay`
-    : undefined;
 
   if (contact?.phone) {
     await notifyBookingApproved({
       phone:        contact.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
-      paymentUrl});
+    });
   }
   if (contact?.email) {
     await sendBookingApprovedEmail({
@@ -711,7 +705,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       totalAmount:  Number(booking.totalAmount),
-      paymentUrl});
+    });
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });
@@ -723,18 +717,11 @@ export async function rejectBooking(bookingId: string, reason: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
 
-  const [booking] = await prisma.$transaction([
-    prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "REJECTED", rejectionReason: reason },
-      include: { patron: true, user: true },
-    }),
-    // Cancel any pending payment records
-    prisma.payment.updateMany({
-      where: { bookingId, status: "PENDING" },
-      data: { status: "FAILED" },
-    }),
-  ]);
+  const booking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "REJECTED", rejectionReason: reason },
+    include: { patron: true, user: true },
+  });
 
   const contact = booking.patron ?? booking.user;
   if (contact?.phone) {
@@ -771,17 +758,10 @@ export async function cancelBooking(bookingId: string) {
   }
   if (booking.status === "COMPLETED") return { error: "Cannot cancel a completed booking." };
 
-  await prisma.$transaction([
-    // Cancel any pending payment records
-    prisma.payment.updateMany({
-      where: { bookingId, status: "PENDING" },
-      data: { status: "FAILED" },
-    }),
-    prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "CANCELLED" },
-    }),
-  ]);
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "CANCELLED" },
+  });
 
   auditLog({ userId: session.sub, action: "CANCEL_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");
@@ -912,14 +892,12 @@ export async function deleteBookingByManager(bookingId: string) {
   const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, deletedAt: null },
     include: {
-      payment: { select: { id: true, status: true } },
-      receipt: { select: { id: true } },
       income: { select: { id: true } },
     },
   });
 
-  if (booking.payment || booking.receipt || booking.income) {
-    return { error: "Cannot delete bookings with payment/receipt records. Cancel the booking instead." };
+  if (booking.income) {
+    return { error: "Cannot delete bookings with income records. Cancel the booking instead." };
   }
 
   if (booking.status === "APPROVED" || booking.status === "COMPLETED") {

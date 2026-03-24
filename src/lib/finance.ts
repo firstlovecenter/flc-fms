@@ -5,34 +5,16 @@ export async function getTotalIncomeIncludingBookingRevenue(): Promise<{
   paidBookingRevenue: number;
   totalIncome: number;
 }> {
-  const linkedBookingIncome = await prisma.income.findMany({
-    where: { bookingId: { not: null }, deletedAt: null },
-    select: { bookingId: true },
+  const incomeAgg = await prisma.income.aggregate({
+    where: { deletedAt: null },
+    _sum: { amount: true },
   });
 
-  const linkedBookingIds = linkedBookingIncome
-    .map((entry) => entry.bookingId)
-    .filter((bookingId): bookingId is string => Boolean(bookingId));
-
-  const [incomeAgg, bookingPaymentAgg] = await Promise.all([
-    prisma.income.aggregate({ where: { deletedAt: null }, _sum: { amount: true } }),
-    prisma.payment.aggregate({
-      where: {
-        status: "PAID",
-        ...(linkedBookingIds.length > 0
-          ? { NOT: { bookingId: { in: linkedBookingIds } } }
-          : {}),
-      },
-      _sum: { amount: true },
-    }),
-  ]);
-
   const recordedIncome = Number(incomeAgg._sum.amount ?? 0);
-  const paidBookingRevenue = Number(bookingPaymentAgg._sum.amount ?? 0);
 
   return {
     recordedIncome,
-    paidBookingRevenue,
-    totalIncome: recordedIncome + paidBookingRevenue,
+    paidBookingRevenue: 0,
+    totalIncome: recordedIncome,
   };
 }

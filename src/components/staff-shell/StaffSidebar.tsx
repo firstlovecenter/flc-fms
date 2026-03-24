@@ -15,7 +15,6 @@ import {
   BarChart3,
   LogOut,
   X,
-  CreditCard,
   ShieldAlert,
   Package,
   FileText,
@@ -73,7 +72,6 @@ const NAV_GROUPS = [
 
 const ADMIN_NAV = [
   { href: "/users", label: "Manage Users", icon: Users },
-  { href: "/payments", label: "Payment Config", icon: CreditCard },
   { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
 ];
 

@@ -116,7 +116,6 @@ export async function notifyBookingApproved(params: {
   phone: string;
   bookingTitle: string;
   startTime: Date;
-  paymentUrl?: string;
 }) {
   const date = params.startTime.toLocaleDateString("en-GH", {
     weekday: "short",
@@ -124,12 +123,9 @@ export async function notifyBookingApproved(params: {
     month: "short",
     year: "numeric",
   });
-  const paymentSuffix = params.paymentUrl
-    ? ` Pay here: ${params.paymentUrl}`
-    : ``;
   await sendSMS({
     to: params.phone,
-    message: `Your booking "${params.bookingTitle}" on ${date} has been APPROVED.${paymentSuffix}`,
+    message: `Your booking "${params.bookingTitle}" on ${date} has been APPROVED.`,
   });
 }
 
@@ -160,18 +156,6 @@ export async function notifyBookingConfirmation(params: {
   await sendSMS({
     to: params.phone,
     message: `Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.`,
-  });
-}
-
-export async function notifyPaymentReceived(params: {
-  phone: string;
-  amount: number;
-  currency: string;
-  bookingTitle: string;
-}) {
-  await sendSMS({
-    to: params.phone,
-    message: `Payment of ${params.currency} ${params.amount.toFixed(2)} received for "${params.bookingTitle}". Thank you!`,
   });
 }
 

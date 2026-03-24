@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Users, CreditCard, FileText, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, LogOut, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { logout } from "@/actions/auth.actions";
@@ -16,7 +16,6 @@ interface SuperAdminSidebarProps {
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/users", label: "Manage Users", icon: Users },
-  { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/audit", label: "Audit Logs", icon: FileText },
 ];
 

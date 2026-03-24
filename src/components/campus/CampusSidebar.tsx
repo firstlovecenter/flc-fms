@@ -15,7 +15,6 @@ import {
   BarChart3,
   LogOut,
   X,
-  CreditCard,
   ShieldAlert,
   Package,
 } from "lucide-react";
@@ -43,7 +42,6 @@ const NAV = [
 
 const ADMIN_NAV = [
   { href: "/users", label: "Manage Users", icon: Users },
-  { href: "/payments", label: "Payment Config", icon: CreditCard },
   { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
 ];
 

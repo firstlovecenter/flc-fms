@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Building2, User, CreditCard, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
+import { ArrowLeft, Clock, Building2, User, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
+import SendSMSButton from "@/components/bookings/SendSMSButton";
 
 function normalizeTel(phone: string) {
   return phone.replace(/[^\d+]/g, "");
@@ -25,8 +26,6 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
       facility: true,
       patron:   true,
       user:     { select: { name: true, email: true, role: true, phone: true } },
-      payment:  true,
-      receipt:  true,
       checkIn:  {
         include: {
           checkedInBy:  { select: { name: true } },
@@ -53,7 +52,6 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
         </div>
         <div className="flex flex-wrap gap-2">
           <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
-          <span className={statusBadgeClass(booking.paymentStatus)}>{booking.paymentStatus}</span>
         </div>
       </div>
 
@@ -119,28 +117,12 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
         </div>
       </div>
 
-      {/* Payment summary */}
+      {/* Amount */}
       <div className="card p-6">
         <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-          <CreditCard size={13} /> Payment
+          <FileText size={13} /> Booking Amount
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
-            {booking.payment && (
-              <p className="text-sm text-[var(--muted)] mt-1">
-                Via {booking.payment.provider}
-                {booking.payment.paidAt && ` · Paid ${formatDateTime(booking.payment.paidAt)}`}
-              </p>
-            )}
-          </div>
-          {booking.receipt && (
-            <div className="text-right">
-              <p className="text-xs text-[var(--muted)]">Receipt</p>
-              <p className="font-mono font-semibold text-[var(--slate)]">#{booking.receipt.receiptNumber}</p>
-            </div>
-          )}
-        </div>
+        <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
       </div>
 
       {booking.notes && (
@@ -188,6 +170,14 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
         )}
         {["PENDING", "APPROVED"].includes(booking.status) && (
           <CancelBookingButton bookingId={booking.id} />
+        )}
+        {canManage && contact?.phone && (
+          <SendSMSButton
+            bookingId={booking.id}
+            bookingTitle={booking.title}
+            bookerName={contact.name}
+            bookerPhone={contact.phone}
+          />
         )}
       </div>
     </div>

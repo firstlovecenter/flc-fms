@@ -190,7 +190,6 @@ export async function createGuestItemBooking(raw: unknown) {
       endTime:      data.endTime,
       totalAmount:  total,
       status:       "PENDING",
-      paymentStatus:"UNPAID",
       lineItems: {
         create: lineData.map(l => ({
           itemId:    l.itemId,

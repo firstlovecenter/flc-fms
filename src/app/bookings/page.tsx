@@ -69,7 +69,6 @@ export default async function BookingsPage({
       facilityName: b.facility?.name ?? "N/A",
       category: b.category,
       status: b.status,
-      paymentStatus: b.paymentStatus,
       totalAmount: Number(b.totalAmount),
       startTime: b.startTime.toISOString(),
       endTime: b.endTime.toISOString(),
