@@ -56,11 +56,13 @@ function normalizeWhatsApp(phone: string) {
 export default function BookingsListClient({
   initialBookings,
   canManage,
+  isSuperAdmin,
   facilities,
   categories,
 }: {
   initialBookings: BookingItem[];
   canManage: boolean;
+  isSuperAdmin: boolean;
   facilities: FacilityOption[];
   categories: CategoryOption[];
 }) {
@@ -283,7 +285,7 @@ export default function BookingsListClient({
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border)]">
-                    {canManage && <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>Edit</button>}
+                    {canManage && (selected.status === "PENDING" || isSuperAdmin) && <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>Edit</button>}
                     {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
                     {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
                     {["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}

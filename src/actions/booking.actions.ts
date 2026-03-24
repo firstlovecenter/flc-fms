@@ -833,13 +833,18 @@ export async function completeBooking(bookingId: string) {
 const ManagerBookingUpdateSchema = BookingSchema;
 
 export async function updateBookingByManager(bookingId: string, data: z.input<typeof ManagerBookingUpdateSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN");
   const validated = ManagerBookingUpdateSchema.parse(data);
 
   const existing = await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
 
   if (existing.status === "COMPLETED") {
     return { error: "Completed bookings cannot be edited." };
+  }
+
+  // Only SUPER_ADMIN can edit bookings that are no longer PENDING
+  if (existing.status !== "PENDING" && session.role !== "SUPER_ADMIN") {
+    return { error: "Only Super Admins can edit bookings after approval." };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({

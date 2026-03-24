@@ -57,6 +57,7 @@ export default async function BookingsPage({
 
   const pages = Math.ceil(total / take);
   const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
   const canCreateBookings = canManage;
 
   // Sort: PENDING first, then by startTime descending
@@ -123,6 +124,7 @@ export default async function BookingsPage({
       <BookingsListClient
         initialBookings={bookingRows}
         canManage={canManage}
+        isSuperAdmin={isSuperAdmin}
         facilities={facilityOptions}
         categories={categories}
       />
