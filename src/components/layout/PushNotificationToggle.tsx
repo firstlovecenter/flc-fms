@@ -12,7 +12,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
-export default function PushNotificationToggle() {
+export default function PushNotificationToggle({ compact }: { compact?: boolean } = {}) {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -95,7 +95,15 @@ export default function PushNotificationToggle() {
 
   // If permission was permanently denied, show disabled state
   if (permission === "denied") {
-    return (
+    return compact ? (
+      <button
+        disabled
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--muted)] cursor-not-allowed"
+        title="Notifications blocked — enable in browser settings"
+      >
+        <BellOff size={15} strokeWidth={1.5} />
+      </button>
+    ) : (
       <button
         disabled
         className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-muted/50 text-muted-foreground cursor-not-allowed"
@@ -103,6 +111,29 @@ export default function PushNotificationToggle() {
       >
         <BellOff size={16} />
         <span className="hidden sm:inline">Notifications blocked</span>
+      </button>
+    );
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handleToggle}
+        disabled={loading}
+        className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200 ${
+          subscribed
+            ? "bg-[rgba(200,163,90,0.15)] border-[rgba(200,163,90,0.3)] text-[var(--gold)] hover:-translate-y-0.5"
+            : "bg-[var(--cream-dark)] border-[var(--border)] text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)] hover:border-[var(--border-dark)] hover:-translate-y-0.5"
+        }`}
+        title={subscribed ? "Disable push notifications" : "Enable push notifications"}
+      >
+        {loading ? (
+          <Loader2 size={15} className="animate-spin" />
+        ) : subscribed ? (
+          <Bell size={15} strokeWidth={1.5} />
+        ) : (
+          <BellOff size={15} strokeWidth={1.5} />
+        )}
       </button>
     );
   }

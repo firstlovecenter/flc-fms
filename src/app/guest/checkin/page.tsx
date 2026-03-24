@@ -18,7 +18,7 @@ export default function GuestCheckInPage() {
         }}
       />
 
-      <PublicTopNav current="guest" />
+      <PublicTopNav current="checkin" />
 
       <main className="max-w-5xl mx-auto px-5 md:px-8 py-8 md:py-12 space-y-6">
         <section

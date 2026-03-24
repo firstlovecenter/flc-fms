@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
-export default function PublicTopNav({ current }: { current?: "home" | "guest" | "patron" | "catalog" }) {
+export default function PublicTopNav({ current }: { current?: "home" | "guest" | "checkin" | "patron" | "catalog" }) {
   const active = "var(--navy)";
   const idle = "var(--muted)";
 
@@ -64,9 +64,39 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
           >
             Guest Booking
           </Link>
+          <Link 
+            href="/guest/checkin" 
+            style={{ 
+              padding: "7px 16px",
+              borderRadius: "20px",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              textDecoration: "none",
+              color: current === "checkin" ? active : idle,
+              transition: "all 0.2s ease",
+              background: current === "checkin" ? "rgba(10, 22, 40, 0.08)" : "transparent",
+            }}
+          >
+            Check-In
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/guest/checkin"
+            className="md:hidden"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              fontSize: "0.8rem",
+              fontWeight: 500,
+              textDecoration: "none",
+              color: current === "checkin" ? "var(--navy)" : "var(--muted)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            Check-In
+          </Link>
           <Link 
             href="/login"
             className="hidden sm:inline-flex"

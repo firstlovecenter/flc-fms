@@ -1,6 +1,9 @@
 "use client";
 
-import { Bell, Menu, Search } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Menu, Search } from "lucide-react";
+import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
+import CommandSearch from "@/components/ui/CommandSearch";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN:      "Super Admin",
@@ -20,6 +23,21 @@ export default function Topbar({
   onMenuToggle?: () => void;
 }) {
   const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  // ⌘K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <header className="topbar flex items-center justify-between px-4 h-14 bg-white dark:bg-[rgba(10,17,29,0.85)] border-b border-[var(--border)] backdrop-blur-md shadow-[var(--shadow-sm)] flex-shrink-0 z-30">
@@ -42,24 +60,28 @@ export default function Topbar({
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        {/* Search hint */}
+        {/* Search trigger */}
         <button
-          className="hidden md:flex items-center gap-2 px-3 h-8 rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--muted)] text-xs hover:border-[var(--border-dark)] hover:text-[var(--slate)] transition-colors"
-          aria-label="Search (coming soon)"
-          disabled
+          onClick={openSearch}
+          className="hidden md:flex items-center gap-2 px-3 h-8 rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--muted)] text-xs hover:border-[var(--border-dark)] hover:text-[var(--slate)] transition-colors cursor-pointer"
+          aria-label="Search"
         >
           <Search size={13} />
           <span>Search…</span>
           <kbd className="ml-1 px-1.5 py-0.5 rounded bg-[var(--border)] text-[0.62rem] font-medium text-[var(--muted)] font-mono">⌘K</kbd>
         </button>
 
-        {/* Bell */}
+        {/* Mobile search button */}
         <button
-          className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)] hover:border-[var(--border-dark)] hover:-translate-y-0.5 transition-all duration-200"
-          aria-label="Notifications"
+          onClick={openSearch}
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)] transition-colors cursor-pointer"
+          aria-label="Search"
         >
-          <Bell size={15} strokeWidth={1.5} />
+          <Search size={15} />
         </button>
+
+        {/* Push notifications */}
+        <PushNotificationToggle compact />
 
         {/* Divider */}
         <div className="hidden sm:block w-px h-7 bg-[var(--border)]" />
@@ -81,6 +103,9 @@ export default function Topbar({
           </div>
         </div>
       </div>
+
+      {/* Command search dialog */}
+      {searchOpen && <CommandSearch onClose={() => setSearchOpen(false)} />}
     </header>
   );
 }
