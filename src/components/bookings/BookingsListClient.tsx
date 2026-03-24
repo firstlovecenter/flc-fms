@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
 import { Phone, MessageCircle } from "lucide-react";
@@ -9,7 +9,7 @@ import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
-import { deleteBookingByManager, updateBookingByManager } from "@/actions/booking.actions";
+import { updateBookingByManager } from "@/actions/booking.actions";
 
 type BookingItem = {
   id: string;
@@ -66,6 +66,12 @@ export default function BookingsListClient({
 }) {
   const router = useRouter();
   const [bookings, setBookings] = useState(initialBookings);
+
+  // Sync client state when server-rendered data changes (e.g. filter navigation)
+  useEffect(() => {
+    setBookings(initialBookings);
+  }, [initialBookings]);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,22 +165,7 @@ export default function BookingsListClient({
     });
   }
 
-  function deleteBooking() {
-    if (!selected) return;
-    if (!confirm("Delete this booking permanently? This cannot be undone.")) return;
 
-    setError(null);
-    startTransition(async () => {
-      const result = await deleteBookingByManager(selected.id);
-      if ("error" in result && result.error) {
-        setError(result.error as string);
-        return;
-      }
-      setBookings((prev) => prev.filter((b) => b.id !== selected.id));
-      closeModal();
-      router.refresh();
-    });
-  }
 
   return (
     <>
@@ -304,7 +295,7 @@ export default function BookingsListClient({
                         bookerPhone={selected.bookerPhone}
                       />
                     )}
-                    {canManage && <button type="button" className="btn-danger" disabled={isPending} onClick={deleteBooking}>Delete</button>}
+
                   </div>
                 </>
               ) : (

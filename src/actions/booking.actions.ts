@@ -790,13 +790,16 @@ export async function cancelBooking(bookingId: string) {
   const session = await getSession();
   if (!session) return { error: "Unauthorized" };
 
+  const isStaff = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const isPatron = session.role === "PATRON";
+
+  if (!isStaff && !isPatron) return { error: "Unauthorized" };
+
   const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, deletedAt: null },
   });
 
-  if (session.role === "PATRON" && booking.patronId !== session.sub) {
-    return { error: "Unauthorized" };
-  }
+  if (isPatron && booking.patronId !== session.sub) return { error: "Unauthorized" };
   if (booking.status === "COMPLETED") return { error: "Cannot cancel a completed booking." };
 
   await prisma.booking.update({
@@ -927,32 +930,8 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
   return { success: true, booking };
 }
 
-export async function deleteBookingByManager(bookingId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
-
-  const booking = await prisma.booking.findFirstOrThrow({
-    where: { id: bookingId, deletedAt: null },
-    include: {
-      income: { select: { id: true } },
-    },
-  });
-
-  if (booking.income) {
-    return { error: "Cannot delete bookings with income records. Cancel the booking instead." };
-  }
-
-  if (booking.status === "APPROVED" || booking.status === "COMPLETED") {
-    return { error: "Approved or completed bookings cannot be deleted. Cancel instead." };
-  }
-
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "CANCELLED", deletedAt: new Date() },
-  });
-
-  auditLog({ userId: session.sub, action: "DELETE_BOOKING", entity: "Booking", entityId: bookingId });
-  revalidatePath("/bookings");
-  return { success: true };
+export async function deleteBookingByManager(_bookingId: string) {
+  return { error: "Bookings cannot be deleted once submitted. Use cancel instead." };
 }
 
 export async function getBookings(filters: {

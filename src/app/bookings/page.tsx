@@ -59,7 +59,16 @@ export default async function BookingsPage({
   const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canCreateBookings = canManage;
 
-  const bookingRows = bookings.map((b) => {
+  // Sort: PENDING first, then by startTime descending
+  const STATUS_PRIORITY: Record<string, number> = { PENDING: 0, APPROVED: 1, COMPLETED: 2, REJECTED: 3, CANCELLED: 4 };
+  const sorted = [...bookings].sort((a, b) => {
+    const pa = STATUS_PRIORITY[a.status] ?? 5;
+    const pb = STATUS_PRIORITY[b.status] ?? 5;
+    if (pa !== pb) return pa - pb;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  const bookingRows = sorted.map((b) => {
     const booker = b.patron ?? b.user;
     return {
       id: b.id,
