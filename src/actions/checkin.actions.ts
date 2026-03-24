@@ -294,9 +294,10 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
       deletedAt: null,
       startTime: { lte: todayEnd },
       endTime: { gte: todayStart },
-      patron: {
-        phone: { contains: searchDigits },
-      },
+      OR: [
+        { patron: { phone: { contains: searchDigits } } },
+        { user:   { phone: { contains: searchDigits } } },
+      ],
     },
     select: {
       id: true,
@@ -351,9 +352,10 @@ export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInReque
       id: bookingId,
       status: "APPROVED",
       deletedAt: null,
-      patron: {
-        phone: { contains: searchDigits },
-      },
+      OR: [
+        { patron: { phone: { contains: searchDigits } } },
+        { user:   { phone: { contains: searchDigits } } },
+      ],
     },
     include: { checkIn: true, facility: { select: { latitude: true, longitude: true } } },
   });
