@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v4";
+const CACHE_VERSION = "v5";
 const STATIC_CACHE  = `cfms-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `cfms-runtime-${CACHE_VERSION}`;
 const DATA_CACHE    = `cfms-data-${CACHE_VERSION}`;
@@ -19,7 +19,6 @@ const PRECACHE_URLS = [
   // Public catalog
   "/",
   "/guest/book",
-  "/pay",
   // Offline data endpoint — seeds the catalog data cache
   "/api/offline/catalog",
 ];
@@ -41,7 +40,6 @@ const WARM_URLS = [
   "/patron/dashboard",
   "/patron/bookings",
   "/patron/profile",
-  "/patron/receipts",
 ];
 
 // Max age for runtime cache entries (24 hours)
@@ -189,6 +187,51 @@ self.addEventListener("fetch", (event) => {
         return cached || fetchPromise;
       })
     )
+  );
+});
+
+// ── Push Notifications ────────────────────────────────────────────────────────
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "FLC FMS", body: event.data.text() };
+  }
+
+  const { title = "FLC FMS", body = "", icon, badge, url, tag } = payload;
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: icon || "/icons/icon-192x192.png",
+      badge: badge || "/icons/icon-72x72.png",
+      tag: tag || "cfms-notification",
+      data: { url: url || "/" },
+      vibrate: [100, 50, 100],
+    })
+  );
+});
+
+// ── Notification Click ───────────────────────────────────────────────────────
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      // Focus an existing window if one is open at the URL
+      for (const client of clients) {
+        if (new URL(client.url).pathname === targetUrl && "focus" in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      return self.clients.openWindow(targetUrl);
+    })
   );
 });
 

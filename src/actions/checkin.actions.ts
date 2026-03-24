@@ -7,10 +7,12 @@ import { requireStaff, requirePatron } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
+import { sendPushToAllStaff } from "@/lib/notifications/push";
+import { verifyCheckInProximity } from "@/lib/geolocation";
 
 // ─── Patron: Request Check-In ──────────────────────────────────────────────
 
-export async function requestCheckIn(bookingId: string) {
+export async function requestCheckIn(bookingId: string, coords?: { latitude: number; longitude: number }) {
   const session = await requirePatron();
 
   const booking = await prisma.booking.findFirst({
@@ -20,7 +22,7 @@ export async function requestCheckIn(bookingId: string) {
       status: "APPROVED",
       deletedAt: null,
     },
-    include: { checkIn: true },
+    include: { checkIn: true, facility: { select: { latitude: true, longitude: true, name: true } } },
   });
 
   if (!booking) return { error: "Booking not found or not approved." };
@@ -40,12 +42,33 @@ export async function requestCheckIn(bookingId: string) {
     return { error: "Check-in can only be requested on the day of your booking." };
   }
 
+  // Verify geolocation proximity if coordinates provided and facility has GPS
+  if (coords && booking.facility) {
+    const proximity = verifyCheckInProximity(
+      coords.latitude,
+      coords.longitude,
+      booking.facility.latitude,
+      booking.facility.longitude
+    );
+    if (!proximity.allowed) {
+      return { error: `You appear to be ${proximity.distance}m from the facility. Please move closer to check in (max ${500}m).` };
+    }
+  }
+
   await prisma.booking.update({
     where: { id: bookingId },
     data: {
       checkInRequested: true,
       checkInRequestedAt: now,
     },
+  });
+
+  // Notify staff about check-in request
+  sendPushToAllStaff({
+    title: "Check-In Request",
+    body: `${session.name} requests check-in for "${booking.title}" at ${booking.facility?.name ?? "N/A"}`,
+    url: "/checkin",
+    tag: `checkin-request-${bookingId}`,
   });
 
   auditLog({
@@ -300,13 +323,15 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
 const GuestCheckInRequestSchema = z.object({
   bookingId: z.string().min(1),
   phone: z.string().min(9).max(20),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInRequestSchema>) {
   const parsed = GuestCheckInRequestSchema.safeParse(data);
   if (!parsed.success) return { error: "Invalid request." };
 
-  const { bookingId, phone } = parsed.data;
+  const { bookingId, phone, latitude, longitude } = parsed.data;
 
   const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const { allowed } = await rateLimit(`guest_checkin_req:${ip}`, 10, 300);
@@ -322,12 +347,25 @@ export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInReque
         phone: { contains: phone.replace(/^\+/, "") },
       },
     },
-    include: { checkIn: true },
+    include: { checkIn: true, facility: { select: { latitude: true, longitude: true } } },
   });
 
   if (!booking) return { error: "Booking not found." };
   if (booking.checkIn) return { error: "Already checked in." };
   if (booking.checkInRequested) return { error: "Check-in already requested." };
+
+  // Verify geolocation proximity if coordinates provided
+  if (latitude != null && longitude != null && booking.facility) {
+    const proximity = verifyCheckInProximity(
+      latitude,
+      longitude,
+      booking.facility.latitude,
+      booking.facility.longitude
+    );
+    if (!proximity.allowed) {
+      return { error: `You appear to be ${proximity.distance}m from the facility. Please move closer to check in (max ${500}m).` };
+    }
+  }
 
   await prisma.booking.update({
     where: { id: bookingId },

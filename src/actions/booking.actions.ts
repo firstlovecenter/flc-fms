@@ -10,6 +10,7 @@ import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
+import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/notifications/push";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
 
@@ -323,10 +324,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
-  // Alert FMs for pending bookings (FM self-bookings are auto-approved, no alert needed)
+  // Alert Booking Managers for pending bookings (both BM and FM can approve,
+  // so BM handles the alert; FM self-bookings are auto-approved, no alert needed)
   if (booking.status === "PENDING") {
     const fms = await prisma.user.findMany({
-      where: { role: "FACILITY_MANAGER", isActive: true },
+      where: { role: "BOOKING_MANAGER", isActive: true },
       select: { phone: true },
     });
     for (const fm of fms) {
@@ -474,9 +476,9 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
-  // Alert all FMs about the new pending patron booking
+  // Alert Booking Managers about the new pending patron booking
   const patronFMs = await prisma.user.findMany({
-    where: { role: "FACILITY_MANAGER", isActive: true },
+    where: { role: "BOOKING_MANAGER", isActive: true },
     select: { phone: true },
   });
   for (const fm of patronFMs) {
@@ -650,9 +652,9 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
   });
 
-  // Alert all FMs about the new pending guest booking
+  // Alert Booking Managers about the new pending guest booking
   const guestFMs = await prisma.user.findMany({
-    where: { role: "FACILITY_MANAGER", isActive: true },
+    where: { role: "BOOKING_MANAGER", isActive: true },
     select: { phone: true },
   });
   for (const fm of guestFMs) {
@@ -712,6 +714,24 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });
+
+  // Push notification to patron/booker
+  if (booking.patronId) {
+    sendPushToPatron(booking.patronId, {
+      title: "Booking Approved ✓",
+      body: `Your booking "${booking.title}" has been approved.`,
+      url: "/patron/bookings",
+      tag: `booking-approved-${bookingId}`,
+    });
+  } else if (booking.userId) {
+    sendPushToUser(booking.userId, {
+      title: "Booking Approved ✓",
+      body: `Your booking "${booking.title}" has been approved.`,
+      url: `/bookings/${bookingId}`,
+      tag: `booking-approved-${bookingId}`,
+    });
+  }
+
   revalidatePath("/bookings");
   return { success: true, booking };
 }
@@ -744,6 +764,24 @@ export async function rejectBooking(bookingId: string, reason: string) {
   }
 
   auditLog({ userId: session.sub, action: "REJECT_BOOKING", entity: "Booking", entityId: bookingId, after: { reason } });
+
+  // Push notification to patron/booker
+  if (booking.patronId) {
+    sendPushToPatron(booking.patronId, {
+      title: "Booking Rejected",
+      body: `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
+      url: "/patron/bookings",
+      tag: `booking-rejected-${bookingId}`,
+    });
+  } else if (booking.userId) {
+    sendPushToUser(booking.userId, {
+      title: "Booking Rejected",
+      body: `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
+      url: `/bookings/${bookingId}`,
+      tag: `booking-rejected-${bookingId}`,
+    });
+  }
+
   revalidatePath("/bookings");
   return { success: true, booking };
 }

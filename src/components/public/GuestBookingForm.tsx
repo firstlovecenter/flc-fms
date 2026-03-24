@@ -274,7 +274,7 @@ export default function GuestBookingForm({
     }
 
     if (mode === "guest") {
-      setSuccessMessage("Booking request submitted successfully! You can create a patron account to track status and payment.");
+      setSuccessMessage("Booking request submitted successfully! You can create a patron account to track your booking status.");
       return;
     }
 

@@ -3,11 +3,21 @@ import Redis from "ioredis";
 
 const globalForRedis = globalThis as unknown as { redis: Redis | undefined };
 
-export const redis =
-  globalForRedis.redis ??
-  new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
-    maxRetriesPerRequest: 3,
-    enableReadyCheck: false});
+function createClient(): Redis {
+  const url = process.env.REDIS_URL;
+  const client = new Redis(url ?? "redis://localhost:6379", {
+    maxRetriesPerRequest: url ? 3 : 0,
+    enableReadyCheck: false,
+    // Don't keep retrying when no Redis URL is configured
+    lazyConnect: !url,
+  });
+  // Prevent unhandled 'error' events from crashing the process;
+  // all callers already have try/catch fallbacks.
+  client.on("error", () => {});
+  return client;
+}
+
+export const redis = globalForRedis.redis ?? createClient();
 
 if (process.env.NODE_ENV !== "production") globalForRedis.redis = redis;
 

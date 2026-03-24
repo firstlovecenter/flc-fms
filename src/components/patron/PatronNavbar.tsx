@@ -6,6 +6,7 @@ import { logout } from "@/actions/auth.actions";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 
 interface PatronNavbarProps {
   initials: string;
@@ -87,6 +88,8 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
               </div>
               <span className="text-[0.82rem] font-semibold text-[var(--navy)]">{name.split(" ")[0]}</span>
             </div>
+            <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
+            <PushNotificationToggle />
             <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
             <button
               onClick={handleLogout}

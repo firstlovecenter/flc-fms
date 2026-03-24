@@ -7,7 +7,7 @@ import PullToRefresh from "@/components/layout/PullToRefresh";
 
 export const metadata: Metadata = {
   title: { default: "FLC FMS — Facility Management", template: "%s | FLC FMS" },
-  description: "First Love Center — Facility Management. Bookings, payments, maintenance, and more.",
+  description: "First Love Center — Facility Management. Bookings, maintenance, and more.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

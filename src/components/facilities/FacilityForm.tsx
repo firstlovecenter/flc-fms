@@ -17,6 +17,8 @@ const schema = z.object({
   requiresItemBookingTerms: z.boolean().default(false),
   amenities:     z.string().optional(), // comma-separated
   availableDays: z.array(z.coerce.number()).min(1, "Select at least one day"),
+  latitude:      z.string().optional(),
+  longitude:     z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -36,6 +38,8 @@ interface Props {
     requiresBookingTerms: boolean;
     requiresItemBookingTerms: boolean;
     amenities: string[]; availableDays: number[]; images: string[];
+    latitude?: number | null;
+    longitude?: number | null;
     pricing?: {
       category: string;
       price: number;
@@ -87,6 +91,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       requiresItemBookingTerms: facility.requiresItemBookingTerms,
       amenities:     facility.amenities.join(", "),
       availableDays: facility.availableDays,
+      latitude:      facility.latitude != null ? String(facility.latitude) : "",
+      longitude:     facility.longitude != null ? String(facility.longitude) : "",
     } : {
       availableDays: [0,1,2,3,4,5,6],
       acUsageFee: 0,
@@ -141,6 +147,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       amenities,
       images,
       availableDays: data.availableDays,
+      latitude:      data.latitude ? Number(data.latitude) : null,
+      longitude:     data.longitude ? Number(data.longitude) : null,
       categoryMappings: activeMappings,
     };
 
@@ -220,6 +228,22 @@ export default function FacilityForm({ facility, categories }: Props) {
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amenities (comma-separated)</label>
         <input {...register("amenities")} className="input" placeholder="AC, Projector, Sound System, Whiteboard" />
+      </div>
+
+      {/* GPS Coordinates for check-in verification */}
+      <div className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-4">
+        <h3 className="text-sm font-semibold text-[var(--slate)] uppercase tracking-wide">GPS Location</h3>
+        <p className="text-xs text-[var(--muted)]">Used for geolocation-based check-in verification. Patrons must be within 500m of the facility to request check-in.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Latitude</label>
+            <input {...register("latitude")} type="number" step="any" className="input" placeholder="5.6037" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Longitude</label>
+            <input {...register("longitude")} type="number" step="any" className="input" placeholder="-0.1870" />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-4">

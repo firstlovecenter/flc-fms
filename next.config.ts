@@ -11,7 +11,7 @@ const productionSecurityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    value: "camera=(), microphone=(), geolocation=(self), notifications=(self)",
   },
   {
     key: "Content-Security-Policy",

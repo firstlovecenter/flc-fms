@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, ArrowRight, Clock, Building2, CheckCircle2, LogIn, Loader2 } from "lucide-react";
+import { Phone, ArrowRight, Clock, Building2, CheckCircle2, LogIn, Loader2, MapPin } from "lucide-react";
 import { lookupGuestCheckInBookings, requestGuestCheckIn } from "@/actions/checkin.actions";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 type BookingResult = {
   id: string;
@@ -21,6 +22,7 @@ export default function GuestCheckInFlow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requestingId, setRequestingId] = useState<string | null>(null);
+  const { getPosition } = useGeolocation();
 
   async function handleLookup(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +46,15 @@ export default function GuestCheckInFlow() {
   async function handleRequestCheckIn(bookingId: string) {
     setError(null);
     setRequestingId(bookingId);
-    const result = await requestGuestCheckIn({ bookingId, phone: phone.trim() });
+
+    // Try to get location for proximity verification
+    const coords = await getPosition();
+
+    const result = await requestGuestCheckIn({
+      bookingId,
+      phone: phone.trim(),
+      ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
+    });
     setRequestingId(null);
     if (result && "error" in result) {
       setError(result.error as string);

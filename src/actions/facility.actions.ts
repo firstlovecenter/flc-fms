@@ -19,6 +19,8 @@ const FacilitySchema = z.object({
   availableFrom:  z.string().regex(/^\d{2}:\d{2}$/).default("08:00"),
   availableTo:    z.string().regex(/^\d{2}:\d{2}$/).default("22:00"),
   availableDays:  z.array(z.coerce.number().int().min(0).max(6)).default([0,1,2,3,4,5,6]),
+  latitude:       z.coerce.number().min(-90).max(90).optional().nullable(),
+  longitude:      z.coerce.number().min(-180).max(180).optional().nullable(),
   categoryMappings: z.array(z.object({
     category: z.string().min(1),
     price: z.coerce.number().min(0),

@@ -136,7 +136,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
           <p style={{ color: "rgba(255,255,255,0.76)", marginTop: 6, maxWidth: 700 }}>
             {isItemBooking
               ? "Reserve items or packages for your external event. Our team will confirm availability and pricing."
-              : <>Submit a booking as a guest, or <Link href="/patron/register" style={{ color: "var(--gold-pale)", textDecoration: "underline" }}>create an account</Link> to track status and payment.</>
+              : <>Submit a booking as a guest, or <Link href="/patron/register" style={{ color: "var(--gold-pale)", textDecoration: "underline" }}>create an account</Link> to track your booking status.</>
             }
           </p>
           <div className="flex flex-wrap gap-2 mt-4">

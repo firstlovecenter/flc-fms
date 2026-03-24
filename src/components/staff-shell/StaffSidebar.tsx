@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
+import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 
 type StaffSidebarProps = {
   role: string;
@@ -193,6 +194,7 @@ export default function StaffSidebar({ role, name, isOpen = false, onClose }: St
             </div>
           </div>
         </div>
+        <PushNotificationToggle />
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[0.82rem] font-medium text-[rgba(255,255,255,0.4)] hover:text-[rgba(255,255,255,0.7)] hover:bg-[rgba(255,255,255,0.06)] transition-all duration-150"
