@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Wrench,
   Building2,
-  Tags,
   Boxes,
   Users,
   ArrowLeftRight,
@@ -50,7 +49,6 @@ const NAV_GROUPS = [
     label: "Facilities & Inventory",
     items: [
       { href: "/facilities", label: "Facilities", icon: Building2 },
-      { href: "/facilities/categories", label: "Category / Pricing", icon: Tags, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
       { href: "/items", label: "Items & Packages", icon: Package },
       { href: "/inventory", label: "Inventory", icon: Boxes },
     ],

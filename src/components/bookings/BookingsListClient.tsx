@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle, Search, Filter, X } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
@@ -73,6 +73,67 @@ export default function BookingsListClient({
   useEffect(() => {
     setBookings(initialBookings);
   }, [initialBookings]);
+
+  // ── Filters ──────────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterFacility, setFilterFacility] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterDay, setFilterDay] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  const hasActiveFilters = !!(searchQuery || filterFacility || filterCategory || filterDateFrom || filterDateTo || filterDay);
+
+  function clearFilters() {
+    setSearchQuery("");
+    setFilterFacility("");
+    setFilterCategory("");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterDay("");
+  }
+
+  const filtered = useMemo(() => {
+    return bookings.filter((b) => {
+      // Text search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          b.title.toLowerCase().includes(q) ||
+          b.bookerName.toLowerCase().includes(q) ||
+          (b.bookerPhone && b.bookerPhone.includes(q)) ||
+          b.facilityName.toLowerCase().includes(q) ||
+          (b.notes && b.notes.toLowerCase().includes(q));
+        if (!match) return false;
+      }
+      // Facility
+      if (filterFacility && b.facilityId !== filterFacility) return false;
+      // Category
+      if (filterCategory && b.category !== filterCategory) return false;
+      // Date range
+      if (filterDateFrom) {
+        const from = new Date(filterDateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (new Date(b.startTime) < from) return false;
+      }
+      if (filterDateTo) {
+        const to = new Date(filterDateTo);
+        to.setHours(23, 59, 59, 999);
+        if (new Date(b.startTime) > to) return false;
+      }
+      // Day of week
+      if (filterDay !== "") {
+        const dayNum = parseInt(filterDay, 10);
+        if (new Date(b.startTime).getDay() !== dayNum) return false;
+      }
+      return true;
+    });
+  }, [bookings, searchQuery, filterFacility, filterCategory, filterDateFrom, filterDateTo, filterDay]);
+
+  // ── End Filters ──────────────────────────────────────────────────────────
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -171,11 +232,87 @@ export default function BookingsListClient({
 
   return (
     <>
+      {/* ── Filter Bar ───────────────────────────────────────────────── */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+            <input
+              type="text"
+              placeholder="Search by name, booker, phone, facility..."
+              className="input w-full pl-9 pr-3 py-2 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`btn-secondary flex items-center gap-1.5 text-sm shrink-0 ${showFilters ? "bg-[var(--navy)] text-white" : ""}`}
+          >
+            <Filter size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[var(--gold)]" />}
+          </button>
+          {hasActiveFilters && (
+            <button type="button" onClick={clearFilters} className="btn-secondary text-xs shrink-0 flex items-center gap-1">
+              <X size={12} /> Clear
+            </button>
+          )}
+        </div>
+
+        {showFilters && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-white border border-[var(--border)]">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Facility</label>
+              <select className="input w-full text-sm" value={filterFacility} onChange={(e) => setFilterFacility(e.target.value)}>
+                <option value="">All facilities</option>
+                {facilities.map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Category</label>
+              <select className="input w-full text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                <option value="">All categories</option>
+                {categories.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Day of Week</label>
+              <select className="input w-full text-sm" value={filterDay} onChange={(e) => setFilterDay(e.target.value)}>
+                <option value="">Any day</option>
+                {DAYS_OF_WEEK.map((d, i) => (
+                  <option key={i} value={i}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">From Date</label>
+              <input type="date" className="input w-full text-sm" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">To Date</label>
+              <input type="date" className="input w-full text-sm" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        {hasActiveFilters && (
+          <p className="text-xs text-[var(--muted)]">
+            Showing {filtered.length} of {bookings.length} bookings
+          </p>
+        )}
+      </div>
+
       <div className="space-y-2">
-        {bookings.length === 0 ? (
-          <div className="card p-10 text-center text-[var(--muted)]">No bookings found.</div>
+        {filtered.length === 0 ? (
+          <div className="card p-10 text-center text-[var(--muted)]">
+            {hasActiveFilters ? "No bookings match your filters." : "No bookings found."}
+          </div>
         ) : (
-          bookings.map((b) => (
+          filtered.map((b) => (
             <button
               key={b.id}
               type="button"

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
-type CurrentPage = "home" | "guest" | "patron";
+type CurrentPage = "home" | "guest" | "checkin" | "patron";
 
 interface PublicSplitShellProps {
   current: CurrentPage;
@@ -219,6 +219,9 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
               </Link>
               <Link href="/guest/book" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "guest" ? active : idle }}>
                 Guest Booking
+              </Link>
+              <Link href="/guest/checkin" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "checkin" ? active : idle }}>
+                Check-In
               </Link>
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <Link href="/login" className="btn-primary px-3 py-2 text-xs sm:text-sm">Sign In</Link>

@@ -21,6 +21,8 @@ const FacilitySchema = z.object({
   availableDays:  z.array(z.coerce.number().int().min(0).max(6)).default([0,1,2,3,4,5,6]),
   latitude:       z.coerce.number().min(-90).max(90).optional().nullable(),
   longitude:      z.coerce.number().min(-180).max(180).optional().nullable(),
+  hasAccessCode:  z.boolean().default(false),
+  accessCode:     z.string().max(50).optional().nullable(),
   categoryMappings: z.array(z.object({
     category: z.string().min(1),
     price: z.coerce.number().min(0),
@@ -173,6 +175,37 @@ export async function updateFacilitySortOrder(facilityId: string, sortOrder: num
   });
 
   auditLog({ userId: session.sub, action: "UPDATE_FACILITY_ORDER", entity: "Facility", entityId: facilityId, after: { sortOrder } });
+  revalidatePath("/facilities");
+  return { success: true, facility };
+}
+
+// ─── Access Code Management ─────────────────────────────────────────────────
+
+export async function updateAccessCode(
+  facilityId: string,
+  data: { hasAccessCode: boolean; accessCode?: string | null }
+) {
+  // Only FM and SUPER_ADMIN can edit access codes
+  const session = await requireStaff("FACILITY_MANAGER");
+  const before = await prisma.facility.findFirstOrThrow({ where: { id: facilityId } });
+
+  const facility = await prisma.facility.update({
+    where: { id: facilityId },
+    data: {
+      hasAccessCode: data.hasAccessCode,
+      accessCode: data.hasAccessCode ? (data.accessCode ?? null) : null,
+    },
+  });
+
+  auditLog({
+    userId: session.sub,
+    action: "UPDATE_ACCESS_CODE",
+    entity: "Facility",
+    entityId: facilityId,
+    before: { hasAccessCode: before.hasAccessCode },
+    after:  { hasAccessCode: data.hasAccessCode },
+  });
+  revalidatePath(`/facilities/${facilityId}`);
   revalidatePath("/facilities");
   return { success: true, facility };
 }

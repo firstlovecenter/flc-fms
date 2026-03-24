@@ -15,6 +15,8 @@ const schema = z.object({
   acUsageFee:    z.coerce.number().min(0, "AC usage fee cannot be negative"),
   requiresBookingTerms: z.boolean().default(true),
   requiresItemBookingTerms: z.boolean().default(false),
+  hasAccessCode: z.boolean().default(false),
+  accessCode:    z.string().optional(),
   amenities:     z.string().optional(), // comma-separated
   availableDays: z.array(z.coerce.number()).min(1, "Select at least one day"),
   latitude:      z.string().optional(),
@@ -37,6 +39,8 @@ interface Props {
     acUsageFee: number;
     requiresBookingTerms: boolean;
     requiresItemBookingTerms: boolean;
+    hasAccessCode: boolean;
+    accessCode: string | null;
     amenities: string[]; availableDays: number[]; images: string[];
     latitude?: number | null;
     longitude?: number | null;
@@ -89,6 +93,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       acUsageFee:    facility.acUsageFee,
       requiresBookingTerms: facility.requiresBookingTerms,
       requiresItemBookingTerms: facility.requiresItemBookingTerms,
+      hasAccessCode: facility.hasAccessCode,
+      accessCode:    facility.accessCode ?? "",
       amenities:     facility.amenities.join(", "),
       availableDays: facility.availableDays,
       latitude:      facility.latitude != null ? String(facility.latitude) : "",
@@ -98,6 +104,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       acUsageFee: 0,
       requiresBookingTerms: true,
       requiresItemBookingTerms: false,
+      hasAccessCode: false,
+      accessCode: "",
     },
   });
 
@@ -144,6 +152,8 @@ export default function FacilityForm({ facility, categories }: Props) {
       acUsageFee:    data.acUsageFee,
       requiresBookingTerms: data.requiresBookingTerms,
       requiresItemBookingTerms: data.requiresItemBookingTerms,
+      hasAccessCode: data.hasAccessCode,
+      accessCode:    data.hasAccessCode ? (data.accessCode?.trim() || null) : null,
       amenities,
       images,
       availableDays: data.availableDays,
@@ -257,6 +267,28 @@ export default function FacilityForm({ facility, categories }: Props) {
           <input type="checkbox" {...register("requiresItemBookingTerms")} />
           Require Item Booking Terms
         </label>
+      </div>
+
+      {/* Access Code */}
+      <div className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-4">
+        <h3 className="text-sm font-semibold text-[var(--slate)] uppercase tracking-wide">Access Code</h3>
+        <p className="text-xs text-[var(--muted)]">If this facility requires an access code for entry, enable it here and provide the code.</p>
+        <label className="flex items-center gap-2 text-sm text-[var(--navy)]">
+          <input type="checkbox" {...register("hasAccessCode")} />
+          This facility has an access code
+        </label>
+        {watch("hasAccessCode") && (
+          <div className="mt-2">
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Access Code</label>
+            <input
+              {...register("accessCode")}
+              type="text"
+              className="input"
+              placeholder="Enter access code"
+              autoComplete="off"
+            />
+          </div>
+        )}
       </div>
 
       {/* Images */}

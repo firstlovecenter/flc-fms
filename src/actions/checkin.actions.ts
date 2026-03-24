@@ -283,6 +283,11 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
+  // Strip all non-digit characters for a reliable partial match
+  const digits = phone.replace(/\D/g, "");
+  // Use the last 9 digits (local number without country code) for matching
+  const searchDigits = digits.length > 9 ? digits.slice(-9) : digits;
+
   const bookings = await prisma.booking.findMany({
     where: {
       status: "APPROVED",
@@ -290,7 +295,7 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
       startTime: { lte: todayEnd },
       endTime: { gte: todayStart },
       patron: {
-        phone: { contains: phone.replace(/^\+/, "") },
+        phone: { contains: searchDigits },
       },
     },
     select: {
@@ -338,13 +343,16 @@ export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInReque
   if (!allowed) return { error: "Too many attempts. Please try again later." };
 
   // Verify the booking belongs to a patron with this phone
+  const phoneDigits = phone.replace(/\D/g, "");
+  const searchDigits = phoneDigits.length > 9 ? phoneDigits.slice(-9) : phoneDigits;
+
   const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
       status: "APPROVED",
       deletedAt: null,
       patron: {
-        phone: { contains: phone.replace(/^\+/, "") },
+        phone: { contains: searchDigits },
       },
     },
     include: { checkIn: true, facility: { select: { latitude: true, longitude: true } } },

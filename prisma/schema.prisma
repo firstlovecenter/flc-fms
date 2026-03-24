@@ -70,6 +70,8 @@ model Facility {
   availableDays       Int[]
   latitude            Float?
   longitude           Float?
+  hasAccessCode       Boolean              @default(false)
+  accessCode          String?
   deletedAt           DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
