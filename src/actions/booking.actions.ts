@@ -637,6 +637,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     bookingTitle: booking.title,
     startTime:    booking.startTime,
     facilityName: booking.facility?.name ?? "N/A",
+    accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
   });
   await sendBookingConfirmationEmail({
     to: validated.guestEmail,
@@ -645,7 +646,9 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     facilityName: booking.facility?.name ?? "N/A",
     startTime: booking.startTime,
     endTime: booking.endTime,
-    totalAmount: Number(booking.totalAmount)});
+    totalAmount: Number(booking.totalAmount),
+    accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
+  });
 
   // Alert all FMs about the new pending guest booking
   const guestFMs = await prisma.user.findMany({

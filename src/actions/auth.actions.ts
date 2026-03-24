@@ -94,11 +94,24 @@ export async function registerPatron(formData: FormData) {
   const { name, email, password, phone } = parsed.data;
 
   const exists = await prisma.patron.findUnique({ where: { email } });
-  if (exists) return { error: "Email already registered." };
+
+  // If the email belongs to an auto-registered (unverified) patron from a guest
+  // booking, let them claim the account by setting a real password.
+  if (exists && !exists.isVerified) {
+    const passwordHash = await bcrypt.hash(password, 12);
+    const patron = await prisma.patron.update({
+      where: { id: exists.id },
+      data: { passwordHash, name, phone, isVerified: true },
+    });
+    await setSession({ sub: patron.id, role: "PATRON", name, email });
+    return { success: true, redirectTo: "/patron/dashboard" };
+  }
+
+  if (exists) return { error: "Email already registered. Please sign in instead." };
 
   const passwordHash = await bcrypt.hash(password, 12);
   const patron = await prisma.patron.create({
-    data: { email, passwordHash, name, phone },
+    data: { email, passwordHash, name, phone, isVerified: true },
   });
 
   await setSession({ sub: patron.id, role: "PATRON", name, email });

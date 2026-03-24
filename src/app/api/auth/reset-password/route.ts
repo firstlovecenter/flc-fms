@@ -38,23 +38,38 @@ export async function POST(req: NextRequest) {
   // Delete OTP after successful verification
   await deletePasswordResetOtp(email);
 
+  // Check User (staff) table first, then Patron table
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found." }, { status: 404 });
+  const patron = !user ? await prisma.patron.findUnique({ where: { email } }) : null;
+
+  if (!user && !patron) {
+    return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
 
   // Update password
   const hash = await bcrypt.hash(password, 12);
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash: hash, mustChangePassword: false },
-  });
 
-  // Notify user
-  if (user.phone) {
-    await notifyPasswordChanged({ phone: user.phone, name: user.name });
+  if (user) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hash, mustChangePassword: false },
+    });
+
+    if (user.phone) {
+      await notifyPasswordChanged({ phone: user.phone, name: user.name });
+    }
+    await sendPasswordChangedEmail({ to: user.email, name: user.name });
+  } else {
+    await prisma.patron.update({
+      where: { id: patron!.id },
+      data: { passwordHash: hash, isVerified: true },
+    });
+
+    if (patron!.phone) {
+      await notifyPasswordChanged({ phone: patron!.phone, name: patron!.name });
+    }
+    await sendPasswordChangedEmail({ to: patron!.email, name: patron!.name });
   }
-  await sendPasswordChangedEmail({ to: user.email, name: user.name });
 
   return NextResponse.json({ success: true });
 }

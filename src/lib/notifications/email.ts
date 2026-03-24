@@ -189,7 +189,15 @@ export async function sendBookingConfirmationEmail(params: {
   startTime: Date;
   endTime: Date;
   totalAmount: number;
+  accountClaimUrl?: string;
 }) {
+  const nextSteps = [
+    "Your request will be reviewed by a facility manager.",
+    "You will receive an approval or rejection update by email and SMS.",
+  ];
+  if (params.accountClaimUrl) {
+    nextSteps.push(`<a href="${esc(params.accountClaimUrl)}" style="color:#c8a35a;font-weight:600">Create an account</a> using the same email to track your booking status and receive updates.`);
+  }
   await sendEmail({
     to: params.to,
     subject: `Booking Received: ${params.bookingTitle}`,
@@ -208,10 +216,7 @@ export async function sendBookingConfirmationEmail(params: {
       detailsHtml: `
         <div style="margin-top:16px;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
           <p style="margin:0 0 8px;color:#0f172a;font-weight:700;font-size:13px">What happens next</p>
-          ${bulletList([
-            "Your request will be reviewed by a facility manager.",
-            "You will receive an approval or rejection update by email and SMS.",
-          ])}
+          ${bulletList(nextSteps)}
         </div>
       `,
     }),

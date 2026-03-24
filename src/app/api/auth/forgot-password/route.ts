@@ -25,8 +25,11 @@ export async function POST(req: NextRequest) {
   // Always return success to avoid user enumeration
   const successResponse = NextResponse.json({ success: true });
 
+  // Check User (staff) table first, then Patron table
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return successResponse;
+  const patron = !user ? await prisma.patron.findUnique({ where: { email } }) : null;
+  const account = user ?? patron;
+  if (!account) return successResponse;
 
   // Generate 6-digit OTP
   const otp = randomInt(100000, 999999).toString();
@@ -36,16 +39,16 @@ export async function POST(req: NextRequest) {
 
   // Notifications should not break password reset request handling.
   const notifyTasks: Promise<unknown>[] = [];
-  if (user.phone) {
+  if (account.phone) {
     notifyTasks.push(sendSMS({
-      to: user.phone,
+      to: account.phone,
       message: `[Revival Mgmt] Your password reset code is: ${otp}. This code expires in 15 minutes. If you did not request this, please ignore.`,
     }));
   }
 
   notifyTasks.push(sendPasswordResetOtpEmail({
     to: email,
-    name: user.name,
+    name: account.name,
     otp,
     expiresMinutes: 15,
   }));

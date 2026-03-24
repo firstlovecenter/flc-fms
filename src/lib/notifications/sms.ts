@@ -146,6 +146,7 @@ export async function notifyBookingConfirmation(params: {
   bookingTitle: string;
   startTime: Date;
   facilityName: string;
+  accountClaimUrl?: string;
 }) {
   const date = params.startTime.toLocaleDateString("en-GH", {
     weekday: "short",
@@ -153,9 +154,12 @@ export async function notifyBookingConfirmation(params: {
     month: "short",
     year: "numeric",
   });
+  const claimSuffix = params.accountClaimUrl
+    ? ` Create an account to track your booking: ${params.accountClaimUrl}`
+    : "";
   await sendSMS({
     to: params.phone,
-    message: `Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.`,
+    message: `Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.${claimSuffix}`,
   });
 }
 
