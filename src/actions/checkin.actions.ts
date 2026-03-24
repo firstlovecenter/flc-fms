@@ -288,16 +288,20 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
   // Use the last 9 digits (local number without country code) for matching
   const searchDigits = digits.length > 9 ? digits.slice(-9) : digits;
 
+  const phoneFilter = {
+    OR: [
+      { patron: { phone: { contains: searchDigits } } },
+      { user:   { phone: { contains: searchDigits } } },
+    ],
+  };
+
   const bookings = await prisma.booking.findMany({
     where: {
       status: "APPROVED",
       deletedAt: null,
       startTime: { lte: todayEnd },
       endTime: { gte: todayStart },
-      OR: [
-        { patron: { phone: { contains: searchDigits } } },
-        { user:   { phone: { contains: searchDigits } } },
-      ],
+      ...phoneFilter,
     },
     select: {
       id: true,
@@ -310,6 +314,31 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
     },
     orderBy: { startTime: "asc" },
   });
+
+  // If no bookings today, check for upcoming ones so we can give helpful feedback
+  if (bookings.length === 0) {
+    const upcoming = await prisma.booking.findMany({
+      where: {
+        status: "APPROVED",
+        deletedAt: null,
+        startTime: { gt: todayEnd },
+        ...phoneFilter,
+      },
+      select: { startTime: true, facility: { select: { name: true } } },
+      orderBy: { startTime: "asc" },
+      take: 5,
+    });
+
+    if (upcoming.length > 0) {
+      return {
+        bookings: [],
+        upcomingDates: upcoming.map((u) => ({
+          date: u.startTime.toISOString(),
+          facilityName: u.facility?.name ?? "N/A",
+        })),
+      };
+    }
+  }
 
   return {
     bookings: bookings.map((b) => ({

@@ -36,7 +36,20 @@ export default function GuestCheckInFlow() {
       return;
     }
     if (!result.bookings || result.bookings.length === 0) {
-      setError("No approved bookings found for this phone number today.");
+      if ("upcomingDates" in result && result.upcomingDates && (result.upcomingDates as { date: string; facilityName: string }[]).length > 0) {
+        const dates = (result.upcomingDates as { date: string; facilityName: string }[]);
+        const uniqueDays = [...new Set(dates.map((d) => {
+          const dt = new Date(d.date);
+          return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        }))];
+        setError(
+          `No bookings for today. Your upcoming booking${
+            dates.length > 1 ? "s are" : " is"
+          } on: ${uniqueDays.join(", ")}. Check-in is available on the day of your booking.`
+        );
+      } else {
+        setError("No approved bookings found for this phone number.");
+      }
       return;
     }
     setBookings(result.bookings);
