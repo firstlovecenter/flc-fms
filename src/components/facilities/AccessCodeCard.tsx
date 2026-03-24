@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { KeyRound, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
 import { updateAccessCode } from "@/actions/facility.actions";
+import { useRouter } from "next/navigation";
 
 interface Props {
   facilityId: string;
@@ -12,11 +13,13 @@ interface Props {
 }
 
 export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, canEdit }: Props) {
+  const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [newCode, setNewCode] = useState(accessCode ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [enabled, setEnabled] = useState(hasAccessCode);
 
   function handleSave() {
     if (!newCode.trim()) {
@@ -32,12 +35,43 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
       if ("error" in result && result.error) {
         setError(result.error as string);
       } else {
+        setEnabled(true);
         setEditing(false);
+        router.refresh();
       }
     });
   }
 
+  function handleToggle() {
+    if (enabled) {
+      // Disable access code
+      startTransition(async () => {
+        const result = await updateAccessCode(facilityId, {
+          hasAccessCode: false,
+          accessCode: null,
+        });
+        if ("error" in result && result.error) {
+          setError(result.error as string);
+        } else {
+          setEnabled(false);
+          setEditing(false);
+          setRevealed(false);
+          router.refresh();
+        }
+      });
+    } else {
+      // Enable — go straight into edit mode
+      setEnabled(true);
+      setEditing(true);
+      setNewCode("");
+      setError(null);
+    }
+  }
+
   const masked = accessCode ? "•".repeat(accessCode.length) : "Not set";
+
+  // Not enabled and user can't edit — nothing to show
+  if (!enabled && !canEdit) return null;
 
   return (
     <div className="card p-5">
@@ -47,7 +81,19 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
           Access Code
         </h3>
         <div className="flex items-center gap-2">
-          {!editing && (
+          {canEdit && (
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={handleToggle}
+                disabled={isPending}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-[var(--gold)]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]" />
+            </label>
+          )}
+          {enabled && !editing && (
             <button
               type="button"
               onClick={() => setRevealed(!revealed)}
@@ -57,7 +103,7 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
               {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           )}
-          {canEdit && !editing && (
+          {canEdit && enabled && !editing && (
             <button
               type="button"
               onClick={() => { setEditing(true); setNewCode(accessCode ?? ""); setError(null); }}
@@ -74,14 +120,16 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
         <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>
       )}
 
-      {editing ? (
+      {!enabled ? (
+        <p className="text-sm text-[var(--muted)]">No access code set. Toggle on to add one.</p>
+      ) : editing ? (
         <div className="flex items-center gap-2">
           <input
             type="text"
             className="input flex-1"
             value={newCode}
             onChange={(e) => setNewCode(e.target.value)}
-            placeholder="Enter new access code"
+            placeholder="Enter access code"
             autoFocus
             autoComplete="off"
           />
@@ -96,7 +144,12 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
           </button>
           <button
             type="button"
-            onClick={() => { setEditing(false); setError(null); }}
+            onClick={() => {
+              setEditing(false);
+              setError(null);
+              // If we were enabling a new code and cancelled, revert
+              if (!hasAccessCode && !accessCode) setEnabled(false);
+            }}
             className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
             title="Cancel"
           >
@@ -111,7 +164,7 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
         </div>
       )}
 
-      {!canEdit && (
+      {enabled && !canEdit && (
         <p className="text-xs text-[var(--muted)] mt-2">Contact a Facility Manager to change the access code.</p>
       )}
     </div>

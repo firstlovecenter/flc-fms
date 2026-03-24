@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon, KeyRound } from "lucide-react";
+import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ToggleMaintenanceButton from "@/components/facilities/ToggleMaintenanceButton";
-import AccessCodeCard from "@/components/facilities/AccessCodeCard";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -44,7 +43,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
   if (!facility) notFound();
 
   const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canEditAccessCode = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
   return (
     <div className="space-y-6 w-full max-w-4xl">
@@ -158,16 +156,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           )}
         </div>
       </div>
-
-      {/* Access Code */}
-      {facility.hasAccessCode && (
-        <AccessCodeCard
-          facilityId={facility.id}
-          hasAccessCode={facility.hasAccessCode}
-          accessCode={facility.accessCode}
-          canEdit={canEditAccessCode}
-        />
-      )}
 
       {/* Time Slots summary */}
       {(() => {

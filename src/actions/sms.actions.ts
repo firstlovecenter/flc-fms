@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { sendSMS, checkSMSBalance } from "@/lib/notifications/sms";
+import { notifyAccessCode } from "@/lib/notifications/sms";
 import { headers } from "next/headers";
 
 const SendCustomSMSSchema = z.object({
@@ -94,4 +95,47 @@ export async function sendBulkSMSToBookers(data: z.input<typeof BulkSMSSchema>) 
 export async function getSMSBalanceAction() {
   await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
   return checkSMSBalance();
+}
+
+export async function sendAccessCodeToBooker(bookingId: string) {
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const { allowed } = await rateLimit(`access_code_sms:${session.sub}:${ip}`, 20, 600);
+  if (!allowed) return { error: "Too many SMS sent. Please wait a few minutes." };
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, deletedAt: null },
+    include: {
+      facility: { select: { name: true, hasAccessCode: true, accessCode: true } },
+      patron: { select: { name: true, phone: true } },
+      user: { select: { name: true, phone: true } },
+    },
+  });
+
+  if (!booking) return { error: "Booking not found." };
+  if (!booking.facility?.hasAccessCode || !booking.facility.accessCode) {
+    return { error: "This facility does not have an access code." };
+  }
+
+  const contact = booking.patron ?? booking.user;
+  if (!contact?.phone) return { error: "Booker has no phone number on record." };
+
+  await notifyAccessCode({
+    phone: contact.phone,
+    bookingTitle: booking.title,
+    facilityName: booking.facility.name,
+    accessCode: booking.facility.accessCode,
+    startTime: booking.startTime,
+  });
+
+  auditLog({
+    userId: session.sub,
+    action: "SEND_ACCESS_CODE_SMS",
+    entity: "Booking",
+    entityId: booking.id,
+    after: { recipient: contact.phone, facilityName: booking.facility.name },
+  });
+
+  return { success: true, recipientName: contact.name };
 }

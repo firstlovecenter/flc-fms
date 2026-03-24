@@ -285,3 +285,20 @@ export async function notifyFMBookingPending(params: {
     message: `[New Booking] ${params.bookedBy} booked "${params.bookingTitle}" at ${params.facilityName} on ${date}. Pending your approval.`,
   });
 }
+
+export async function notifyAccessCode(params: {
+  phone: string;
+  bookingTitle: string;
+  facilityName: string;
+  accessCode: string;
+  startTime: Date;
+}) {
+  const time = params.startTime.toLocaleTimeString("en-GH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  await sendSMS({
+    to: params.phone,
+    message: `Your access code for "${params.bookingTitle}" at ${params.facilityName} (${time}) is: ${params.accessCode}. Please present this upon arrival.`,
+  });
+}

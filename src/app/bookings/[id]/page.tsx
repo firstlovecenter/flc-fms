@@ -8,6 +8,7 @@ import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
+import SendAccessCodeButton from "@/components/bookings/SendAccessCodeButton";
 
 function normalizeTel(phone: string) {
   return phone.replace(/[^\d+]/g, "");
@@ -177,6 +178,12 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
             bookingTitle={booking.title}
             bookerName={contact.name}
             bookerPhone={contact.phone}
+          />
+        )}
+        {canManage && contact?.phone && booking.status === "APPROVED" && booking.facility?.hasAccessCode && booking.facility.accessCode && (
+          <SendAccessCodeButton
+            bookingId={booking.id}
+            bookerName={contact.name}
           />
         )}
       </div>

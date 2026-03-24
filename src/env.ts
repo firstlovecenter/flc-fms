@@ -35,6 +35,9 @@ export const env = createEnv({
     VAPID_PRIVATE_KEY: z.string().optional(),
     VAPID_SUBJECT: z.string().optional(),
 
+    // Cron
+    CRON_SECRET: z.string().optional(),
+
     // Node environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
@@ -58,6 +61,7 @@ export const env = createEnv({
     VAPID_PUBLIC_KEY:      process.env.VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY:     process.env.VAPID_PRIVATE_KEY,
     VAPID_SUBJECT:         process.env.VAPID_SUBJECT,
+    CRON_SECRET:           process.env.CRON_SECRET,
     NODE_ENV:              process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL:   process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_VAPID_KEY: process.env.NEXT_PUBLIC_VAPID_KEY,

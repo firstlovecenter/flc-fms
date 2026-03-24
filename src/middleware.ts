@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/patron/login",
   "/patron/register",
   "/api/webhooks",
+  "/api/cron",
   "/_next",
   "/favicon.ico",
   "/robots.txt",
