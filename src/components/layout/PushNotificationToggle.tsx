@@ -12,12 +12,62 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
+async function getOrRegisterServiceWorker() {
+  const existing = await navigator.serviceWorker.getRegistration("/");
+  if (existing) return existing;
+  return navigator.serviceWorker.register("/sw.js");
+}
+
+function getValidatedVapidKey() {
+  const key = process.env.NEXT_PUBLIC_VAPID_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!key) return null;
+
+  try {
+    // Web Push public keys are uncompressed P-256 points (65 bytes).
+    const decoded = urlBase64ToUint8Array(key);
+    if (decoded.length !== 65) return null;
+    return key;
+  } catch {
+    return null;
+  }
+}
+
 export default function PushNotificationToggle({ compact }: { compact?: boolean } = {}) {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [vapidKey, setVapidKey] = useState<string | null>(() => getValidatedVapidKey());
 
-  const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY;
+  useEffect(() => {
+    if (vapidKey) return;
+
+    let cancelled = false;
+
+    fetch("/api/push/public-key")
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{ key?: string }>;
+      })
+      .then((data) => {
+        if (cancelled || !data?.key) return;
+
+        try {
+          const decoded = urlBase64ToUint8Array(data.key);
+          if (decoded.length === 65) {
+            setVapidKey(data.key);
+          }
+        } catch {
+          // Ignore invalid server response.
+        }
+      })
+      .catch(() => {
+        // Ignore; toggle remains hidden when key is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vapidKey]);
 
   const checkSubscription = useCallback(async () => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -27,11 +77,11 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
     setPermission(Notification.permission);
 
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getOrRegisterServiceWorker();
       const sub = await reg.pushManager.getSubscription();
       setSubscribed(!!sub);
-    } catch {
-      // SW not ready yet
+    } catch (error) {
+      console.error("Failed to check push subscription", error);
     }
   }, []);
 
@@ -46,14 +96,17 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
     try {
       if (subscribed) {
         // Unsubscribe
-        const reg = await navigator.serviceWorker.ready;
+        const reg = await getOrRegisterServiceWorker();
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
-          await fetch("/api/push/subscribe", {
+          const res = await fetch("/api/push/subscribe", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: sub.endpoint }),
           });
+          if (!res.ok) {
+            throw new Error(`Failed to unsubscribe: ${res.status}`);
+          }
           await sub.unsubscribe();
         }
         setSubscribed(false);
@@ -66,14 +119,14 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
           return;
         }
 
-        const reg = await navigator.serviceWorker.ready;
+        const reg = await getOrRegisterServiceWorker();
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
         });
 
         const json = sub.toJSON();
-        await fetch("/api/push/subscribe", {
+        const res = await fetch("/api/push/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -81,10 +134,14 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
             keys: json.keys,
           }),
         });
+        if (!res.ok) {
+          await sub.unsubscribe();
+          throw new Error(`Failed to persist subscription: ${res.status}`);
+        }
         setSubscribed(true);
       }
-    } catch {
-      // Push subscription failed silently
+    } catch (error) {
+      console.error("Push subscription toggle failed", error);
     } finally {
       setLoading(false);
     }
