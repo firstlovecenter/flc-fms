@@ -270,6 +270,18 @@ export async function notifyFMMaintenanceRequested(params: {
   });
 }
 
+export async function notifyCeremonyCode(params: {
+  phone: string;
+  code: string;
+  ceremonyType: string; // "Wedding" or "Naming"
+  requesterName: string;
+}) {
+  await sendSMS({
+    to: params.phone,
+    message: `Hi ${params.requesterName}, your ${params.ceremonyType} booking code is: ${params.code}. Valid for 30 days. Use it on our website to complete your booking.`,
+  });
+}
+
 export async function notifyFMBookingPending(params: {
   phone: string;
   bookedBy: string;

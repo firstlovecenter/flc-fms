@@ -496,3 +496,39 @@ export async function sendStaffPasswordResetEmail(params: {
     }),
   });
 }
+
+export async function sendCeremonyCodeEmail(params: {
+  to: string;
+  name: string;
+  code: string;
+  ceremonyType: string; // "Wedding" or "Naming"
+}) {
+  await sendEmail({
+    to: params.to,
+    subject: `Your ${params.ceremonyType} Booking Code`,
+    html: renderEmailTemplate({
+      preheader: `Your ${params.ceremonyType} booking code is ready.`,
+      badge: `${params.ceremonyType} Booking`,
+      title: "Your booking code is ready",
+      intro: `Hi ${esc(params.name)}, your payment has been confirmed. Use the code below to complete your ${params.ceremonyType.toLowerCase()} booking on our website.`,
+      detailsHtml: `
+        <div style="margin:22px 0;text-align:center">
+          <div style="display:inline-block;padding:18px 32px;border-radius:14px;background:#1e3a5f;color:#ffffff">
+            <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:0.75">Your Booking Code</p>
+            <p style="margin:0;font-size:32px;font-weight:900;letter-spacing:6px;font-family:monospace">${esc(params.code)}</p>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.7">
+          <strong>How to use your code:</strong>
+          <ol style="margin:8px 0 0;padding-left:18px">
+            <li>Go to our website and open the ${esc(params.ceremonyType)} catalogue.</li>
+            <li>Select your preferred venue and click <strong>Book Now</strong>.</li>
+            <li>Enter this code when prompted.</li>
+            <li>Complete the booking form with your ceremony details.</li>
+          </ol>
+          <p style="margin:10px 0 0;color:#64748b;font-size:12px">This code is valid for <strong>30 days</strong> and can only be used once.</p>
+        </div>
+      `,
+    }),
+  });
+}

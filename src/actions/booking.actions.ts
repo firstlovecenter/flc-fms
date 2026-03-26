@@ -13,6 +13,7 @@ import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation
 import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/notifications/push";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
+import { CeremonyDetailsSchema } from "@/lib/ceremony-utils";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
@@ -31,6 +32,8 @@ const BookingSchema = z.object({
   acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
     .optional()
     .default([]),
+  ceremonyDetails: CeremonyDetailsSchema.optional(),
+  ceremonyCodeId: z.string().optional(),
 }).refine(d => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"],
@@ -513,6 +516,8 @@ const GuestBookingSchema = z.object({
   acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
     .optional()
     .default([]),
+  ceremonyDetails: CeremonyDetailsSchema.optional(),
+  ceremonyCodeId: z.string().optional(),
 }).refine((d) => d.endTime > d.startTime, {
   message: "End time must be after start time",
   path: ["endTime"]});
@@ -593,6 +598,22 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
+    // Ceremony code validation + flat pricing
+    let ceremonyPrice: number | null = null;
+    if (validated.ceremonyCodeId) {
+      const codeRecord = await tx.ceremonyBookingCode.findFirst({
+        where: { id: validated.ceremonyCodeId, status: "ACTIVE" },
+      });
+      if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
+        return { error: "Invalid or expired ceremony code." };
+      }
+      const config = await tx.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
+      });
+      if (!config) return { error: "No ceremony configuration found for this venue." };
+      ceremonyPrice = Number(config.price);
+    }
+
     const amountResult = await computeConfiguredBookingAmount(
       tx,
       validated.facilityId,
@@ -601,7 +622,13 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error! };
+    if (!ceremonyPrice && "error" in amountResult) return { error: amountResult.error! };
+
+    const amountData = {
+      totalAmount: ("totalAmount" in amountResult ? amountResult.totalAmount : 0) as number,
+      unitPrice: ("unitPrice" in amountResult ? amountResult.unitPrice : 0) as number,
+      pricingSource: ("pricingSource" in amountResult ? amountResult.pricingSource : "CEREMONY_CONFIG") as string,
+    };
 
     const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
     const maxAllowed = slot?.maxBookings ?? 1;
@@ -621,13 +648,23 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
         notes:        [validated.notes, guestMeta].filter(Boolean).join("\n") || null,
-        totalAmount:  amountResult.totalAmount,
-        resolvedUnitPrice: amountResult.unitPrice,
-        resolvedPricingSource: amountResult.pricingSource,
+        totalAmount:  ceremonyPrice ?? amountData.totalAmount,
+        resolvedUnitPrice: ceremonyPrice ?? amountData.unitPrice,
+        resolvedPricingSource: ceremonyPrice != null ? "CEREMONY_CONFIG" : amountData.pricingSource,
+        ceremonyDetails: validated.ceremonyDetails ?? undefined,
         status: "PENDING",
       },
       include: { facility: true },
     });
+
+    // Atomically consume the ceremony code
+    if (validated.ceremonyCodeId) {
+      await tx.ceremonyBookingCode.update({
+        where: { id: validated.ceremonyCodeId },
+        data: { status: "USED", usedAt: new Date(), bookingId: booking.id },
+      });
+    }
+
     return { booking };
   });
 

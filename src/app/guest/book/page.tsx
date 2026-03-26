@@ -8,6 +8,8 @@ type SearchParams = {
   facilityId?: string;
   type?: string;
   lines?: string; // e.g. "item=abc123:2,bundle=xyz:1"
+  ceremonyType?: string;
+  codeId?: string;
 };
 
 /** Parse the ?lines= param from ItemsCatalogClient cart */
@@ -25,6 +27,21 @@ function parseLines(raw: string | undefined) {
 
 export default async function GuestBookPage({ searchParams }: { searchParams: SearchParams }) {
   const isItemBooking = searchParams.type === "items";
+  const isCeremonyBooking = !!searchParams.ceremonyType && !!searchParams.codeId;
+
+  // For ceremony bookings, look up the flat price
+  let ceremonyFlatPrice: number | undefined;
+  if (isCeremonyBooking && searchParams.facilityId && searchParams.ceremonyType) {
+    const cfg = await prisma.ceremonyVenueConfig.findUnique({
+      where: {
+        facilityId_type: {
+          facilityId: searchParams.facilityId,
+          type: searchParams.ceremonyType as "WEDDING" | "NAMING",
+        },
+      },
+    });
+    if (cfg) ceremonyFlatPrice = Number(cfg.price);
+  }
 
   const facilities = (await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
@@ -171,7 +188,14 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
               <GuestItemBookingForm initialLines={initialLines} />
             </div>
           ) : (
-            <GuestBookingForm facilities={facilities} defaultFacilityId={searchParams.facilityId} />
+            <GuestBookingForm
+              facilities={facilities}
+              defaultFacilityId={searchParams.facilityId}
+              isCeremonyBooking={isCeremonyBooking}
+              ceremonyCodeId={searchParams.codeId}
+              ceremonyFlatPrice={ceremonyFlatPrice}
+              defaultCategory={searchParams.ceremonyType}
+            />
           )}
         </section>
       </main>

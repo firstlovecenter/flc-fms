@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ToggleMaintenanceButton from "@/components/facilities/ToggleMaintenanceButton";
+import CeremonyConfigCard from "@/components/facilities/CeremonyConfigCard";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -15,6 +16,7 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
   const facility = await prisma.facility.findFirst({
     where: { id: params.id },
     include: {
+      ceremonyConfigs: true,
       bookings: {
         where: { status: { in: ["PENDING", "APPROVED"] } },
         include: {
@@ -247,6 +249,25 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Ceremony Configurations */}
+      {canManage && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-[var(--navy)]">Ceremony Configurations</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CeremonyConfigCard
+              facilityId={facility.id}
+              type="WEDDING"
+              config={facility.ceremonyConfigs.find((c) => c.type === "WEDDING") ?? null}
+            />
+            <CeremonyConfigCard
+              facilityId={facility.id}
+              type="NAMING"
+              config={facility.ceremonyConfigs.find((c) => c.type === "NAMING") ?? null}
+            />
           </div>
         </div>
       )}

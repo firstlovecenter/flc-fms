@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Building2, User, FileText, Phone, MessageCircle, LogI
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
+import { type CeremonyDetails } from "@/lib/ceremony-utils";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
@@ -40,6 +41,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
 
   const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const contact   = booking.patron ?? booking.user;
+  const cd = booking.ceremonyDetails as CeremonyDetails | null;
 
   return (
     <div className="w-full max-w-3xl space-y-6">
@@ -132,6 +134,55 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
             <FileText size={13} /> Notes
           </div>
           <p className="text-sm text-[var(--slate)]">{booking.notes}</p>
+        </div>
+      )}
+
+      {/* Ceremony Details */}
+      {cd && (
+        <div className="card p-5">
+          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
+            <FileText size={13} /> {cd.type === "wedding" ? "Wedding" : "Naming Ceremony"} Details
+          </div>
+          {cd.type === "wedding" ? (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {[
+                  ["Bride's Name", cd.brideName],
+                  ["Groom's Name", cd.groomName],
+                  ["Contact (WhatsApp)", cd.contactWhatsApp],
+                  ["Email", cd.email],
+                ].map(([label, value]) => (
+                  <tr key={label}>
+                    <td className="py-2 pr-4 text-[var(--muted)] w-40">{label}</td>
+                    <td className="py-2 font-medium text-[var(--navy)]">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div>
+                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Father</p>
+                <p>{cd.fatherName}</p>
+                <p className="text-[var(--muted)] text-xs">{cd.fatherPhone} / WA: {cd.fatherWhatsApp}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Child</p>
+                <p>{cd.childrenNames}</p>
+                <p className="text-[var(--muted)] text-xs">DOB: {cd.childBirthday}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Mother</p>
+                <p>{cd.motherName}</p>
+                <p className="text-[var(--muted)] text-xs">{cd.motherPhone}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Officiating Clergy</p>
+                <p>Pastor: {cd.pastorName} ({cd.pastorPhone})</p>
+                <p>Bishop: {cd.bishopName} ({cd.bishopPhone})</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

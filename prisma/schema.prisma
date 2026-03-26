@@ -34,6 +34,7 @@ model User {
   requestedMaint       MaintenanceRequest[]   @relation("RequestedMaint")
   facilityCheckIns     FacilityCheckIn[]      @relation("FacilityCheckIns")
   facilityCheckOuts    FacilityCheckIn[]      @relation("FacilityCheckOuts")
+  activatedCodes       CeremonyBookingCode[]
 
   @@index([role])
   @@map("users")
@@ -84,6 +85,7 @@ model Facility {
   timeSlots             FacilityTimeSlot[]
   maintenance           MaintenanceRequest[]
   inventoryRequirements FacilityInventoryRequirement[]
+  ceremonyConfigs       CeremonyVenueConfig[]
 
   @@index([isActive])
   @@map("facilities")
@@ -153,6 +155,7 @@ model Booking {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   isBillingWaived Boolean           @default(false)
+  ceremonyDetails Json?
   lineItems       BookingLineItem[]
   event           Event?            @relation(fields: [eventId], references: [id])
   facility        Facility?         @relation(fields: [facilityId], references: [id])
@@ -160,6 +163,7 @@ model Booking {
   user            User?             @relation(fields: [userId], references: [id])
   income          Income?
   checkIn         FacilityCheckIn?
+  ceremonyCode    CeremonyBookingCode?
 
   @@index([facilityId, startTime, endTime])
   @@index([status])
@@ -578,4 +582,62 @@ model PushSubscription {
   @@index([userId])
   @@index([patronId])
   @@map("push_subscriptions")
+}
+
+// ─── Ceremony Booking Support ─────────────────────────────────────────────────
+
+enum CeremonyType {
+  WEDDING
+  NAMING
+}
+
+enum CeremonyCodeStatus {
+  PENDING
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+model CeremonyVenueConfig {
+  id          String        @id @default(cuid())
+  facilityId  String
+  type        CeremonyType
+  images      String[]
+  price       Decimal       @db.Decimal(10, 2)
+  description String?
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  facility    Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@unique([facilityId, type])
+  @@index([type, isActive])
+  @@map("ceremony_venue_configs")
+}
+
+model CeremonyBookingCode {
+  id             String             @id @default(cuid())
+  code           String             @unique
+  status         CeremonyCodeStatus @default(PENDING)
+  ceremonyType   CeremonyType
+  requesterName  String
+  requesterPhone String
+  requesterEmail String
+  notes          String?
+  expiresAt      DateTime?
+  activatedAt    DateTime?
+  activatedById  String?
+  usedAt         DateTime?
+  bookingId      String?            @unique
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  activatedBy    User?              @relation(fields: [activatedById], references: [id])
+  booking        Booking?           @relation(fields: [bookingId], references: [id])
+
+  @@index([status])
+  @@index([requesterEmail])
+  @@map("ceremony_booking_codes")
 }

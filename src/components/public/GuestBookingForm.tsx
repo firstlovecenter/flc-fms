@@ -15,6 +15,7 @@ import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
+import { getCeremonyType } from "@/lib/ceremony-utils";
 import "react-day-picker/dist/style.css";
 
 interface Facility {
@@ -72,11 +73,19 @@ export default function GuestBookingForm({
   defaultFacilityId,
   mode = "guest",
   currentUserRole,
+  ceremonyCodeId,
+  isCeremonyBooking = false,
+  ceremonyFlatPrice,
+  defaultCategory,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
   mode?: BookingMode;
   currentUserRole?: string;
+  ceremonyCodeId?: string;
+  isCeremonyBooking?: boolean;
+  ceremonyFlatPrice?: number;
+  defaultCategory?: string;
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
@@ -111,6 +120,34 @@ export default function GuestBookingForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // ── Ceremony-specific state ──────────────────────────────────────────────────
+  // Wedding
+  const [brideName, setBrideName] = useState("");
+  const [groomName, setGroomName] = useState("");
+  const [coupleContact, setCoupleContact] = useState("");
+  const [coupleEmail, setCoupleEmail] = useState("");
+  // Naming
+  const [fatherName, setFatherName] = useState("");
+  const [fatherPhone, setFatherPhone] = useState("");
+  const [fatherWhatsApp, setFatherWhatsApp] = useState("");
+  const [childrenNames, setChildrenNames] = useState("");
+  const [childBirthday, setChildBirthday] = useState("");
+  const [motherName, setMotherName] = useState("");
+  const [motherPhone, setMotherPhone] = useState("");
+  const [pastorName, setPastorName] = useState("");
+  const [pastorPhone, setPastorPhone] = useState("");
+  const [bishopName, setBishopName] = useState("");
+  const [bishopPhone, setBishopPhone] = useState("");
+
+  // Pre-set category for ceremony bookings (no hourly pricing applies)
+  useEffect(() => {
+    if (isCeremonyBooking && defaultCategory) {
+      setCategory(defaultCategory);
+    }
+  }, [isCeremonyBooking, defaultCategory]);
+
+  const ceremonyType = isCeremonyBooking ? getCeremonyType(category || defaultCategory || "WEDDING") : null;
 
   const requiresBookingTerms = Boolean(selectedFacility?.requiresBookingTerms);
   const requiresItemTerms = Boolean(selectedFacility?.requiresItemBookingTerms);
@@ -211,6 +248,7 @@ export default function GuestBookingForm({
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
+    if (isCeremonyBooking && ceremonyFlatPrice != null) return ceremonyFlatPrice;
     if (!selectedSlot) return null;
     const base = selectedSlot.isFree ? 0 : selectedSlot.effectivePricePerHour;
     const ac = useAirConditioner ? Number(selectedFacility?.acUsageFee ?? 0) : 0;
@@ -218,7 +256,7 @@ export default function GuestBookingForm({
   })();
 
   const disabledDays = [
-    () => !category,
+    () => !isCeremonyBooking && !category,
     { before: addDays(new Date(), 1) },
     ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
     (date: Date) =>
@@ -244,6 +282,19 @@ export default function GuestBookingForm({
     const endTime = new Date(selectedDate);
     endTime.setHours(eh, em, 0, 0);
 
+    // Build ceremony details if applicable
+    const builtCeremonyDetails = (() => {
+      if (!isCeremonyBooking || !ceremonyType) return undefined;
+      if (ceremonyType === "wedding") {
+        return { type: "wedding" as const, brideName, groomName, contactWhatsApp: coupleContact, email: coupleEmail };
+      }
+      return {
+        type: "naming" as const,
+        fatherName, fatherPhone, fatherWhatsApp, childrenNames, childBirthday,
+        motherName, motherPhone, pastorName, pastorPhone, bishopName, bishopPhone,
+      };
+    })();
+
     const bookingPayload = {
       facilityId: selectedFacility.id,
       category: category as any,
@@ -253,6 +304,8 @@ export default function GuestBookingForm({
       endTime,
       useAirConditioner,
       acceptedTerms: agreedToTerms ? requiredTerms : [],
+      ...(builtCeremonyDetails ? { ceremonyDetails: builtCeremonyDetails } : {}),
+      ...(ceremonyCodeId ? { ceremonyCodeId } : {}),
     };
 
     const result =
@@ -322,6 +375,7 @@ export default function GuestBookingForm({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {!isCeremonyBooking && (
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
                 Event Category
@@ -350,6 +404,7 @@ export default function GuestBookingForm({
                     ))}
               </select>
             </div>
+            )}
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
@@ -466,7 +521,7 @@ export default function GuestBookingForm({
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {slot.isFree ? (
+                              {isCeremonyBooking ? null : slot.isFree ? (
                                 <span
                                   className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/15 text-white/90" : "bg-green-500/12 text-green-600 dark:bg-[rgba(34,197,94,0.2)] dark:text-green-400"}`}
                                 >
@@ -717,6 +772,109 @@ export default function GuestBookingForm({
         />
       </div>
 
+      {/* ── Ceremony details ─────────────────────────────────────────── */}
+      {isCeremonyBooking && ceremonyType === "wedding" && (
+        <div className="card p-5 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Wedding Details</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Bride&apos;s Name *</label>
+              <input value={brideName} onChange={(e) => setBrideName(e.target.value)} className="input" placeholder="Full name" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Groom&apos;s Name *</label>
+              <input value={groomName} onChange={(e) => setGroomName(e.target.value)} className="input" placeholder="Full name" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Contact (WhatsApp) *</label>
+              <input value={coupleContact} onChange={(e) => setCoupleContact(e.target.value)} className="input" placeholder="0244000000" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
+              <input type="email" value={coupleEmail} onChange={(e) => setCoupleEmail(e.target.value)} className="input" placeholder="couple@email.com" required />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isCeremonyBooking && ceremonyType === "naming" && (
+        <div className="card p-5 space-y-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Naming Ceremony Details</p>
+
+          {/* Father */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--slate)] mb-3">Father</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Full Name *</label>
+                <input value={fatherName} onChange={(e) => setFatherName(e.target.value)} className="input text-sm" placeholder="Father's name" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Contact Number *</label>
+                <input value={fatherPhone} onChange={(e) => setFatherPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">WhatsApp Number *</label>
+                <input value={fatherWhatsApp} onChange={(e) => setFatherWhatsApp(e.target.value)} className="input text-sm" placeholder="WhatsApp" required />
+              </div>
+            </div>
+          </div>
+
+          {/* Child */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--slate)] mb-3">Child</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Name(s) *</label>
+                <input value={childrenNames} onChange={(e) => setChildrenNames(e.target.value)} className="input text-sm" placeholder="Child's full name(s)" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Date of Birth (DD/MM/YYYY) *</label>
+                <input value={childBirthday} onChange={(e) => setChildBirthday(e.target.value)} className="input text-sm" placeholder="DD/MM/YYYY" required />
+              </div>
+            </div>
+          </div>
+
+          {/* Mother */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--slate)] mb-3">Mother</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Full Name *</label>
+                <input value={motherName} onChange={(e) => setMotherName(e.target.value)} className="input text-sm" placeholder="Mother's name" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Contact Number *</label>
+                <input value={motherPhone} onChange={(e) => setMotherPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+              </div>
+            </div>
+          </div>
+
+          {/* Clergy */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--slate)] mb-3">Officiating Clergy</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Name *</label>
+                <input value={pastorName} onChange={(e) => setPastorName(e.target.value)} className="input text-sm" placeholder="Pastor's name" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Contact *</label>
+                <input value={pastorPhone} onChange={(e) => setPastorPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Name *</label>
+                <input value={bishopName} onChange={(e) => setBishopName(e.target.value)} className="input text-sm" placeholder="Bishop's name" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Contact *</label>
+                <input value={bishopPhone} onChange={(e) => setBishopPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {requiresBookingTerms && <BookingTermsAndFaq title="Booking Terms and Conditions" />}
       {requiresItemTerms && <ItemBookingTerms />}
 
@@ -750,8 +908,10 @@ export default function GuestBookingForm({
             submitting ||
             !title.trim() ||
             (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) ||
-            (categories.length > 0 && !category) ||
-            (termsRequired && !agreedToTerms)
+            (!isCeremonyBooking && categories.length > 0 && !category) ||
+            (termsRequired && !agreedToTerms) ||
+            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim())) ||
+            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !pastorName.trim() || !pastorPhone.trim() || !bishopName.trim() || !bishopPhone.trim()))
           }
           className="btn-primary w-full sm:flex-1"
         >
