@@ -324,11 +324,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
-  // Alert Booking Managers for pending bookings (both BM and FM can approve,
-  // so BM handles the alert; FM self-bookings are auto-approved, no alert needed)
+  // Alert Booking Managers and Facility Managers about new pending bookings
+  // (both roles can approve bookings and should be notified)
   if (booking.status === "PENDING") {
     const fms = await prisma.user.findMany({
-      where: { role: "BOOKING_MANAGER", isActive: true },
+      where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
       select: { phone: true },
     });
     for (const fm of fms) {
@@ -476,9 +476,9 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
-  // Alert Booking Managers about the new pending patron booking
+  // Alert Booking Managers and Facility Managers about the new pending patron booking
   const patronFMs = await prisma.user.findMany({
-    where: { role: "BOOKING_MANAGER", isActive: true },
+    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
     select: { phone: true },
   });
   for (const fm of patronFMs) {
@@ -652,9 +652,9 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
   });
 
-  // Alert Booking Managers about the new pending guest booking
+  // Alert Booking Managers and Facility Managers about the new pending guest booking
   const guestFMs = await prisma.user.findMany({
-    where: { role: "BOOKING_MANAGER", isActive: true },
+    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
     select: { phone: true },
   });
   for (const fm of guestFMs) {
@@ -733,6 +733,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
   }
 
   revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}`);
   return { success: true, booking };
 }
 
@@ -783,6 +784,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
   }
 
   revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}`);
   return { success: true, booking };
 }
 
