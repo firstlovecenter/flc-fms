@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import GuestBookingForm from "@/components/public/GuestBookingForm";
 import GuestItemBookingForm from "@/components/public/GuestItemBookingForm";
 import PublicTopNav from "@/components/public/PublicTopNav";
+import { getCeremonyFacilityIds, getCeremonyDays } from "@/actions/ceremony-venue.actions";
 
 type SearchParams = {
   facilityId?: string;
@@ -43,7 +44,10 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     if (cfg) ceremonyFlatPrice = Number(cfg.price);
   }
 
-  const facilities = (await prisma.facility.findMany({
+  // Fetch ceremony days for both filtering (ceremony) and blocking (general)
+  const ceremonyDays = await getCeremonyDays();
+
+  let facilities = (await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
     select: {
       id: true,
@@ -75,6 +79,14 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     availableDays: f.availableDays,
     pricePerHour: (f.pricing[0]?.price ?? 0).toString(),
   }));
+
+  // For ceremony bookings: restrict venues to those configured for the ceremony type
+  if (isCeremonyBooking && searchParams.ceremonyType) {
+    const allowedIds = await getCeremonyFacilityIds(
+      searchParams.ceremonyType as "WEDDING" | "NAMING"
+    );
+    facilities = facilities.filter((f) => allowedIds.includes(f.id));
+  }
 
   // For item bookings: resolve pre-selected lines from URL
   let initialLines: Array<{
@@ -195,6 +207,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
               ceremonyCodeId={searchParams.codeId}
               ceremonyFlatPrice={ceremonyFlatPrice}
               defaultCategory={searchParams.ceremonyType}
+              ceremonyDays={ceremonyDays}
             />
           )}
         </section>

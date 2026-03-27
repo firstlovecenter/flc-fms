@@ -19,10 +19,12 @@ export default function BookingForm({
   facilities,
   defaultFacilityId,
   currentUserRole,
+  ceremonyDays,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
   currentUserRole?: string;
+  ceremonyDays?: string[];
 }) {
-  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="staff" currentUserRole={currentUserRole} />;
+  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="staff" currentUserRole={currentUserRole} ceremonyDays={ceremonyDays} />;
 }

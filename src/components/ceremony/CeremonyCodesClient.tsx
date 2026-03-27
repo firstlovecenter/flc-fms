@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Check, RefreshCw, X, Receipt, Plus, Pencil, Trash2,
   ChevronDown, ChevronUp, Copy, CheckCheck, RotateCcw,
+  CalendarDays, Calendar,
 } from "lucide-react";
 import {
   activateCeremonyCode,
@@ -16,6 +17,11 @@ import {
   deleteCeremonyCode,
   regenerateCeremonyCode,
 } from "@/actions/ceremony-code.actions";
+import {
+  addCeremonyDateOverride,
+  removeCeremonyDateOverride,
+} from "@/actions/ceremony-venue.actions";
+import { getFirstSaturdaysForMonths, toDateStr } from "@/lib/ceremony-utils";
 
 type Code = {
   id: string;
@@ -33,9 +39,18 @@ type Code = {
   activatedBy: { name: string } | null;
 };
 
+type DateOverride = {
+  id: string;
+  date: Date;
+  note: string | null;
+  createdBy: { name: string };
+  createdAt: Date;
+};
+
 type Props = {
   initialCodes: Code[];
   total: number;
+  initialDateOverrides: DateOverride[];
 };
 
 type FormState = {
@@ -149,9 +164,13 @@ function CopyButton({ value }: { value: string }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function CeremonyCodesClient({ initialCodes, total }: Props) {
+export default function CeremonyCodesClient({ initialCodes, total, initialDateOverrides }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  // Top-level page tab: Codes vs Ceremony Dates
+  const [pageTab, setPageTab] = useState<"codes" | "dates">("codes");
+
   const [activeTab, setActiveTab] = useState<(typeof STATUS_TABS)[number]>("ALL");
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -179,6 +198,37 @@ export default function CeremonyCodesClient({ initialCodes, total }: Props) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  }
+
+  // Date overrides state
+  const [dateOverrides, setDateOverrides] = useState<DateOverride[]>(initialDateOverrides);
+  const [showAddDate, setShowAddDate] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newDateNote, setNewDateNote] = useState("");
+  const [dateActionLoading, setDateActionLoading] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  async function handleAddDate() {
+    if (!newDate) return;
+    setDateActionLoading("add");
+    setDateError(null);
+    try {
+      const result = await addCeremonyDateOverride({ date: newDate, note: newDateNote || undefined });
+      if ("error" in result) { setDateError(result.error as string); }
+      else { setShowAddDate(false); setNewDate(""); setNewDateNote(""); refresh(); }
+    } catch { setDateError("Failed to add date."); }
+    finally { setDateActionLoading(null); }
+  }
+
+  async function handleRemoveDate(id: string) {
+    if (!confirm("Remove this extra ceremony day? It will no longer be blocked for general bookings.")) return;
+    setDateActionLoading(id);
+    try {
+      await removeCeremonyDateOverride(id);
+      setDateOverrides((prev) => prev.filter((d) => d.id !== id));
+      refresh();
+    } catch { setDateError("Failed to remove date."); }
+    finally { setDateActionLoading(null); }
   }
 
   function refresh() { startTransition(() => router.refresh()); }
@@ -255,8 +305,178 @@ export default function CeremonyCodesClient({ initialCodes, total }: Props) {
     finally { setDeleteLoading(false); }
   }
 
+  // Compute upcoming first Saturdays for display
+  const firstSaturdays = getFirstSaturdaysForMonths(12);
+  const overrideStrs = new Set(dateOverrides.map((o) => toDateStr(new Date(o.date))));
+
   return (
     <div className="space-y-4">
+
+      {/* Page-level tab: Codes | Ceremony Dates */}
+      <div className="flex gap-2 border-b border-[var(--border)] pb-0">
+        <button
+          onClick={() => setPageTab("codes")}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            pageTab === "codes"
+              ? "border-[var(--navy)] text-[var(--navy)]"
+              : "border-transparent text-[var(--muted)] hover:text-[var(--navy)]"
+          }`}
+        >
+          <Receipt size={14} /> Codes
+        </button>
+        <button
+          onClick={() => setPageTab("dates")}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            pageTab === "dates"
+              ? "border-[var(--navy)] text-[var(--navy)]"
+              : "border-transparent text-[var(--muted)] hover:text-[var(--navy)]"
+          }`}
+        >
+          <CalendarDays size={14} /> Ceremony Dates
+        </button>
+      </div>
+
+      {/* ── Ceremony Dates tab ─────────────────────────────────────────────── */}
+      {pageTab === "dates" && (
+        <div className="space-y-6">
+          {dateError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{dateError}</div>
+          )}
+
+          {/* Auto first Saturdays */}
+          <div className="card overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-[var(--navy)] text-sm">Automatic Ceremony Days</h3>
+                <p className="text-xs text-[var(--muted)] mt-0.5">First Saturday of every month — always blocked for general bookings</p>
+              </div>
+              <Calendar size={16} className="text-[var(--muted)]" />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Day</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {firstSaturdays.map((d) => (
+                    <tr key={toDateStr(d)} className="hover:bg-gray-50">
+                      <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
+                        {d.toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-2.5 text-[var(--muted)]">Saturday</td>
+                      <td className="px-4 py-2.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                          <Check size={10} /> Ceremony Day
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Extra ceremony days added by staff */}
+          <div className="card overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Saturdays</h3>
+                <p className="text-xs text-[var(--muted)] mt-0.5">Additional Saturdays designated as ceremony-only days</p>
+              </div>
+              <button
+                onClick={() => { setShowAddDate(true); setDateError(null); setNewDate(""); setNewDateNote(""); }}
+                className="btn-primary text-xs flex items-center gap-1"
+              >
+                <Plus size={12} /> Add Saturday
+              </button>
+            </div>
+            {dateOverrides.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-[var(--muted)]">
+                No extra ceremony days added yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Note</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Added By</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {dateOverrides.map((o) => (
+                      <tr key={o.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
+                          {new Date(o.date).toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-2.5 text-[var(--muted)] hidden md:table-cell text-xs">{o.note ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-[var(--muted)] hidden md:table-cell text-xs">{o.createdBy.name}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <button
+                            onClick={() => handleRemoveDate(o.id)}
+                            disabled={dateActionLoading === o.id}
+                            className="p-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-50"
+                            title="Remove"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Add date modal */}
+          {showAddDate && (
+            <Modal title="Add Extra Ceremony Saturday" onClose={() => setShowAddDate(false)}>
+              <p className="text-xs text-[var(--muted)]">
+                This Saturday will be blocked for general bookings and available for ceremony bookings.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="label text-xs">Date (must be a Saturday) *</label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="input text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="label text-xs">Note (optional)</label>
+                  <input
+                    value={newDateNote}
+                    onChange={(e) => setNewDateNote(e.target.value)}
+                    className="input text-sm"
+                    placeholder="e.g. Special event date"
+                  />
+                </div>
+                {dateError && <p className="text-xs text-red-600">{dateError}</p>}
+                <button
+                  onClick={handleAddDate}
+                  disabled={!newDate || dateActionLoading === "add"}
+                  className="btn-primary w-full text-sm disabled:opacity-50"
+                >
+                  {dateActionLoading === "add" ? "Adding…" : "Add Ceremony Day"}
+                </button>
+              </div>
+            </Modal>
+          )}
+        </div>
+      )}
+
+      {/* ── Codes tab ──────────────────────────────────────────────────────── */}
+      {pageTab === "codes" && <>
+
       {/* Header row */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex gap-1 overflow-x-auto pb-1 flex-1">
@@ -528,6 +748,8 @@ export default function CeremonyCodesClient({ initialCodes, total }: Props) {
           </div>
         </Modal>
       )}
+
+      </> /* end codes tab */}
     </div>
   );
 }

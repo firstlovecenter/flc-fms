@@ -15,7 +15,7 @@ import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
-import { getCeremonyType } from "@/lib/ceremony-utils";
+import { getCeremonyType, toDateStr } from "@/lib/ceremony-utils";
 import "react-day-picker/dist/style.css";
 
 interface Facility {
@@ -77,6 +77,7 @@ export default function GuestBookingForm({
   isCeremonyBooking = false,
   ceremonyFlatPrice,
   defaultCategory,
+  ceremonyDays = [],
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -86,6 +87,7 @@ export default function GuestBookingForm({
   isCeremonyBooking?: boolean;
   ceremonyFlatPrice?: number;
   defaultCategory?: string;
+  ceremonyDays?: string[];
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
@@ -264,6 +266,14 @@ export default function GuestBookingForm({
     ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
     (date: Date) =>
       !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+    // Ceremony booking: only ceremony days are selectable
+    ...(isCeremonyBooking && ceremonyDays.length > 0
+      ? [(date: Date) => !ceremonyDays.includes(toDateStr(date))]
+      : []),
+    // General booking: ceremony days are blocked
+    ...(!isCeremonyBooking && ceremonyDays.length > 0
+      ? [(date: Date) => ceremonyDays.includes(toDateStr(date))]
+      : []),
   ];
 
   async function handleSubmit(e: React.FormEvent) {
@@ -411,19 +421,32 @@ export default function GuestBookingForm({
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
-                Select Venue
+                {isCeremonyBooking && defaultFacilityId ? "Venue" : "Select Venue"}
               </label>
-              <select
-                value={facilityId}
-                onChange={(e) => setFacilityId(e.target.value)}
-                className="input"
-                disabled={bookingMode === "category-first" && (!category || !selectedDate)}
-              >
-                <option value="">Choose a venue...</option>
-                {(bookingMode === "category-first" ? bookableFacilities : facilities).map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
+              {isCeremonyBooking && defaultFacilityId ? (
+                <div className="input flex items-center justify-between cursor-default select-none opacity-80">
+                  <span className="font-medium text-[var(--navy)] dark:text-gray-100">
+                    {selectedFacility?.name ?? "Loading…"}
+                  </span>
+                  {selectedFacility && (
+                    <span className="text-xs text-[var(--muted)] ml-2 shrink-0">
+                      Up to {selectedFacility.capacity} guests
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={facilityId}
+                  onChange={(e) => setFacilityId(e.target.value)}
+                  className="input"
+                  disabled={bookingMode === "category-first" && (!category || !selectedDate)}
+                >
+                  <option value="">Choose a venue...</option>
+                  {(bookingMode === "category-first" ? bookableFacilities : facilities).map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>

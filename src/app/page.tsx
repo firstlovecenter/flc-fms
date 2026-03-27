@@ -98,6 +98,22 @@ export default async function PublicHomePage({
         counts={{ venues: facilities.length, items: items.length, packages: bundles.length }}
       />
 
+      {/* General-booking notice + ceremony catalog links */}
+      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+        <p className="text-sm text-amber-800 dark:text-amber-300">
+          <span className="font-semibold">General bookings only.</span>{" "}
+          For wedding or naming ceremony bookings, visit the dedicated ceremony catalogs.
+        </p>
+        <div className="flex gap-2 shrink-0">
+          <Link href="/catalog/weddings" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors">
+            💍 Weddings
+          </Link>
+          <Link href="/catalog/namings" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors">
+            🕊 Namings
+          </Link>
+        </div>
+      </div>
+
       {/* Tab: Venues */}
       {tab === "venues" && (
         <>

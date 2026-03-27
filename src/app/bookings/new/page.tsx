@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import BookingForm from "@/components/bookings/BookingForm";
+import { getCeremonyDays } from "@/actions/ceremony-venue.actions";
 
 export default async function NewBookingPage({
   searchParams,
@@ -9,29 +10,32 @@ export default async function NewBookingPage({
 }) {
   const session = await requirePermission("canCreateBookings");
 
-  const facilities = await prisma.facility.findMany({
-    where: { isActive: true, underMaintenance: false },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      capacity: true,
-      requiresBookingTerms: true,
-      requiresItemBookingTerms: true,
-      acUsageFee: true,
-      amenities: true,
-      availableDays: true,
-      pricing: {
-        where: { isActive: true },
-        select: { price: true },
-        orderBy: { price: "asc" },
-        take: 1,
+  const [ceremonyDays, facilitiesRaw] = await Promise.all([
+    getCeremonyDays(),
+    prisma.facility.findMany({
+      where: { isActive: true, underMaintenance: false },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        capacity: true,
+        requiresBookingTerms: true,
+        requiresItemBookingTerms: true,
+        acUsageFee: true,
+        amenities: true,
+        availableDays: true,
+        pricing: {
+          where: { isActive: true },
+          select: { price: true },
+          orderBy: { price: "asc" },
+          take: 1,
+        },
       },
-    },
-    orderBy: { name: "asc" },
-  });
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  const serialized = facilities.map((f) => ({
+  const serialized = facilitiesRaw.map((f) => ({
     id: f.id,
     name: f.name,
     description: f.description,
@@ -50,7 +54,12 @@ export default async function NewBookingPage({
         <h1 className="page-title">New Booking</h1>
         <p className="text-sm page-subtitle">Schedule a facility for staff use.</p>
       </div>
-      <BookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} currentUserRole={session.role} />
+      <BookingForm
+        facilities={serialized}
+        defaultFacilityId={searchParams.facilityId}
+        currentUserRole={session.role}
+        ceremonyDays={ceremonyDays}
+      />
     </div>
   );
 }

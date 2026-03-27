@@ -34,7 +34,8 @@ model User {
   requestedMaint       MaintenanceRequest[]   @relation("RequestedMaint")
   facilityCheckIns     FacilityCheckIn[]      @relation("FacilityCheckIns")
   facilityCheckOuts    FacilityCheckIn[]      @relation("FacilityCheckOuts")
-  activatedCodes       CeremonyBookingCode[]
+  activatedCodes        CeremonyBookingCode[]
+  ceremonyDateOverrides CeremonyDateOverride[]
 
   @@index([role])
   @@map("users")
@@ -641,4 +642,17 @@ model CeremonyBookingCode {
   @@index([status])
   @@index([requesterEmail])
   @@map("ceremony_booking_codes")
+}
+
+model CeremonyDateOverride {
+  id          String   @id @default(cuid())
+  date        DateTime // stored at noon UTC; must be a Saturday
+  note        String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@unique([date])
+  @@map("ceremony_date_overrides")
 }

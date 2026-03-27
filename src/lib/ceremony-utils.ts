@@ -70,6 +70,26 @@ export function getCeremonyType(
   return null;
 }
 
+// ── Ceremony Date Helpers ──────────────────────────────────────────────────────
+
+/** Returns the first Saturday of each month for the next N months. */
+export function getFirstSaturdaysForMonths(monthsAhead: number): Date[] {
+  const dates: Date[] = [];
+  const now = new Date();
+  for (let i = 0; i < monthsAhead; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const dow = d.getDay(); // 0=Sun … 6=Sat
+    d.setDate(1 + (dow === 6 ? 0 : 6 - dow));
+    dates.push(d);
+  }
+  return dates;
+}
+
+/** Formats a Date as YYYY-MM-DD using local time (no timezone shift). */
+export function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function generateCeremonyCode(): string {
   // 8-char alphanumeric, uppercase — no ambiguous chars (0, O, I, 1)
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
