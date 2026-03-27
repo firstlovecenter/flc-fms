@@ -1,9 +1,9 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requireRole } from "@/lib/auth/guards";
 import { getBookingCategories } from "@/actions/category.actions";
 import CategoryManager from "@/components/facilities/CategoryManager";
 
 export default async function CategoriesPage() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requireRole("SUPER_ADMIN");
   const categories = await getBookingCategories(false);
 
   return (

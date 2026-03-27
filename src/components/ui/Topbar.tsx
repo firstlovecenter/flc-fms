@@ -105,7 +105,7 @@ export default function Topbar({
       </div>
 
       {/* Command search dialog */}
-      {searchOpen && <CommandSearch onClose={() => setSearchOpen(false)} />}
+      {searchOpen && <CommandSearch onClose={() => setSearchOpen(false)} role={role} />}
     </header>
   );
 }

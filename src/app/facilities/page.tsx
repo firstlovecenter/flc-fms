@@ -21,6 +21,7 @@ export default async function FacilitiesPage() {
   });
 
   const canManage = ["FACILITY_MANAGER","BOOKING_MANAGER","SUPER_ADMIN"].includes(session.role);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -32,9 +33,11 @@ export default async function FacilitiesPage() {
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
-            <Link href="/facilities/categories" className="btn-secondary text-sm">
-              Categories
-            </Link>
+            {isSuperAdmin && (
+              <Link href="/facilities/categories" className="btn-secondary text-sm">
+                Categories
+              </Link>
+            )}
             <Link href="/facilities/bulk-slots" className="btn-secondary text-sm">
               <Layers size={15} /> Bulk Slots
             </Link>

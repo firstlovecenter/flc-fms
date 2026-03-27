@@ -27,6 +27,7 @@ type SearchItem = {
   icon: React.ElementType;
   keywords?: string[];
   group: string;
+  superAdminOnly?: boolean;
 };
 
 const NAV_ITEMS: SearchItem[] = [
@@ -35,7 +36,7 @@ const NAV_ITEMS: SearchItem[] = [
   { label: "Check-In", href: "/checkin", icon: ClipboardCheck, keywords: ["checkin", "arrival"], group: "Navigate" },
   { label: "Booking Content", href: "/bookings/content", icon: FileText, keywords: ["terms", "content"], group: "Navigate" },
   { label: "Facilities", href: "/facilities", icon: Building2, keywords: ["venues", "rooms"], group: "Navigate" },
-  { label: "Category / Pricing", href: "/facilities/categories", icon: Tags, keywords: ["categories", "pricing", "rates"], group: "Navigate" },
+  { label: "Category / Pricing", href: "/facilities/categories", icon: Tags, keywords: ["categories", "pricing", "rates"], group: "Navigate", superAdminOnly: true },
   { label: "Items & Packages", href: "/items", icon: Package, keywords: ["bundles", "bookable items"], group: "Navigate" },
   { label: "Inventory", href: "/inventory", icon: Boxes, keywords: ["stock", "equipment"], group: "Navigate" },
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight, keywords: ["income", "expenses", "finance"], group: "Navigate" },
@@ -52,9 +53,10 @@ const ACTION_ITEMS: SearchItem[] = [
   { label: "New Income", href: "/transactions/new-income", icon: Plus, keywords: ["add income", "create income"], group: "Actions" },
 ];
 
-const ALL_ITEMS = [...ACTION_ITEMS, ...NAV_ITEMS];
-
-export default function CommandSearch({ onClose }: { onClose: () => void }) {
+export default function CommandSearch({ onClose, role }: { onClose: () => void; role?: string }) {
+  const ALL_ITEMS = [...ACTION_ITEMS, ...NAV_ITEMS].filter(
+    (item) => !item.superAdminOnly || role === "SUPER_ADMIN"
+  );
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
