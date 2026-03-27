@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getCeremonyVenueConfigs } from "@/actions/ceremony-venue.actions";
 import CeremonyCatalogClient from "@/components/public/CeremonyCatalogClient";
 import PublicTopNav from "@/components/public/PublicTopNav";
