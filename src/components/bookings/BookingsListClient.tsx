@@ -442,7 +442,12 @@ export default function BookingsListClient({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Facility</label>
-                      <select className="input" value={form.facilityId} onChange={(e) => setForm((f) => ({ ...f, facilityId: e.target.value, category: "" }))}>
+                      <select className="input" value={form.facilityId} onChange={(e) => {
+                          const fid = e.target.value;
+                          const fac = facilities.find((f) => f.id === fid) ?? null;
+                          const cats = fac ? categories.filter((c) => fac.categories.includes(c.slug)) : categories;
+                          setForm((f) => ({ ...f, facilityId: fid, category: cats.length === 1 ? cats[0].slug : "" }));
+                        }}>
                         <option value="">Select facility...</option>
                         {facilities.map((f) => (
                           <option key={f.id} value={f.id}>{f.name}</option>

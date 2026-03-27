@@ -194,9 +194,12 @@ export default function GuestBookingForm({
       getFacilityCategories(f.id).then((res) => {
         if (res.success) {
           setCategories(res.categories);
-          setCategory((prev) =>
-            prev && res.categories.some((c) => c.category === prev) ? prev : ""
-          );
+          setCategory((prev) => {
+            if (prev && res.categories.some((c) => c.category === prev)) return prev;
+            // Auto-select when only one category is available
+            if (res.categories.length === 1) return res.categories[0].category;
+            return "";
+          });
         }
       });
     } else {
