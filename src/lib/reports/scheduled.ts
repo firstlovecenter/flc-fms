@@ -13,8 +13,8 @@ import {
   getCeremonyReport,
   getPatronsReport,
   getMaintenanceReport,
-  type DateRange,
 } from "@/actions/reports.actions";
+import type { DateRange } from "@/lib/reports/utils";
 import {
   financialToCSV,
   bookingsToCSV,
