@@ -208,6 +208,158 @@ export async function validateCeremonyCode(
   };
 }
 
+// ── Staff: create code manually ───────────────────────────────────────────────
+
+const StaffCreateSchema = z.object({
+  name: z.string().min(2, "Full name is required"),
+  phone: z.string().min(9, "Phone number is required"),
+  email: z.string().email("A valid email is required"),
+  ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  notes: z.string().optional(),
+  receiptUrl: z.string().url().optional(),
+});
+
+export async function staffCreateCeremonyCode(
+  data: z.infer<typeof StaffCreateSchema>
+) {
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const validated = StaffCreateSchema.safeParse(data);
+  if (!validated.success) {
+    return { error: validated.error.errors[0].message };
+  }
+
+  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
+
+  let code: string;
+  let attempts = 0;
+  do {
+    code = generateCeremonyCode();
+    const existing = await prisma.ceremonyBookingCode.findUnique({ where: { code } });
+    if (!existing) break;
+    attempts++;
+  } while (attempts < 10);
+
+  await prisma.ceremonyBookingCode.create({
+    data: {
+      code,
+      status: "PENDING",
+      ceremonyType: ceremonyType as CeremonyType,
+      requesterName: name,
+      requesterPhone: phone,
+      requesterEmail: email,
+      notes,
+      receiptUrl,
+    },
+  });
+
+  revalidatePath("/ceremony-codes");
+  return { success: true };
+}
+
+// ── Staff: update code details ────────────────────────────────────────────────
+
+const UpdateSchema = z.object({
+  name: z.string().min(2, "Full name is required"),
+  phone: z.string().min(9, "Phone number is required"),
+  email: z.string().email("A valid email is required"),
+  ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  notes: z.string().optional(),
+});
+
+export async function updateCeremonyCode(
+  codeId: string,
+  data: z.infer<typeof UpdateSchema>
+) {
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const validated = UpdateSchema.safeParse(data);
+  if (!validated.success) {
+    return { error: validated.error.errors[0].message };
+  }
+
+  const record = await prisma.ceremonyBookingCode.findUnique({ where: { id: codeId } });
+  if (!record) return { error: "Code not found." };
+  if (record.status === "USED") return { error: "Cannot edit a USED code." };
+
+  await prisma.ceremonyBookingCode.update({
+    where: { id: codeId },
+    data: {
+      requesterName:  validated.data.name,
+      requesterPhone: validated.data.phone,
+      requesterEmail: validated.data.email,
+      ceremonyType:   validated.data.ceremonyType as CeremonyType,
+      notes:          validated.data.notes ?? null,
+    },
+  });
+
+  revalidatePath("/ceremony-codes");
+  return { success: true };
+}
+
+// ── Staff: delete code ────────────────────────────────────────────────────────
+
+export async function deleteCeremonyCode(codeId: string) {
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const record = await prisma.ceremonyBookingCode.findUnique({ where: { id: codeId } });
+  if (!record) return { error: "Code not found." };
+  if (record.status === "USED") return { error: "Cannot delete a USED code — it is linked to a booking." };
+
+  await prisma.ceremonyBookingCode.delete({ where: { id: codeId } });
+
+  revalidatePath("/ceremony-codes");
+  return { success: true };
+}
+
+// ── Staff: regenerate code (same payment, new code string) ───────────────────
+
+export async function regenerateCeremonyCode(codeId: string) {
+  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+
+  const record = await prisma.ceremonyBookingCode.findUnique({ where: { id: codeId } });
+  if (!record) return { error: "Code not found." };
+  if (record.status === "USED") return { error: "Cannot regenerate a USED code — it is already linked to a booking." };
+
+  // Generate a new unique code string
+  let newCode: string;
+  let attempts = 0;
+  do {
+    newCode = generateCeremonyCode();
+    const existing = await prisma.ceremonyBookingCode.findUnique({ where: { code: newCode } });
+    if (!existing) break;
+    attempts++;
+  } while (attempts < 10);
+
+  await prisma.ceremonyBookingCode.update({
+    where: { id: codeId },
+    data: { code: newCode },
+  });
+
+  // If ACTIVE, re-send the new code to the requester
+  if (record.status === "ACTIVE") {
+    const ceremonyLabel = record.ceremonyType === "WEDDING" ? "Wedding" : "Naming";
+    await notifyCeremonyCode({
+      phone: record.requesterPhone,
+      code: newCode,
+      ceremonyType: ceremonyLabel,
+      requesterName: record.requesterName,
+    }).catch(() => null);
+
+    await sendCeremonyCodeEmail({
+      to: record.requesterEmail,
+      name: record.requesterName,
+      code: newCode,
+      ceremonyType: ceremonyLabel,
+    }).catch(() => null);
+  }
+
+  revalidatePath("/ceremony-codes");
+  return { success: true };
+}
+
+// ── List ──────────────────────────────────────────────────────────────────────
+
 export async function listCeremonyCodes(searchParams: {
   status?: string;
   search?: string;
