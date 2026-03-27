@@ -3,24 +3,128 @@ import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import BookingsListClient from "@/components/bookings/BookingsListClient";
+import CeremonyBookingsTable, { type CeremonyBookingRow } from "@/components/bookings/CeremonyBookingsTable";
+import type { CeremonyDetails } from "@/lib/ceremony-utils";
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
+
+type Tab = "regular" | "ceremony";
 
 export default async function BookingsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; page?: string };
+  searchParams: { status?: string; page?: string; tab?: string };
 }) {
   const session  = await requireStaff();
 
+  const tab    = (searchParams.tab ?? "regular") as Tab;
   const status = searchParams.status && searchParams.status !== "ALL"
     ? searchParams.status as any
     : undefined;
   const page = Number(searchParams.page ?? 1);
   const take = 20;
 
+  const canManage   = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+
+  if (tab === "ceremony") {
+    // ── Ceremony tab ──────────────────────────────────────────────────────────
+    const where = {
+      ceremonyCode: { isNot: null },
+      ...(status ? { status } : {}),
+      deletedAt: null,
+    };
+
+    const [bookings, total] = await prisma.$transaction([
+      prisma.booking.findMany({
+        where,
+        include: {
+          facility:     { select: { id: true, name: true } },
+          patron:       { select: { name: true, phone: true, email: true } },
+          user:         { select: { name: true, phone: true, email: true } },
+          ceremonyCode: { select: { code: true, ceremonyType: true } },
+        },
+        orderBy: [{ status: "asc" }, { startTime: "asc" }],
+        skip: (page - 1) * take,
+        take,
+      }),
+      prisma.booking.count({ where }),
+    ]);
+
+    const pages = Math.ceil(total / take);
+
+    const ceremonyRows: CeremonyBookingRow[] = bookings.map((b) => {
+      const booker = b.patron ?? b.user;
+      const cd     = b.ceremonyDetails as CeremonyDetails | null;
+      const ctype  = b.ceremonyCode?.ceremonyType?.toLowerCase() as "wedding" | "naming" | null ?? null;
+      return {
+        id:                b.id,
+        title:             b.title,
+        facilityName:      b.facility?.name ?? "N/A",
+        status:            b.status,
+        totalAmount:       Number(b.totalAmount),
+        startTime:         b.startTime.toISOString(),
+        endTime:           b.endTime.toISOString(),
+        bookerName:        booker?.name ?? "—",
+        bookerPhone:       booker?.phone ?? null,
+        bookerEmail:       booker?.email ?? null,
+        rejectionReason:   b.rejectionReason,
+        notes:             b.notes,
+        ceremonyType:      ctype,
+        ceremonyCodeValue: b.ceremonyCode?.code ?? null,
+        // Wedding fields
+        brideName:         cd && cd.type === "wedding" ? cd.brideName    : null,
+        groomName:         cd && cd.type === "wedding" ? cd.groomName    : null,
+        contactWhatsApp:   cd && cd.type === "wedding" ? cd.contactWhatsApp : null,
+        // Naming fields
+        fatherName:        cd && cd.type === "naming"  ? cd.fatherName   : null,
+        motherName:        cd && cd.type === "naming"  ? cd.motherName   : null,
+        childrenNames:     cd && cd.type === "naming"  ? cd.childrenNames : null,
+        childBirthday:     cd && cd.type === "naming"  ? cd.childBirthday : null,
+        pastorName:        cd && cd.type === "naming"  ? cd.pastorName   : null,
+      };
+    });
+
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
+            <p className="text-sm text-[var(--muted)]">{total} ceremony booking{total !== 1 ? "s" : ""}</p>
+          </div>
+          {canManage && (
+            <Link href="/bookings/new" className="btn-primary text-sm">
+              <Plus size={15} /> New Booking
+            </Link>
+          )}
+        </div>
+
+        <TabBar tab="ceremony" status={searchParams.status} />
+
+        <CeremonyBookingsTable
+          bookings={ceremonyRows}
+          canManage={canManage}
+          isSuperAdmin={isSuperAdmin}
+        />
+
+        {pages > 1 && (
+          <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
+            <span>Page {page} of {pages}</span>
+            <div className="flex gap-2">
+              {page > 1 && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary text-xs px-3 py-1.5">← Prev</Link>}
+              {page < pages && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-secondary text-xs px-3 py-1.5">Next →</Link>}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Regular tab ─────────────────────────────────────────────────────────────
   const where = {
+    ceremonyCode: null,
     ...(status ? { status } : {}),
+    deletedAt: null,
   };
 
   const [bookings, total, facilities, categories] = await prisma.$transaction([
@@ -56,11 +160,7 @@ export default async function BookingsPage({
   ]);
 
   const pages = Math.ceil(total / take);
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const isSuperAdmin = session.role === "SUPER_ADMIN";
-  const canCreateBookings = canManage;
 
-  // Sort: PENDING first, then by startTime descending
   const STATUS_PRIORITY: Record<string, number> = { PENDING: 0, APPROVED: 1, COMPLETED: 2, REJECTED: 3, CANCELLED: 4 };
   const sorted = [...bookings].sort((a, b) => {
     const pa = STATUS_PRIORITY[a.status] ?? 5;
@@ -72,21 +172,21 @@ export default async function BookingsPage({
   const bookingRows = sorted.map((b) => {
     const booker = b.patron ?? b.user;
     return {
-      id: b.id,
-      title: b.title,
-      description: b.description,
-      facilityId: b.facilityId,
-      facilityName: b.facility?.name ?? "N/A",
-      category: b.category,
-      status: b.status,
-      totalAmount: Number(b.totalAmount),
-      startTime: b.startTime.toISOString(),
-      endTime: b.endTime.toISOString(),
-      notes: b.notes,
+      id:              b.id,
+      title:           b.title,
+      description:     b.description,
+      facilityId:      b.facilityId,
+      facilityName:    b.facility?.name ?? "N/A",
+      category:        b.category,
+      status:          b.status,
+      totalAmount:     Number(b.totalAmount),
+      startTime:       b.startTime.toISOString(),
+      endTime:         b.endTime.toISOString(),
+      notes:           b.notes,
       rejectionReason: b.rejectionReason,
-      bookerName: booker?.name ?? "-",
-      bookerPhone: booker?.phone ?? null,
-      bookerEmail: booker?.email ?? null,
+      bookerName:      booker?.name ?? "-",
+      bookerPhone:     booker?.phone ?? null,
+      bookerEmail:     booker?.email ?? null,
     };
   });
 
@@ -101,20 +201,23 @@ export default async function BookingsPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
-          <p className="text-sm text-[var(--muted)]">{total} total</p>
+          <p className="text-sm text-[var(--muted)]">{total} regular booking{total !== 1 ? "s" : ""}</p>
         </div>
-        {canCreateBookings && (
+        {canManage && (
           <Link href="/bookings/new" className="btn-primary text-sm">
             <Plus size={15} /> New Booking
           </Link>
         )}
       </div>
 
+      <TabBar tab="regular" status={searchParams.status} />
+
       <div className="flex gap-2 flex-wrap">
         {STATUSES.map((s) => {
           const active = (searchParams.status ?? "ALL") === s;
           return (
-            <Link key={s} href={`/bookings?status=${s}`} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${active ? "bg-[var(--navy)] text-white border-[var(--navy)]" : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"}`}>
+            <Link key={s} href={`/bookings?tab=regular&status=${s}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${active ? "bg-[var(--navy)] text-white border-[var(--navy)]" : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"}`}>
               {s}
             </Link>
           );
@@ -133,11 +236,41 @@ export default async function BookingsPage({
         <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
           <span>Page {page} of {pages}</span>
           <div className="flex gap-2">
-            {page > 1 && <Link href={`/bookings?status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary text-xs px-3 py-1.5">← Prev</Link>}
-            {page < pages && <Link href={`/bookings?status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-secondary text-xs px-3 py-1.5">Next →</Link>}
+            {page > 1 && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary text-xs px-3 py-1.5">← Prev</Link>}
+            {page < pages && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-secondary text-xs px-3 py-1.5">Next →</Link>}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Tab navigation component ──────────────────────────────────────────────────
+
+function TabBar({ tab, status }: { tab: Tab; status?: string }) {
+  const statusParam = status && status !== "ALL" ? `&status=${status}` : "";
+  return (
+    <div className="flex gap-1 border-b border-[var(--border)]">
+      <Link
+        href={`/bookings?tab=regular${statusParam}`}
+        className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+          tab === "regular"
+            ? "border-[var(--navy)] text-[var(--navy)]"
+            : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] hover:border-gray-300"
+        }`}
+      >
+        Regular Bookings
+      </Link>
+      <Link
+        href={`/bookings?tab=ceremony${statusParam}`}
+        className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+          tab === "ceremony"
+            ? "border-[var(--navy)] text-[var(--navy)]"
+            : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] hover:border-gray-300"
+        }`}
+      >
+        Ceremony Bookings
+      </Link>
     </div>
   );
 }

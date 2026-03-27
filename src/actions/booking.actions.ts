@@ -8,8 +8,8 @@ import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guard
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
-import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/notifications/email";
-import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
+import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingCancelledEmail } from "@/lib/notifications/email";
+import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyBookingCancelled, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/notifications/push";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
@@ -836,6 +836,7 @@ export async function cancelBooking(bookingId: string) {
 
   const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, deletedAt: null },
+    include: { patron: true, user: true },
   });
 
   if (isPatron && booking.patronId !== session.sub) return { error: "Unauthorized" };
@@ -845,6 +846,41 @@ export async function cancelBooking(bookingId: string) {
     where: { id: bookingId },
     data: { status: "CANCELLED" },
   });
+
+  // Notify patron/user (only when cancelled by staff — patron already knows they cancelled)
+  if (isStaff) {
+    const contact = booking.patron ?? booking.user;
+    if (contact?.phone) {
+      notifyBookingCancelled({
+        phone: contact.phone,
+        bookingTitle: booking.title,
+        cancelledByStaff: true,
+      }).catch((e) => console.error("[cancelBooking] SMS failed:", e));
+    }
+    if (contact?.email) {
+      sendBookingCancelledEmail({
+        to: contact.email,
+        name: contact.name,
+        bookingTitle: booking.title,
+        cancelledByStaff: true,
+      }).catch((e) => console.error("[cancelBooking] Email failed:", e));
+    }
+    if (booking.patronId) {
+      sendPushToPatron(booking.patronId, {
+        title: "Booking Cancelled",
+        body: `Your booking "${booking.title}" has been cancelled by the facility team.`,
+        url: "/patron/bookings",
+        tag: `booking-cancelled-${bookingId}`,
+      });
+    } else if (booking.userId) {
+      sendPushToUser(booking.userId, {
+        title: "Booking Cancelled",
+        body: `Your booking "${booking.title}" has been cancelled.`,
+        url: `/bookings/${bookingId}`,
+        tag: `booking-cancelled-${bookingId}`,
+      });
+    }
+  }
 
   auditLog({ userId: session.sub, action: "CANCEL_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");

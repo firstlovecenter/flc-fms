@@ -667,3 +667,19 @@ model SiteSetting {
 
   @@map("site_settings")
 }
+
+// ─── Report Subscriptions (scheduled automated email reports) ─────────────────
+
+model ReportSubscription {
+  id        String   @id @default(cuid())
+  email     String
+  name      String
+  frequency String   // "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY"
+  reports   String[] // ["FINANCIAL","BOOKINGS","FACILITIES","MAINTENANCE","CEREMONY","INVENTORY","PATRONS"]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([frequency, isActive])
+  @@map("report_subscriptions")
+}

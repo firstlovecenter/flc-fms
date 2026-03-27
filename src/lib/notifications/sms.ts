@@ -145,6 +145,18 @@ export async function notifyBookingRejected(params: {
   });
 }
 
+export async function notifyBookingCancelled(params: {
+  phone: string;
+  bookingTitle: string;
+  cancelledByStaff?: boolean;
+}) {
+  const by = params.cancelledByStaff ? " by the facility team" : "";
+  await sendSMS({
+    to: params.phone,
+    message: `Your booking "${params.bookingTitle}" has been CANCELLED${by}. Contact us if you have any questions.`,
+  });
+}
+
 export async function notifyBookingConfirmation(params: {
   phone: string;
   bookingTitle: string;

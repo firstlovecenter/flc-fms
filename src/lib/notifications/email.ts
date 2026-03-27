@@ -323,6 +323,32 @@ export async function sendBookingRejectedEmail(params: {
   });
 }
 
+export async function sendBookingCancelledEmail(params: {
+  to: string;
+  name: string;
+  bookingTitle: string;
+  cancelledByStaff?: boolean;
+}) {
+  const by = params.cancelledByStaff ? " by the facility team" : "";
+  await sendEmail({
+    to: params.to,
+    subject: `Booking Cancelled: ${params.bookingTitle}`,
+    html: renderEmailTemplate({
+      preheader: `Your booking "${params.bookingTitle}" has been cancelled.`,
+      badge: "Booking Update",
+      title: "Booking cancelled",
+      intro: `Hi ${esc(params.name)}, your booking <strong>${esc(params.bookingTitle)}</strong> has been cancelled${by}.`,
+      detailsHtml: `
+        <div style="margin-top:14px;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.6">
+          If you believe this is a mistake or have questions, please contact the facility manager.
+        </div>
+      `,
+      ctaLabel: "Browse available facilities",
+      ctaUrl: APP_URL,
+    }),
+  });
+}
+
 export async function sendMaintenanceOpenedEmail(params: {
   to: string;
   fmName: string;
