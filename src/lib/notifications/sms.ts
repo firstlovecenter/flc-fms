@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/db/prisma";
 
-const BMS_BASE_URL = process.env.BMS_API_URL!;   // e.g. https://bms.codeslaw.dev/api/v1
-const BMS_API_KEY = process.env.BMS_API_KEY!;
-const BMS_SENDER_ID = process.env.BMS_SENDER_ID ?? "CFMS";
+const FLASHSMS_BASE_URL = process.env.FLASHSMS_API_URL!;
+const FLASHSMS_API_KEY = process.env.FLASHSMS_API_KEY!;
+const FLASHSMS_SENDER_ID = process.env.FLASHSMS_SENDER_ID ?? "CFMS";
 
 function bmsHeaders() {
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${BMS_API_KEY}`,
+    Authorization: `Bearer ${FLASHSMS_API_KEY}`,
   } as const;
 }
 
@@ -27,13 +27,13 @@ export async function sendSMS({ to, message }: SendSMSParams) {
     let error: string | undefined;
 
     try {
-      const res = await fetch(`${BMS_BASE_URL}/sms/send`, {
+      const res = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
         method: "POST",
         headers: bmsHeaders(),
         body: JSON.stringify({
           recipients: [recipient],
           message,
-          senderId: BMS_SENDER_ID,
+          senderId: FLASHSMS_SENDER_ID,
         }),
       });
 
@@ -74,7 +74,7 @@ export async function checkSMSBalance(): Promise<{
   currency: string;
 } | null> {
   try {
-    const res = await fetch(`${BMS_BASE_URL}/balance`, {
+    const res = await fetch(`${FLASHSMS_BASE_URL}/balance`, {
       headers: bmsHeaders(),
     });
     if (!res.ok) return null;
@@ -89,7 +89,7 @@ export async function getSMSStatus(
   messageId: string
 ): Promise<{ status: string; deliveredAt?: string } | null> {
   try {
-    const res = await fetch(`${BMS_BASE_URL}/sms/status/${encodeURIComponent(messageId)}`, {
+    const res = await fetch(`${FLASHSMS_BASE_URL}/sms/status/${encodeURIComponent(messageId)}`, {
       headers: bmsHeaders(),
     });
     if (!res.ok) return null;
@@ -103,7 +103,7 @@ export async function getSMSStatus(
 export async function getSMSHistory(page = 1, limit = 20) {
   try {
     const res = await fetch(
-      `${BMS_BASE_URL}/sms?page=${page}&limit=${limit}`,
+      `${FLASHSMS_BASE_URL}/sms?page=${page}&limit=${limit}`,
       { headers: bmsHeaders() }
     );
     if (!res.ok) return null;
