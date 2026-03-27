@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Phone, Mail } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
-export default function PublicTopNav({ current }: { current?: "home" | "guest" | "checkin" | "patron" | "catalog" | "weddings" | "namings" | "ceremony-request" }) {
+export default function PublicTopNav({
+  current,
+  officePhone,
+  officeEmail,
+}: {
+  current?: "home" | "guest" | "checkin" | "patron" | "catalog" | "weddings" | "namings" | "ceremony-request";
+  officePhone?: string;
+  officeEmail?: string;
+}) {
   const active = "var(--navy)";
   const idle = "var(--muted)";
 
@@ -190,6 +198,22 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
           )}
         </div>
       </nav>
+      {(officePhone || officeEmail) && (
+        <div className="border-t border-[rgba(10,22,40,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-[rgba(10,22,40,0.02)] dark:bg-[rgba(255,255,255,0.02)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-5 md:px-8 py-1.5 flex items-center gap-4 text-[0.72rem] text-[var(--muted)]">
+            {officePhone && (
+              <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                <Phone size={11} /> {officePhone}
+              </a>
+            )}
+            {officeEmail && (
+              <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                <Mail size={11} /> {officeEmail}
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

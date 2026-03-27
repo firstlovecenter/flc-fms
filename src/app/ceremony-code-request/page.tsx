@@ -2,12 +2,14 @@ import PublicTopNav from "@/components/public/PublicTopNav";
 import CeremonyCodeRequestForm from "@/components/public/CeremonyCodeRequestForm";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { getSiteSettings } from "@/actions/site-settings.actions";
 
 export const metadata = {
   title: "Request a Ceremony Booking Code",
 };
 
-export default function CeremonyCodeRequestPage() {
+export default async function CeremonyCodeRequestPage() {
+  const siteSettings = await getSiteSettings();
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
       {/* Background decorations */}
@@ -17,7 +19,7 @@ export default function CeremonyCodeRequestPage() {
       </div>
 
       <div className="relative z-10 w-full">
-        <PublicTopNav current="ceremony-request" />
+        <PublicTopNav current="ceremony-request" officePhone={siteSettings.officePhone || undefined} officeEmail={siteSettings.officeEmail || undefined} />
 
         <main className="max-w-2xl mx-auto px-5 md:px-8 py-10 md:py-16 space-y-6">
           <div>

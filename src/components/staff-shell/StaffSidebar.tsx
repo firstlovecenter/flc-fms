@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Image from "next/image";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -19,6 +20,8 @@ import {
   FileText,
   ClipboardCheck,
   KeyRound,
+  Settings,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
@@ -27,6 +30,7 @@ import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 type StaffSidebarProps = {
   role: string;
   name: string;
+  profilePicture?: string;
   isOpen?: boolean;
   onClose?: () => void;
 };
@@ -76,6 +80,11 @@ const ADMIN_NAV = [
   { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
 ];
 
+const BOTTOM_NAV = [
+  { href: "/settings", label: "Site Settings", icon: Settings, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
+];
+
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 }
@@ -100,7 +109,7 @@ function NavItem({ href, label, Icon, isActive }: { href: string; label: string;
   );
 }
 
-export default function StaffSidebar({ role, name, isOpen = false, onClose }: StaffSidebarProps) {
+export default function StaffSidebar({ role, name, profilePicture, isOpen = false, onClose }: StaffSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const initials = getInitials(name);
@@ -179,14 +188,32 @@ export default function StaffSidebar({ role, name, isOpen = false, onClose }: St
             </div>
           </div>
         )}
+
+        <div className="space-y-0.5">
+          {BOTTOM_NAV.filter(item => !item.roles || item.roles.includes(role)).map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href;
+            return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} />;
+          })}
+        </div>
       </nav>
 
       {/* User footer */}
       <div className="p-3 border-t border-[rgba(255,255,255,0.06)]">
         <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1">
-          <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.08)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold-bright)] flex-shrink-0">
-            {initials}
-          </div>
+          {profilePicture ? (
+            <Image
+              src={profilePicture}
+              alt={name}
+              width={32}
+              height={32}
+              unoptimized
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[rgba(200,163,90,0.2)]"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.08)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold-bright)] flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <div className="text-[0.78rem] font-semibold text-[rgba(255,255,255,0.8)] truncate">{name}</div>
             <div className="text-[0.6rem] text-[rgba(255,255,255,0.28)] uppercase tracking-[0.06em] mt-0.5">

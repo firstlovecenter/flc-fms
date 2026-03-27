@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Menu, Search } from "lucide-react";
+import Image from "next/image";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 import CommandSearch from "@/components/ui/CommandSearch";
 
@@ -16,10 +17,12 @@ const ROLE_LABELS: Record<string, string> = {
 export default function Topbar({
   name,
   role,
+  profilePicture,
   onMenuToggle,
 }: {
   name: string;
   role: string;
+  profilePicture?: string;
   onMenuToggle?: () => void;
 }) {
   const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -88,15 +91,26 @@ export default function Topbar({
 
         {/* User pill */}
         <div className="flex items-center gap-2.5 pr-1">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold)] flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, rgba(200,163,90,0.22) 0%, rgba(200,163,90,0.1) 100%)",
-              border: "1px solid rgba(200,163,90,0.2)",
-              boxShadow: "0 2px 8px rgba(200,163,90,0.08)",
-            }}
-          >
-            {initials}
-          </div>
+          {profilePicture ? (
+            <Image
+              src={profilePicture}
+              alt={name}
+              width={32}
+              height={32}
+              unoptimized
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[rgba(200,163,90,0.2)]"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold)] flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, rgba(200,163,90,0.22) 0%, rgba(200,163,90,0.1) 100%)",
+                border: "1px solid rgba(200,163,90,0.2)",
+                boxShadow: "0 2px 8px rgba(200,163,90,0.08)",
+              }}
+            >
+              {initials}
+            </div>
+          )}
           <div className="hidden sm:flex flex-col gap-px">
             <span className="text-[0.84rem] font-semibold text-[var(--navy)] leading-none">{name}</span>
             <span className="text-[0.68rem] font-medium text-[var(--gold)] uppercase tracking-[0.03em] leading-none">{ROLE_LABELS[role]}</span>

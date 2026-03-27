@@ -7,7 +7,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_FILE_TYPES = ["application/pdf"];
 
-type MediaType = "facility" | "staff" | "receipt" | "item" | "bundle" | "inventory";
+type MediaType = "facility" | "staff" | "receipt" | "item" | "bundle" | "inventory" | "profile";
 
 const ALLOWED_MEDIA_TYPES: MediaType[] = [
   "facility",
@@ -16,6 +16,7 @@ const ALLOWED_MEDIA_TYPES: MediaType[] = [
   "item",
   "bundle",
   "inventory",
+  "profile",
 ];
 
 function getAllowedTypes(mediaType: MediaType): string[] {

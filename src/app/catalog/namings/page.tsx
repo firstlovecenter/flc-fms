@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { getCeremonyVenueConfigs } from "@/actions/ceremony-venue.actions";
+import { getSiteSettings } from "@/actions/site-settings.actions";
 import CeremonyCatalogClient from "@/components/public/CeremonyCatalogClient";
 import PublicTopNav from "@/components/public/PublicTopNav";
 import Link from "next/link";
@@ -11,7 +12,10 @@ export const metadata = {
 };
 
 export default async function NamingCatalogPage() {
-  const configs = await getCeremonyVenueConfigs("NAMING");
+  const [configs, siteSettings] = await Promise.all([
+    getCeremonyVenueConfigs("NAMING"),
+    getSiteSettings(),
+  ]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
@@ -22,7 +26,7 @@ export default async function NamingCatalogPage() {
       </div>
 
       <div className="relative z-10 w-full">
-        <PublicTopNav current="namings" />
+        <PublicTopNav current="namings" officePhone={siteSettings.officePhone || undefined} officeEmail={siteSettings.officeEmail || undefined} />
 
         <main className="max-w-[1200px] mx-auto px-5 md:px-8 py-10 md:py-16 space-y-8">
           <div>

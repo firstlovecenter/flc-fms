@@ -9,10 +9,12 @@ export default function StaffShell({
   children,
   name,
   role,
+  profilePicture,
 }: {
   children: React.ReactNode;
   name: string;
   role: string;
+  profilePicture?: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggle = useCallback(() => setMenuOpen((o) => !o), []);
@@ -20,9 +22,9 @@ export default function StaffShell({
 
   return (
     <div className="flex h-[100dvh] bg-cream overflow-hidden">
-      <StaffSidebar role={role} name={name} isOpen={menuOpen} onClose={close} />
+      <StaffSidebar role={role} name={name} profilePicture={profilePicture} isOpen={menuOpen} onClose={close} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
-        <Topbar name={name} role={role} onMenuToggle={toggle} />
+        <Topbar name={name} role={role} profilePicture={profilePicture} onMenuToggle={toggle} />
         <OfflineQueueBanner />
         <main
           className="staff-main"

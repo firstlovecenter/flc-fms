@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode, useState } from "react";
+import { Phone, Mail } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
 type CurrentPage = "home" | "guest" | "checkin" | "patron" | "weddings" | "namings";
@@ -12,6 +13,8 @@ interface PublicSplitShellProps {
   title: string;
   subtitle: ReactNode;
   children: ReactNode;
+  officePhone?: string;
+  officeEmail?: string;
 }
 
 const FEATURES = [
@@ -69,7 +72,7 @@ function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: s
   );
 }
 
-export default function PublicSplitShell({ current, eyebrow, title, subtitle, children }: PublicSplitShellProps) {
+export default function PublicSplitShell({ current, eyebrow, title, subtitle, children, officePhone, officeEmail }: PublicSplitShellProps) {
   const active = "var(--navy)";
   const idle = "var(--muted)";
 
@@ -138,6 +141,20 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
                 <ThemeModeSwitcher />
               </div>
             </div>
+            {(officePhone || officeEmail) && (
+              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-[rgba(10,22,40,0.06)] text-[0.7rem] text-[var(--muted)]">
+                {officePhone && (
+                  <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                    <Phone size={11} /> {officePhone}
+                  </a>
+                )}
+                {officeEmail && (
+                  <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                    <Mail size={11} /> {officeEmail}
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

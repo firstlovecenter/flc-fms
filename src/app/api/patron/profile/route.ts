@@ -10,7 +10,7 @@ export async function GET() {
 
   const patron = await prisma.patron.findUnique({
     where: { id: session.sub },
-    select: { name: true, email: true, phone: true }});
+    select: { name: true, email: true, phone: true, profilePicture: true }});
 
   if (!patron) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(patron);
@@ -22,11 +22,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { name?: string; email?: string; phone?: string };
+  let body: { name?: string; email?: string; phone?: string; profilePicture?: string };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }
 
-  const { name, email, phone } = body;
+  const { name, email, phone, profilePicture } = body;
   if (!name?.trim() || !email?.trim() || !phone?.trim()) {
     return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
   }
@@ -38,8 +38,13 @@ export async function PATCH(req: NextRequest) {
 
   const updated = await prisma.patron.update({
     where: { id: session.sub },
-    data: { name: name.trim(), email: email.trim(), phone: phone?.trim() || null },
-    select: { name: true, email: true, phone: true }});
+    data: {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone?.trim() || null,
+      ...(profilePicture !== undefined ? { profilePicture } : {}),
+    },
+    select: { name: true, email: true, phone: true, profilePicture: true }});
 
   return NextResponse.json(updated);
 }

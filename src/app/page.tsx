@@ -6,6 +6,7 @@ import PublicSplitShell from "@/components/public/PublicSplitShell";
 import FacilityCatalogClient from "@/components/public/FacilityCatalogClient";
 import ItemsCatalogClient from "@/components/public/ItemsCatalogClient";
 import CatalogTabs from "@/components/public/CatalogTabs";
+import { getSiteSettings } from "@/actions/site-settings.actions";
 
 type Tab = "venues" | "items" | "packages";
 
@@ -70,6 +71,9 @@ export default async function PublicHomePage({
     })),
   }));
 
+  // ── Site settings ────────────────────────────────────────────────────────────
+  const siteSettings = await getSiteSettings();
+
   // ── Hero subtitle ─────────────────────────────────────────────────────────────
   const minRate = facilities.length > 0
     ? formatCurrency(Math.min(...facilities.map(f => Number(f.pricePerHour))))
@@ -84,6 +88,8 @@ export default async function PublicHomePage({
       current="home"
       eyebrow="Venues, Items & Packages"
       title="Everything you need for your perfect event"
+      officePhone={siteSettings.officePhone || undefined}
+      officeEmail={siteSettings.officeEmail || undefined}
       subtitle={
         <>
           {facilities.length} premium {facilities.length === 1 ? "venue" : "venues"} •{" "}

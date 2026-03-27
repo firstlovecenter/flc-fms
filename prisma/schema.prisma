@@ -42,15 +42,16 @@ model User {
 }
 
 model Patron {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  phone        String?   @unique
-  isVerified   Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  bookings     Booking[]
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  name           String
+  phone          String?   @unique
+  isVerified     Boolean   @default(false)
+  profilePicture String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  bookings       Booking[]
 
   @@map("patrons")
 }
@@ -655,4 +656,14 @@ model CeremonyDateOverride {
 
   @@unique([date])
   @@map("ceremony_date_overrides")
+}
+
+// ─── Site Settings (key-value store for FM-editable config) ──────────────────
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }

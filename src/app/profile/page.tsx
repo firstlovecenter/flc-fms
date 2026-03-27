@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { User, KeyRound, Save, Eye, EyeOff, Camera, Loader2 } from "lucide-react";
 import Image from "next/image";
 
-export default function PatronProfilePage() {
+export default function StaffProfilePage() {
   const [profile, setProfile] = useState({ name: "", email: "", phone: "", profilePicture: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
@@ -19,7 +19,7 @@ export default function PatronProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/patron/profile")
+    fetch("/api/profile")
       .then(r => r.json())
       .then(d => {
         setProfile({ name: d.name, email: d.email, phone: d.phone ?? "", profilePicture: d.profilePicture ?? "" });
@@ -40,11 +40,10 @@ export default function PatronProfilePage() {
     const data = await res.json();
     setUploading(false);
     if (!res.ok) { setMessage({ type: "error", text: data.error ?? "Upload failed." }); return; }
-    // Save picture URL immediately
-    const patchRes = await fetch("/api/patron/profile", {
+    const patchRes = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: profile.name, email: profile.email, phone: profile.phone, profilePicture: data.url }),
+      body: JSON.stringify({ name: profile.name, phone: profile.phone, profilePicture: data.url }),
     });
     if (patchRes.ok) {
       setProfile(p => ({ ...p, profilePicture: data.url }));
@@ -57,12 +56,11 @@ export default function PatronProfilePage() {
     const fd = new FormData(e.currentTarget);
     setSaving(true);
     setMessage(null);
-    const res = await fetch("/api/patron/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: fd.get("name"),
-        email: fd.get("email"),
         phone: fd.get("phone"),
         profilePicture: profile.profilePicture || undefined,
       }),
@@ -70,7 +68,7 @@ export default function PatronProfilePage() {
     const data = await res.json();
     setSaving(false);
     setMessage(res.ok ? { type: "success", text: "Profile updated." } : { type: "error", text: data.error ?? "Failed." });
-    if (res.ok) setProfile({ name: data.name, email: data.email, phone: data.phone ?? "", profilePicture: data.profilePicture ?? "" });
+    if (res.ok) setProfile(p => ({ ...p, name: data.name, phone: data.phone ?? "", profilePicture: data.profilePicture ?? "" }));
   }
 
   async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
@@ -85,7 +83,7 @@ export default function PatronProfilePage() {
 
     setPwLoading(true);
     setPwMessage(null);
-    const res = await fetch("/api/patron/change-password", {
+    const res = await fetch("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ current, next }),
@@ -143,7 +141,7 @@ export default function PatronProfilePage() {
             >
               {uploading ? "Uploading…" : "Change Photo"}
             </button>
-            <p className="text-xs text-[var(--muted)] mt-1">JPG, PNG or WebP · max 5 MB</p>
+            <p className="text-xs text-[var(--muted)] mt-1">JPG, PNG or WebP · max 5 MB · saved to Sanity</p>
           </div>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
@@ -159,7 +157,6 @@ export default function PatronProfilePage() {
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <User size={18} /> Profile Details
         </div>
-
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name</label>
@@ -167,11 +164,12 @@ export default function PatronProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email Address</label>
-            <input name="email" type="email" defaultValue={profile.email} required className="input" />
+            <input value={profile.email} readOnly className="input bg-[var(--cream-dark)] text-[var(--muted)] cursor-not-allowed" title="Email cannot be changed here" />
+            <p className="text-xs text-[var(--muted)] mt-1">Email changes must be done by an administrator.</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone Number *</label>
-            <input name="phone" type="tel" required defaultValue={profile.phone} className="input" placeholder="+233..." />
+            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone Number</label>
+            <input name="phone" type="tel" defaultValue={profile.phone} className="input" placeholder="+233..." />
           </div>
           <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
             <Save size={16} /> {saving ? "Saving…" : "Save Changes"}
@@ -184,13 +182,11 @@ export default function PatronProfilePage() {
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <KeyRound size={18} /> Change Password
         </div>
-
         {pwMessage && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
             {pwMessage.text}
           </div>
         )}
-
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Current Password</label>
