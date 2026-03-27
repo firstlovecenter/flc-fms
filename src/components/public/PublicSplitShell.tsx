@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
 type CurrentPage = "home" | "guest" | "checkin" | "patron" | "weddings" | "namings";
@@ -24,8 +24,6 @@ const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
 const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
-
-const SPLASH_DURATION = 7000; // 7 seconds
 
 function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: ReactNode }) {
   return (
@@ -75,104 +73,10 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
   const active = "var(--navy)";
   const idle = "var(--muted)";
 
-  const [splashExiting, setSplashExiting] = useState(false);
-  const [splashDone, setSplashDone] = useState(false);
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
-
-  const dismissSplash = () => {
-    if (splashExiting || splashDone) return;
-    setSplashExiting(true);
-    setTimeout(() => setSplashDone(true), 700);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(dismissSplash, SPLASH_DURATION);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!splashDone) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [splashDone]);
 
   return (
     <div style={{ height: "100vh", display: "flex", position: "relative", overflow: "hidden" }} className="bg-navy dark:bg-transparent">
-
-      {/* ── Mobile Splash (full-screen, lg:hidden) ── */}
-      {!splashDone && (
-        <div
-          className="lg:hidden bg-navy dark:bg-transparent"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 200,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "48px 36px",
-            overflow: "hidden",
-            transition: "opacity 0.7s ease, transform 0.7s ease",
-            opacity: splashExiting ? 0 : 1,
-            transform: splashExiting ? "translateY(-32px)" : "translateY(0)",
-            pointerEvents: splashExiting ? "none" : "auto",
-          }}
-        >
-          {/* Background media */}
-          <img
-            src={leftSplitImage}
-            alt=""
-            aria-hidden="true"
-            onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-          <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-            <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-            <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-          </video>
-          {/* Tint so text stays readable */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.65) 100%)" }} />
-
-          <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <BrandingPanel eyebrow={eyebrow} title={title} subtitle={subtitle} />
-          </div>
-
-          {/* Progress bar + skip */}
-          <div style={{ position: "absolute", bottom: 40, left: 36, right: 36, zIndex: 2 }}>
-            <div style={{ height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
-              <div
-                style={{
-                  height: "100%",
-                  background: "var(--gold)",
-                  borderRadius: 2,
-                  animation: `splashBar ${SPLASH_DURATION}ms linear forwards`,
-                }}
-              />
-            </div>
-            <button
-              onClick={dismissSplash}
-              style={{
-                display: "block",
-                marginLeft: "auto",
-                background: "none",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "rgba(255,255,255,0.5)",
-                borderRadius: 20,
-                padding: "6px 18px",
-                fontSize: "0.75rem",
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-              }}
-            >
-              Skip →
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Desktop left panel ── */}
       <div style={{ flex: 2, position: "relative", overflow: "hidden" }} className="hidden lg:flex items-center justify-center">
@@ -199,16 +103,16 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
         </div>
       </div>
 
-      {/* ── Right panel (always mounted) ── */}
+      {/* ── Right panel ── */}
       <div style={{ flex: 3, background: "var(--cream)", display: "flex", flexDirection: "column" }}>
         {/* Sticky Navigation */}
         <div
           className="px-4 py-5 sm:px-8 lg:px-[50px]"
-          style={{ 
-            position: "sticky", 
-            top: 0, 
+          style={{
+            position: "sticky",
+            top: 0,
             zIndex: 10,
-            background: "var(--cream)", 
+            background: "var(--cream)",
             borderBottom: "1px solid rgba(10,22,40,0.08)",
             boxShadow: "0 1px 3px rgba(10,22,40,0.03)"
           }}>
