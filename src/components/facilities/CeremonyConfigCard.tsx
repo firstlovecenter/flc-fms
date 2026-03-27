@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { upsertCeremonyVenueConfig } from "@/actions/ceremony-venue.actions";
+import MediaUploader from "@/components/ui/MediaUploader";
 import type { CeremonyVenueConfig } from "@prisma/client";
 
 type Props = {
@@ -19,9 +21,7 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [imagesRaw, setImagesRaw] = useState(
-    config?.images.join("\n") ?? ""
-  );
+  const [images, setImages] = useState<string[]>(config?.images ?? []);
   const [price, setPrice] = useState(
     config ? String(Number(config.price)) : ""
   );
@@ -34,10 +34,6 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
   async function handleSave() {
     setLoading(true);
     setError(null);
-    const images = imagesRaw
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
     try {
       const result = await upsertCeremonyVenueConfig(facilityId, type, {
         images,
@@ -79,14 +75,28 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
       </div>
 
       {!editing && config && (
-        <div className="space-y-1 text-sm">
+        <div className="space-y-2 text-sm">
+          {config.images.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {config.images.slice(0, 4).map((url, i) => (
+                <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-[var(--border)]">
+                  <Image src={url} alt={`${label} image ${i + 1}`} fill className="object-cover" unoptimized />
+                </div>
+              ))}
+              {config.images.length > 4 && (
+                <div className="w-16 h-16 rounded-lg border border-[var(--border)] bg-gray-50 flex items-center justify-center text-xs text-[var(--muted)]">
+                  +{config.images.length - 4}
+                </div>
+              )}
+            </div>
+          )}
           <p>
             <span className="text-[var(--muted)]">Price:</span>{" "}
             <strong>GH₵ {Number(config.price).toFixed(2)}</strong>
           </p>
           <p>
             <span className="text-[var(--muted)]">Images:</span>{" "}
-            {config.images.length} url(s)
+            {config.images.length} uploaded
           </p>
           {config.description && (
             <p className="text-[var(--slate)] text-xs">{config.description}</p>
@@ -103,18 +113,15 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
 
       {editing && (
         <div className="space-y-3">
-          <div>
-            <label className="label text-xs">
-              Image URLs (one per line)
-            </label>
-            <textarea
-              value={imagesRaw}
-              onChange={(e) => setImagesRaw(e.target.value)}
-              className="input text-xs"
-              rows={4}
-              placeholder="https://example.com/image1.jpg"
-            />
-          </div>
+          <MediaUploader
+            mediaType="facility"
+            mediaId={`ceremony-${type.toLowerCase()}-${facilityId}`}
+            images={images}
+            onImagesChange={setImages}
+            max={6}
+            showMain={true}
+            label={`${label} Images`}
+          />
 
           <div>
             <label className="label text-xs">Flat Price (GH₵) *</label>

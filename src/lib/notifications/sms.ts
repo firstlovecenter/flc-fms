@@ -49,17 +49,21 @@ export async function sendSMS({ to, message }: SendSMSParams) {
       error = err.message;
     }
 
-    await prisma.notificationLog.create({
-      data: {
-        type: "SMS",
-        recipient,
-        body: message,
-        status,
-        provider: "BMS",
-        providerRef,
-        error,
-      },
-    });
+    try {
+      await prisma.notificationLog.create({
+        data: {
+          type: "SMS",
+          recipient,
+          body: message,
+          status,
+          provider: "BMS",
+          providerRef,
+          error,
+        },
+      });
+    } catch (logErr) {
+      console.error("[SMS] Failed to write notification log:", logErr);
+    }
   }
 }
 

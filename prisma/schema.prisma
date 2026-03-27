@@ -626,6 +626,7 @@ model CeremonyBookingCode {
   requesterPhone String
   requesterEmail String
   notes          String?
+  receiptUrl     String?
   expiresAt      DateTime?
   activatedAt    DateTime?
   activatedById  String?

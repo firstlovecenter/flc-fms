@@ -23,8 +23,8 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
       } else {
         router.refresh();
       }
-    } catch {
-      setError("Failed to approve booking. Please try again.");
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to approve booking. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -42,8 +42,8 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
         router.refresh();
         setShowReject(false);
       }
-    } catch {
-      setError("Failed to reject booking. Please try again.");
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to reject booking. Please try again.");
     } finally {
       setLoading(null);
     }

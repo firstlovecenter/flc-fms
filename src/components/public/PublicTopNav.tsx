@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
-export default function PublicTopNav({ current }: { current?: "home" | "guest" | "checkin" | "patron" | "catalog" }) {
+export default function PublicTopNav({ current }: { current?: "home" | "guest" | "checkin" | "patron" | "catalog" | "weddings" | "namings" | "ceremony-request" }) {
   const active = "var(--navy)";
   const idle = "var(--muted)";
 
@@ -64,9 +64,9 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
           >
             Guest Booking
           </Link>
-          <Link 
-            href="/guest/checkin" 
-            style={{ 
+          <Link
+            href="/guest/checkin"
+            style={{
               padding: "7px 16px",
               borderRadius: "20px",
               fontSize: "0.85rem",
@@ -78,6 +78,36 @@ export default function PublicTopNav({ current }: { current?: "home" | "guest" |
             }}
           >
             Check-In
+          </Link>
+          <Link
+            href="/catalog/weddings"
+            style={{
+              padding: "7px 16px",
+              borderRadius: "20px",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              textDecoration: "none",
+              color: current === "weddings" ? active : idle,
+              transition: "all 0.2s ease",
+              background: current === "weddings" ? "rgba(10, 22, 40, 0.08)" : "transparent",
+            }}
+          >
+            Weddings
+          </Link>
+          <Link
+            href="/catalog/namings"
+            style={{
+              padding: "7px 16px",
+              borderRadius: "20px",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              textDecoration: "none",
+              color: current === "namings" ? active : idle,
+              transition: "all 0.2s ease",
+              background: current === "namings" ? "rgba(10, 22, 40, 0.08)" : "transparent",
+            }}
+          >
+            Namings
           </Link>
         </div>
 

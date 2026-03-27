@@ -174,9 +174,13 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     error = err.message;
   }
 
-  await prisma.notificationLog.create({
-    data: { type: "EMAIL", recipient: to, subject, body: html, status, provider: "RESEND", providerRef, error },
-  });
+  try {
+    await prisma.notificationLog.create({
+      data: { type: "EMAIL", recipient: to, subject, body: html, status, provider: "RESEND", providerRef, error },
+    });
+  } catch (logErr) {
+    console.error("[Email] Failed to write notification log:", logErr);
+  }
 }
 
 // ── Templated senders ─────────────────────────────────────────────────────────

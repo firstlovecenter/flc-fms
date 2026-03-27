@@ -17,6 +17,7 @@ const RequestSchema = z.object({
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
   notes: z.string().optional(),
+  receiptUrl: z.string().url().optional(),
 });
 
 export async function requestCeremonyCode(
@@ -35,7 +36,7 @@ export async function requestCeremonyCode(
     return { error: validated.error.errors[0].message };
   }
 
-  const { name, phone, email, ceremonyType, notes } = validated.data;
+  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
 
   // Generate a unique code
   let code: string;
@@ -56,6 +57,7 @@ export async function requestCeremonyCode(
       requesterPhone: phone,
       requesterEmail: email,
       notes,
+      receiptUrl,
     },
   });
 

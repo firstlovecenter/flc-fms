@@ -737,7 +737,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
       phone:        contact.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
-    });
+    }).catch((e) => console.error("[approveBooking] SMS failed:", e));
   }
   if (contact?.email) {
     await sendBookingApprovedEmail({
@@ -747,7 +747,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       totalAmount:  Number(booking.totalAmount),
-    });
+    }).catch((e) => console.error("[approveBooking] Email failed:", e));
   }
 
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });
@@ -790,7 +790,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
       phone:        contact.phone,
       bookingTitle: booking.title,
       reason,
-    });
+    }).catch((e) => console.error("[rejectBooking] SMS failed:", e));
   }
   if (contact?.email) {
     await sendBookingRejectedEmail({
@@ -798,7 +798,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
       name:         contact.name,
       bookingTitle: booking.title,
       reason,
-    });
+    }).catch((e) => console.error("[rejectBooking] Email failed:", e));
   }
 
   auditLog({ userId: session.sub, action: "REJECT_BOOKING", entity: "Booking", entityId: bookingId, after: { reason } });

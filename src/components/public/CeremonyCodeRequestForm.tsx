@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Upload, X, FileImage } from "lucide-react";
 import { requestCeremonyCode } from "@/actions/ceremony-code.actions";
 
 export default function CeremonyCodeRequestForm() {
@@ -11,9 +12,13 @@ export default function CeremonyCodeRequestForm() {
     ceremonyType: "WEDDING" as "WEDDING" | "NAMING",
     notes: "",
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleChange(
     e: React.ChangeEvent<
@@ -23,12 +28,63 @@ export default function CeremonyCodeRequestForm() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setUploadError(null);
+    if (!file) {
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      return;
+    }
+
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only JPEG, PNG, WebP, or PDF files are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File must be 5MB or smaller.");
+      return;
+    }
+
+    setReceiptFile(file);
+    if (file.type.startsWith("image/")) {
+      setReceiptPreview(URL.createObjectURL(file));
+    } else {
+      setReceiptPreview(null);
+    }
+  }
+
+  function removeFile() {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    setUploadError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUploadError(null);
+
     try {
-      const result = await requestCeremonyCode(form);
+      // Upload receipt first if provided
+      let receiptUrl: string | undefined;
+      if (receiptFile) {
+        const fd = new FormData();
+        fd.append("file", receiptFile);
+        const res = await fetch("/api/upload-receipt", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!res.ok || !json.url) {
+          setUploadError(json.error ?? "Receipt upload failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+        receiptUrl = json.url as string;
+      }
+
+      const result = await requestCeremonyCode({ ...form, receiptUrl });
       if ("error" in result) {
         setError(result.error ?? "An error occurred.");
       } else {
@@ -122,6 +178,66 @@ export default function CeremonyCodeRequestForm() {
           placeholder="you@email.com"
           required
         />
+      </div>
+
+      {/* Payment Receipt Upload */}
+      <div>
+        <label className="label">
+          Payment Receipt / Screenshot *
+        </label>
+        <p className="text-xs text-[var(--muted)] mb-2">
+          Upload a screenshot or photo of your payment confirmation. Accepted formats: JPEG, PNG, WebP, PDF (max 5MB).
+        </p>
+
+        {!receiptFile ? (
+          <label
+            htmlFor="receipt-upload"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[rgba(10,22,40,0.2)] rounded-xl cursor-pointer hover:border-[var(--navy)] hover:bg-[rgba(10,22,40,0.02)] transition-colors"
+          >
+            <Upload size={22} className="text-[var(--muted)] mb-2" />
+            <span className="text-sm font-medium text-[var(--navy)]">Click to upload receipt</span>
+            <span className="text-xs text-[var(--muted)] mt-0.5">or drag and drop</span>
+            <input
+              id="receipt-upload"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              required
+            />
+          </label>
+        ) : (
+          <div className="relative border border-[rgba(10,22,40,0.1)] rounded-xl overflow-hidden bg-gray-50">
+            {receiptPreview ? (
+              <img
+                src={receiptPreview}
+                alt="Payment receipt preview"
+                className="w-full max-h-48 object-contain"
+              />
+            ) : (
+              <div className="flex items-center gap-3 p-4">
+                <FileImage size={28} className="text-[var(--navy)] flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[var(--navy)] truncate">{receiptFile.name}</p>
+                  <p className="text-xs text-[var(--muted)]">{(receiptFile.size / 1024).toFixed(0)} KB · PDF</p>
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={removeFile}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center hover:bg-red-50"
+              title="Remove file"
+            >
+              <X size={12} className="text-red-500" />
+            </button>
+          </div>
+        )}
+
+        {uploadError && (
+          <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+        )}
       </div>
 
       <div>

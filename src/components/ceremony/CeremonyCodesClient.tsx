@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, RefreshCw, X } from "lucide-react";
+import { Check, RefreshCw, X, Receipt } from "lucide-react";
 import {
   activateCeremonyCode,
   resendCeremonyCode,
@@ -19,6 +19,7 @@ type Code = {
   requesterPhone: string;
   requesterEmail: string;
   notes: string | null;
+  receiptUrl: string | null;
   createdAt: Date;
   expiresAt: Date | null;
   bookingId: string | null;
@@ -173,6 +174,17 @@ export default function CeremonyCodesClient({ initialCodes, total }: Props) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {c.receiptUrl && (
+                        <a
+                          href={c.receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View payment receipt"
+                          className="p-1.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100"
+                        >
+                          <Receipt size={13} />
+                        </a>
+                      )}
                       {c.status === "PENDING" && (
                         <button
                           onClick={() => doAction(c.id, "activate")}
