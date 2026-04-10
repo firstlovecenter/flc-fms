@@ -52,9 +52,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // Force password change for staff with temp passwords
+    // Force password change for staff with temp passwords (skip when impersonating)
     if (
       session.mustChangePassword &&
+      !session.impersonatedBy &&
       session.role !== "PATRON" &&
       pathname !== "/change-password" &&
       !pathname.startsWith("/api/auth/change-password") &&

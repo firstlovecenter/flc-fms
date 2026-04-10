@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Pencil, KeyRound, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, KeyRound, Trash2, UserCog } from "lucide-react";
 import { deletePatron, resetPatronPassword } from "@/actions/patron.actions";
+import { impersonatePatron } from "@/actions/impersonation.actions";
 import EditPatronModal from "./EditPatronModal";
 
 interface Props {
@@ -23,6 +24,16 @@ export default function PatronRowActions({ patron }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
+  async function handleImpersonate() {
+    setLoading("impersonate");
+    setImpersonateError(null);
+    const result = await impersonatePatron(patron.id);
+    if (result?.error) setImpersonateError(result.error);
+    setLoading(null);
+    setOpen(false);
+  }
 
   async function handleResetPassword() {
     if (!confirm(`Reset password for ${patron.name}?`)) return;
@@ -66,6 +77,15 @@ export default function PatronRowActions({ patron }: Props) {
     );
   }
 
+  if (impersonateError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 max-w-56">
+        {impersonateError}
+        <button onClick={() => setImpersonateError(null)} className="text-red-600 hover:text-red-800 ml-2 font-semibold">Dismiss</button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <button
@@ -79,6 +99,14 @@ export default function PatronRowActions({ patron }: Props) {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-8 z-20 bg-white border border-[var(--border)] rounded-xl shadow-lg w-44 py-1 text-sm">
+            <button
+              onClick={handleImpersonate}
+              disabled={loading === "impersonate"}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-purple-50 text-purple-700 disabled:opacity-50"
+            >
+              <UserCog size={14} /> {loading === "impersonate" ? "Starting…" : "Impersonate"}
+            </button>
+            <div className="border-t border-[var(--border)] my-1" />
             <button
               onClick={() => { setOpen(false); setEditOpen(true); }}
               className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)]"

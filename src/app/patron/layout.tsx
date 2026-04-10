@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import PatronNavbar from "@/components/patron/PatronNavbar";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 export default async function PatronLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -10,6 +11,13 @@ export default async function PatronLayout({ children }: { children: React.React
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)" }}>
+      {session.impersonatedBy && (
+        <ImpersonationBanner
+          adminName={session.impersonatedBy.name}
+          targetName={session.name}
+          targetRole="PATRON"
+        />
+      )}
       <PatronNavbar initials={initials} name={session.name} />
 
       {/* Main content */}

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, KeyRound, UserX, UserCheck, Pencil } from "lucide-react";
+import { MoreHorizontal, KeyRound, UserX, UserCheck, Pencil, UserCog } from "lucide-react";
 import { deactivateStaffMember, reactivateStaffMember, resetStaffPassword } from "@/actions/staff.actions";
+import { impersonateUser } from "@/actions/impersonation.actions";
 import EditStaffModal from "./EditStaffModal";
 
 interface Props {
@@ -23,6 +24,19 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
   const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
+  const canImpersonate = currentUserRole === "SUPER_ADMIN" && role !== "SUPER_ADMIN" && !inactive;
+
+  async function handleImpersonate() {
+    setLoading("impersonate");
+    setImpersonateError(null);
+    const result = await impersonateUser(userId);
+    // impersonateUser redirects on success; result only returned on error
+    if (result?.error) setImpersonateError(result.error);
+    setLoading(null);
+    setOpen(false);
+  }
 
   async function handleDeactivate() {
     if (!confirm(`Deactivate ${name}? They will no longer be able to log in.`)) return;
@@ -60,6 +74,15 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
     );
   }
 
+  if (impersonateError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-800 max-w-56">
+        {impersonateError}
+        <button onClick={() => setImpersonateError(null)} className="text-red-700 hover:text-red-900 ml-2 font-semibold">Dismiss</button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <button
@@ -83,6 +106,18 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
               </button>
             ) : (
               <>
+                {canImpersonate && (
+                  <>
+                    <button
+                      onClick={handleImpersonate}
+                      disabled={loading === "impersonate"}
+                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-purple-50 text-purple-700 disabled:opacity-50"
+                    >
+                      <UserCog size={14} /> {loading === "impersonate" ? "Starting…" : "Impersonate"}
+                    </button>
+                    <div style={{ height: 1, background: "var(--border)", margin: "2px 0" }} />
+                  </>
+                )}
                 <button
                   onClick={() => { setOpen(false); setEditOpen(true); }}
                   className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)]"

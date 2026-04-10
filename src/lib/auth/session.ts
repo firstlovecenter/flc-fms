@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const COOKIE_NAME = "cfms_token";
+const IMPERSONATION_COOKIE_NAME = "cfms_impersonation_token";
 
 export interface SessionPayload {
   sub: string;        // userId or patronId
@@ -13,6 +14,8 @@ export interface SessionPayload {
   email: string;
   permissions?: Record<string, boolean>;
   mustChangePassword?: boolean;
+  /** Set when a SUPER_ADMIN is impersonating this user. */
+  impersonatedBy?: { id: string; name: string };
 }
 
 export async function signJWT(payload: SessionPayload): Promise<string> {
@@ -50,4 +53,26 @@ export async function setSession(payload: SessionPayload): Promise<void> {
 
 export function clearSession(): void {
   cookies().delete(COOKIE_NAME);
+}
+
+/** Save the original SUPER_ADMIN session so impersonation can be reversed. */
+export async function setImpersonationBackup(payload: SessionPayload): Promise<void> {
+  const token = await signJWT(payload);
+  cookies().set(IMPERSONATION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 8,
+    path: "/",
+  });
+}
+
+export async function getImpersonationBackup(): Promise<SessionPayload | null> {
+  const token = cookies().get(IMPERSONATION_COOKIE_NAME)?.value;
+  if (!token) return null;
+  return verifyJWT(token);
+}
+
+export function clearImpersonationBackup(): void {
+  cookies().delete(IMPERSONATION_COOKIE_NAME);
 }

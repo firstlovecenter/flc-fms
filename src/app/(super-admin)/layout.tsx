@@ -13,7 +13,12 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   });
 
   return (
-    <StaffShell name={session.name} role={session.role} profilePicture={user?.profilePicture ?? undefined}>
+    <StaffShell
+      name={session.name}
+      role={session.role}
+      profilePicture={user?.profilePicture ?? undefined}
+      impersonatedBy={session.impersonatedBy}
+    >
       {children}
     </StaffShell>
   );

@@ -4,17 +4,25 @@ import { useState, useCallback } from "react";
 import StaffSidebar from "@/components/staff-shell/StaffSidebar";
 import Topbar from "@/components/ui/Topbar";
 import OfflineQueueBanner from "@/components/layout/OfflineQueueBanner";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
+
+interface ImpersonatedBy {
+  id: string;
+  name: string;
+}
 
 export default function StaffShell({
   children,
   name,
   role,
   profilePicture,
+  impersonatedBy,
 }: {
   children: React.ReactNode;
   name: string;
   role: string;
   profilePicture?: string;
+  impersonatedBy?: ImpersonatedBy;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggle = useCallback(() => setMenuOpen((o) => !o), []);
@@ -24,6 +32,13 @@ export default function StaffShell({
     <div className="flex h-[100dvh] bg-cream overflow-hidden">
       <StaffSidebar role={role} name={name} profilePicture={profilePicture} isOpen={menuOpen} onClose={close} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+        {impersonatedBy && (
+          <ImpersonationBanner
+            adminName={impersonatedBy.name}
+            targetName={name}
+            targetRole={role}
+          />
+        )}
         <Topbar name={name} role={role} profilePicture={profilePicture} onMenuToggle={toggle} />
         <OfflineQueueBanner />
         <main
