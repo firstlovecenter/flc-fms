@@ -220,7 +220,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
         {canManage && booking.status === "APPROVED" && (
           <CompleteBookingButton bookingId={booking.id} />
         )}
-        {["PENDING", "APPROVED"].includes(booking.status) && (
+        {canManage && ["PENDING", "APPROVED"].includes(booking.status) && (
           <CancelBookingButton bookingId={booking.id} />
         )}
         {canManage && contact?.phone && (

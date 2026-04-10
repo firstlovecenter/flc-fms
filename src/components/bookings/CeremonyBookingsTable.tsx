@@ -185,7 +185,7 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
                         {b.status === "APPROVED" && canManage && (
                           <CompleteBookingButton bookingId={b.id} />
                         )}
-                        {["PENDING", "APPROVED"].includes(b.status) && (
+                        {canManage && ["PENDING", "APPROVED"].includes(b.status) && (
                           <CancelBookingButton bookingId={b.id} />
                         )}
                       </div>

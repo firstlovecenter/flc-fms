@@ -425,7 +425,7 @@ export default function BookingsListClient({
                     {canManage && (selected.status === "PENDING" || isSuperAdmin) && <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>Edit</button>}
                     {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
                     {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
-                    {["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
+                    {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
                     {canManage && selected.bookerPhone && (
                       <SendSMSButton
                         bookingId={selected.id}
