@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { Plus, LayoutGrid, List, User } from "lucide-react";
@@ -150,24 +150,14 @@ export default function TaskBoardClient({
   }
 
   // ── View toggle button helper ──────────────────────────────────────────────
-  function ViewBtn({ id, icon: Icon, label }: { id: "kanban" | "list" | "my"; icon: React.ElementType; label: string }) {
+  function viewBtnClass(id: "kanban" | "list" | "my") {
     const active = view === id;
-    return (
-      <button
-        type="button"
-        onClick={() => setView(id)}
-        title={label}
-        className={[
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
-          active
-            ? "bg-[var(--navy)] text-[var(--cream)] border-[var(--navy)]"
-            : "bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--navy)] hover:text-[var(--navy)]",
-        ].join(" ")}
-      >
-        <Icon size={13} />
-        <span className="hidden sm:inline">{label}</span>
-      </button>
-    );
+    return [
+      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
+      active
+        ? "bg-[var(--navy)] text-[var(--cream)] border-[var(--navy)]"
+        : "bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--navy)] hover:text-[var(--navy)]",
+    ].join(" ");
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -185,9 +175,18 @@ export default function TaskBoardClient({
         <div className="flex items-center gap-2">
           {/* View toggle */}
           <div className="flex items-center gap-1 p-1 rounded-lg border border-[var(--border)] bg-[var(--cream)]">
-            <ViewBtn id="kanban" icon={LayoutGrid} label="Kanban" />
-            <ViewBtn id="list"   icon={List}        label="List"   />
-            <ViewBtn id="my"     icon={User}        label="My Tasks" />
+            <button type="button" onClick={() => setView("kanban")} title="Kanban" className={viewBtnClass("kanban")}>
+              <LayoutGrid size={13} />
+              <span className="hidden sm:inline">Kanban</span>
+            </button>
+            <button type="button" onClick={() => setView("list")} title="List" className={viewBtnClass("list")}>
+              <List size={13} />
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button type="button" onClick={() => setView("my")} title="My Tasks" className={viewBtnClass("my")}>
+              <User size={13} />
+              <span className="hidden sm:inline">My Tasks</span>
+            </button>
           </div>
           <button
             type="button"
