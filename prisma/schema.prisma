@@ -37,6 +37,8 @@ model User {
   activatedCodes        CeremonyBookingCode[]
   ceremonyDateOverrides CeremonyDateOverride[]
   savingsTransactions   SavingsTransaction[]
+  createdTasks          Task[]              @relation("TaskCreatedBy")
+  assignedTasks         Task[]              @relation("TaskAssignedTo")
 
   @@index([role])
   @@map("users")
@@ -536,6 +538,12 @@ enum InventoryStatus {
   LOST
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
 // ─── Booking Categories (dynamic, managed by FM / Super Admin) ────────────────
 
 model BookingCategory {
@@ -549,6 +557,29 @@ model BookingCategory {
 
   @@index([isActive, sortOrder])
   @@map("booking_categories")
+}
+
+// ─── Kanban Task Board ────────────────────────────────────────────────────────
+
+model Task {
+  id           String              @id @default(cuid())
+  title        String
+  description  String?
+  priority     MaintenancePriority @default(MEDIUM)
+  status       TaskStatus          @default(TODO)
+  dueDate      DateTime?
+  assignedToId String?
+  createdById  String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  assignedTo   User?               @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdBy    User                @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@map("tasks")
 }
 
 // ─── Facility Inventory Requirements ─────────────────────────────────────────

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { stopImpersonating } from "@/actions/impersonation.actions";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ImpersonationBanner({ adminName, targetName, targetRole }: Props) {
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const label = targetRole.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -54,7 +56,10 @@ export default function ImpersonationBanner({ adminName, targetName, targetRole 
       </div>
 
       <button
-        onClick={() => startTransition(async () => { await stopImpersonating(); })}
+        onClick={() => startTransition(async () => {
+          const result = await stopImpersonating();
+          if ("redirectTo" in result) router.push(result.redirectTo);
+        })}
         disabled={pending}
         style={{
           padding: "4px 14px",

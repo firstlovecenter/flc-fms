@@ -90,7 +90,7 @@ export async function impersonatePatron(patronId: string) {
   redirect("/patron/dashboard");
 }
 
-export async function stopImpersonating() {
+export async function stopImpersonating(): Promise<{ error: string } | { redirectTo: string }> {
   const session = await getSession();
   if (!session?.impersonatedBy) return { error: "Not currently impersonating." };
 
@@ -99,7 +99,7 @@ export async function stopImpersonating() {
     // Safety fallback — something is wrong, clear everything.
     clearSession();
     clearImpersonationBackup();
-    redirect("/login");
+    return { redirectTo: "/login" };
   }
 
   const impersonatedId   = session.sub;
@@ -117,5 +117,5 @@ export async function stopImpersonating() {
     after:    { targetName: impersonatedName, targetRole: impersonatedRole },
   });
 
-  redirect(impersonatedRole === "PATRON" ? "/users" : "/staff");
+  return { redirectTo: impersonatedRole === "PATRON" ? "/users" : "/staff" };
 }
