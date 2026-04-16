@@ -99,11 +99,18 @@ export async function getBookableCatalog() {
 
 // ─── Guest item booking ───────────────────────────────────────────────────────
 
+const ITEM_MIN_LEAD_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 export async function createGuestItemBooking(raw: unknown) {
   const parsed = GuestItemBookingSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   const data = parsed.data;
+
+  // Enforce 24-hour minimum lead time
+  if (data.startTime.getTime() < Date.now() + ITEM_MIN_LEAD_MS) {
+    return { error: "Item bookings must be made at least 24 hours in advance." };
+  }
 
   // Compute totalAmount from line items
   let total = 0;

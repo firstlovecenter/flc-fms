@@ -135,6 +135,11 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
     }
   }
 
+  // Compute min start time server-side (now + 24 hours), formatted for datetime-local input
+  const minStartDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const minStartTime = `${minStartDate.getFullYear()}-${pad(minStartDate.getMonth() + 1)}-${pad(minStartDate.getDate())}T${pad(minStartDate.getHours())}:${pad(minStartDate.getMinutes())}`;
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
       <div
@@ -197,7 +202,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
         <section>
           {isItemBooking ? (
             <div className="card p-6 md:p-7 bg-gradient-to-b from-[#FFFFFF] to-[#FCFAF6] dark:from-[rgba(15,26,43,0.45)] dark:to-[rgba(15,26,43,0.45)]">
-              <GuestItemBookingForm initialLines={initialLines} />
+              <GuestItemBookingForm initialLines={initialLines} minStartTime={minStartTime} />
             </div>
           ) : (
             <GuestBookingForm

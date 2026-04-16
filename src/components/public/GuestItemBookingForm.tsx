@@ -37,8 +37,10 @@ type Line = {
 
 export default function GuestItemBookingForm({
   initialLines,
+  minStartTime,
 }: {
   initialLines: Line[];
+  minStartTime: string;
 }) {
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -80,6 +82,11 @@ export default function GuestItemBookingForm({
     setServerError(null);
     if (lines.length === 0) {
       setServerError("You have no items in your selection.");
+      return;
+    }
+    const start = new Date(data.startTime);
+    if (start.getTime() < Date.now() + 24 * 3600 * 1000) {
+      setServerError("Bookings must be made at least 24 hours in advance.");
       return;
     }
     if (termsRequired && !agreedToTerms) {
@@ -249,7 +256,7 @@ export default function GuestItemBookingForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="label">Event Start</label>
-            <input {...register("startTime")} type="datetime-local" className="input" />
+            <input {...register("startTime")} type="datetime-local" min={minStartTime} className="input" />
             {errors.startTime && <p className="text-xs text-red-600 mt-1">{errors.startTime.message}</p>}
           </div>
           <div>
