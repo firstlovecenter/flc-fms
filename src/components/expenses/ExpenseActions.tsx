@@ -13,8 +13,9 @@ export default function ExpenseActions({
   isLocked: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<null | "reject">(null);
+  const [mode, setMode] = useState<null | "approve" | "reject">(null);
   const [reason, setReason] = useState("");
+  const [chargeAmount, setChargeAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,11 +26,13 @@ export default function ExpenseActions({
   async function handleApprove() {
     setLoading(true);
     setError(null);
-    const result = await approveExpense(expenseId);
+    const result = await approveExpense(expenseId, parseFloat(chargeAmount) || 0);
     if (result && "error" in result) {
       setError(result.error as string);
     } else {
       router.refresh();
+      setMode(null);
+      setChargeAmount("");
     }
     setLoading(false);
   }
@@ -46,6 +49,45 @@ export default function ExpenseActions({
       setMode(null);
     }
     setLoading(false);
+  }
+
+  if (mode === "approve") {
+    return (
+      <div className="flex flex-col gap-1">
+        {error && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            {error}
+          </p>
+        )}
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={chargeAmount}
+            onChange={(e) => setChargeAmount(e.target.value)}
+            placeholder="Charge (GH₵)…"
+            className="input text-xs py-1 w-28"
+            autoFocus
+          />
+          <button
+            onClick={handleApprove}
+            disabled={loading}
+            className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50"
+            title="Confirm approval"
+          >
+            <Check size={12} />
+          </button>
+          <button
+            onClick={() => { setMode(null); setChargeAmount(""); setError(null); }}
+            className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
+            title="Cancel"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (mode === "reject") {
@@ -73,14 +115,19 @@ export default function ExpenseActions({
         </p>
       )}
       <div className="flex items-center gap-1">
-        <button onClick={handleApprove} disabled={loading}
+        <button
+          onClick={() => setMode("approve")}
+          disabled={loading}
           className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 text-xs font-medium px-2"
-          title="Approve">
+          title="Approve"
+        >
           Approve
         </button>
-        <button onClick={() => setMode("reject")}
+        <button
+          onClick={() => setMode("reject")}
           className="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium px-2"
-          title="Reject">
+          title="Reject"
+        >
           Reject
         </button>
       </div>

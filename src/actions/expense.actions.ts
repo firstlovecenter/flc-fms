@@ -71,8 +71,11 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
 // so the balance check and the approval update are always atomic with respect to each other.
 const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
-export async function approveExpense(expenseId: string) {
+export async function approveExpense(expenseId: string, chargeAmount: number = 0) {
   const session = await requireStaff("FACILITY_MANAGER");
+
+  // Sanitise charge amount — must be non-negative
+  const sanitisedCharge = Math.max(0, Number(chargeAmount) || 0);
 
   // Quick pre-flight: verify existence + lock window before entering the serialised path
   const preCheck = await prisma.expense.findFirst({
@@ -85,7 +88,9 @@ export async function approveExpense(expenseId: string) {
   // Run the balance check + approval inside a transaction protected by an advisory lock.
   // pg_advisory_xact_lock releases when the transaction commits, so by the time the next
   // concurrent approval acquires the lock it will see the updated approved-expense total.
-  type TxResult = { updated: { createdBy: { email: string; name: string; phone: string | null }; title: string; amount: Prisma.Decimal } } | { error: string };
+  type TxResult =
+    | { updated: { createdBy: { email: string; name: string; phone: string | null }; title: string; amount: Prisma.Decimal }; appliedCharge: number }
+    | { error: string };
 
   const txResult: TxResult = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
@@ -93,33 +98,68 @@ export async function approveExpense(expenseId: string) {
     // Re-verify inside the lock — another request may have approved it while we waited
     const current = await tx.expense.findFirst({
       where: { id: expenseId, status: "PENDING", deletedAt: null },
-      select: { amount: true },
+      select: { amount: true, title: true },
     });
     if (!current) return { error: "This expense has already been processed." };
 
-    // Compute available balance inside the lock using committed data
-    const [incomeTotals, totalApprovedExpenses] = await Promise.all([
+    // Compute savings-aware available balance inside the lock
+    const [incomeTotals, approvedExpAgg, savingsAgg] = await Promise.all([
       getTotalIncomeIncludingBookingRevenue(),
       tx.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
+      tx.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } }),
     ]);
 
-    const balance = incomeTotals.totalIncome - Number(totalApprovedExpenses._sum.amount ?? 0);
-    if (Number(current.amount) > balance) {
-      return {
-        error: `Insufficient balance. Available: GH₵${balance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`,
-      };
+    const totalApprovedExpenses = Number(approvedExpAgg._sum.amount ?? 0);
+    const savingsDeposits       = Number(savingsAgg.find((r) => r.type === "DEPOSIT")?._sum.amount    ?? 0);
+    const savingsWithdrawals    = Number(savingsAgg.find((r) => r.type === "WITHDRAWAL")?._sum.amount ?? 0);
+    const netSavings            = savingsDeposits - savingsWithdrawals;
+    const availableBalance      = incomeTotals.totalIncome - totalApprovedExpenses - netSavings;
+    const totalRequired         = Number(current.amount) + sanitisedCharge;
+
+    if (totalRequired > availableBalance) {
+      const msg = sanitisedCharge > 0
+        ? `Insufficient balance. Available: GH₵${availableBalance.toFixed(2)}, Required: GH₵${totalRequired.toFixed(2)} (expense GH₵${Number(current.amount).toFixed(2)} + charge GH₵${sanitisedCharge.toFixed(2)})`
+        : `Insufficient balance. Available: GH₵${availableBalance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`;
+      return { error: msg };
+    }
+
+    const now = new Date();
+
+    // Create charge expense first (if applicable) so we have its id
+    let chargeExpenseId: string | undefined;
+    if (sanitisedCharge > 0) {
+      const chargeExpense = await tx.expense.create({
+        data: {
+          createdById:        session.sub,
+          approvedById:       session.sub,
+          title:              `Transaction Charge — ${current.title}`,
+          narration:          `Transaction charge entered by FM on approval of "${current.title}"`,
+          amount:             sanitisedCharge,
+          category:           "Transaction Charge",
+          status:             "APPROVED",
+          isTransactionCharge: true,
+          approvedAt:         now,
+        },
+        select: { id: true },
+      });
+      chargeExpenseId = chargeExpense.id;
     }
 
     const updated = await tx.expense.update({
       where: { id: expenseId },
-      data: { status: "APPROVED", approvedById: session.sub, approvedAt: new Date() },
+      data: {
+        status:       "APPROVED",
+        approvedById: session.sub,
+        approvedAt:   now,
+        ...(chargeExpenseId ? { chargeExpenseId } : {}),
+      },
       include: { createdBy: true },
     });
-    return { updated };
+    return { updated, appliedCharge: sanitisedCharge };
   });
 
   if ("error" in txResult) return { error: txResult.error };
-  const { updated } = txResult;
+  const { updated, appliedCharge } = txResult;
 
   if (updated.createdBy.email) {
     await sendExpenseNotificationEmail({ to: updated.createdBy.email, name: updated.createdBy.name,
@@ -130,7 +170,13 @@ export async function approveExpense(expenseId: string) {
       title: updated.title, approved: true});
   }
 
-  auditLog({ userId: session.sub, action: "APPROVE_EXPENSE", entity: "Expense", entityId: expenseId });
+  auditLog({
+    userId:   session.sub,
+    action:   "APPROVE_EXPENSE",
+    entity:   "Expense",
+    entityId: expenseId,
+    after:    appliedCharge > 0 ? { chargeAmount: appliedCharge } : undefined,
+  });
   revalidatePath("/transactions");
   return { success: true, expense: updated };
 }
@@ -139,11 +185,14 @@ export async function rejectExpense(expenseId: string, reason: string) {
   const session  = await requireStaff("FACILITY_MANAGER");
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, status: true },
+    select: { createdAt: true, status: true, isTransactionCharge: true },
   });
 
   if (!existing || existing.status !== "PENDING") {
     return { error: "Only pending expenses can be rejected." };
+  }
+  if (existing.isTransactionCharge) {
+    return { error: "Transaction charge entries cannot be rejected." };
   }
   if (isTransactionLocked(existing.createdAt)) {
     return { error: transactionLockMessage() };
@@ -199,10 +248,11 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, status: true, createdById: true },
+    select: { createdAt: true, status: true, createdById: true, isTransactionCharge: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
+  if (existing.isTransactionCharge) return { error: "Transaction charge entries cannot be edited." };
 
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const isRequesterReceiptOnly =
@@ -250,10 +300,11 @@ export async function deleteExpense(expenseId: string) {
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true },
+    select: { createdAt: true, isTransactionCharge: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
+  if (existing.isTransactionCharge) return { error: "Transaction charge entries cannot be deleted." };
   if (isTransactionLocked(existing.createdAt)) {
     return { error: transactionLockMessage() };
   }

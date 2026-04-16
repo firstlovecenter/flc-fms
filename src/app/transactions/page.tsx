@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownLeft, Wrench } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
@@ -39,6 +39,7 @@ export default async function TransactionsPage({
   const [
     expenses, expenseTotal, expenseSummary,
     incomeRecords, incomeTotals, incomeByCategory,
+    savingsRecords, savingsAgg,
   ] = await Promise.all([
     prisma.expense.findMany({
       where: expenseWhere,
@@ -46,6 +47,7 @@ export default async function TransactionsPage({
         createdBy:  { select: { name: true, role: true } },
         approvedBy: { select: { name: true } },
         maintenanceRequest: { select: { id: true, title: true } },
+        chargeExpense: { select: { id: true, amount: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * take,
@@ -72,6 +74,15 @@ export default async function TransactionsPage({
       _count: true,
       orderBy: { _sum: { amount: "desc" } },
     }) : Promise.resolve([]),
+    isFM ? prisma.savingsTransaction.findMany({
+      include: { createdBy: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }) : Promise.resolve([]),
+    isFM ? prisma.savingsTransaction.groupBy({
+      by: ["type"],
+      _sum: { amount: true },
+    }) : Promise.resolve([]),
   ]);
 
   const incomeByCategryList = incomeByCategory.map((c) => ({
@@ -85,15 +96,21 @@ export default async function TransactionsPage({
   const approvedExp = expenseSummary.find((s) => s.status === "APPROVED");
   const totalIncome = incomeTotals.totalIncome;
   const totalApprovedExpenses = Number(approvedExp?._sum.amount ?? 0);
-  const balance = totalIncome - totalApprovedExpenses;
+
+  // Savings balance
+  const savingsDeposits    = Number(savingsAgg.find((r) => r.type === "DEPOSIT")?._sum.amount    ?? 0);
+  const savingsWithdrawals = Number(savingsAgg.find((r) => r.type === "WITHDRAWAL")?._sum.amount ?? 0);
+  const netSavings         = savingsDeposits - savingsWithdrawals;
+  const availableBalance   = totalIncome - totalApprovedExpenses - netSavings;
 
   // Build tab link helper
   const tabHref = (t: string) => `/transactions?tab=${t}`;
   const tabs = isFM
     ? [
-        { key: "overview", label: "Overview" },
-        { key: "income", label: "Income" },
-        { key: "expenses", label: "Expenses" },
+        { key: "overview",  label: "Overview" },
+        { key: "income",    label: "Income" },
+        { key: "expenses",  label: "Expenses" },
+        { key: "savings",   label: "Savings" },
       ]
     : [{ key: "expenses", label: "My Expense Requests" }];
 
@@ -127,7 +144,7 @@ export default async function TransactionsPage({
           </h1>
           {isFM && (
             <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.9)" }}>
-              Balance: <strong style={{ color: balance >= 0 ? "#86efac" : "#fca5a5" }}>{formatCurrency(balance)}</strong>
+              Available Balance: <strong style={{ color: availableBalance >= 0 ? "#86efac" : "#fca5a5" }}>{formatCurrency(availableBalance)}</strong>
             </p>
           )}
         </div>
@@ -147,7 +164,7 @@ export default async function TransactionsPage({
 
       {/* FM Balance Cards */}
       {isFM && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="card p-4 border-green-200 bg-green-50">
             <p className="text-xs font-medium text-green-700">Total Income</p>
             <p className="text-2xl font-bold text-green-800">{formatCurrency(totalIncome)}</p>
@@ -161,9 +178,13 @@ export default async function TransactionsPage({
             <p className="text-2xl font-bold text-yellow-800">{pendingExp?._count ?? 0}</p>
             <p className="text-xs text-yellow-600 mt-0.5">{formatCurrency(Number(pendingExp?._sum.amount ?? 0))}</p>
           </div>
-          <div className={`card p-4 ${balance >= 0 ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
-            <p className={`text-xs font-medium ${balance >= 0 ? "text-emerald-700" : "text-red-700"}`}>Net Balance</p>
-            <p className={`text-2xl font-bold ${balance >= 0 ? "text-emerald-800" : "text-red-800"}`}>{formatCurrency(balance)}</p>
+          <div className="card p-4 border-purple-200 bg-purple-50">
+            <p className="text-xs font-medium text-purple-700">Savings Balance</p>
+            <p className="text-2xl font-bold text-purple-800">{formatCurrency(netSavings)}</p>
+          </div>
+          <div className={`card p-4 ${availableBalance >= 0 ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+            <p className={`text-xs font-medium ${availableBalance >= 0 ? "text-emerald-700" : "text-red-700"}`}>Available Balance</p>
+            <p className={`text-2xl font-bold ${availableBalance >= 0 ? "text-emerald-800" : "text-red-800"}`}>{formatCurrency(availableBalance)}</p>
           </div>
         </div>
       )}
@@ -359,6 +380,16 @@ export default async function TransactionsPage({
                                 <Wrench size={9} /> Maintenance
                               </span>
                             )}
+                            {e.isTransactionCharge && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                <Zap size={9} /> Charge
+                              </span>
+                            )}
+                            {!e.isTransactionCharge && e.chargeExpense && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                <Zap size={9} /> +{formatCurrency(Number(e.chargeExpense.amount))} charge
+                              </span>
+                            )}
                           </div>
                           {e.maintenanceRequest ? (
                             <Link href={`/maintenance/${e.maintenanceRequest.id}`} className="text-xs text-[var(--gold)] hover:underline mt-0.5 block">
@@ -378,7 +409,7 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
-                            {e.status === "APPROVED" && !e.receiptUrl && (
+                            {e.status === "APPROVED" && !e.receiptUrl && !e.isTransactionCharge && (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                                 Receipt Missing
                               </span>
@@ -388,13 +419,13 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
-                            {e.status === "APPROVED" && e.createdById === session.sub && !isFM && (
+                            {e.status === "APPROVED" && e.createdById === session.sub && !isFM && !e.isTransactionCharge && (
                               <Link href={`/transactions/expenses/${e.id}/edit`} className="text-xs text-[var(--navy)] hover:underline">
                                 Upload Receipt
                               </Link>
                             )}
-                            {isFM && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
-                            {isFM && e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
+                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
+                            {isFM && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>
                             )}
@@ -414,6 +445,82 @@ export default async function TransactionsPage({
               {page < expensePages && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-primary">Next</Link>}
             </div>
           )}
+        </>
+      )}
+
+      {/* ── SAVINGS TAB (FM only) ──────────────────────────────────── */}
+      {tab === "savings" && isFM && (
+        <>
+          {/* Savings summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="card p-4 border-green-200 bg-green-50">
+              <p className="text-xs font-medium text-green-700">Total Deposited</p>
+              <p className="text-2xl font-bold text-green-800">{formatCurrency(savingsDeposits)}</p>
+            </div>
+            <div className="card p-4 border-orange-200 bg-orange-50">
+              <p className="text-xs font-medium text-orange-700">Total Withdrawn</p>
+              <p className="text-2xl font-bold text-orange-800">{formatCurrency(savingsWithdrawals)}</p>
+            </div>
+            <div className="card p-4 border-purple-200 bg-purple-50">
+              <p className="text-xs font-medium text-purple-700">Net Savings Balance</p>
+              <p className="text-2xl font-bold text-purple-800">{formatCurrency(netSavings)}</p>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Link href="/transactions/savings/deposit" className="btn-gold flex items-center gap-2">
+              <PiggyBank size={16} /> Deposit to Savings
+            </Link>
+            <Link href="/transactions/savings/withdrawal" className="btn-secondary flex items-center gap-2">
+              <ArrowUpRight size={16} /> Withdraw from Savings
+            </Link>
+          </div>
+
+          {/* Savings history */}
+          <div className="card overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)] bg-purple-50">
+              <h3 className="font-semibold text-purple-800 text-sm">Savings History</h3>
+            </div>
+            {savingsRecords.length === 0 ? (
+              <div className="p-12 text-center text-[var(--muted)]">No savings transactions yet.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Type</th>
+                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Narration</th>
+                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">By</th>
+                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Date</th>
+                      <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {savingsRecords.map((s) => (
+                      <tr key={s.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            s.type === "DEPOSIT"
+                              ? "bg-green-100 text-green-700 border border-green-200"
+                              : "bg-orange-100 text-orange-700 border border-orange-200"
+                          }`}>
+                            {s.type === "DEPOSIT" ? "Deposit" : "Withdrawal"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-[var(--slate)]">{s.narration}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">{s.createdBy.name}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">{formatDate(s.createdAt)}</td>
+                        <td className={`py-3 px-4 text-right font-semibold ${s.type === "DEPOSIT" ? "text-green-700" : "text-orange-700"}`}>
+                          {s.type === "DEPOSIT" ? "+" : "−"}{formatCurrency(Number(s.amount))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileText, User, DollarSign, Clock } from "lucide-react";
+import { ArrowLeft, FileText, User, DollarSign, Clock, Zap } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { isTransactionLocked } from "@/lib/transaction-lock";
@@ -13,8 +13,9 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   const expense = await prisma.expense.findFirst({
     where: { id: params.id },
     include: {
-      createdBy: { select: { name: true, email: true, role: true } },
-      approvedBy: { select: { name: true } },
+      createdBy:    { select: { name: true, email: true, role: true } },
+      approvedBy:   { select: { name: true } },
+      chargeExpense: { select: { id: true, amount: true, title: true, status: true } },
     },
   });
 
@@ -38,6 +39,17 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
         <span className={statusBadgeClass(expense.status)}>{expense.status}</span>
       </div>
+
+      {expense.isTransactionCharge && (
+        <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-violet-700 text-sm font-semibold mb-1">
+            <Zap size={14} /> System-Generated Transaction Charge
+          </div>
+          <p className="text-sm text-violet-600">
+            This entry was automatically created when an expense was approved. It cannot be manually edited or deleted.
+          </p>
+        </div>
+      )}
 
       {expense.status === "REJECTED" && expense.rejectionReason && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -99,7 +111,22 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
         </div>
       )}
 
-      {(canManage || canUploadReceiptOnly) && (
+      {expense.chargeExpense && (
+        <div className="card p-4 border-violet-200 bg-violet-50">
+          <div className="flex items-center gap-2 text-violet-700 text-xs font-medium mb-2">
+            <Zap size={13} /> Transaction Charge Applied
+          </div>
+          <p className="text-sm font-semibold text-violet-800">
+            {formatCurrency(Number(expense.chargeExpense.amount))} processing fee
+          </p>
+          <Link href={`/transactions/${expense.chargeExpense.id}`}
+            className="text-xs text-violet-700 hover:underline mt-1 block">
+            View charge record →
+          </Link>
+        </div>
+      )}
+
+      {!expense.isTransactionCharge && (canManage || canUploadReceiptOnly) && (
         <div className="flex">
           <Link
             href={`/transactions/expenses/${expense.id}/edit`}

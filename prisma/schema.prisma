@@ -36,6 +36,7 @@ model User {
   facilityCheckOuts    FacilityCheckIn[]      @relation("FacilityCheckOuts")
   activatedCodes        CeremonyBookingCode[]
   ceremonyDateOverrides CeremonyDateOverride[]
+  savingsTransactions   SavingsTransaction[]
 
   @@index([role])
   @@map("users")
@@ -261,9 +262,13 @@ model Expense {
   approvedAt           DateTime?
   updatedAt            DateTime             @updatedAt
   maintenanceRequestId String?              @unique
+  isTransactionCharge  Boolean              @default(false)
+  chargeExpenseId      String?              @unique
   approvedBy           User?                @relation("ApprovedExpenses", fields: [approvedById], references: [id])
   createdBy            User                 @relation("CreatedExpenses", fields: [createdById], references: [id])
   maintenanceRequest   MaintenanceRequest?  @relation(fields: [maintenanceRequestId], references: [id])
+  chargeExpense        Expense?             @relation("ChargeExpense", fields: [chargeExpenseId], references: [id])
+  linkedExpense        Expense?             @relation("ChargeExpense")
 
   @@index([status])
   @@map("expenses")
@@ -286,6 +291,20 @@ model Income {
 
   @@index([receivedAt])
   @@map("income")
+}
+
+model SavingsTransaction {
+  id          String                 @id @default(cuid())
+  type        SavingsTransactionType
+  amount      Decimal                @db.Decimal(10, 2)
+  narration   String
+  createdById String
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  createdBy   User                   @relation(fields: [createdById], references: [id])
+
+  @@index([type, createdAt])
+  @@map("savings_transactions")
 }
 
 model MaintenanceRequest {
@@ -478,6 +497,11 @@ enum ExpenseStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum SavingsTransactionType {
+  DEPOSIT
+  WITHDRAWAL
 }
 
 enum MaintenanceStatus {
