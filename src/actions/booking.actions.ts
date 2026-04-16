@@ -263,24 +263,48 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
-    // Recompute price inside the lock so it reflects any pricing changes
-    // that may have occurred between the pre-flight checks above and now.
-    const amountResult = await computeConfiguredBookingAmount(
-      tx,
-      validated.facilityId,
-      validated.category,
-      validated.startTime,
-      validated.endTime,
-      validated.useAirConditioner,
-    );
-    if ("error" in amountResult) return { error: amountResult.error! };
+    // Ceremony booking (staff bypass — no code required)
+    const isCeremonyBooking = !!validated.ceremonyDetails;
+    let ceremonyPrice: number | null = null;
+    if (isCeremonyBooking) {
+      const ctype = (validated.category?.toUpperCase() ?? "WEDDING") as "WEDDING" | "NAMING";
+      const cfg = await tx.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId: validated.facilityId, type: ctype } },
+      });
+      ceremonyPrice = cfg ? Number(cfg.price) : 0;
+    }
 
-    // Check capacity: count overlapping bookings and compare to slot's maxBookings
-    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
-    const maxAllowed = slot?.maxBookings ?? 1;
-    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
-    if (overlapCount >= maxAllowed) {
-      return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
+    let totalAmount: number;
+    let unitPrice: number;
+    let pricingSource: string;
+
+    if (ceremonyPrice !== null) {
+      totalAmount   = ceremonyPrice;
+      unitPrice     = ceremonyPrice;
+      pricingSource = "CEREMONY_CONFIG";
+    } else {
+      // Recompute price inside the lock so it reflects any pricing changes
+      // that may have occurred between the pre-flight checks above and now.
+      const amountResult = await computeConfiguredBookingAmount(
+        tx,
+        validated.facilityId,
+        validated.category,
+        validated.startTime,
+        validated.endTime,
+        validated.useAirConditioner,
+      );
+      if ("error" in amountResult) return { error: amountResult.error! };
+      totalAmount   = amountResult.totalAmount;
+      unitPrice     = amountResult.unitPrice;
+      pricingSource = amountResult.pricingSource;
+
+      // Check capacity: count overlapping bookings and compare to slot's maxBookings
+      const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+      const maxAllowed = slot?.maxBookings ?? 1;
+      const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
+      if (overlapCount >= maxAllowed) {
+        return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
+      }
     }
 
     const booking = await tx.booking.create({
@@ -294,9 +318,10 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
         notes:        validated.notes ?? null,
-        totalAmount:  amountResult.totalAmount,
-        resolvedUnitPrice: amountResult.unitPrice,
-        resolvedPricingSource: amountResult.pricingSource,
+        totalAmount,
+        resolvedUnitPrice: unitPrice,
+        resolvedPricingSource: pricingSource,
+        ceremonyDetails: validated.ceremonyDetails ?? undefined,
         status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
       },
       include: { facility: true, user: true },

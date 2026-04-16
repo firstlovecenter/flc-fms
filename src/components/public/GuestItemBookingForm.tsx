@@ -1,23 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createGuestItemBooking } from "@/actions/bookable-items.actions";
+import { getPublicBookingCategories } from "@/actions/availability.actions";
 import { Package, Layers, Minus, Plus, CheckCircle2 } from "lucide-react";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 
 const schema = z.object({
-  guestName:   z.string().min(2, "Name is required"),
-  guestEmail:  z.string().email("Enter a valid email"),
-  guestPhone:  z.string().min(9, "Phone number is required"),
-  title:       z.string().min(2, "Booking title is required"),
-  description: z.string().optional(),
-  startTime:   z.string().min(1, "Start time is required"),
-  endTime:     z.string().min(1, "End time is required"),
-  notes:       z.string().optional(),
+  guestName:      z.string().min(2, "Name is required"),
+  guestEmail:     z.string().email("Enter a valid email"),
+  guestPhone:     z.string().min(9, "Phone number is required"),
+  groupMinistry:  z.string().min(1, "Group or Ministry is required"),
+  title:          z.string().min(2, "Booking title is required"),
+  description:    z.string().optional(),
+  startTime:      z.string().min(1, "Start time is required"),
+  endTime:        z.string().min(1, "End time is required"),
+  notes:          z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -42,6 +44,14 @@ export default function GuestItemBookingForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [category, setCategory] = useState("");
+  const [publicCategories, setPublicCategories] = useState<{ slug: string; name: string }[]>([]);
+
+  useEffect(() => {
+    getPublicBookingCategories().then((res) => {
+      if (res.success) setPublicCategories(res.categories);
+    });
+  }, []);
 
   const {
     register,
@@ -76,15 +86,19 @@ export default function GuestItemBookingForm({
       setServerError("Please accept the required terms before submitting.");
       return;
     }
+    const groupLine = `Group/Ministry: ${data.groupMinistry.trim()}`;
+    const notesWithGroup = [groupLine, data.notes].filter(Boolean).join("\n") || undefined;
+
     const result = await createGuestItemBooking({
       guestName:   data.guestName,
       guestEmail:  data.guestEmail,
       guestPhone:  data.guestPhone,
       title:       data.title,
       description: data.description,
+      category:    category || "OTHER",
       startTime:   new Date(data.startTime),
       endTime:     new Date(data.endTime),
-      notes:       data.notes,
+      notes:       notesWithGroup,
       lines: lines.map(l => ({
         itemId:   l.type === "item"   ? l.id : undefined,
         bundleId: l.type === "bundle" ? l.id : undefined,
@@ -173,7 +187,7 @@ export default function GuestItemBookingForm({
       </div>
 
       {/* GUEST INFO */}
-      <div className="card-inset p-4 md:p-5">
+      <div className="card p-4 md:p-5">
         <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Your Information
         </p>
@@ -194,10 +208,15 @@ export default function GuestItemBookingForm({
           <input {...register("guestPhone")} className="input" />
           {errors.guestPhone && <p className="text-xs text-red-600 mt-1">{errors.guestPhone.message}</p>}
         </div>
+        <div className="mt-4">
+          <label className="label">Group / Ministry</label>
+          <input {...register("groupMinistry")} className="input" placeholder="e.g. Youth Ministry, Choir, Cell Group 5" />
+          {errors.groupMinistry && <p className="text-xs text-red-600 mt-1">{errors.groupMinistry.message}</p>}
+        </div>
       </div>
 
       {/* BOOKING DETAILS */}
-      <div className="card-inset p-4 md:p-5">
+      <div className="card p-4 md:p-5">
         <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Event Details
         </p>
@@ -206,6 +225,23 @@ export default function GuestItemBookingForm({
           <input {...register("title")} className="input" placeholder="e.g. Wedding reception, fundraiser gala" />
           {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title.message}</p>}
         </div>
+
+        {publicCategories.length > 0 && (
+          <div className="mt-4">
+            <label className="label">Event Type</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="input"
+            >
+              <option value="">Select event type (optional)</option>
+              {publicCategories.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="mt-4">
           <label className="label">Description (optional)</label>
           <textarea {...register("description")} className="input" rows={2} placeholder="Briefly describe your event" />

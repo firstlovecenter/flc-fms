@@ -93,9 +93,17 @@ export default async function BookingsPage({
             <p className="text-sm text-[var(--muted)]">{total} ceremony booking{total !== 1 ? "s" : ""}</p>
           </div>
           {canManage && (
-            <Link href="/bookings/new" className="btn-primary text-sm">
-              <Plus size={15} /> New Booking
-            </Link>
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/bookings/new" className="btn-primary text-sm">
+                <Plus size={15} /> New Booking
+              </Link>
+              <Link href="/bookings/new?type=wedding" className="btn-secondary text-sm">
+                <Plus size={15} /> New Wedding
+              </Link>
+              <Link href="/bookings/new?type=naming" className="btn-secondary text-sm">
+                <Plus size={15} /> New Naming
+              </Link>
+            </div>
           )}
         </div>
 
@@ -204,9 +212,17 @@ export default async function BookingsPage({
           <p className="text-sm text-[var(--muted)]">{total} regular booking{total !== 1 ? "s" : ""}</p>
         </div>
         {canManage && (
-          <Link href="/bookings/new" className="btn-primary text-sm">
-            <Plus size={15} /> New Booking
-          </Link>
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/bookings/new" className="btn-primary text-sm">
+              <Plus size={15} /> New Booking
+            </Link>
+            <Link href="/bookings/new?type=wedding" className="btn-secondary text-sm">
+              <Plus size={15} /> New Wedding
+            </Link>
+            <Link href="/bookings/new?type=naming" className="btn-secondary text-sm">
+              <Plus size={15} /> New Naming
+            </Link>
+          </div>
         )}
       </div>
 

@@ -16,14 +16,16 @@ import {
   ClipboardList,
   Package,
   BarChart3,
+  PiggyBank,
 } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await requireStaff();
+  const isFM = ["FACILITY_MANAGER","SUPER_ADMIN"].includes(session.role);
 
   const [
     totalFacilities, pendingBookings, activeBookings, openMaintenance,
-    pendingExpenses, incomeTotals, expenseTotal,
+    pendingExpenses, incomeTotals, expenseTotal, savingsAgg,
   ] = await Promise.all([
     prisma.facility.count({ where: { isActive: true } }),
     prisma.booking.count({ where: { status: "PENDING" } }),
@@ -32,9 +34,17 @@ export default async function DashboardPage() {
     prisma.expense.count({ where: { status: "PENDING" } }),
     getTotalIncomeIncludingBookingRevenue(),
     prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
+    isFM
+      ? prisma.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } })
+      : Promise.resolve([] as { type: string; _sum: { amount: unknown } }[]),
   ]);
 
-  const net = incomeTotals.totalIncome - Number(expenseTotal._sum.amount ?? 0);
+  const totalApprovedExpenses = Number(expenseTotal._sum.amount ?? 0);
+  const savingsDeposits    = Number((savingsAgg as { type: string; _sum: { amount: unknown } }[]).find((r) => r.type === "DEPOSIT")?._sum.amount    ?? 0);
+  const savingsWithdrawals = Number((savingsAgg as { type: string; _sum: { amount: unknown } }[]).find((r) => r.type === "WITHDRAWAL")?._sum.amount ?? 0);
+  const netSavings         = savingsDeposits - savingsWithdrawals;
+  const net                = incomeTotals.totalIncome - totalApprovedExpenses;
+  const availableBalance   = incomeTotals.totalIncome - totalApprovedExpenses - netSavings;
 
   const recentBookings = await prisma.booking.findMany({
     include: { facility: { select: { name: true } }, patron: { select: { name: true } }, user: { select: { name: true } } },
@@ -43,7 +53,6 @@ export default async function DashboardPage() {
   });
 
   const recentBookingsWithFacility = recentBookings.filter((b) => b.facility !== null) as Parameters<typeof RecentBookings>[0]["bookings"];
-  const isFM = ["FACILITY_MANAGER","SUPER_ADMIN"].includes(session.role);
   const canBook = ["FACILITY_MANAGER","BOOKING_MANAGER","SUPER_ADMIN"].includes(session.role);
 
   return (
@@ -112,10 +121,12 @@ export default async function DashboardPage() {
 
       {/* Financial stats — FM only */}
       {isFM && (
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Income"   value={formatCurrency(incomeTotals.totalIncome)}  icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" />
-          <StatCard label="Total Expenses" value={formatCurrency(Number(expenseTotal._sum.amount ?? 0))} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" />
-          <StatCard label="Net Balance"    value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
+        <div className="relative z-10 grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard label="Total Income"      value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" />
+          <StatCard label="Total Expenses"    value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" />
+          <StatCard label="Net Balance"       value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
+          <StatCard label="Savings Balance"   value={formatCurrency(netSavings)} icon={<PiggyBank size={16} />} href="/transactions?tab=savings" />
+          <StatCard label="Available Balance" value={formatCurrency(availableBalance)} icon={<DollarSign size={16} />} sub={availableBalance >= 0 ? "Surplus" : "Deficit"} trend={availableBalance >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
         </div>
       )}
 

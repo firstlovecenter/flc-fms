@@ -20,11 +20,28 @@ export default function BookingForm({
   defaultFacilityId,
   currentUserRole,
   ceremonyDays,
+  isCeremonyBooking,
+  defaultCategory,
+  ceremonyFlatPrice,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
   currentUserRole?: string;
   ceremonyDays?: string[];
+  isCeremonyBooking?: boolean;
+  defaultCategory?: string;
+  ceremonyFlatPrice?: number;
 }) {
-  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="staff" currentUserRole={currentUserRole} ceremonyDays={ceremonyDays} />;
+  return (
+    <GuestBookingForm
+      facilities={facilities}
+      defaultFacilityId={defaultFacilityId}
+      mode="staff"
+      currentUserRole={currentUserRole}
+      ceremonyDays={ceremonyDays}
+      isCeremonyBooking={isCeremonyBooking}
+      defaultCategory={defaultCategory}
+      ceremonyFlatPrice={ceremonyFlatPrice}
+    />
+  );
 }
