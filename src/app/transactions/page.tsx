@@ -159,6 +159,11 @@ export default async function TransactionsPage({
               <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
             </Link>
           )}
+          {isFM && (
+            <Link href="/transactions/savings/deposit" className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto">
+              <PiggyBank size={16} /> Move to Savings
+            </Link>
+          )}
         </div>
       </div>
 
