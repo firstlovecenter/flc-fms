@@ -5,6 +5,41 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { sendPushToUser } from "@/lib/notifications/push";
+import { sendSMS } from "@/lib/notifications/sms";
+
+// ─── Notification helpers ─────────────────────────────────────────────────────
+
+async function notifyAssigned(userId: string, taskTitle: string) {
+  // Push notification (fire-and-forget)
+  sendPushToUser(userId, {
+    title: "New task assigned to you",
+    body:  taskTitle,
+    url:   "/tasks",
+    tag:   "task-assigned",
+  }).catch(() => {});
+
+  // SMS if user has a phone number
+  const user = await prisma.user.findUnique({
+    where:  { id: userId },
+    select: { phone: true, name: true },
+  });
+  if (user?.phone) {
+    sendSMS({
+      to:      user.phone,
+      message: `Hi ${user.name ?? "there"}, a task has been assigned to you: "${taskTitle}". Log in to FLC FMS to view details.`,
+    }).catch(() => {});
+  }
+}
+
+async function notifyUnassigned(userId: string, taskTitle: string) {
+  sendPushToUser(userId, {
+    title: "Task unassigned",
+    body:  `You have been removed from: "${taskTitle}"`,
+    url:   "/tasks",
+    tag:   "task-unassigned",
+  }).catch(() => {});
+}
 
 // ─── Shared include shape ─────────────────────────────────────────────────────
 
@@ -61,6 +96,11 @@ export async function createTask(data: z.infer<typeof CreateSchema>) {
     after:    { title: task.title, priority: task.priority, status: task.status },
   });
 
+  // Notify assignee if different from creator
+  if (validated.assignedToId && validated.assignedToId !== session.sub) {
+    await notifyAssigned(validated.assignedToId, task.title);
+  }
+
   revalidatePath("/tasks");
   return { success: true as const, task };
 }
@@ -71,7 +111,7 @@ export async function updateTask(taskId: string, data: z.infer<typeof UpdateSche
 
   const existing = await prisma.task.findUniqueOrThrow({
     where:  { id: taskId },
-    select: { createdById: true },
+    select: { createdById: true, assignedToId: true },
   });
 
   const canEdit =
@@ -96,6 +136,20 @@ export async function updateTask(taskId: string, data: z.infer<typeof UpdateSche
     entityId: taskId,
     after:    validated,
   });
+
+  // Handle assignee change notifications
+  const oldAssignee = existing.assignedToId;
+  const newAssignee = validated.assignedToId ?? null;
+  if (newAssignee !== oldAssignee) {
+    // Notify old assignee they were removed (push only)
+    if (oldAssignee && oldAssignee !== session.sub) {
+      await notifyUnassigned(oldAssignee, task.title);
+    }
+    // Notify new assignee (push + SMS)
+    if (newAssignee && newAssignee !== session.sub) {
+      await notifyAssigned(newAssignee, task.title);
+    }
+  }
 
   revalidatePath("/tasks");
   return { success: true as const, task };

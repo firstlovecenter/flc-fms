@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, LayoutGrid, List, User } from "lucide-react";
 import { moveTask, deleteTask } from "@/actions/task.actions";
 import TaskColumn from "./TaskColumn";
+import TaskListView from "./TaskListView";
+import TaskMyView from "./TaskMyView";
 import TaskFormModal from "./TaskFormModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,6 +57,7 @@ export default function TaskBoardClient({
   currentUserRole,
 }: TaskBoardClientProps) {
   const [tasks, setTasks] = useState<TaskWithRelations[]>(initialTasks);
+  const [view,  setView]  = useState<"kanban" | "list" | "my">("kanban");
   const [modal, setModal] = useState<{
     open: boolean;
     mode: "create" | "edit";
@@ -131,44 +134,115 @@ export default function TaskBoardClient({
     setModal({ open: true, mode: "edit", task });
   }
 
+  async function handleStatusChange(taskId: string, status: "TODO" | "IN_PROGRESS" | "DONE") {
+    const previousTasks = tasks;
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
+    try {
+      const res = await moveTask(taskId, { status });
+      if (!res.success) {
+        setTasks(previousTasks);
+        toast.error("Failed to update status");
+      }
+    } catch {
+      setTasks(previousTasks);
+      toast.error("Failed to update status");
+    }
+  }
+
+  // ── View toggle button helper ──────────────────────────────────────────────
+  function ViewBtn({ id, icon: Icon, label }: { id: "kanban" | "list" | "my"; icon: React.ElementType; label: string }) {
+    const active = view === id;
+    return (
+      <button
+        type="button"
+        onClick={() => setView(id)}
+        title={label}
+        className={[
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
+          active
+            ? "bg-[var(--navy)] text-[var(--cream)] border-[var(--navy)]"
+            : "bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--navy)] hover:text-[var(--navy)]",
+        ].join(" ")}
+      >
+        <Icon size={13} />
+        <span className="hidden sm:inline">{label}</span>
+      </button>
+    );
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Task Board</h1>
           <p className="text-sm text-[var(--muted)] mt-0.5">
-            {tasks.length} task{tasks.length !== 1 ? "s" : ""} · drag cards to update status
+            {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+            {view === "kanban" ? " · drag cards to update status" : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setModal({ open: true, mode: "create" })}
-          className="btn-primary flex items-center gap-2 shrink-0"
-        >
-          <Plus size={16} />
-          New Task
-        </button>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center gap-1 p-1 rounded-lg border border-[var(--border)] bg-[var(--cream)]">
+            <ViewBtn id="kanban" icon={LayoutGrid} label="Kanban" />
+            <ViewBtn id="list"   icon={List}        label="List"   />
+            <ViewBtn id="my"     icon={User}        label="My Tasks" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setModal({ open: true, mode: "create" })}
+            className="btn-primary flex items-center gap-2 shrink-0"
+          >
+            <Plus size={16} />
+            New Task
+          </button>
+        </div>
       </div>
 
-      {/* Board */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          {COLUMNS.map((col) => (
-            <TaskColumn
-              key={col.id}
-              columnId={col.id}
-              label={col.label}
-              tasks={tasksByStatus[col.id]}
-              currentUserId={currentUserId}
-              currentUserRole={currentUserRole}
-              onEdit={openEdit}
-              onDelete={handleDeleteTask}
-            />
-          ))}
-        </div>
-      </DragDropContext>
+      {/* Kanban view */}
+      {view === "kanban" && (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            {COLUMNS.map((col) => (
+              <TaskColumn
+                key={col.id}
+                columnId={col.id}
+                label={col.label}
+                tasks={tasksByStatus[col.id]}
+                currentUserId={currentUserId}
+                currentUserRole={currentUserRole}
+                onEdit={openEdit}
+                onDelete={handleDeleteTask}
+              />
+            ))}
+          </div>
+        </DragDropContext>
+      )}
+
+      {/* List view */}
+      {view === "list" && (
+        <TaskListView
+          tasks={tasks}
+          currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
+          onEdit={openEdit}
+          onDelete={handleDeleteTask}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+
+      {/* My Tasks view */}
+      {view === "my" && (
+        <TaskMyView
+          tasks={tasks}
+          currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
+          onEdit={openEdit}
+          onDelete={handleDeleteTask}
+          onStatusChange={handleStatusChange}
+        />
+      )}
 
       {/* Modal */}
       <TaskFormModal
