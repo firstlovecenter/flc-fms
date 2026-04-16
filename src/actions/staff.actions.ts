@@ -13,7 +13,7 @@ import { DEFAULT_VICAR_PERMISSIONS } from "@/lib/staff-permissions";
 
 export async function getStaffMembers() {
   const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
-    where: { isActive: true },
+    where: { isActive: true, role: { not: "SUPER_ADMIN" } },
     select: {
       id: true, name: true, email: true, phone: true,
       role: true, permissions: true, lastLoginAt: true, createdAt: true},
@@ -154,7 +154,7 @@ export async function updateStaffMember(
 export async function getInactiveStaffMembers() {
   await requireStaff("FACILITY_MANAGER");
   return prisma.user.findMany({
-    where: { isActive: false },
+    where: { isActive: false, role: { not: "SUPER_ADMIN" } },
     select: {
       id: true, name: true, email: true, phone: true,
       role: true, permissions: true, lastLoginAt: true, createdAt: true,

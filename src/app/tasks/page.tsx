@@ -18,7 +18,7 @@ export default async function TasksPage() {
       orderBy:  { createdAt: "asc" },
     }),
     prisma.user.findMany({
-      where:   { isActive: true },
+      where:   { isActive: true, role: { not: "SUPER_ADMIN" } },
       select:  { id: true, name: true },
       orderBy: { name: "asc" },
     }),

@@ -2,23 +2,16 @@
 
 import { Draggable } from "@hello-pangea/dnd";
 import { format, isPast } from "date-fns";
-import { CalendarDays, User, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, User, Pencil, Trash2, AlertCircle } from "lucide-react";
 import type { TaskWithRelations } from "./TaskBoardClient";
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 
-const PRIORITY_STYLES: Record<string, string> = {
-  CRITICAL: "bg-red-500/20 text-red-300 border border-red-500/30",
-  HIGH:     "bg-orange-500/20 text-orange-300 border border-orange-500/30",
-  MEDIUM:   "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-  LOW:      "bg-green-500/20 text-green-300 border border-green-500/30",
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  CRITICAL: "Critical",
-  HIGH:     "High",
-  MEDIUM:   "Medium",
-  LOW:      "Low",
+const PRIORITY_CONFIG: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  CRITICAL: { bg: "#fee2e2", text: "#b91c1c", border: "#fca5a5", label: "Critical" },
+  HIGH:     { bg: "#ffedd5", text: "#c2410c", border: "#fdba74", label: "High"     },
+  MEDIUM:   { bg: "#fef9c3", text: "#a16207", border: "#fde047", label: "Medium"   },
+  LOW:      { bg: "#dcfce7", text: "#15803d", border: "#86efac", label: "Low"      },
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -52,6 +45,8 @@ export default function TaskCard({
     isPast(new Date(task.dueDate)) &&
     task.status !== "DONE";
 
+  const pCfg = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.MEDIUM;
+
   function handleDelete() {
     if (window.confirm(`Delete "${task.title}"? This cannot be undone.`)) {
       onDelete(task.id);
@@ -65,24 +60,29 @@ export default function TaskCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          style={provided.draggableProps.style}
+          style={{
+            ...provided.draggableProps.style,
+            boxShadow: snapshot.isDragging
+              ? "0 12px 32px rgba(10,22,40,0.16), 0 2px 8px rgba(10,22,40,0.10)"
+              : "0 1px 3px rgba(10,22,40,0.06)",
+          }}
           className={[
-            "rounded-xl p-4 space-y-3 transition-all duration-150 cursor-grab active:cursor-grabbing",
-            "border",
+            "rounded-xl p-4 space-y-3 bg-white transition-shadow duration-150 cursor-grab active:cursor-grabbing border",
             snapshot.isDragging
-              ? "border-[rgba(200,163,90,0.6)] bg-[rgba(255,255,255,0.18)] shadow-2xl rotate-1"
-              : "border-[rgba(200,163,90,0.2)] bg-[rgba(255,255,255,0.08)] hover:-translate-y-0.5 hover:border-[rgba(200,163,90,0.4)] hover:shadow-lg",
+              ? "border-[var(--gold)] rotate-1 scale-[1.02]"
+              : "border-[var(--border)] hover:border-[rgba(200,163,90,0.5)] hover:shadow-md",
           ].join(" ")}
         >
-          {/* Title row */}
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-medium text-[var(--cream)] leading-snug flex-1">
+          {/* Title + priority */}
+          <div className="flex items-start gap-2">
+            <p className="text-sm font-semibold text-[var(--navy)] leading-snug flex-1">
               {task.title}
             </p>
             <span
-              className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${PRIORITY_STYLES[task.priority] ?? ""}`}
+              className="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border whitespace-nowrap"
+              style={{ background: pCfg.bg, color: pCfg.text, borderColor: pCfg.border }}
             >
-              {PRIORITY_LABELS[task.priority]}
+              {pCfg.label}
             </span>
           </div>
 
@@ -102,23 +102,27 @@ export default function TaskCard({
               </span>
             )}
             {task.dueDate && (
-              <span
-                className={`flex items-center gap-1 ${isOverdue ? "text-rose-400 font-medium" : ""}`}
-              >
-                <CalendarDays size={11} />
+              <span className={`flex items-center gap-1 ${
+                isOverdue ? "text-rose-600 font-semibold" : ""
+              }`}>
+                {isOverdue ? <AlertCircle size={11} /> : <CalendarDays size={11} />}
                 {format(new Date(task.dueDate), "MMM d, yyyy")}
-                {isOverdue && " · overdue"}
+                {isOverdue && (
+                  <span className="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full border border-rose-200">
+                    Overdue
+                  </span>
+                )}
               </span>
             )}
           </div>
 
           {/* Actions */}
           {canManage && (
-            <div className="flex items-center gap-2 pt-1 border-t border-[rgba(255,255,255,0.06)]">
+            <div className="flex items-center gap-3 pt-2 border-t border-[var(--border)]">
               <button
                 type="button"
                 onClick={() => onEdit(task)}
-                className="flex items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--cream)] transition-colors"
+                className="flex items-center gap-1 text-xs text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
               >
                 <Pencil size={11} />
                 Edit
@@ -126,13 +130,13 @@ export default function TaskCard({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex items-center gap-1 text-xs text-[var(--muted)] hover:text-rose-400 transition-colors"
+                className="flex items-center gap-1 text-xs text-[var(--muted)] hover:text-rose-600 transition-colors"
               >
                 <Trash2 size={11} />
                 Delete
               </button>
-              <span className="ml-auto text-[10px] text-[var(--muted)] opacity-50">
-                by {task.createdBy.name}
+              <span className="ml-auto text-[10px] text-[var(--muted)] truncate max-w-[100px]">
+                {task.createdBy.name}
               </span>
             </div>
           )}

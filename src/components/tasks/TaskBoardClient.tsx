@@ -137,7 +137,7 @@ export default function TaskBoardClient({
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--cream)]">Task Board</h1>
+          <h1 className="text-2xl font-bold text-[var(--navy)]">Task Board</h1>
           <p className="text-sm text-[var(--muted)] mt-0.5">
             {tasks.length} task{tasks.length !== 1 ? "s" : ""} · drag cards to update status
           </p>

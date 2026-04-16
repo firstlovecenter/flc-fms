@@ -6,16 +6,10 @@ import type { TaskWithRelations } from "./TaskBoardClient";
 
 // ─── Column config ────────────────────────────────────────────────────────────
 
-const COLUMN_ACCENT: Record<string, string> = {
-  TODO:        "rgba(245,158,11,0.5)",
-  IN_PROGRESS: "rgba(59,130,246,0.5)",
-  DONE:        "rgba(34,197,94,0.5)",
-};
-
-const COLUMN_HEADER_COLOR: Record<string, string> = {
-  TODO:        "text-amber-300",
-  IN_PROGRESS: "text-blue-300",
-  DONE:        "text-emerald-300",
+const COLUMN_CONFIG: Record<string, { accent: string; bg: string; labelColor: string; dot: string }> = {
+  TODO:        { accent: "#f59e0b", bg: "rgba(245,158,11,0.06)",  labelColor: "#b45309", dot: "bg-amber-400" },
+  IN_PROGRESS: { accent: "#3b82f6", bg: "rgba(59,130,246,0.06)",  labelColor: "#1d4ed8", dot: "bg-blue-400" },
+  DONE:        { accent: "#16a34a", bg: "rgba(22,163,74,0.06)",   labelColor: "#15803d", dot: "bg-emerald-400" },
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -41,22 +35,27 @@ export default function TaskColumn({
   onEdit,
   onDelete,
 }: TaskColumnProps) {
+  const cfg = COLUMN_CONFIG[columnId];
+
   return (
     <div className="flex flex-col min-w-0 flex-1">
       {/* Column header */}
       <div
-        className="rounded-t-xl px-4 py-3 border-t-2 flex items-center justify-between"
+        className="rounded-t-xl px-4 py-3 flex items-center justify-between border border-b-0"
         style={{
-          borderTopColor: COLUMN_ACCENT[columnId],
-          background: "rgba(255,255,255,0.06)",
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
+          borderColor: "var(--border)",
+          borderTop: `3px solid ${cfg.accent}`,
+          background: cfg.bg,
         }}
       >
-        <h3 className={`text-sm font-semibold uppercase tracking-wide ${COLUMN_HEADER_COLOR[columnId]}`}>
-          {label}
-        </h3>
-        <span className="text-xs font-medium text-[var(--muted)] bg-[rgba(255,255,255,0.08)] px-2 py-0.5 rounded-full">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+          <h3 className="text-sm font-bold tracking-wide" style={{ color: cfg.labelColor }}>{label}</h3>
+        </div>
+        <span
+          className="text-xs font-semibold px-2 py-0.5 rounded-full"
+          style={{ background: cfg.accent + "22", color: cfg.accent }}
+        >
           {tasks.length}
         </span>
       </div>
@@ -67,17 +66,15 @@ export default function TaskColumn({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={[
-              "flex-1 min-h-[200px] rounded-b-xl p-3 space-y-3 transition-colors duration-150",
-              "border border-t-0",
-              snapshot.isDraggingOver
-                ? "bg-[rgba(255,255,255,0.06)] border-[rgba(200,163,90,0.3)]"
-                : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]",
-            ].join(" ")}
+            className="flex-1 min-h-[220px] rounded-b-xl p-3 space-y-3 transition-colors duration-150 border border-t-0"
+            style={{
+              borderColor: snapshot.isDraggingOver ? cfg.accent + "55" : "var(--border)",
+              background: snapshot.isDraggingOver ? cfg.bg : "var(--cream)",
+            }}
           >
             {tasks.length === 0 && !snapshot.isDraggingOver && (
-              <div className="h-full min-h-[120px] flex items-center justify-center rounded-lg border border-dashed border-[rgba(255,255,255,0.1)]">
-                <p className="text-xs text-[var(--muted)] opacity-60">No tasks</p>
+              <div className="h-full min-h-[140px] flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--border)]">
+                <p className="text-xs text-[var(--muted)]">Drop tasks here</p>
               </div>
             )}
 
