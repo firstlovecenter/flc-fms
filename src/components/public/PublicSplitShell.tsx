@@ -79,7 +79,7 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
 
   return (
-    <div style={{ height: "100vh", display: "flex", position: "relative", overflow: "hidden" }} className="bg-navy dark:bg-transparent">
+    <div style={{ display: "flex", position: "relative", overflowX: "hidden", minHeight: "100dvh" }} className="bg-navy dark:bg-transparent lg:h-screen lg:overflow-hidden">
 
       {/* ── Desktop left panel ── */}
       <div style={{ flex: 2, position: "relative", overflow: "hidden" }} className="hidden lg:flex items-center justify-center">
@@ -159,7 +159,7 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
         </div>
 
         {/* Scrollable Content */}
-        <div className="px-4 py-8 sm:px-8 lg:px-[50px]" style={{ flex: 1, overflowY: "auto" }}>
+        <div className="px-4 py-8 sm:px-8 lg:px-[50px] lg:overflow-y-auto" style={{ flex: 1 }}>
           <div style={{ width: "100%", maxWidth: 900, margin: "0 auto" }}>
             {children}
           </div>

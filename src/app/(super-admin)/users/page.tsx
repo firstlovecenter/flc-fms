@@ -98,7 +98,7 @@ export default async function SuperAdminUsersPage({
         )}
       </div>
 
-      <div className="card overflow-hidden" style={{
+      <div className="card" style={{
         background: "linear-gradient(135deg, #FFFFFF 0%, #FEFDFB 100%)",
         boxShadow: "0 2px 8px rgba(10,22,40,0.04), 0 1px 3px rgba(10,22,40,0.06)",
         position: "relative", zIndex: 1,
