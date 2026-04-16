@@ -270,7 +270,7 @@ export default async function TransactionsPage({
                         </td>
                         <td className="py-2.5 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-2.5 px-4">
-                          {e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
+                          {e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={false} />}
                         </td>
                       </tr>
                     ))}
@@ -429,8 +429,8 @@ export default async function TransactionsPage({
                                 Upload Receipt
                               </Link>
                             )}
-                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
-                            {isFM && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={isTransactionLocked(e.createdAt)} />}
+                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={e.status !== "PENDING" && isTransactionLocked(e.createdAt)} />}
+                            {isFM && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={false} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>
                             )}
