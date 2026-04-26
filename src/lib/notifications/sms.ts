@@ -1,13 +1,17 @@
 import { prisma } from "@/lib/db/prisma";
+import { randomUUID } from "crypto";
 
+// FLASHSMS_API_URL must be the v2 base URL, e.g. https://app.flashsms.africa/api/v2
+// FLASHSMS_API_KEY must be a v2 API key (v1 keys are not accepted by v2 endpoints)
 const FLASHSMS_BASE_URL = process.env.FLASHSMS_API_URL!;
 const FLASHSMS_API_KEY = process.env.FLASHSMS_API_KEY!;
 const FLASHSMS_SENDER_ID = process.env.FLASHSMS_SENDER_ID ?? "CFMS";
 
-function bmsHeaders() {
+function v2Headers(idempotencyKey?: string) {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${FLASHSMS_API_KEY}`,
+    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
   } as const;
 }
 
@@ -19,9 +23,9 @@ interface SendSMSParams {
 }
 
 export async function sendSMS({ to, message }: SendSMSParams) {
-  const recipients = Array.isArray(to) ? to : [to];
+  const phones = Array.isArray(to) ? to : [to];
 
-  for (const recipient of recipients) {
+  for (const phone of phones) {
     let status = "FAILED";
     let providerRef: string | undefined;
     let error: string | undefined;
@@ -29,21 +33,22 @@ export async function sendSMS({ to, message }: SendSMSParams) {
     try {
       const res = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
         method: "POST",
-        headers: bmsHeaders(),
+        headers: v2Headers(randomUUID()),
         body: JSON.stringify({
-          recipients: [recipient],
+          phones: [phone],
           message,
           senderId: FLASHSMS_SENDER_ID,
         }),
       });
 
-      const data = await res.json();
+      const body = await res.json();
 
-      if (res.ok && data.data?.messageId) {
+      // v2 returns 202 Accepted on success
+      if (res.status === 202 && body.data?.id) {
         status = "SENT";
-        providerRef = data.data.messageId;
+        providerRef = body.data.id;
       } else {
-        error = data.message ?? "Unknown BMS error";
+        error = body.error?.message ?? "Unknown FlashSMS error";
       }
     } catch (err: any) {
       error = err.message;
@@ -53,7 +58,7 @@ export async function sendSMS({ to, message }: SendSMSParams) {
       await prisma.notificationLog.create({
         data: {
           type: "SMS",
-          recipient,
+          recipient: phone,
           body: message,
           status,
           provider: "BMS",
@@ -70,45 +75,54 @@ export async function sendSMS({ to, message }: SendSMSParams) {
 // ── Balance & status helpers ──────────────────────────────────────────────────
 
 export async function checkSMSBalance(): Promise<{
-  balance: number;
-  currency: string;
+  total: number;
+  expiry: number;
+  nonExpiry: number;
 } | null> {
   try {
     const res = await fetch(`${FLASHSMS_BASE_URL}/balance`, {
-      headers: bmsHeaders(),
+      headers: v2Headers(),
     });
     if (!res.ok) return null;
-    const data = await res.json();
-    return data.data ?? null;
+    const body = await res.json();
+    if (!body.data) return null;
+    return {
+      total:     body.data.total ?? 0,
+      expiry:    body.data.expiry?.credits ?? 0,
+      nonExpiry: body.data.nonExpiry?.credits ?? 0,
+    };
   } catch {
     return null;
   }
 }
 
 export async function getSMSStatus(
-  messageId: string
-): Promise<{ status: string; deliveredAt?: string } | null> {
+  messageId: string,
+): Promise<{ status: string; recipientCount?: number; creditsUsed?: number } | null> {
   try {
-    const res = await fetch(`${FLASHSMS_BASE_URL}/sms/status/${encodeURIComponent(messageId)}`, {
-      headers: bmsHeaders(),
-    });
+    const res = await fetch(
+      `${FLASHSMS_BASE_URL}/sms/status/${encodeURIComponent(messageId)}`,
+      { headers: v2Headers() },
+    );
     if (!res.ok) return null;
-    const data = await res.json();
-    return data.data ?? null;
+    const body = await res.json();
+    return body.data ?? null;
   } catch {
     return null;
   }
 }
 
-export async function getSMSHistory(page = 1, limit = 20) {
+export async function getSMSHistory(cursor?: string, limit = 20) {
   try {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set("cursor", cursor);
     const res = await fetch(
-      `${FLASHSMS_BASE_URL}/sms?page=${page}&limit=${limit}`,
-      { headers: bmsHeaders() }
+      `${FLASHSMS_BASE_URL}/sms?${params.toString()}`,
+      { headers: v2Headers() },
     );
     if (!res.ok) return null;
-    const data = await res.json();
-    return data.data ?? null;
+    const body = await res.json();
+    return body.data ?? null;
   } catch {
     return null;
   }
