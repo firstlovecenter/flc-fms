@@ -8,8 +8,8 @@ import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guard
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
-import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingCancelledEmail } from "@/lib/notifications/email";
-import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyBookingCancelled, notifyFMBookingPending } from "@/lib/notifications/sms";
+import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingCancelledEmail, sendBookingCompletedEmail } from "@/lib/notifications/email";
+import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyBookingCancelled, notifyBookingCompleted, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/notifications/push";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
@@ -352,6 +352,16 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
+  // Push notification to the staff booker
+  sendPushToUser(session.sub, {
+    title: booking.status === "APPROVED" ? "Booking Approved ✓" : "Booking Request Submitted",
+    body:  booking.status === "APPROVED"
+      ? `Your booking "${booking.title}" was automatically approved.`
+      : `Your booking "${booking.title}" has been submitted for review.`,
+    url:  `/bookings/${booking.id}`,
+    tag:  `booking-created-${booking.id}`,
+  });
+
   // Alert Booking Managers and Facility Managers about new pending bookings
   // (both roles can approve bookings and should be notified)
   if (booking.status === "PENDING") {
@@ -370,6 +380,12 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
         });
       }
     }
+    sendPushToAllStaff({
+      title: "New Booking Pending Approval",
+      body:  `${booking.user?.name ?? "Staff"} submitted "${booking.title}". Pending your approval.`,
+      url:   `/bookings/${booking.id}`,
+      tag:   `booking-pending-${booking.id}`,
+    });
   }
 
   auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
@@ -504,6 +520,14 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
     });
   }
 
+  // Push notification to the patron booker
+  sendPushToPatron(session.sub, {
+    title: "Booking Request Submitted",
+    body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+    url:   "/patron/bookings",
+    tag:   `booking-created-${booking.id}`,
+  });
+
   // Alert Booking Managers and Facility Managers about the new pending patron booking
   const patronFMs = await prisma.user.findMany({
     where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
@@ -520,6 +544,12 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
       });
     }
   }
+  sendPushToAllStaff({
+    title: "New Booking Pending Approval",
+    body:  `${booking.patron?.name ?? "Patron"} submitted "${booking.title}". Pending your approval.`,
+    url:   `/bookings/${booking.id}`,
+    tag:   `booking-pending-${booking.id}`,
+  });
 
   auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
   revalidatePath("/bookings");
@@ -714,6 +744,14 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
   });
 
+  // Push notification to patron (if returning guest with existing subscription)
+  sendPushToPatron(patron.id, {
+    title: "Booking Request Submitted",
+    body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+    url:   "/patron/bookings",
+    tag:   `booking-created-${booking.id}`,
+  });
+
   // Alert Booking Managers and Facility Managers about the new pending guest booking
   const guestFMs = await prisma.user.findMany({
     where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
@@ -730,6 +768,12 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       });
     }
   }
+  sendPushToAllStaff({
+    title: "New Guest Booking Pending Approval",
+    body:  `${validated.guestName} submitted "${booking.title}". Pending your approval.`,
+    url:   `/bookings/${booking.id}`,
+    tag:   `booking-pending-${booking.id}`,
+  });
 
   auditLog({
     action: "CREATE_GUEST_BOOKING",
@@ -872,8 +916,8 @@ export async function cancelBooking(bookingId: string) {
     data: { status: "CANCELLED" },
   });
 
-  // Notify patron/user (only when cancelled by staff — patron already knows they cancelled)
   if (isStaff) {
+    // Staff-initiated cancellation: notify the booker on all channels
     const contact = booking.patron ?? booking.user;
     if (contact?.phone) {
       notifyBookingCancelled({
@@ -905,6 +949,30 @@ export async function cancelBooking(bookingId: string) {
         tag: `booking-cancelled-${bookingId}`,
       });
     }
+  } else if (isPatron && booking.patronId) {
+    // Patron self-cancellation: send a confirmation on all channels
+    const contact = booking.patron;
+    if (contact?.phone) {
+      notifyBookingCancelled({
+        phone: contact.phone,
+        bookingTitle: booking.title,
+        cancelledByStaff: false,
+      }).catch((e) => console.error("[cancelBooking] self-cancel SMS failed:", e));
+    }
+    if (contact?.email) {
+      sendBookingCancelledEmail({
+        to: contact.email,
+        name: contact.name,
+        bookingTitle: booking.title,
+        cancelledByStaff: false,
+      }).catch((e) => console.error("[cancelBooking] self-cancel Email failed:", e));
+    }
+    sendPushToPatron(booking.patronId, {
+      title: "Booking Cancelled",
+      body: `Your booking "${booking.title}" has been cancelled as requested.`,
+      url: "/patron/bookings",
+      tag: `booking-cancelled-${bookingId}`,
+    });
   }
 
   auditLog({ userId: session.sub, action: "CANCEL_BOOKING", entity: "Booking", entityId: bookingId });
@@ -915,13 +983,50 @@ export async function cancelBooking(bookingId: string) {
 export async function completeBooking(bookingId: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
-  const booking = await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
+  const booking = await prisma.booking.findFirstOrThrow({
+    where: { id: bookingId, deletedAt: null },
+    include: { patron: true, user: true, facility: true },
+  });
   if (booking.status !== "APPROVED") return { error: "Only approved bookings can be marked as completed." };
 
   await prisma.booking.update({
     where: { id: bookingId },
     data: { status: "COMPLETED" },
   });
+
+  const contact = booking.patron ?? booking.user;
+  if (contact?.phone) {
+    notifyBookingCompleted({
+      phone:        contact.phone,
+      bookingTitle: booking.title,
+      startTime:    booking.startTime,
+    }).catch((e) => console.error("[completeBooking] SMS failed:", e));
+  }
+  if (contact?.email) {
+    sendBookingCompletedEmail({
+      to:           contact.email,
+      name:         contact.name,
+      bookingTitle: booking.title,
+      facilityName: booking.facility?.name ?? "N/A",
+      startTime:    booking.startTime,
+      endTime:      booking.endTime,
+    }).catch((e) => console.error("[completeBooking] Email failed:", e));
+  }
+  if (booking.patronId) {
+    sendPushToPatron(booking.patronId, {
+      title: "Booking Completed",
+      body:  `Your booking "${booking.title}" has been marked as completed. Thank you!`,
+      url:   "/patron/bookings",
+      tag:   `booking-completed-${bookingId}`,
+    });
+  } else if (booking.userId) {
+    sendPushToUser(booking.userId, {
+      title: "Booking Completed",
+      body:  `Your booking "${booking.title}" has been marked as completed.`,
+      url:   `/bookings/${bookingId}`,
+      tag:   `booking-completed-${bookingId}`,
+    });
+  }
 
   auditLog({ userId: session.sub, action: "COMPLETE_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");

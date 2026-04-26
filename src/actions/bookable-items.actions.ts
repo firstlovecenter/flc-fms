@@ -5,6 +5,64 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { sendBookingConfirmationEmail } from "@/lib/notifications/email";
+import { notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
+import { sendPushToPatron, sendPushToAllStaff } from "@/lib/notifications/push";
+
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+function hashId(id: string): bigint {
+  const hash = id.split("").reduce((acc, ch) => (acc * 31n + BigInt(ch.charCodeAt(0))) & 0xFFFFFFFFFFFFFFFFn, 0n);
+  return BigInt.asIntN(64, hash);
+}
+
+async function acquireItemLock(tx: Tx, itemId: string) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${hashId(itemId)})`;
+}
+
+async function countBookedItemQuantity(
+  tx: Tx,
+  itemId: string,
+  startTime: Date,
+  endTime: Date,
+): Promise<number> {
+  // Count units from direct item line items
+  const direct = await tx.bookingLineItem.aggregate({
+    _sum: { quantity: true },
+    where: {
+      itemId,
+      booking: {
+        status: { in: ["PENDING", "APPROVED"] },
+        deletedAt: null,
+        AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+      },
+    },
+  });
+
+  // Count units consumed via bundle line items (item is a component of a booked bundle)
+  const bundleComponents = await tx.bundleComponent.findMany({
+    where: { itemId },
+    select: { bundleId: true, quantity: true },
+  });
+
+  let fromBundles = 0;
+  for (const bc of bundleComponents) {
+    const bundleLines = await tx.bookingLineItem.aggregate({
+      _sum: { quantity: true },
+      where: {
+        bundleId: bc.bundleId,
+        booking: {
+          status: { in: ["PENDING", "APPROVED"] },
+          deletedAt: null,
+          AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+        },
+      },
+    });
+    fromBundles += (bundleLines._sum.quantity ?? 0) * bc.quantity;
+  }
+
+  return (direct._sum.quantity ?? 0) + fromBundles;
+}
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -107,12 +165,11 @@ export async function createGuestItemBooking(raw: unknown) {
 
   const data = parsed.data;
 
-  // Enforce 24-hour minimum lead time
   if (data.startTime.getTime() < Date.now() + ITEM_MIN_LEAD_MS) {
     return { error: "Item bookings must be made at least 24 hours in advance." };
   }
 
-  // Compute totalAmount from line items
+  // Pre-validate items/bundles and compute pricing outside the transaction
   let total = 0;
   const lineData: Array<{
     itemId?: string;
@@ -120,24 +177,24 @@ export async function createGuestItemBooking(raw: unknown) {
     quantity: number;
     unitPrice: number;
     subtotal: number;
+    displayName: string;
   }> = [];
 
   for (const line of data.lines) {
     if (line.itemId) {
       const item = await prisma.bookableItem.findUnique({ where: { id: line.itemId } });
-      if (!item || !item.isActive) return { error: `Item not found or unavailable` };
-      if (line.quantity > item.quantity) return { error: `Only ${item.quantity} unit(s) of "${item.name}" available` };
+      if (!item || !item.isActive) return { error: "Item not found or unavailable" };
       const unitPrice = Number(item.pricePerUnit);
       const subtotal = unitPrice * line.quantity;
       total += subtotal;
-      lineData.push({ itemId: line.itemId, quantity: line.quantity, unitPrice, subtotal });
+      lineData.push({ itemId: line.itemId, quantity: line.quantity, unitPrice, subtotal, displayName: item.name });
     } else if (line.bundleId) {
       const bundle = await prisma.bookableBundle.findUnique({ where: { id: line.bundleId } });
-      if (!bundle || !bundle.isActive) return { error: `Bundle not found or unavailable` };
+      if (!bundle || !bundle.isActive) return { error: "Bundle not found or unavailable" };
       const unitPrice = Number(bundle.price);
       const subtotal = unitPrice * line.quantity;
       total += subtotal;
-      lineData.push({ bundleId: line.bundleId, quantity: line.quantity, unitPrice, subtotal });
+      lineData.push({ bundleId: line.bundleId, quantity: line.quantity, unitPrice, subtotal, displayName: bundle.name });
     } else {
       return { error: "Each line must reference an item or bundle" };
     }
@@ -187,27 +244,143 @@ export async function createGuestItemBooking(raw: unknown) {
     });
   }
 
-  const booking = await prisma.booking.create({
-    data: {
-      patronId:     patron.id,
-      title:        data.title,
-      description:  data.description,
-      notes:        data.notes,
-      category:     data.category || "OTHER",
-      startTime:    data.startTime,
-      endTime:      data.endTime,
-      totalAmount:  total,
-      status:       "PENDING",
-      lineItems: {
-        create: lineData.map(l => ({
-          itemId:    l.itemId,
-          bundleId:  l.bundleId,
-          quantity:  l.quantity,
-          unitPrice: l.unitPrice,
-          subtotal:  l.subtotal,
-        })),
+  // Collect all item IDs that need locking (direct items + bundle component items)
+  const itemIdsToLock = new Set<string>();
+  for (const line of lineData) {
+    if (line.itemId) {
+      itemIdsToLock.add(line.itemId);
+    } else if (line.bundleId) {
+      const components = await prisma.bundleComponent.findMany({ where: { bundleId: line.bundleId }, select: { itemId: true } });
+      for (const c of components) itemIdsToLock.add(c.itemId);
+    }
+  }
+  // Sort IDs for consistent lock ordering to prevent deadlocks
+  const sortedItemIds = [...itemIdsToLock].sort();
+
+  type TxResult = { booking: { id: string } } | { error: string };
+
+  const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
+    // Acquire per-item advisory locks in sorted order
+    for (const itemId of sortedItemIds) {
+      await acquireItemLock(tx, itemId);
+    }
+
+    // Check real-time availability for each line (accounting for concurrent bookings)
+    for (const line of lineData) {
+      if (line.itemId) {
+        const item = await tx.bookableItem.findUnique({ where: { id: line.itemId } });
+        if (!item || !item.isActive) return { error: "Item not found or unavailable" };
+        const booked = await countBookedItemQuantity(tx, line.itemId, data.startTime, data.endTime);
+        const available = item.quantity - booked;
+        if (line.quantity > available) {
+          return {
+            error: available <= 0
+              ? `"${item.name}" is fully booked for the selected time period`
+              : `Only ${available} unit(s) of "${item.name}" available for the selected time period`,
+          };
+        }
+      } else if (line.bundleId) {
+        const bundle = await tx.bookableBundle.findUnique({
+          where: { id: line.bundleId },
+          include: { components: { include: { item: true } } },
+        });
+        if (!bundle || !bundle.isActive) return { error: "Bundle not found or unavailable" };
+        for (const component of bundle.components) {
+          const needed = component.quantity * line.quantity;
+          const booked = await countBookedItemQuantity(tx, component.itemId, data.startTime, data.endTime);
+          const available = component.item.quantity - booked;
+          if (needed > available) {
+            return {
+              error: available <= 0
+                ? `"${component.item.name}" is fully booked for the selected time period`
+                : `Only ${available} unit(s) of "${component.item.name}" available for the selected time period`,
+            };
+          }
+        }
+      }
+    }
+
+    const booking = await tx.booking.create({
+      data: {
+        patronId:    patron!.id,
+        title:       data.title,
+        description: data.description,
+        notes:       data.notes,
+        category:    data.category || "OTHER",
+        startTime:   data.startTime,
+        endTime:     data.endTime,
+        totalAmount: total,
+        status:      "PENDING",
+        lineItems: {
+          create: lineData.map(l => ({
+            itemId:    l.itemId,
+            bundleId:  l.bundleId,
+            quantity:  l.quantity,
+            unitPrice: l.unitPrice,
+            subtotal:  l.subtotal,
+          })),
+        },
       },
-    },
+    });
+    return { booking };
+  });
+
+  if ("error" in txResult) return { error: txResult.error };
+  const { booking } = txResult;
+
+  const itemSummary = lineData.map(l => l.displayName).join(", ");
+  const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`;
+
+  // SMS confirmation to booker
+  await notifyBookingConfirmation({
+    phone:           data.guestPhone,
+    bookingTitle:    data.title,
+    startTime:       data.startTime,
+    facilityName:    itemSummary,
+    accountClaimUrl: claimUrl,
+  }).catch((e) => console.error("[createGuestItemBooking] SMS failed:", e));
+
+  // Email confirmation to booker
+  await sendBookingConfirmationEmail({
+    to:              data.guestEmail,
+    name:            data.guestName,
+    bookingTitle:    data.title,
+    facilityName:    itemSummary,
+    startTime:       data.startTime,
+    endTime:         data.endTime,
+    totalAmount:     total,
+    accountClaimUrl: claimUrl,
+  }).catch((e) => console.error("[createGuestItemBooking] Email failed:", e));
+
+  // Push to patron (if returning guest with existing subscription)
+  sendPushToPatron(patron.id, {
+    title: "Booking Request Received",
+    body:  `Your booking "${data.title}" has been submitted and is pending review.`,
+    url:   "/patron/bookings",
+    tag:   `booking-created-${booking.id}`,
+  });
+
+  // Notify staff (SMS + push)
+  const staffUsers = await prisma.user.findMany({
+    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
+    select: { phone: true },
+  });
+  for (const staff of staffUsers) {
+    if (staff.phone) {
+      await notifyFMBookingPending({
+        phone:        staff.phone,
+        bookedBy:     data.guestName,
+        bookingTitle: data.title,
+        facilityName: itemSummary,
+        startTime:    data.startTime,
+      }).catch(() => null);
+    }
+  }
+  sendPushToAllStaff({
+    title: "New Item Booking Pending",
+    body:  `${data.guestName} requested "${data.title}". Pending your approval.`,
+    url:   "/bookings",
+    tag:   `item-booking-pending-${booking.id}`,
   });
 
   return { bookingId: booking.id };

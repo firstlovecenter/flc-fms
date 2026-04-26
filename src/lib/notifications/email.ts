@@ -349,6 +349,34 @@ export async function sendBookingCancelledEmail(params: {
   });
 }
 
+export async function sendBookingCompletedEmail(params: {
+  to: string;
+  name: string;
+  bookingTitle: string;
+  facilityName: string;
+  startTime: Date;
+  endTime: Date;
+}) {
+  await sendEmail({
+    to: params.to,
+    subject: `Booking Completed: ${params.bookingTitle}`,
+    html: renderEmailTemplate({
+      preheader: `Your booking "${params.bookingTitle}" has been completed.`,
+      badge: "Booking Completed",
+      title: "Booking completed",
+      intro: `Hi ${esc(params.name)}, your booking has been marked as completed. We hope everything went well!`,
+      rows: [
+        { label: "Booking title", value: esc(params.bookingTitle) },
+        { label: "Facility", value: esc(params.facilityName) },
+        { label: "Start", value: esc(dt(params.startTime)) },
+        { label: "End", value: esc(dt(params.endTime)) },
+      ],
+      ctaLabel: "View your bookings",
+      ctaUrl: APP_URL,
+    }),
+  });
+}
+
 export async function sendMaintenanceOpenedEmail(params: {
   to: string;
   fmName: string;

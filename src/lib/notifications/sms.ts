@@ -298,6 +298,23 @@ export async function notifyCeremonyCode(params: {
   });
 }
 
+export async function notifyBookingCompleted(params: {
+  phone: string;
+  bookingTitle: string;
+  startTime: Date;
+}) {
+  const date = params.startTime.toLocaleDateString("en-GH", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  await sendSMS({
+    to: params.phone,
+    message: `Your booking "${params.bookingTitle}" on ${date} has been marked as COMPLETED. Thank you!`,
+  });
+}
+
 export async function notifyFMBookingPending(params: {
   phone: string;
   bookedBy: string;
