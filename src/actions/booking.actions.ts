@@ -332,61 +332,55 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   if ("error" in txResult) return { error: txResult.error };
   const { booking } = txResult;
 
-  if (booking.user?.phone) {
-    await notifyBookingConfirmation({
+  // All notifications fired in parallel — booking is already persisted
+  await Promise.allSettled([
+    ...(booking.user?.phone ? [notifyBookingConfirmation({
       phone:        booking.user.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
       facilityName: booking.facility?.name ?? "N/A",
-    });
-  }
-  if (booking.user?.email) {
-    await sendBookingConfirmationEmail({
-      to:            booking.user.email,
-      name:          booking.user.name,
-      bookingTitle:  booking.title,
-      facilityName:  booking.facility?.name ?? "N/A",
-      startTime:     booking.startTime,
-      endTime:       booking.endTime,
-      totalAmount:   Number(booking.totalAmount),
-    });
-  }
-
-  // Push notification to the staff booker
-  sendPushToUser(session.sub, {
-    title: booking.status === "APPROVED" ? "Booking Approved ✓" : "Booking Request Submitted",
-    body:  booking.status === "APPROVED"
-      ? `Your booking "${booking.title}" was automatically approved.`
-      : `Your booking "${booking.title}" has been submitted for review.`,
-    url:  `/bookings/${booking.id}`,
-    tag:  `booking-created-${booking.id}`,
-  });
-
-  // Alert Booking Managers and Facility Managers about new pending bookings
-  // (both roles can approve bookings and should be notified)
-  if (booking.status === "PENDING") {
-    const fms = await prisma.user.findMany({
-      where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-      select: { phone: true },
-    });
-    for (const fm of fms) {
-      if (fm.phone) {
-        await notifyFMBookingPending({
-          phone:        fm.phone,
-          bookedBy:     booking.user?.name ?? "Staff",
-          bookingTitle: booking.title,
-          facilityName: booking.facility?.name ?? "N/A",
-          startTime:    booking.startTime,
+    })] : []),
+    ...(booking.user?.email ? [sendBookingConfirmationEmail({
+      to:           booking.user.email,
+      name:         booking.user.name,
+      bookingTitle: booking.title,
+      facilityName: booking.facility?.name ?? "N/A",
+      startTime:    booking.startTime,
+      endTime:      booking.endTime,
+      totalAmount:  Number(booking.totalAmount),
+    })] : []),
+    sendPushToUser(session.sub, {
+      title: booking.status === "APPROVED" ? "Booking Approved ✓" : "Booking Request Submitted",
+      body:  booking.status === "APPROVED"
+        ? `Your booking "${booking.title}" was automatically approved.`
+        : `Your booking "${booking.title}" has been submitted for review.`,
+      url:  `/bookings/${booking.id}`,
+      tag:  `booking-created-${booking.id}`,
+    }),
+    ...(booking.status === "PENDING" ? [
+      (async () => {
+        const fms = await prisma.user.findMany({
+          where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
+          select: { phone: true },
         });
-      }
-    }
-    sendPushToAllStaff({
-      title: "New Booking Pending Approval",
-      body:  `${booking.user?.name ?? "Staff"} submitted "${booking.title}". Pending your approval.`,
-      url:   `/bookings/${booking.id}`,
-      tag:   `booking-pending-${booking.id}`,
-    });
-  }
+        await Promise.allSettled(
+          fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
+            phone:        fm.phone!,
+            bookedBy:     booking.user?.name ?? "Staff",
+            bookingTitle: booking.title,
+            facilityName: booking.facility?.name ?? "N/A",
+            startTime:    booking.startTime,
+          }))
+        );
+      })(),
+      sendPushToAllStaff({
+        title: "New Booking Pending Approval",
+        body:  `${booking.user?.name ?? "Staff"} submitted "${booking.title}". Pending your approval.`,
+        url:   `/bookings/${booking.id}`,
+        tag:   `booking-pending-${booking.id}`,
+      }),
+    ] : []),
+  ]);
 
   auditLog({ userId: session.sub, action: "CREATE_BOOKING", entity: "Booking", entityId: booking.id, after: booking });
   revalidatePath("/bookings");
@@ -500,56 +494,50 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   if ("error" in txResult) return { error: txResult.error };
   const { booking } = txResult;
 
-  if (booking.patron?.phone) {
-    await notifyBookingConfirmation({
+  await Promise.allSettled([
+    ...(booking.patron?.phone ? [notifyBookingConfirmation({
       phone:        booking.patron.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
       facilityName: booking.facility?.name ?? "N/A",
-    });
-  }
-  if (booking.patron?.email) {
-    await sendBookingConfirmationEmail({
-      to:            booking.patron.email,
-      name:          booking.patron.name,
-      bookingTitle:  booking.title,
-      facilityName:  booking.facility?.name ?? "N/A",
-      startTime:     booking.startTime,
-      endTime:       booking.endTime,
-      totalAmount:   Number(booking.totalAmount),
-    });
-  }
-
-  // Push notification to the patron booker
-  sendPushToPatron(session.sub, {
-    title: "Booking Request Submitted",
-    body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
-    url:   "/patron/bookings",
-    tag:   `booking-created-${booking.id}`,
-  });
-
-  // Alert Booking Managers and Facility Managers about the new pending patron booking
-  const patronFMs = await prisma.user.findMany({
-    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-    select: { phone: true },
-  });
-  for (const fm of patronFMs) {
-    if (fm.phone) {
-      await notifyFMBookingPending({
-        phone:        fm.phone,
-        bookedBy:     booking.patron?.name ?? "Patron",
-        bookingTitle: booking.title,
-        facilityName: booking.facility?.name ?? "N/A",
-        startTime:    booking.startTime,
+    })] : []),
+    ...(booking.patron?.email ? [sendBookingConfirmationEmail({
+      to:           booking.patron.email,
+      name:         booking.patron.name,
+      bookingTitle: booking.title,
+      facilityName: booking.facility?.name ?? "N/A",
+      startTime:    booking.startTime,
+      endTime:      booking.endTime,
+      totalAmount:  Number(booking.totalAmount),
+    })] : []),
+    sendPushToPatron(session.sub, {
+      title: "Booking Request Submitted",
+      body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+      url:   "/patron/bookings",
+      tag:   `booking-created-${booking.id}`,
+    }),
+    (async () => {
+      const fms = await prisma.user.findMany({
+        where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
+        select: { phone: true },
       });
-    }
-  }
-  sendPushToAllStaff({
-    title: "New Booking Pending Approval",
-    body:  `${booking.patron?.name ?? "Patron"} submitted "${booking.title}". Pending your approval.`,
-    url:   `/bookings/${booking.id}`,
-    tag:   `booking-pending-${booking.id}`,
-  });
+      await Promise.allSettled(
+        fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
+          phone:        fm.phone!,
+          bookedBy:     booking.patron?.name ?? "Patron",
+          bookingTitle: booking.title,
+          facilityName: booking.facility?.name ?? "N/A",
+          startTime:    booking.startTime,
+        }))
+      );
+    })(),
+    sendPushToAllStaff({
+      title: "New Booking Pending Approval",
+      body:  `${booking.patron?.name ?? "Patron"} submitted "${booking.title}". Pending your approval.`,
+      url:   `/bookings/${booking.id}`,
+      tag:   `booking-pending-${booking.id}`,
+    }),
+  ]);
 
   auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
   revalidatePath("/bookings");
@@ -725,55 +713,54 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 
   if ("error" in txResult) return { error: txResult.error };
   const { booking } = txResult;
+  const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`;
 
-  await notifyBookingConfirmation({
-    phone:        validated.guestPhone,
-    bookingTitle: booking.title,
-    startTime:    booking.startTime,
-    facilityName: booking.facility?.name ?? "N/A",
-    accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
-  });
-  await sendBookingConfirmationEmail({
-    to: validated.guestEmail,
-    name: validated.guestName,
-    bookingTitle: booking.title,
-    facilityName: booking.facility?.name ?? "N/A",
-    startTime: booking.startTime,
-    endTime: booking.endTime,
-    totalAmount: Number(booking.totalAmount),
-    accountClaimUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`,
-  });
-
-  // Push notification to patron (if returning guest with existing subscription)
-  sendPushToPatron(patron.id, {
-    title: "Booking Request Submitted",
-    body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
-    url:   "/patron/bookings",
-    tag:   `booking-created-${booking.id}`,
-  });
-
-  // Alert Booking Managers and Facility Managers about the new pending guest booking
-  const guestFMs = await prisma.user.findMany({
-    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-    select: { phone: true },
-  });
-  for (const fm of guestFMs) {
-    if (fm.phone) {
-      await notifyFMBookingPending({
-        phone:        fm.phone,
-        bookedBy:     validated.guestName,
-        bookingTitle: booking.title,
-        facilityName: booking.facility?.name ?? "N/A",
-        startTime:    booking.startTime,
+  await Promise.allSettled([
+    notifyBookingConfirmation({
+      phone:           validated.guestPhone,
+      bookingTitle:    booking.title,
+      startTime:       booking.startTime,
+      facilityName:    booking.facility?.name ?? "N/A",
+      accountClaimUrl: claimUrl,
+    }),
+    sendBookingConfirmationEmail({
+      to:              validated.guestEmail,
+      name:            validated.guestName,
+      bookingTitle:    booking.title,
+      facilityName:    booking.facility?.name ?? "N/A",
+      startTime:       booking.startTime,
+      endTime:         booking.endTime,
+      totalAmount:     Number(booking.totalAmount),
+      accountClaimUrl: claimUrl,
+    }),
+    sendPushToPatron(patron.id, {
+      title: "Booking Request Submitted",
+      body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+      url:   "/patron/bookings",
+      tag:   `booking-created-${booking.id}`,
+    }),
+    (async () => {
+      const fms = await prisma.user.findMany({
+        where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
+        select: { phone: true },
       });
-    }
-  }
-  sendPushToAllStaff({
-    title: "New Guest Booking Pending Approval",
-    body:  `${validated.guestName} submitted "${booking.title}". Pending your approval.`,
-    url:   `/bookings/${booking.id}`,
-    tag:   `booking-pending-${booking.id}`,
-  });
+      await Promise.allSettled(
+        fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
+          phone:        fm.phone!,
+          bookedBy:     validated.guestName,
+          bookingTitle: booking.title,
+          facilityName: booking.facility?.name ?? "N/A",
+          startTime:    booking.startTime,
+        }))
+      );
+    })(),
+    sendPushToAllStaff({
+      title: "New Guest Booking Pending Approval",
+      body:  `${validated.guestName} submitted "${booking.title}". Pending your approval.`,
+      url:   `/bookings/${booking.id}`,
+      tag:   `booking-pending-${booking.id}`,
+    }),
+  ]);
 
   auditLog({
     action: "CREATE_GUEST_BOOKING",
@@ -788,8 +775,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 // ── Approve / Reject ──────────────────────────────────────────────────────────
 
 export async function approveBooking(bookingId: string, waiveBilling = false) {
-  const session  = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
-  await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
+  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
 
   const booking = await prisma.booking.update({
     where: { id: bookingId },
@@ -797,47 +783,43 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
       status: "APPROVED",
       ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0 } : {}),
     },
-    include: { patron: true, user: true, facility: true }});
+    include: { patron: true, user: true, facility: true },
+  });
 
   const contact = booking.patron ?? booking.user;
 
-  if (contact?.phone) {
-    await notifyBookingApproved({
+  await Promise.allSettled([
+    ...(contact?.phone ? [notifyBookingApproved({
       phone:        contact.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
-    }).catch((e) => console.error("[approveBooking] SMS failed:", e));
-  }
-  if (contact?.email) {
-    await sendBookingApprovedEmail({
+    })] : []),
+    ...(contact?.email ? [sendBookingApprovedEmail({
       to:           contact.email,
       name:         contact.name,
       bookingTitle: booking.title,
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       totalAmount:  Number(booking.totalAmount),
-    }).catch((e) => console.error("[approveBooking] Email failed:", e));
-  }
+    })] : []),
+    booking.patronId
+      ? sendPushToPatron(booking.patronId, {
+          title: "Booking Approved ✓",
+          body:  `Your booking "${booking.title}" has been approved.`,
+          url:   "/patron/bookings",
+          tag:   `booking-approved-${bookingId}`,
+        })
+      : booking.userId
+      ? sendPushToUser(booking.userId, {
+          title: "Booking Approved ✓",
+          body:  `Your booking "${booking.title}" has been approved.`,
+          url:   `/bookings/${bookingId}`,
+          tag:   `booking-approved-${bookingId}`,
+        })
+      : Promise.resolve(),
+  ]);
 
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });
-
-  // Push notification to patron/booker
-  if (booking.patronId) {
-    sendPushToPatron(booking.patronId, {
-      title: "Booking Approved ✓",
-      body: `Your booking "${booking.title}" has been approved.`,
-      url: "/patron/bookings",
-      tag: `booking-approved-${bookingId}`,
-    });
-  } else if (booking.userId) {
-    sendPushToUser(booking.userId, {
-      title: "Booking Approved ✓",
-      body: `Your booking "${booking.title}" has been approved.`,
-      url: `/bookings/${bookingId}`,
-      tag: `booking-approved-${bookingId}`,
-    });
-  }
-
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${bookingId}`);
   return { success: true, booking };
@@ -845,7 +827,6 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 
 export async function rejectBooking(bookingId: string, reason: string) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
-  await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });
 
   const booking = await prisma.booking.update({
     where: { id: bookingId },
@@ -854,41 +835,37 @@ export async function rejectBooking(bookingId: string, reason: string) {
   });
 
   const contact = booking.patron ?? booking.user;
-  if (contact?.phone) {
-    await notifyBookingRejected({
+
+  await Promise.allSettled([
+    ...(contact?.phone ? [notifyBookingRejected({
       phone:        contact.phone,
       bookingTitle: booking.title,
       reason,
-    }).catch((e) => console.error("[rejectBooking] SMS failed:", e));
-  }
-  if (contact?.email) {
-    await sendBookingRejectedEmail({
+    })] : []),
+    ...(contact?.email ? [sendBookingRejectedEmail({
       to:           contact.email,
       name:         contact.name,
       bookingTitle: booking.title,
       reason,
-    }).catch((e) => console.error("[rejectBooking] Email failed:", e));
-  }
+    })] : []),
+    booking.patronId
+      ? sendPushToPatron(booking.patronId, {
+          title: "Booking Rejected",
+          body:  `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
+          url:   "/patron/bookings",
+          tag:   `booking-rejected-${bookingId}`,
+        })
+      : booking.userId
+      ? sendPushToUser(booking.userId, {
+          title: "Booking Rejected",
+          body:  `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
+          url:   `/bookings/${bookingId}`,
+          tag:   `booking-rejected-${bookingId}`,
+        })
+      : Promise.resolve(),
+  ]);
 
   auditLog({ userId: session.sub, action: "REJECT_BOOKING", entity: "Booking", entityId: bookingId, after: { reason } });
-
-  // Push notification to patron/booker
-  if (booking.patronId) {
-    sendPushToPatron(booking.patronId, {
-      title: "Booking Rejected",
-      body: `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
-      url: "/patron/bookings",
-      tag: `booking-rejected-${bookingId}`,
-    });
-  } else if (booking.userId) {
-    sendPushToUser(booking.userId, {
-      title: "Booking Rejected",
-      body: `Your booking "${booking.title}" was not approved. Reason: ${reason}`,
-      url: `/bookings/${bookingId}`,
-      tag: `booking-rejected-${bookingId}`,
-    });
-  }
-
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${bookingId}`);
   return { success: true, booking };
@@ -917,62 +894,56 @@ export async function cancelBooking(bookingId: string) {
   });
 
   if (isStaff) {
-    // Staff-initiated cancellation: notify the booker on all channels
     const contact = booking.patron ?? booking.user;
-    if (contact?.phone) {
-      notifyBookingCancelled({
-        phone: contact.phone,
-        bookingTitle: booking.title,
+    await Promise.allSettled([
+      ...(contact?.phone ? [notifyBookingCancelled({
+        phone:            contact.phone,
+        bookingTitle:     booking.title,
         cancelledByStaff: true,
-      }).catch((e) => console.error("[cancelBooking] SMS failed:", e));
-    }
-    if (contact?.email) {
-      sendBookingCancelledEmail({
-        to: contact.email,
-        name: contact.name,
-        bookingTitle: booking.title,
+      })] : []),
+      ...(contact?.email ? [sendBookingCancelledEmail({
+        to:               contact.email,
+        name:             contact.name,
+        bookingTitle:     booking.title,
         cancelledByStaff: true,
-      }).catch((e) => console.error("[cancelBooking] Email failed:", e));
-    }
-    if (booking.patronId) {
+      })] : []),
+      booking.patronId
+        ? sendPushToPatron(booking.patronId, {
+            title: "Booking Cancelled",
+            body:  `Your booking "${booking.title}" has been cancelled by the facility team.`,
+            url:   "/patron/bookings",
+            tag:   `booking-cancelled-${bookingId}`,
+          })
+        : booking.userId
+        ? sendPushToUser(booking.userId, {
+            title: "Booking Cancelled",
+            body:  `Your booking "${booking.title}" has been cancelled.`,
+            url:   `/bookings/${bookingId}`,
+            tag:   `booking-cancelled-${bookingId}`,
+          })
+        : Promise.resolve(),
+    ]);
+  } else if (isPatron && booking.patronId) {
+    const contact = booking.patron;
+    await Promise.allSettled([
+      ...(contact?.phone ? [notifyBookingCancelled({
+        phone:            contact.phone,
+        bookingTitle:     booking.title,
+        cancelledByStaff: false,
+      })] : []),
+      ...(contact?.email ? [sendBookingCancelledEmail({
+        to:               contact.email,
+        name:             contact.name,
+        bookingTitle:     booking.title,
+        cancelledByStaff: false,
+      })] : []),
       sendPushToPatron(booking.patronId, {
         title: "Booking Cancelled",
-        body: `Your booking "${booking.title}" has been cancelled by the facility team.`,
-        url: "/patron/bookings",
-        tag: `booking-cancelled-${bookingId}`,
-      });
-    } else if (booking.userId) {
-      sendPushToUser(booking.userId, {
-        title: "Booking Cancelled",
-        body: `Your booking "${booking.title}" has been cancelled.`,
-        url: `/bookings/${bookingId}`,
-        tag: `booking-cancelled-${bookingId}`,
-      });
-    }
-  } else if (isPatron && booking.patronId) {
-    // Patron self-cancellation: send a confirmation on all channels
-    const contact = booking.patron;
-    if (contact?.phone) {
-      notifyBookingCancelled({
-        phone: contact.phone,
-        bookingTitle: booking.title,
-        cancelledByStaff: false,
-      }).catch((e) => console.error("[cancelBooking] self-cancel SMS failed:", e));
-    }
-    if (contact?.email) {
-      sendBookingCancelledEmail({
-        to: contact.email,
-        name: contact.name,
-        bookingTitle: booking.title,
-        cancelledByStaff: false,
-      }).catch((e) => console.error("[cancelBooking] self-cancel Email failed:", e));
-    }
-    sendPushToPatron(booking.patronId, {
-      title: "Booking Cancelled",
-      body: `Your booking "${booking.title}" has been cancelled as requested.`,
-      url: "/patron/bookings",
-      tag: `booking-cancelled-${bookingId}`,
-    });
+        body:  `Your booking "${booking.title}" has been cancelled as requested.`,
+        url:   "/patron/bookings",
+        tag:   `booking-cancelled-${bookingId}`,
+      }),
+    ]);
   }
 
   auditLog({ userId: session.sub, action: "CANCEL_BOOKING", entity: "Booking", entityId: bookingId });
@@ -995,38 +966,37 @@ export async function completeBooking(bookingId: string) {
   });
 
   const contact = booking.patron ?? booking.user;
-  if (contact?.phone) {
-    notifyBookingCompleted({
+
+  await Promise.allSettled([
+    ...(contact?.phone ? [notifyBookingCompleted({
       phone:        contact.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
-    }).catch((e) => console.error("[completeBooking] SMS failed:", e));
-  }
-  if (contact?.email) {
-    sendBookingCompletedEmail({
+    })] : []),
+    ...(contact?.email ? [sendBookingCompletedEmail({
       to:           contact.email,
       name:         contact.name,
       bookingTitle: booking.title,
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       endTime:      booking.endTime,
-    }).catch((e) => console.error("[completeBooking] Email failed:", e));
-  }
-  if (booking.patronId) {
-    sendPushToPatron(booking.patronId, {
-      title: "Booking Completed",
-      body:  `Your booking "${booking.title}" has been marked as completed. Thank you!`,
-      url:   "/patron/bookings",
-      tag:   `booking-completed-${bookingId}`,
-    });
-  } else if (booking.userId) {
-    sendPushToUser(booking.userId, {
-      title: "Booking Completed",
-      body:  `Your booking "${booking.title}" has been marked as completed.`,
-      url:   `/bookings/${bookingId}`,
-      tag:   `booking-completed-${bookingId}`,
-    });
-  }
+    })] : []),
+    booking.patronId
+      ? sendPushToPatron(booking.patronId, {
+          title: "Booking Completed",
+          body:  `Your booking "${booking.title}" has been marked as completed. Thank you!`,
+          url:   "/patron/bookings",
+          tag:   `booking-completed-${bookingId}`,
+        })
+      : booking.userId
+      ? sendPushToUser(booking.userId, {
+          title: "Booking Completed",
+          body:  `Your booking "${booking.title}" has been marked as completed.`,
+          url:   `/bookings/${bookingId}`,
+          tag:   `booking-completed-${bookingId}`,
+        })
+      : Promise.resolve(),
+  ]);
 
   auditLog({ userId: session.sub, action: "COMPLETE_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");

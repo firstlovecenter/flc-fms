@@ -45,21 +45,23 @@ async function countBookedItemQuantity(
     select: { bundleId: true, quantity: true },
   });
 
-  let fromBundles = 0;
-  for (const bc of bundleComponents) {
-    const bundleLines = await tx.bookingLineItem.aggregate({
-      _sum: { quantity: true },
-      where: {
-        bundleId: bc.bundleId,
-        booking: {
-          status: { in: ["PENDING", "APPROVED"] },
-          deletedAt: null,
-          AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+  const bundleCounts = await Promise.all(
+    bundleComponents.map(async (bc) => {
+      const bundleLines = await tx.bookingLineItem.aggregate({
+        _sum: { quantity: true },
+        where: {
+          bundleId: bc.bundleId,
+          booking: {
+            status: { in: ["PENDING", "APPROVED"] },
+            deletedAt: null,
+            AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+          },
         },
-      },
-    });
-    fromBundles += (bundleLines._sum.quantity ?? 0) * bc.quantity;
-  }
+      });
+      return (bundleLines._sum.quantity ?? 0) * bc.quantity;
+    }),
+  );
+  const fromBundles = bundleCounts.reduce((a, b) => a + b, 0);
 
   return (direct._sum.quantity ?? 0) + fromBundles;
 }

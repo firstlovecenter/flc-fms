@@ -25,51 +25,53 @@ interface SendSMSParams {
 export async function sendSMS({ to, message }: SendSMSParams) {
   const phones = Array.isArray(to) ? to : [to];
 
-  for (const phone of phones) {
-    let status = "FAILED";
-    let providerRef: string | undefined;
-    let error: string | undefined;
+  await Promise.allSettled(
+    phones.map(async (phone) => {
+      let status = "FAILED";
+      let providerRef: string | undefined;
+      let error: string | undefined;
 
-    try {
-      const res = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
-        method: "POST",
-        headers: v2Headers(randomUUID()),
-        body: JSON.stringify({
-          phones: [phone],
-          message,
-          senderId: FLASHSMS_SENDER_ID,
-        }),
-      });
+      try {
+        const res = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
+          method: "POST",
+          headers: v2Headers(randomUUID()),
+          body: JSON.stringify({
+            phones: [phone],
+            message,
+            senderId: FLASHSMS_SENDER_ID,
+          }),
+        });
 
-      const body = await res.json();
+        const body = await res.json();
 
-      // v2 returns 202 Accepted on success
-      if (res.status === 202 && body.data?.id) {
-        status = "SENT";
-        providerRef = body.data.id;
-      } else {
-        error = body.error?.message ?? "Unknown FlashSMS error";
+        // v2 returns 202 Accepted on success
+        if (res.status === 202 && body.data?.id) {
+          status = "SENT";
+          providerRef = body.data.id;
+        } else {
+          error = body.error?.message ?? "Unknown FlashSMS error";
+        }
+      } catch (err: any) {
+        error = err.message;
       }
-    } catch (err: any) {
-      error = err.message;
-    }
 
-    try {
-      await prisma.notificationLog.create({
-        data: {
-          type: "SMS",
-          recipient: phone,
-          body: message,
-          status,
-          provider: "BMS",
-          providerRef,
-          error,
-        },
-      });
-    } catch (logErr) {
-      console.error("[SMS] Failed to write notification log:", logErr);
-    }
-  }
+      try {
+        await prisma.notificationLog.create({
+          data: {
+            type: "SMS",
+            recipient: phone,
+            body: message,
+            status,
+            provider: "BMS",
+            providerRef,
+            error,
+          },
+        });
+      } catch (logErr) {
+        console.error("[SMS] Failed to write notification log:", logErr);
+      }
+    }),
+  );
 }
 
 // ── Balance & status helpers ──────────────────────────────────────────────────
