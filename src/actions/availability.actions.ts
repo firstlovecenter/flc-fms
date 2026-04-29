@@ -433,6 +433,68 @@ export async function getBookableFacilitiesByCategoryDate(
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     });
 
+    const facilityIds = facilities.map((f) => f.id);
+
+    // Batch all per-facility queries in parallel instead of N*7 sequential queries
+    const [maintConflicts, activeCategory, allTimeSlots, allCategoryPricing, allBookings] =
+      await Promise.all([
+        prisma.maintenanceRequest.findMany({
+          where: {
+            facilityId: { in: facilityIds },
+            status: { in: ["OPEN", "IN_PROGRESS"] },
+            scheduledStart: { not: null, lt: endOfDay },
+            scheduledEnd: { not: null, gt: startOfDay },
+          },
+          select: { facilityId: true },
+        }),
+        prisma.bookingCategory.findFirst({
+          where: { slug: category, isActive: true },
+          select: { id: true },
+        }),
+        prisma.facilityTimeSlot.findMany({
+          where: { facilityId: { in: facilityIds }, dayOfWeek, isActive: true, category },
+        }),
+        prisma.facilityPricing.findMany({
+          where: { facilityId: { in: facilityIds }, category, isActive: true },
+        }),
+        prisma.booking.findMany({
+          where: {
+            facilityId: { in: facilityIds },
+            deletedAt: null,
+            status: { in: ["PENDING", "APPROVED"] },
+            OR: [
+              { startTime: { gte: startOfDay, lte: endOfDay } },
+              { endTime: { gte: startOfDay, lte: endOfDay } },
+              { AND: [{ startTime: { lte: startOfDay } }, { endTime: { gte: endOfDay } }] },
+            ],
+          },
+          select: { facilityId: true, startTime: true, endTime: true },
+        }),
+      ]);
+
+    if (!activeCategory) {
+      return { success: false, error: "This booking category is no longer available.", facilities: [] };
+    }
+
+    const facilitiesWithMaint = new Set(
+      maintConflicts.map((m) => m.facilityId).filter((id): id is string => id !== null),
+    );
+
+    const slotsByFacility = new Map<string, typeof allTimeSlots>();
+    for (const slot of allTimeSlots) {
+      if (!slotsByFacility.has(slot.facilityId)) slotsByFacility.set(slot.facilityId, []);
+      slotsByFacility.get(slot.facilityId)!.push(slot);
+    }
+
+    const pricingByFacility = new Map(allCategoryPricing.map((p) => [p.facilityId, p]));
+
+    const bookingsByFacility = new Map<string, typeof allBookings>();
+    for (const b of allBookings) {
+      const fid = b.facilityId!;
+      if (!bookingsByFacility.has(fid)) bookingsByFacility.set(fid, []);
+      bookingsByFacility.get(fid)!.push(b);
+    }
+
     const output: Array<{
       id: string;
       name: string;
@@ -447,23 +509,35 @@ export async function getBookableFacilitiesByCategoryDate(
     }> = [];
 
     for (const facility of facilities) {
-      const maintConflict = await prisma.maintenanceRequest.findFirst({
-        where: {
-          facilityId: facility.id,
-          status: { in: ["OPEN", "IN_PROGRESS"] },
-          scheduledStart: { not: null, lt: endOfDay },
-          scheduledEnd: { not: null, gt: startOfDay },
-        },
-        select: { id: true },
-      });
-      if (maintConflict) continue;
+      if (facilitiesWithMaint.has(facility.id)) continue;
 
-      const availability = await getFacilityAvailability(facility.id, date, category, {
-        allowMonday,
-        leadTimeHours,
-      });
-      if (!availability.success) continue;
-      const hasBookableSlot = (availability.slots || []).some((s) => s.isAvailable);
+      const timeSlots = slotsByFacility.get(facility.id) ?? [];
+      if (timeSlots.length === 0) continue;
+
+      const categoryPricing = pricingByFacility.get(facility.id);
+      if (!categoryPricing) continue;
+
+      const existingBookings = bookingsByFacility.get(facility.id) ?? [];
+
+      // Check if at least one slot is bookable (mirrors getFacilityAvailability logic)
+      let hasBookableSlot = false;
+      for (const slot of timeSlots) {
+        if (slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours)) continue;
+
+        const slotStartMin = toMinutes(slot.startTime);
+        const slotEndMin   = toMinutes(slot.endTime);
+
+        const overlapping = existingBookings.filter((b) => {
+          const bStartMin = b.startTime.getHours() * 60 + b.startTime.getMinutes();
+          const bEndMin   = b.endTime.getHours() * 60 + b.endTime.getMinutes();
+          return bookingOverlapsSlot(bStartMin, bEndMin, slotStartMin, slotEndMin);
+        }).length;
+
+        if (overlapping < slot.maxBookings) {
+          hasBookableSlot = true;
+          break;
+        }
+      }
       if (!hasBookableSlot) continue;
 
       output.push({
