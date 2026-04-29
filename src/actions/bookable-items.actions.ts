@@ -11,6 +11,24 @@ import { sendPushToPatron, sendPushToAllStaff } from "@/lib/notifications/push";
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
+type ItemData = {
+  id: string;
+  name: string;
+  pricePerUnit: { toString(): string };
+  isActive: boolean;
+  requiresBookingTerms: boolean;
+  requiresItemBookingTerms: boolean;
+};
+
+type BundleData = {
+  id: string;
+  name: string;
+  price: { toString(): string };
+  isActive: boolean;
+  requiresBookingTerms: boolean;
+  requiresItemBookingTerms: boolean;
+};
+
 function hashId(id: string): bigint {
   const hash = id.split("").reduce((acc, ch) => (acc * 31n + BigInt(ch.charCodeAt(0))) & 0xFFFFFFFFFFFFFFFFn, 0n);
   return BigInt.asIntN(64, hash);
@@ -45,23 +63,31 @@ async function countBookedItemQuantity(
     select: { bundleId: true, quantity: true },
   });
 
-  const bundleCounts = await Promise.all(
-    bundleComponents.map(async (bc) => {
-      const bundleLines = await tx.bookingLineItem.aggregate({
-        _sum: { quantity: true },
-        where: {
-          bundleId: bc.bundleId,
-          booking: {
-            status: { in: ["PENDING", "APPROVED"] },
-            deletedAt: null,
-            AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
-          },
+  let fromBundles = 0;
+  if (bundleComponents.length > 0) {
+    const bundleIds = bundleComponents.map((bc) => bc.bundleId);
+    const bundleLineGroups = await tx.bookingLineItem.groupBy({
+      by: ["bundleId"],
+      where: {
+        bundleId: { in: bundleIds },
+        booking: {
+          status: { in: ["PENDING", "APPROVED"] },
+          deletedAt: null,
+          AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
         },
-      });
-      return (bundleLines._sum.quantity ?? 0) * bc.quantity;
-    }),
-  );
-  const fromBundles = bundleCounts.reduce((a, b) => a + b, 0);
+      },
+      _sum: { quantity: true },
+    });
+    const bundleLineMap = new Map(
+      bundleLineGroups
+        .filter((g) => g.bundleId !== null)
+        .map((g) => [g.bundleId!, g._sum.quantity ?? 0]),
+    );
+    fromBundles = bundleComponents.reduce(
+      (sum: number, bc) => sum + Number(bundleLineMap.get(bc.bundleId) ?? 0) * Number(bc.quantity),
+      0,
+    );
+  }
 
   return (direct._sum.quantity ?? 0) + fromBundles;
 }
@@ -171,7 +197,44 @@ export async function createGuestItemBooking(raw: unknown) {
     return { error: "Item bookings must be made at least 24 hours in advance." };
   }
 
-  // Pre-validate items/bundles and compute pricing outside the transaction
+  // Batch-fetch all referenced items, bundles, and bundle components in parallel.
+  // Prisma returns [] for `{ in: [] }` queries, so no conditional needed.
+  const lineItemIds   = data.lines.filter((l) => l.itemId).map((l) => l.itemId!);
+  const lineBundleIds = data.lines.filter((l) => l.bundleId).map((l) => l.bundleId!);
+
+  const [itemsRaw, bundlesRaw, bundleComponentsRaw] = await Promise.all([
+    prisma.bookableItem.findMany({
+      where: { id: { in: lineItemIds } },
+      select: {
+        id: true, name: true, pricePerUnit: true, isActive: true,
+        requiresBookingTerms: true, requiresItemBookingTerms: true,
+      },
+    }),
+    prisma.bookableBundle.findMany({
+      where: { id: { in: lineBundleIds } },
+      select: {
+        id: true, name: true, price: true, isActive: true,
+        requiresBookingTerms: true, requiresItemBookingTerms: true,
+      },
+    }),
+    prisma.bundleComponent.findMany({
+      where: { bundleId: { in: lineBundleIds } },
+      select: { bundleId: true, itemId: true },
+    }),
+  ]);
+
+  const itemMap   = new Map<string, ItemData>((itemsRaw as ItemData[]).map((i) => [i.id, i]));
+  const bundleMap = new Map<string, BundleData>((bundlesRaw as BundleData[]).map((b) => [b.id, b]));
+  const bundleComponentsByBundle = bundleComponentsRaw.reduce(
+    (acc, bc) => {
+      if (!acc.has(bc.bundleId)) acc.set(bc.bundleId, []);
+      acc.get(bc.bundleId)!.push(bc.itemId);
+      return acc;
+    },
+    new Map<string, string[]>(),
+  );
+
+  // Pre-validate items/bundles and compute pricing
   let total = 0;
   const lineData: Array<{
     itemId?: string;
@@ -184,14 +247,14 @@ export async function createGuestItemBooking(raw: unknown) {
 
   for (const line of data.lines) {
     if (line.itemId) {
-      const item = await prisma.bookableItem.findUnique({ where: { id: line.itemId } });
+      const item = itemMap.get(line.itemId);
       if (!item || !item.isActive) return { error: "Item not found or unavailable" };
       const unitPrice = Number(item.pricePerUnit);
       const subtotal = unitPrice * line.quantity;
       total += subtotal;
       lineData.push({ itemId: line.itemId, quantity: line.quantity, unitPrice, subtotal, displayName: item.name });
     } else if (line.bundleId) {
-      const bundle = await prisma.bookableBundle.findUnique({ where: { id: line.bundleId } });
+      const bundle = bundleMap.get(line.bundleId);
       if (!bundle || !bundle.isActive) return { error: "Bundle not found or unavailable" };
       const unitPrice = Number(bundle.price);
       const subtotal = unitPrice * line.quantity;
@@ -205,18 +268,12 @@ export async function createGuestItemBooking(raw: unknown) {
   const requiredTerms = new Set<"BOOKING_TERMS" | "ITEM_BOOKING_TERMS">();
   for (const line of lineData) {
     if (line.itemId) {
-      const item = await prisma.bookableItem.findUnique({
-        where: { id: line.itemId },
-        select: { requiresBookingTerms: true, requiresItemBookingTerms: true },
-      });
+      const item = itemMap.get(line.itemId);
       if (item?.requiresBookingTerms) requiredTerms.add("BOOKING_TERMS");
       if (item?.requiresItemBookingTerms) requiredTerms.add("ITEM_BOOKING_TERMS");
     }
     if (line.bundleId) {
-      const bundle = await prisma.bookableBundle.findUnique({
-        where: { id: line.bundleId },
-        select: { requiresBookingTerms: true, requiresItemBookingTerms: true },
-      });
+      const bundle = bundleMap.get(line.bundleId);
       if (bundle?.requiresBookingTerms) requiredTerms.add("BOOKING_TERMS");
       if (bundle?.requiresItemBookingTerms) requiredTerms.add("ITEM_BOOKING_TERMS");
     }
@@ -247,13 +304,15 @@ export async function createGuestItemBooking(raw: unknown) {
   }
 
   // Collect all item IDs that need locking (direct items + bundle component items)
+  // Use the already-fetched bundleComponentsByBundle map — no extra queries needed
   const itemIdsToLock = new Set<string>();
   for (const line of lineData) {
     if (line.itemId) {
       itemIdsToLock.add(line.itemId);
     } else if (line.bundleId) {
-      const components = await prisma.bundleComponent.findMany({ where: { bundleId: line.bundleId }, select: { itemId: true } });
-      for (const c of components) itemIdsToLock.add(c.itemId);
+      for (const itemId of bundleComponentsByBundle.get(line.bundleId) ?? []) {
+        itemIdsToLock.add(itemId);
+      }
     }
   }
   // Sort IDs for consistent lock ordering to prevent deadlocks

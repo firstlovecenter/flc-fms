@@ -41,6 +41,7 @@ model User {
   assignedTasks         Task[]              @relation("TaskAssignedTo")
 
   @@index([role])
+  @@index([role, isActive])
   @@map("users")
 }
 
@@ -171,6 +172,7 @@ model Booking {
   ceremonyCode    CeremonyBookingCode?
 
   @@index([facilityId, startTime, endTime])
+  @@index([facilityId, status, deletedAt])
   @@index([status])
   @@index([category])
   @@map("bookings")
@@ -229,6 +231,7 @@ model BundleComponent {
   item     BookableItem   @relation(fields: [itemId], references: [id])
 
   @@unique([bundleId, itemId])
+  @@index([itemId])
   @@map("bundle_components")
 }
 
@@ -245,6 +248,8 @@ model BookingLineItem {
   item      BookableItem?   @relation(fields: [itemId], references: [id])
 
   @@index([bookingId])
+  @@index([bundleId])
+  @@index([itemId])
   @@map("booking_line_items")
 }
 
@@ -292,6 +297,7 @@ model Income {
   recordedBy   User?    @relation(fields: [recordedById], references: [id])
 
   @@index([receivedAt])
+  @@index([receivedAt, deletedAt])
   @@map("income")
 }
 
