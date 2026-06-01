@@ -53,10 +53,10 @@ export default function StatCard({ label, value, color = "gold", sub, icon, tren
           <div
             className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0 ml-3"
             style={{
-              background: `${accent}20`,
+              background: `color-mix(in srgb, ${accent} 12%, transparent)`,
               color: accent,
-              border: `1px solid ${accent}30`,
-              boxShadow: `0 0 20px ${accent}10`,
+              border: `1px solid color-mix(in srgb, ${accent} 20%, transparent)`,
+              boxShadow: `0 0 20px color-mix(in srgb, ${accent} 18%, transparent)`,
             }}
           >
             {icon}

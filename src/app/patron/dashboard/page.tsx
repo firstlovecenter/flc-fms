@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
 import { formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import PageHeader from "@/components/layout/PageHeader";
+import { DataTable } from "@/components/layout/DataTable";
 import { CalendarDays, CheckCircle2, Clock, Plus, ArrowRight } from "lucide-react";
 
 export default async function PatronDashboardPage() {
@@ -24,27 +26,24 @@ export default async function PatronDashboardPage() {
 	const approved = bookings.filter((b) => b.status === "APPROVED").length;
 
 	return (
-		<div className="space-y-8 animate-fade-in relative">
+		<div className="space-y-8 animate-fade-in relative overflow-x-clip">
 			{/* Ambient glow */}
-			<div className="absolute -top-20 -right-16 w-96 h-96 rounded-full pointer-events-none z-0"
+			<div className="absolute -top-20 right-0 w-96 h-96 rounded-full pointer-events-none z-0"
 				style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
 			/>
 
-			{/* Hero header */}
-			<div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-				<div>
-					<p className="section-eyebrow mb-3">Welcome back</p>
-					<h1 className="page-title text-[clamp(1.75rem,3vw,2.5rem)] mb-1.5">
-						{session.name.split(" ")[0]}&apos;s Bookings
-					</h1>
-					<p className="page-hero-muted text-[0.95rem]">
-						Manage your facility reservations and browse available venues
-					</p>
-				</div>
-				<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2 flex-shrink-0 mt-1">
-					<Plus size={15} /> Book Facility
-				</Link>
-			</div>
+			<PageHeader
+				variant="hero"
+				eyebrow="Welcome back"
+				title={`${session.name.split(" ")[0]}'s Bookings`}
+				description="Manage your facility reservations and browse available venues"
+				actions={
+					<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2 flex-shrink-0">
+						<Plus size={15} aria-hidden /> Book Facility
+					</Link>
+				}
+				className="relative z-10"
+			/>
 
 			{/* Stats */}
 			<div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
@@ -58,7 +57,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">My Bookings</p>
-						<p className="stat-value text-2xl">{bookings.length}</p>
+						<p className="text-2xl font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]" style={{ fontFamily: "var(--font-display)" }}>{bookings.length}</p>
 					</div>
 				</Link>
 
@@ -72,7 +71,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">Approved</p>
-						<p className="stat-value text-2xl text-emerald-600 dark:text-emerald-400">{approved}</p>
+						<p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400" style={{ fontFamily: "var(--font-display)" }}>{approved}</p>
 					</div>
 				</Link>
 
@@ -86,7 +85,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">Pending</p>
-						<p className="stat-value text-2xl text-amber-600 dark:text-amber-400">{pending}</p>
+						<p className="text-2xl font-bold text-amber-600 dark:text-amber-400" style={{ fontFamily: "var(--font-display)" }}>{pending}</p>
 					</div>
 				</Link>
 			</div>

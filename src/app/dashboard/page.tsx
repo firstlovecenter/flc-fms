@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils";
 import StatCard from "@/components/ui/StatCard";
+import PageHeader from "@/components/layout/PageHeader";
 import RecentBookings from "@/components/bookings/RecentBookings";
 import Link from "next/link";
 import {
@@ -63,20 +64,13 @@ export default async function DashboardPage() {
         style={{ background: "radial-gradient(circle, rgba(200,163,90,0.07) 0%, transparent 70%)", filter: "blur(40px)" }}
       />
 
-      {/* Hero header */}
-      <div className="page-hero relative z-10">
-        {/* Gold shimmer line */}
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(200,163,90,0.5), transparent)" }} />
-        <div>
-          <p className="section-eyebrow mb-2">Welcome Back</p>
-          <h1 className="text-[clamp(1.75rem,2.5vw,2.5rem)] font-bold leading-[1.1] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
-            {session.name.split(" ")[0]}&apos;s Dashboard
-          </h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            Manage facilities, bookings, and operations efficiently
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Welcome Back"
+        title={`${session.name.split(" ")[0]}'s Dashboard`}
+        description="Manage facilities, bookings, and operations efficiently"
+        className="relative z-10"
+      />
 
       {/* Quick actions */}
       {canBook && (

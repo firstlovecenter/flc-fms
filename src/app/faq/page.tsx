@@ -6,7 +6,7 @@ import BookingFaq from "@/components/bookings/BookingFaq";
 export default function FaqPage() {
   return (
     <PublicSplitShell
-      current="home"
+      current="faq"
       eyebrow="Help Center"
       title="Booking FAQs"
       subtitle={

@@ -106,8 +106,8 @@ export default async function PublicHomePage({
       />
 
       {/* General-booking notice + ceremony catalog links */}
-      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
-        <p className="text-sm text-amber-800 dark:text-amber-300">
+      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 min-w-0">
+        <p className="text-sm text-amber-800 dark:text-amber-300 min-w-0 break-words">
           <span className="font-semibold">General bookings only.</span>{" "}
           For wedding or naming ceremony bookings, visit the dedicated ceremony catalogs.
         </p>
@@ -176,7 +176,7 @@ export default async function PublicHomePage({
 
       {/* CTA */}
       <section className="relative mt-20 p-6 sm:p-10 md:p-14 bg-[var(--navy)] dark:bg-[#0f1b30] rounded-3xl overflow-hidden group border border-transparent dark:border-slate-700/60">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: "url('https://grainy-gradients.vercel.app/noise.svg')" }} />
+        <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] bg-[length:4px_4px]" aria-hidden="true" />
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent dark:from-[#1d3358] skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="text-center md:text-left max-w-xl">

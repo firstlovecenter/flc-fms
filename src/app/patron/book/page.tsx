@@ -41,8 +41,8 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
 
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">
-      <div className="page-hero relative z-10">
-        <div className="absolute -top-10 -right-16 w-72 h-72 rounded-full pointer-events-none"
+      <div className="page-hero relative z-10 overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-72 h-72 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
         />
         <div className="relative z-10">

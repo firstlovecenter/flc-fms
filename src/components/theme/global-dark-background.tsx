@@ -3,8 +3,6 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
-const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 
@@ -39,18 +37,6 @@ export function GlobalDarkBackground() {
         onError={() => setBgImage(LEFT_SPLIT_IMAGE_FALLBACK)}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster={bgImage}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-      >
-        <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-        <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-      </video>
-
       {/* Tints and Gradients to match PublicSplitShell exactly */}
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(6,15,30,0.84) 0%, rgba(8,20,40,0.68) 48%, rgba(17,33,59,0.6) 100%)" }} />
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(224, 186, 112, 0.14) 0%, rgba(224, 186, 112, 0) 70%)" }} />

@@ -6,22 +6,41 @@
 
 /* ─── Design Tokens ──────────────────────────────────────────────────────── */
 :root {
-  --navy:        #0A1628;
-  --navy-mid:    #132040;
-  --navy-light:  #1C3058;
-  --navy-glass:  rgba(10, 22, 40, 0.85);
-  --gold:        #C8A35A;
-  --gold-bright: #E2B96A;
+  --navy:        #080F1A;
+  --navy-mid:    #0F1E36;
+  --navy-light:  #1A3058;
+  --navy-glass:  rgba(8, 15, 26, 0.88);
+  --gold:        #C49A4A;
+  --gold-bright: #D4AE62;
   --gold-pale:   #F5EAD0;
   --gold-muted:  #8A6D35;
-  --cream:       #F9F6F0;
-  --cream-dark:  #F1EBE0;
+  --cream:       #F7F4EE;
+  --cream-dark:  #EDE6D8;
+  --surface:     #FFFFFF;
   --white:       #FFFFFF;
   --slate:       #475569;
   --muted:       #94A3B8;
-  --text-muted:  #64748B;   /* WCAG AA on cream: ~4.6:1 */
-  --border:      #E4DDD3;
+  --text-muted:  #5C6B7A;
+  --border:      #DDD6CA;
   --border-dark: #C9C0B4;
+  --success:     #15803D;
+  --success-bg:  #F0FDF4;
+  --warning:     #B45309;
+  --warning-bg:  #FFFBEB;
+  --danger:      #B91C1C;
+  --danger-bg:   #FEF2F2;
+
+  /* Spacing (4px grid) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
@@ -78,8 +97,8 @@
   --field-placeholder: #94a3b8;
   --field-border: #e4ddd3;
 
-  --surface: var(--cream-dark);
-  --page-hero-bg: linear-gradient(135deg, #0a1628 0%, #1c3058 100%);
+  --page-bg: var(--cream);
+  --page-hero-bg: linear-gradient(135deg, #080f1a 0%, #1a3058 100%);
   --page-hero-fg: #ffffff;
   --page-hero-muted: rgba(255, 255, 255, 0.75);
   --page-hero-border: rgba(200, 163, 90, 0.3);
@@ -102,6 +121,8 @@
   --gold-muted:  #D9BF8B;
   --cream:       transparent;
   --cream-dark:  rgba(10, 17, 29, 0.4);
+  --surface:     rgba(15, 26, 43, 0.72);
+  --page-bg:     transparent;
   --white:       rgba(15, 26, 43, 0.6);
   --slate:       #A7B6CC;
   --muted:       #8EA1BC;
@@ -192,7 +213,7 @@
 
   body {
     font-family: var(--font-body);
-    background: var(--cream);
+    background: var(--page-bg, var(--cream));
     color: var(--navy);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1220,6 +1241,7 @@
 /* ─── Campus Main Content Area ───────────────────────────────────────────── */
 .campus-main {
   padding: 20px 16px;
+  overflow-x: clip;
 }
 
 .staff-main {
