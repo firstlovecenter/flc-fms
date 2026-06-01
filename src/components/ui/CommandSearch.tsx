@@ -16,6 +16,7 @@ import {
   Package,
   FileText,
   ClipboardCheck,
+  ClipboardList,
   ShieldAlert,
   Plus,
   X,
@@ -28,10 +29,12 @@ type SearchItem = {
   keywords?: string[];
   group: string;
   superAdminOnly?: boolean;
+  roles?: string[];
 };
 
 const NAV_ITEMS: SearchItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, keywords: ["home", "overview"], group: "Navigate" },
+  { label: "Duty Logs", href: "/duty", icon: ClipboardList, keywords: ["duty", "schedule", "checklist", "man on duty"], group: "Navigate" },
   { label: "Bookings", href: "/bookings", icon: CalendarDays, keywords: ["reservations", "booking list"], group: "Navigate" },
   { label: "Check-In", href: "/checkin", icon: ClipboardCheck, keywords: ["checkin", "arrival"], group: "Navigate" },
   { label: "Booking Content", href: "/bookings/content", icon: FileText, keywords: ["terms", "content"], group: "Navigate" },
@@ -49,14 +52,25 @@ const NAV_ITEMS: SearchItem[] = [
 
 const ACTION_ITEMS: SearchItem[] = [
   { label: "New Booking", href: "/bookings/new", icon: Plus, keywords: ["create booking", "add booking"], group: "Actions" },
+  {
+    label: "Create Duty",
+    href: "/duty/new",
+    icon: Plus,
+    keywords: ["duty", "assign", "schedule", "create"],
+    group: "Actions",
+    roles: ["FACILITY_MANAGER", "SUPER_ADMIN"],
+  },
   { label: "New Expense", href: "/transactions/new-expense", icon: Plus, keywords: ["add expense", "create expense"], group: "Actions" },
   { label: "New Income", href: "/transactions/new-income", icon: Plus, keywords: ["add income", "create income"], group: "Actions" },
 ];
 
 export default function CommandSearch({ onClose, role }: { onClose: () => void; role?: string }) {
-  const ALL_ITEMS = [...ACTION_ITEMS, ...NAV_ITEMS].filter(
-    (item) => !item.superAdminOnly || role === "SUPER_ADMIN"
-  );
+  const ALL_ITEMS = [...ACTION_ITEMS, ...NAV_ITEMS].filter((item) => {
+    if (item.superAdminOnly && role !== "SUPER_ADMIN") return false;
+    if (item.roles && role && !item.roles.includes(role)) return false;
+    if (item.roles && !role) return false;
+    return true;
+  });
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
