@@ -26,13 +26,13 @@ export default async function FacilitiesPage() {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Facilities</h1>
           <p className="text-sm text-[var(--muted)]">{facilities.length} {facilities.length === 1 ? "facility" : "facilities"}</p>
         </div>
         {canManage && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {isSuperAdmin && (
               <Link href="/facilities/categories" className="btn-secondary text-sm">
                 Categories

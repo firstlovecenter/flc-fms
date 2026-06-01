@@ -87,7 +87,7 @@ export default async function BookingsPage({
 
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
             <p className="text-sm text-[var(--muted)]">{total} ceremony booking{total !== 1 ? "s" : ""}</p>
@@ -206,7 +206,7 @@ export default async function BookingsPage({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
           <p className="text-sm text-[var(--muted)]">{total} regular booking{total !== 1 ? "s" : ""}</p>

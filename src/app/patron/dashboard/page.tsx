@@ -24,9 +24,9 @@ export default async function PatronDashboardPage() {
 	const approved = bookings.filter((b) => b.status === "APPROVED").length;
 
 	return (
-		<div className="space-y-8 animate-fade-in relative">
+		<div className="space-y-8 animate-fade-in relative overflow-x-clip">
 			{/* Ambient glow */}
-			<div className="absolute -top-20 -right-16 w-96 h-96 rounded-full pointer-events-none z-0"
+			<div className="absolute -top-20 right-0 w-96 h-96 rounded-full pointer-events-none z-0"
 				style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
 			/>
 
@@ -58,7 +58,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">My Bookings</p>
-						<p className="stat-value text-2xl">{bookings.length}</p>
+						<p className="text-2xl font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]" style={{ fontFamily: "var(--font-display)" }}>{bookings.length}</p>
 					</div>
 				</Link>
 
@@ -72,7 +72,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">Approved</p>
-						<p className="stat-value text-2xl text-emerald-600 dark:text-emerald-400">{approved}</p>
+						<p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400" style={{ fontFamily: "var(--font-display)" }}>{approved}</p>
 					</div>
 				</Link>
 
@@ -86,7 +86,7 @@ export default async function PatronDashboardPage() {
 					</div>
 					<div>
 						<p className="stat-label mb-0.5">Pending</p>
-						<p className="stat-value text-2xl text-amber-600 dark:text-amber-400">{pending}</p>
+						<p className="text-2xl font-bold text-amber-600 dark:text-amber-400" style={{ fontFamily: "var(--font-display)" }}>{pending}</p>
 					</div>
 				</Link>
 			</div>

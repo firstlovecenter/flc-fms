@@ -1220,6 +1220,7 @@
 /* ─── Campus Main Content Area ───────────────────────────────────────────── */
 .campus-main {
   padding: 20px 16px;
+  overflow-x: clip;
 }
 
 .staff-main {
