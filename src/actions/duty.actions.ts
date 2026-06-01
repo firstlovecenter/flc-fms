@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/db/prisma";
+import { dutyDateFromInput } from "@/lib/duty/dates";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/notifications/push";
@@ -74,7 +74,7 @@ async function notifyAssigned(userId: string, templateName: string, date: Date) 
 
 const AssignSchema = z.object({
   templateId: z.string().min(1, "Select a duty form"),
-  date: z.coerce.date(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Select a valid date"),
   assignedToId: z.string().cuid(),
 });
 
@@ -85,7 +85,7 @@ export async function assignDuty(data: z.infer<typeof AssignSchema>) {
   }
 
   const validated = AssignSchema.parse(data);
-  const dateOnly = startOfDay(validated.date);
+  const dateOnly = dutyDateFromInput(validated.date);
 
   const template = await prisma.dutyTemplate.findUnique({
     where: { id: validated.templateId, isActive: true },
@@ -198,6 +198,9 @@ export async function signDutyAsAssignee(dutyLogId: string) {
     select: { assignedToId: true, status: true },
   });
   if (!log) return { success: false as const, error: "Duty log not found." };
+  if (log.status === "SIGNED_OFF") {
+    return { success: false as const, error: "This duty log is signed off and cannot be edited." };
+  }
   if (log.assignedToId !== session.sub && !canManage(session)) {
     return { success: false as const, error: "Only the assigned person can sign this log." };
   }
@@ -511,7 +514,7 @@ export async function deleteDutyTemplate(templateId: string) {
 
 const UpdateAssignmentSchema = z.object({
   assignedToId: z.string().cuid(),
-  date: z.coerce.date(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Select a valid date"),
 });
 
 export async function updateDutyAssignment(
@@ -524,7 +527,7 @@ export async function updateDutyAssignment(
   }
 
   const validated = UpdateAssignmentSchema.parse(data);
-  const dateOnly = startOfDay(validated.date);
+  const dateOnly = dutyDateFromInput(validated.date);
 
   const existing = await prisma.dutyLog.findUnique({
     where: { id: dutyLogId },

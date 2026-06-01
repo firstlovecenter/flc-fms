@@ -39,7 +39,7 @@ export default function AssignDutyForm({
       const res = await assignDuty({
         templateId,
         assignedToId,
-        date: new Date(date),
+        date,
       });
       if (!res.success) {
         toast.error(res.error ?? "Could not assign duty");

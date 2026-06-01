@@ -46,7 +46,10 @@ export default function DutyLogPanel({
     (isAssignee || canManage);
 
   const canSignAssignee =
-    !readOnly && (isAssignee || canManage) && !log.assigneeSignedAt;
+    !readOnly &&
+    log.status !== "SIGNED_OFF" &&
+    (isAssignee || canManage) &&
+    !log.assigneeSignedAt;
   const canSignSupervisor =
     !readOnly &&
     canManage &&

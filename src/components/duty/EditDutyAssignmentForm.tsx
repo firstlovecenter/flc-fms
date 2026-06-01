@@ -28,7 +28,7 @@ export default function EditDutyAssignmentForm({
     startTransition(async () => {
       const res = await updateDutyAssignment(dutyLogId, {
         assignedToId,
-        date: new Date(date),
+        date,
       });
       if (!res.success) {
         toast.error(res.error ?? "Could not update assignment");

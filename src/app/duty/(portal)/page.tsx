@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import { requireStaff } from "@/lib/auth/guards";
+import {
+  dutyDateFromInput,
+  formatDutyDateInput,
+  toDutyDateOnly,
+} from "@/lib/duty/dates";
 import {
   getActiveStaffForDuty,
   getDutyLogsForDate,
@@ -23,9 +27,9 @@ export default async function DutyPage({
 
   const dateParam = searchParams.date;
   const selectedDate = dateParam
-    ? new Date(dateParam + "T12:00:00")
-    : new Date();
-  const dateStr = format(selectedDate, "yyyy-MM-dd");
+    ? dutyDateFromInput(dateParam)
+    : toDutyDateOnly(new Date());
+  const dateStr = dateParam ?? formatDutyDateInput(selectedDate);
 
   const logs = await getDutyLogsForDate(
     selectedDate,

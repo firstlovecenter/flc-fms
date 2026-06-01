@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { endOfWeek, startOfDay, startOfWeek } from "date-fns";
+import { endOfWeek, startOfWeek } from "date-fns";
+import { dutyDateFromInput, toDutyDateOnly } from "@/lib/duty/dates";
 import {
   getDutyLogsForDate,
   getDutyLogsForWeek,
@@ -28,8 +29,8 @@ export default async function DutyDisplayPage({
 
   const dateParam = searchParams.date;
   const anchorDate = dateParam
-    ? startOfDay(new Date(dateParam + "T12:00:00"))
-    : startOfDay(new Date());
+    ? dutyDateFromInput(dateParam)
+    : toDutyDateOnly(new Date());
 
   const weekStart = startOfWeek(anchorDate, { weekStartsOn: WEEK_STARTS_ON });
   const weekEnd = endOfWeek(anchorDate, { weekStartsOn: WEEK_STARTS_ON });
