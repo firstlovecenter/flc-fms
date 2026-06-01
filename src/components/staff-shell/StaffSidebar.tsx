@@ -22,7 +22,7 @@ import {
   KeyRound,
   Settings,
   UserCircle,
-  SquareKanban,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
@@ -41,7 +41,7 @@ const NAV_GROUPS = [
     label: null,
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/tasks",     label: "Task Board", icon: SquareKanban },
+      { href: "/duty",      label: "Duty Logs", icon: ClipboardList },
     ],
   },
   {

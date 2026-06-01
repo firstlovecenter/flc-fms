@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
 
   "/guest",
   "/pwa",
+  "/duty/display",
   "/login",
   "/register",
   "/patron/login",

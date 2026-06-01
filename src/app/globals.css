@@ -76,6 +76,18 @@
   --field-fg: #0a1628;
   --field-placeholder: #94a3b8;
   --field-border: #e4ddd3;
+
+  --surface: var(--cream-dark);
+  --page-hero-bg: linear-gradient(135deg, #0a1628 0%, #1c3058 100%);
+  --page-hero-fg: #ffffff;
+  --page-hero-muted: rgba(255, 255, 255, 0.75);
+  --page-hero-border: rgba(200, 163, 90, 0.3);
+  --duty-gold-on-accent: #0a1628;
+
+  --duty-board-bg: var(--cream);
+  --duty-board-fg: #0a1628;
+  --duty-board-panel-header-bg: #132040;
+  --duty-board-panel-header-fg: #ffffff;
 }
 
 .dark {
@@ -133,6 +145,22 @@
   --field-fg: #e8eff8;
   --field-placeholder: #8ea1bc;
   --field-border: #24334b;
+
+  --surface: rgba(10, 17, 29, 0.45);
+  --page-hero-bg: linear-gradient(
+    135deg,
+    rgba(10, 22, 40, 0.96) 0%,
+    rgba(28, 48, 88, 0.9) 100%
+  );
+  --page-hero-fg: #e8eef8;
+  --page-hero-muted: rgba(232, 238, 248, 0.72);
+  --page-hero-border: rgba(212, 180, 116, 0.35);
+  --duty-gold-on-accent: #0a1628;
+
+  --duty-board-bg: transparent;
+  --duty-board-fg: #e8eef8;
+  --duty-board-panel-header-bg: rgba(10, 22, 40, 0.92);
+  --duty-board-panel-header-fg: #e8eef8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -362,6 +390,67 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Page hero (staff list headers — theme-aware) */
+  .page-hero,
+  .hero-card {
+    padding: 1.5rem 1.75rem;
+    background: var(--page-hero-bg);
+    border: 1px solid var(--page-hero-border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    color: var(--page-hero-fg);
+  }
+
+  .page-hero h1,
+  .hero-card h1 {
+    color: var(--page-hero-fg);
+  }
+
+  .page-hero-muted {
+    color: var(--page-hero-muted);
+  }
+
+  .page-hero-stat strong {
+    color: var(--page-hero-fg);
+  }
+
+  .page-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--r-sm);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: var(--page-hero-fg);
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.15s ease;
+  }
+
+  .page-hero-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .page-hero-btn-primary {
+    border-color: transparent;
+    background: #ffffff;
+    color: #0a1628;
+  }
+
+  .page-hero-btn-primary:hover {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .dark .page-hero-btn-primary {
+    background: var(--gold);
+    color: var(--duty-gold-on-accent);
+  }
+
+  .dark .page-hero-btn-primary:hover {
+    background: var(--gold-bright);
   }
 
   .card-hover {
