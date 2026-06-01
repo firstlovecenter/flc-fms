@@ -37,8 +37,10 @@ model User {
   activatedCodes        CeremonyBookingCode[]
   ceremonyDateOverrides CeremonyDateOverride[]
   savingsTransactions   SavingsTransaction[]
-  createdTasks          Task[]              @relation("TaskCreatedBy")
-  assignedTasks         Task[]              @relation("TaskAssignedTo")
+  dutyLogsAssigned      DutyLog[]           @relation("DutyAssignedTo")
+  dutyLogsCreated       DutyLog[]           @relation("DutyCreatedBy")
+  dutyLogsSupervised     DutyLog[]           @relation("DutySupervisor")
+  dutyItemsSigned       DutyLogItem[]       @relation("DutyItemSignedBy")
 
   @@index([role])
   @@index([role, isActive])
@@ -544,12 +546,6 @@ enum InventoryStatus {
   LOST
 }
 
-enum TaskStatus {
-  TODO
-  IN_PROGRESS
-  DONE
-}
-
 // ─── Booking Categories (dynamic, managed by FM / Super Admin) ────────────────
 
 model BookingCategory {
@@ -565,29 +561,96 @@ model BookingCategory {
   @@map("booking_categories")
 }
 
-// ─── Kanban Task Board ────────────────────────────────────────────────────────
+// ─── Duty Logs (staff duty checklists) ────────────────────────────────────────
 
-model Task {
-  id                String              @id @default(cuid())
-  title             String
-  description       String?
-  priority          MaintenancePriority @default(MEDIUM)
-  status            TaskStatus          @default(TODO)
-  dueDate           DateTime?
-  assignedToId      String?
-  createdById       String
-  reminderSentAt24h DateTime?
-  reminderSentAt1h  DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+enum DutyTemplateType {
+  TIMED_LOG
+  END_OF_SHIFT
+  CHECKLIST
+}
 
-  assignedTo   User?               @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  createdBy    User                @relation("TaskCreatedBy", fields: [createdById], references: [id])
+enum DutyTimeType {
+  SPECIFIC
+  END_OF_DAY
+  CONTINUOUS
+}
 
-  @@index([status])
-  @@index([createdById])
+enum DutyLogStatus {
+  ACTIVE
+  COMPLETED
+  SIGNED_OFF
+}
+
+model DutyTemplate {
+  id        String           @id @default(cuid())
+  name      String
+  type      DutyTemplateType
+  isActive  Boolean          @default(true)
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  items    DutyTemplateItem[]
+  dutyLogs DutyLog[]
+
+  @@map("duty_templates")
+}
+
+model DutyTemplateItem {
+  id            String       @id @default(cuid())
+  templateId    String
+  sortOrder     Int
+  timeType      DutyTimeType @default(SPECIFIC)
+  scheduledTime String?
+  description   String
+
+  template DutyTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, sortOrder])
+  @@map("duty_template_items")
+}
+
+model DutyLog {
+  id                 String        @id @default(cuid())
+  templateId         String
+  date               DateTime      @db.Date
+  assignedToId       String
+  createdById        String
+  status             DutyLogStatus @default(ACTIVE)
+  assigneeSignedAt   DateTime?
+  supervisorId       String?
+  supervisorSignedAt DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  template   DutyTemplate  @relation(fields: [templateId], references: [id])
+  assignedTo User          @relation("DutyAssignedTo", fields: [assignedToId], references: [id])
+  createdBy  User          @relation("DutyCreatedBy", fields: [createdById], references: [id])
+  supervisor User?         @relation("DutySupervisor", fields: [supervisorId], references: [id])
+  items      DutyLogItem[]
+
+  @@unique([templateId, date, assignedToId])
+  @@index([date])
   @@index([assignedToId])
-  @@map("tasks")
+  @@map("duty_logs")
+}
+
+model DutyLogItem {
+  id            String       @id @default(cuid())
+  dutyLogId     String
+  sortOrder     Int
+  timeType      DutyTimeType @default(SPECIFIC)
+  scheduledTime String?
+  description   String
+  isDone        Boolean      @default(false)
+  completedAt   DateTime?
+  signedById    String?
+
+  dutyLog  DutyLog @relation(fields: [dutyLogId], references: [id], onDelete: Cascade)
+  signedBy User?   @relation("DutyItemSignedBy", fields: [signedById], references: [id])
+
+  @@index([dutyLogId, sortOrder])
+  @@map("duty_log_items")
 }
 
 // ─── Facility Inventory Requirements ─────────────────────────────────────────
