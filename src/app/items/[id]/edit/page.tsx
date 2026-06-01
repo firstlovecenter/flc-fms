@@ -36,7 +36,7 @@ export default async function EditItemPage({ params }: { params: { id: string } 
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card max-w-[640px]">
         <div className="card-inset">
           <AddItemForm itemId={item.id} defaultValues={defaultValues} />
         </div>

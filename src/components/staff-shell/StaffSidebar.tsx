@@ -248,7 +248,7 @@ export default function StaffSidebar({ role, name, profilePicture, isOpen = fals
             onClick={onClose}
             className="absolute inset-0 bg-[rgba(10,22,40,0.6)] backdrop-blur-sm"
           />
-          <div className="relative h-full z-[51] flex flex-col" style={{ animation: "slideInSidebar 0.22s ease-out" }}>
+          <div className="relative h-full z-[51] flex flex-col animate-[slideInSidebar_0.22s_ease-out]">
             {sidebarContent}
           </div>
         </div>

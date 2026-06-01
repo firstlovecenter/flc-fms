@@ -26,79 +26,67 @@ export default async function PatronDashboardPage() {
 	return (
 		<div className="space-y-8 animate-fade-in relative">
 			{/* Ambient glow */}
-			<div className="absolute -top-20 -right-16 w-96 h-96 rounded-full pointer-events-none"
-				style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)", zIndex: 0 }}
+			<div className="absolute -top-20 -right-16 w-96 h-96 rounded-full pointer-events-none z-0"
+				style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
 			/>
 
 			{/* Hero header */}
-			<div className="card relative overflow-hidden z-10"
-				style={{
-					padding: "28px 28px",
-					background: "linear-gradient(135deg, var(--navy) 0%, rgba(28,48,88,1) 100%)",
-					borderColor: "rgba(200,163,90,0.3)",
-					boxShadow: "0 8px 32px rgba(10,22,40,0.12)",
-				}}
-			>
-				<div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(200,163,90,0.5), transparent)" }} />
-				<div className="flex items-start justify-between gap-4 flex-wrap">
-					<div>
-						<p className="text-[0.68rem] uppercase tracking-[0.08em] font-bold mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-							Welcome back
-						</p>
-						<h1 className="font-bold leading-[1.1] mb-1.5 text-white" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.75rem, 3vw, 2.5rem)" }}>
-							{session.name.split(" ")[0]}&apos;s Bookings
-						</h1>
-						<p className="text-[0.95rem]" style={{ color: "rgba(255,255,255,0.7)" }}>
-							Manage your facility reservations and browse available venues
-						</p>
-					</div>
-					<Link href="/patron/book"
-						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex-shrink-0 mt-1"
-						style={{ background: "var(--gold)", color: "var(--navy)", boxShadow: "0 2px 8px rgba(200,163,90,0.3)" }}
-					>
-						<Plus size={15} /> Book Facility
-					</Link>
+			<div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
+				<div>
+					<p className="section-eyebrow mb-3">Welcome back</p>
+					<h1 className="page-title text-[clamp(1.75rem,3vw,2.5rem)] mb-1.5">
+						{session.name.split(" ")[0]}&apos;s Bookings
+					</h1>
+					<p className="page-hero-muted text-[0.95rem]">
+						Manage your facility reservations and browse available venues
+					</p>
 				</div>
+				<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2 flex-shrink-0 mt-1">
+					<Plus size={15} /> Book Facility
+				</Link>
 			</div>
 
 			{/* Stats */}
-			<div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+			<div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
 				<Link href="/patron/bookings"
-					className="card flex items-center gap-4 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-					style={{ background: "linear-gradient(135deg, rgba(200,163,90,0.08) 0%, rgba(200,163,90,0.02) 100%)", borderColor: "rgba(200,163,90,0.2)", textDecoration: "none" }}
+					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
+					data-accent="gold"
 				>
-					<div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.2)" }}>
-						<CalendarDays size={18} style={{ color: "var(--gold)" }} />
+					<div className="stat-accent" />
+					<div className="w-10 h-10 rounded-xl bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center flex-shrink-0">
+						<CalendarDays size={18} className="text-[var(--gold)]" />
 					</div>
 					<div>
-						<p className="text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-[var(--muted)] mb-0.5">My Bookings</p>
-						<p className="text-2xl font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--gold)" }}>{bookings.length}</p>
+						<p className="stat-label mb-0.5">My Bookings</p>
+						<p className="stat-value text-2xl">{bookings.length}</p>
 					</div>
 				</Link>
 
 				<Link href="/patron/bookings?status=APPROVED"
-					className="card flex items-center gap-4 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-					style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(34,197,94,0.02) 100%)", borderColor: "rgba(34,197,94,0.2)", textDecoration: "none" }}
+					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
+					data-accent="green"
 				>
-					<div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.18)" }}>
-						<CheckCircle2 size={18} className="text-emerald-600" />
+					<div className="stat-accent" />
+					<div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center flex-shrink-0">
+						<CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
 					</div>
 					<div>
-						<p className="text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-[var(--muted)] mb-0.5">Approved</p>
-						<p className="text-2xl font-bold leading-none text-emerald-600" style={{ fontFamily: "var(--font-display)" }}>{approved}</p>
+						<p className="stat-label mb-0.5">Approved</p>
+						<p className="stat-value text-2xl text-emerald-600 dark:text-emerald-400">{approved}</p>
 					</div>
 				</Link>
 
 				<Link href="/patron/bookings?status=PENDING"
-					className="card flex items-center gap-4 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-					style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.02) 100%)", borderColor: "rgba(245,158,11,0.2)", textDecoration: "none" }}
+					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
+					data-accent="yellow"
 				>
-					<div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.18)" }}>
-						<Clock size={18} className="text-amber-600" />
+					<div className="stat-accent" />
+					<div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-center flex-shrink-0">
+						<Clock size={18} className="text-amber-600 dark:text-amber-400" />
 					</div>
 					<div>
-						<p className="text-[0.72rem] font-semibold uppercase tracking-[0.05em] text-[var(--muted)] mb-0.5">Pending</p>
-						<p className="text-2xl font-bold leading-none text-amber-600" style={{ fontFamily: "var(--font-display)" }}>{pending}</p>
+						<p className="stat-label mb-0.5">Pending</p>
+						<p className="stat-value text-2xl text-amber-600 dark:text-amber-400">{pending}</p>
 					</div>
 				</Link>
 			</div>
@@ -107,30 +95,28 @@ export default async function PatronDashboardPage() {
 			<div className="relative z-10">
 				<div className="flex items-end justify-between mb-4">
 					<div>
-						<p className="text-[0.68rem] uppercase tracking-[0.08em] font-bold text-[var(--muted)] mb-1">Recently Booked</p>
-						<h2 className="text-[1.4rem] font-bold text-[var(--navy)] leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+						<p className="section-eyebrow mb-1">Recently Booked</p>
+						<h2 className="text-[1.4rem] font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] leading-tight" style={{ fontFamily: "var(--font-display)" }}>
 							Your Bookings
 						</h2>
 					</div>
-					<Link href="/patron/bookings" className="text-[0.88rem] font-semibold text-[var(--gold)] hover:text-[var(--gold-bright)] transition-colors flex items-center gap-1">
+					<Link href="/patron/bookings" className="link-gold text-[0.88rem] font-semibold inline-flex items-center gap-1">
 						View All <ArrowRight size={14} />
 					</Link>
 				</div>
 
-				<div className="card overflow-hidden" style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FEFDFB 100%)", boxShadow: "0 2px 8px rgba(10,22,40,0.04)" }}>
+				<div className="card overflow-hidden">
 					{bookings.length === 0 ? (
-						<div className="flex flex-col items-center justify-center gap-4 py-14 px-6 text-center">
-							<div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--cream-dark)", border: "1px solid var(--border)" }}>
-								<CalendarDays size={24} className="text-[var(--muted)]" />
+						<div className="empty-state py-14">
+							<div className="w-14 h-14 rounded-2xl bg-[var(--cream-dark)] dark:bg-[rgba(255,255,255,0.05)] border border-[var(--border)] flex items-center justify-center mx-auto mb-4">
+								<CalendarDays size={24} className="text-[var(--text-muted)]" />
 							</div>
-							<div>
-								<p className="font-semibold text-[var(--navy)] mb-1">No bookings yet</p>
-								<p className="text-sm text-[var(--muted)]">Book a facility to get started</p>
-							</div>
-							<Link href="/patron/book" className="btn-primary mt-1">Start Booking Now</Link>
+							<p className="font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] mb-1">No bookings yet</p>
+							<p className="text-sm text-[var(--text-muted)]">Book a facility to get started</p>
+							<Link href="/patron/book" className="btn-primary mt-4 inline-flex">Start Booking Now</Link>
 						</div>
 					) : (
-						<div className="overflow-x-auto">
+						<div className="table-scroll-wrapper">
 							<table className="data-table">
 								<thead>
 									<tr>
@@ -144,14 +130,14 @@ export default async function PatronDashboardPage() {
 								<tbody>
 									{bookings.map((b) => (
 										<tr key={b.id}>
-											<td className="font-medium text-[var(--navy)]">{b.facility?.name ?? "N/A"}</td>
+											<td className="font-medium text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">{b.facility?.name ?? "N/A"}</td>
 											<td className="text-[var(--slate)]">{b.title}</td>
-											<td className="text-sm font-medium text-[var(--navy)]">{formatDateTime(b.startTime)}</td>
+											<td className="text-sm font-medium text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">{formatDateTime(b.startTime)}</td>
 											<td>
 												<StatusBadge status={b.status} size="xs" />
 											</td>
 											<td>
-												<Link href={`/patron/bookings/${b.id}`} className="btn-secondary" style={{ padding: "5px 12px", fontSize: "0.75rem" }}>
+												<Link href={`/patron/bookings/${b.id}`} className="btn-secondary text-xs py-1 px-3">
 													View
 												</Link>
 											</td>
@@ -165,22 +151,12 @@ export default async function PatronDashboardPage() {
 			</div>
 
 			{/* CTA banner */}
-			<div className="card relative overflow-hidden z-10 text-center"
-				style={{
-					padding: "28px 24px",
-					background: "linear-gradient(135deg, var(--navy) 0%, rgba(28,48,88,1) 100%)",
-					borderColor: "rgba(200,163,90,0.3)",
-				}}
-			>
-				<div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(200,163,90,0.4), transparent)" }} />
+			<div className="page-hero text-center relative z-10">
 				<p className="font-bold text-[1.1rem] text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
 					{facilitiesOpen} venue{facilitiesOpen !== 1 ? "s" : ""} available
 				</p>
-				<p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.65)" }}>Browse and reserve your preferred space</p>
-				<Link href="/patron/book"
-					className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-					style={{ background: "var(--gold)", color: "var(--navy)", boxShadow: "0 2px 12px rgba(200,163,90,0.3)" }}
-				>
+				<p className="text-sm mb-5 text-[rgba(255,255,255,0.65)]">Browse and reserve your preferred space</p>
+				<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2">
 					Browse & Book Now <ArrowRight size={15} />
 				</Link>
 			</div>

@@ -19,34 +19,10 @@ export default function ImpersonationBanner({ adminName, targetName, targetRole 
   return (
     <div
       role="alert"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "8px 20px",
-        background: "linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)",
-        borderBottom: "1px solid rgba(255,255,255,0.15)",
-        flexWrap: "wrap",
-        zIndex: 50,
-        flexShrink: 0,
-      }}
+      className="flex items-center justify-between gap-3 px-5 py-2 bg-gradient-to-r from-violet-600 to-violet-700 border-b border-white/15 flex-wrap z-50 shrink-0"
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#fff" }}>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            background: "rgba(255,255,255,0.15)",
-            borderRadius: 20,
-            padding: "2px 10px",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            fontSize: "0.72rem",
-            textTransform: "uppercase",
-          }}
-        >
+      <div className="flex items-center gap-2 text-[0.82rem] text-white">
+        <span className="inline-flex items-center gap-1 bg-white/15 rounded-full px-2.5 py-0.5 font-bold tracking-[0.04em] text-[0.72rem] uppercase">
           Impersonating
         </span>
         <span>
@@ -61,21 +37,7 @@ export default function ImpersonationBanner({ adminName, targetName, targetRole 
           if ("redirectTo" in result) router.push(result.redirectTo);
         })}
         disabled={pending}
-        style={{
-          padding: "4px 14px",
-          borderRadius: 8,
-          border: "1.5px solid rgba(255,255,255,0.6)",
-          background: "transparent",
-          color: "#fff",
-          fontSize: "0.8rem",
-          fontWeight: 600,
-          cursor: pending ? "not-allowed" : "pointer",
-          opacity: pending ? 0.6 : 1,
-          whiteSpace: "nowrap",
-          transition: "background 0.15s",
-        }}
-        onMouseEnter={(e) => { if (!pending) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.15)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+        className="px-3.5 py-1 rounded-lg border border-white/60 bg-transparent text-white text-[0.8rem] font-semibold cursor-pointer whitespace-nowrap transition-colors hover:bg-white/15 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {pending ? "Stopping…" : "Stop Impersonating"}
       </button>

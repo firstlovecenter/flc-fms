@@ -10,7 +10,7 @@ import { Home } from "lucide-react";
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-gold w-full" style={{ padding: "12px", justifyContent: "center" }}>
+    <button type="submit" disabled={pending} className="btn-gold w-full justify-center py-3">
       {pending ? "Creating account…" : "Create Account"}
     </button>
   );
@@ -28,53 +28,55 @@ export default function PatronRegisterPage() {
   }, [state, router]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ width: "100%", maxWidth: 400 }}>
+    <div className="min-h-screen bg-[var(--cream)] dark:bg-transparent flex items-center justify-center p-6 animate-fade-in">
+      <div className="w-full max-w-[400px]">
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <div style={{ width: 36, height: 36, background: "var(--navy)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Home size={17} style={{ color: "var(--gold)" }} />
+        <div className="text-center mb-7">
+          <Link href="/" className="inline-flex items-center gap-2 no-underline">
+            <div className="w-9 h-9 bg-[var(--navy)] rounded-[9px] flex items-center justify-center">
+              <Home size={17} className="text-[var(--gold)]" />
             </div>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 600, color: "var(--navy)" }}>First Love Center</span>
+            <span className="text-[1.25rem] font-semibold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
+              First Love Center
+            </span>
           </Link>
         </div>
 
-        <div className="card-elevated" style={{ padding: "36px 32px" }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 600, color: "var(--navy)", marginBottom: 4 }}>Create Account</h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginBottom: 28 }}>Register to book facilities</p>
+        <div className="card p-9">
+          <h1 className="text-[1.6rem] font-semibold text-[var(--navy)] mb-1" style={{ fontFamily: "var(--font-display)" }}>
+            Create Account
+          </h1>
+          <p className="text-[var(--text-muted)] text-[0.875rem] mb-7">Register to book facilities</p>
 
           {state?.error && (
-            <div style={{ background: "#FFF1F2", border: "1px solid #FECDD3", borderRadius: 8, padding: "10px 14px", color: "#9F1239", fontSize: "0.85rem", marginBottom: 20 }}>
-              {state.error}
-            </div>
+            <div className="alert alert-error mb-5">{state.error}</div>
           )}
 
-          <form action={action} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--navy)", marginBottom: 6 }}>Full Name</label>
+          <form action={action} className="flex flex-col gap-3.5">
+            <div className="form-group">
+              <label className="label">Full Name</label>
               <input name="name" required className="input" placeholder="Kwame Asante" />
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--navy)", marginBottom: 6 }}>Email Address</label>
+            <div className="form-group">
+              <label className="label">Email Address</label>
               <input name="email" type="email" required className="input" placeholder="kwame@example.com" />
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--navy)", marginBottom: 6 }}>Phone Number</label>
+            <div className="form-group">
+              <label className="label">Phone Number</label>
               <input name="phone" type="tel" required className="input" placeholder="+233..." />
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--navy)", marginBottom: 6 }}>Password</label>
+            <div className="form-group">
+              <label className="label">Password</label>
               <input name="password" type="password" required minLength={8} className="input" placeholder="Min. 8 characters" />
             </div>
-            <div style={{ marginTop: 6 }}>
+            <div className="mt-1.5">
               <SubmitButton />
             </div>
           </form>
 
-          <p style={{ textAlign: "center", marginTop: 22, fontSize: "0.82rem", color: "var(--muted)" }}>
+          <p className="text-center mt-5 text-[0.82rem] text-[var(--text-muted)]">
             Already have an account?{" "}
-            <Link href="/patron/login" style={{ color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>Sign in →</Link>
+            <Link href="/patron/login" className="link-gold">Sign in →</Link>
           </p>
         </div>
       </div>
