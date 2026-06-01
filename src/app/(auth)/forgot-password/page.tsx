@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
-import { Home } from "lucide-react";
+import AuthShell, { AuthBrandLink } from "@/components/layout/AuthShell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -73,8 +73,8 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-dvh bg-[var(--cream)] dark:bg-transparent flex items-center justify-center p-6 animate-fade-in">
-        <div className="w-full max-w-[400px] text-center">
+      <AuthShell>
+        <div className="text-center">
           <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={26} className="text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -88,25 +88,13 @@ export default function ForgotPasswordPage() {
             Sign In <ArrowRight size={15} />
           </Link>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-[var(--cream)] dark:bg-transparent flex items-center justify-center p-6 animate-fade-in">
-      <div className="w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="text-center mb-7">
-          <Link href="/" className="inline-flex items-center gap-2 no-underline">
-            <div className="w-9 h-9 bg-[var(--navy)] rounded-[9px] flex items-center justify-center">
-              <Home size={17} className="text-[var(--gold)]" />
-            </div>
-            <span className="text-[1.25rem] font-semibold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
-              First Love Center
-            </span>
-          </Link>
-        </div>
-
+    <AuthShell>
+        <AuthBrandLink />
         <div className="card p-9">
           <div className="text-center mb-7">
             <h2 className="text-[1.5rem] font-bold text-[var(--navy)] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
@@ -205,7 +193,6 @@ export default function ForgotPasswordPage() {
             </Link>
           </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

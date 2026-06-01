@@ -128,9 +128,10 @@ export default function CeremonyCodeRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card p-8 space-y-5 max-w-lg mx-auto">
-      <div>
-        <label className="label">Ceremony Type</label>
+      <div className="form-group">
+        <label className="label" htmlFor="ceremony-type">Ceremony Type</label>
         <select
+          id="ceremony-type"
           name="ceremonyType"
           value={form.ceremonyType}
           onChange={handleChange}
@@ -142,9 +143,10 @@ export default function CeremonyCodeRequestForm() {
         </select>
       </div>
 
-      <div>
-        <label className="label">Full Name *</label>
+      <div className="form-group">
+        <label className="label" htmlFor="ceremony-name">Full Name *</label>
         <input
+          id="ceremony-name"
           name="name"
           value={form.name}
           onChange={handleChange}
@@ -154,9 +156,10 @@ export default function CeremonyCodeRequestForm() {
         />
       </div>
 
-      <div>
-        <label className="label">Phone Number *</label>
+      <div className="form-group">
+        <label className="label" htmlFor="ceremony-phone">Phone Number *</label>
         <input
+          id="ceremony-phone"
           name="phone"
           type="tel"
           value={form.phone}
@@ -167,9 +170,10 @@ export default function CeremonyCodeRequestForm() {
         />
       </div>
 
-      <div>
-        <label className="label">Email Address *</label>
+      <div className="form-group">
+        <label className="label" htmlFor="ceremony-email">Email Address *</label>
         <input
+          id="ceremony-email"
           name="email"
           type="email"
           value={form.email}
@@ -252,7 +256,7 @@ export default function CeremonyCodeRequestForm() {
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
 
       <button
         type="submit"
