@@ -7,8 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
-const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 
@@ -96,10 +94,6 @@ function LoginContent() {
             onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
-          <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-            <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-            <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-          </video>
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.86) 0%, rgba(10,22,40,0.68) 100%)" }} />
 
           <div
@@ -138,10 +132,6 @@ function LoginContent() {
           onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <video autoPlay muted loop playsInline poster={leftSplitImage} className="absolute inset-0 w-full h-full object-cover">
-          <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-          <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-        </video>
         <div className="absolute inset-0 bg-gradient-to-br from-[rgba(6,15,30,0.84)] via-[rgba(8,20,40,0.68)] to-[rgba(17,33,59,0.6)]" />
         <div className="absolute inset-0" style={{ background: "radial-gradient(80% 60% at 14% 86%, rgba(224,186,112,0.14) 0%, transparent 70%)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(75% 55% at 88% 14%, rgba(150,174,215,0.2) 0%, transparent 75%)" }} />

@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { Phone, Mail, Check } from "lucide-react";
-import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
-import { cn } from "@/lib/utils";
-
-type CurrentPage = "home" | "guest" | "checkin" | "patron" | "weddings" | "namings";
+import PublicSiteNav from "@/components/public/PublicSiteNav";
+import type { PublicNavPage } from "@/components/public/public-nav";
 
 interface PublicSplitShellProps {
-  current: CurrentPage;
+  current: PublicNavPage;
   eyebrow: string;
   title: string;
   subtitle: ReactNode;
@@ -24,8 +21,6 @@ const FEATURES = [
   "Trusted church facility operations",
 ];
 
-const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
-const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 
@@ -74,14 +69,6 @@ function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: s
   );
 }
 
-const NAV_ITEMS: { href: string; label: string; id: CurrentPage }[] = [
-  { href: "/",                id: "home",     label: "Home" },
-  { href: "/guest/book",      id: "guest",    label: "Guest Booking" },
-  { href: "/guest/checkin",   id: "checkin",  label: "Check-In" },
-  { href: "/catalog/weddings",id: "weddings", label: "Weddings" },
-  { href: "/catalog/namings", id: "namings",  label: "Namings" },
-];
-
 export default function PublicSplitShell({ current, eyebrow, title, subtitle, children, officePhone, officeEmail }: PublicSplitShellProps) {
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
 
@@ -98,14 +85,6 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
           onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <video
-          autoPlay muted loop playsInline
-          poster={leftSplitImage}
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-          <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-        </video>
         {/* Layered tints */}
         <div className="absolute inset-0 bg-gradient-to-br from-[rgba(6,15,30,0.84)] via-[rgba(8,20,40,0.68)] to-[rgba(17,33,59,0.6)]" />
         <div className="absolute inset-0" style={{ background: "radial-gradient(80% 60% at 14% 86%, rgba(224,186,112,0.14) 0%, transparent 70%)" }} />
@@ -118,40 +97,21 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
       </div>
 
       {/* ── Right panel ── */}
-      <div className="flex-[3] bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.96)] flex flex-col">
+      <div className="flex-[3] min-w-0 w-full bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.96)] flex flex-col">
         {/* Sticky Navigation */}
         <div className="px-4 py-4 sm:px-8 lg:px-[50px] sticky top-0 z-10 bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.92)] dark:backdrop-blur-md border-b border-[rgba(10,22,40,0.08)] dark:border-[rgba(255,255,255,0.06)] shadow-[0_1px_3px_rgba(10,22,40,0.03)]">
-          <div className="max-w-[900px] mx-auto w-full">
-            <div className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap scrollbar-thin">
-              {NAV_ITEMS.map(({ href, label, id }) => (
-                <Link
-                  key={id}
-                  href={href}
-                  className={cn(
-                    "btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm transition-colors",
-                    current === id
-                      ? "text-[var(--navy)] dark:text-white font-semibold"
-                      : "text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-white"
-                  )}
-                >
-                  {label}
-                </Link>
-              ))}
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                <Link href="/login" className="btn-primary px-3 py-2 text-xs sm:text-sm">Sign In</Link>
-                <ThemeModeSwitcher />
-              </div>
-            </div>
+          <div className="max-w-[900px] mx-auto w-full min-w-0">
+            <PublicSiteNav current={current} variant="split" showBookCta={current !== "guest"} />
             {(officePhone || officeEmail) && (
-              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-[rgba(10,22,40,0.06)] dark:border-[rgba(255,255,255,0.05)] text-[0.7rem] text-[var(--text-muted)]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-2 border-t border-[rgba(10,22,40,0.06)] dark:border-[rgba(255,255,255,0.05)] text-[0.7rem] text-[var(--text-muted)] min-w-0">
                 {officePhone && (
-                  <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors">
-                    <Phone size={11} /> {officePhone}
+                  <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+                    <Phone size={11} className="shrink-0" /> {officePhone}
                   </a>
                 )}
                 {officeEmail && (
-                  <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors">
-                    <Mail size={11} /> {officeEmail}
+                  <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+                    <Mail size={11} className="shrink-0" /> {officeEmail}
                   </a>
                 )}
               </div>
@@ -160,7 +120,7 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
         </div>
 
         {/* Scrollable Content */}
-        <div className="px-4 py-8 sm:px-8 lg:px-[50px] lg:overflow-y-auto flex-1 animate-fade-in">
+        <div className="px-4 py-8 sm:px-8 lg:px-[50px] lg:overflow-y-auto flex-1 animate-fade-in min-w-0">
           <div className="w-full max-w-[900px] mx-auto">
             {children}
           </div>
