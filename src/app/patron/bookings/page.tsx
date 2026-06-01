@@ -16,12 +16,12 @@ export default async function PatronBookingsPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex items-start justify-between gap-3 flex-wrap">
 				<div>
 					<h1 className="page-title">My Bookings</h1>
 					<p className="text-sm page-subtitle">{bookings.length} booking{bookings.length === 1 ? "" : "s"}</p>
 				</div>
-				<Link href="/patron/book" className="btn-primary">New Booking</Link>
+				<Link href="/patron/book" className="btn-primary flex-shrink-0">New Booking</Link>
 			</div>
 
 			<div className="card overflow-hidden">

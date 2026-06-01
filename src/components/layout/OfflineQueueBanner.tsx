@@ -4,13 +4,8 @@ import { useCallback, useState } from "react";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { submitExpense } from "@/actions/expense.actions";
 import { WifiOff, UploadCloud, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-/**
- * Shown in the staff shell.
- * - When offline: displays an amber "You're offline" strip.
- * - When online and queue has items: shows a blue banner with a "Submit now" button
- *   that replays saved drafts through their respective server actions.
- */
 export default function OfflineQueueBanner() {
   const { queue, isOnline, dequeue } = useOfflineQueue();
   const [syncing, setSyncing] = useState(false);
@@ -49,7 +44,6 @@ export default function OfflineQueueBanner() {
     }
   }, [syncing, expenseQueue, dequeue]);
 
-  // Nothing to show when online, queue empty, and not syncing
   if (isOnline && expenseQueue.length === 0 && !syncResult) return null;
 
   // Offline strip
@@ -57,12 +51,7 @@ export default function OfflineQueueBanner() {
     return (
       <div
         role="status"
-        className="flex items-center gap-2 px-4 py-2 text-xs font-medium"
-        style={{
-          background: "rgba(180,83,9,0.10)",
-          borderBottom: "1px solid rgba(180,83,9,0.20)",
-          color: "var(--amber, #b45309)",
-        }}
+        className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-amber-900/10 border-b border-amber-900/20 text-amber-700 dark:text-amber-400"
       >
         <WifiOff size={13} />
         <span>You&apos;re offline. Any expense requests will be saved and submitted automatically when you reconnect.</span>
@@ -70,22 +59,17 @@ export default function OfflineQueueBanner() {
     );
   }
 
-  // Online + pending queue (or sync result shown)
   if (dismissed && !syncResult) return null;
 
   return (
     <div
       role="status"
-      className="flex items-center gap-3 px-4 py-2 text-xs font-medium flex-wrap"
-      style={{
-        background: syncResult
-          ? "rgba(16,185,129,0.08)"
-          : "rgba(37,99,235,0.08)",
-        borderBottom: syncResult
-          ? "1px solid rgba(16,185,129,0.20)"
-          : "1px solid rgba(37,99,235,0.18)",
-        color: syncResult ? "var(--emerald, #059669)" : "var(--navy, #1c3058)",
-      }}
+      className={cn(
+        "flex items-center gap-3 px-4 py-2 text-xs font-medium flex-wrap border-b",
+        syncResult
+          ? "bg-emerald-50/80 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+          : "bg-blue-50/80 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 text-[var(--navy)] dark:text-blue-300"
+      )}
     >
       <UploadCloud size={13} />
 
@@ -99,13 +83,7 @@ export default function OfflineQueueBanner() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-md px-3 py-1 text-xs font-semibold"
-            style={{
-              background: "rgba(37,99,235,0.12)",
-              border: "1px solid rgba(37,99,235,0.25)",
-              color: "var(--navy, #1c3058)",
-              cursor: syncing ? "not-allowed" : "pointer",
-            }}
+            className="rounded-md px-3 py-1 text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 text-[var(--navy)] dark:text-blue-300 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
           >
             {syncing ? "Submitting…" : "Submit now"}
           </button>
@@ -113,13 +91,9 @@ export default function OfflineQueueBanner() {
       )}
 
       <button
-        onClick={() => {
-          setDismissed(true);
-          setSyncResult(null);
-        }}
+        onClick={() => { setDismissed(true); setSyncResult(null); }}
         aria-label="Dismiss"
-        className="ml-auto"
-        style={{ color: "inherit", opacity: 0.5 }}
+        className="ml-auto opacity-50 hover:opacity-80 transition-opacity"
       >
         <X size={13} />
       </button>

@@ -40,33 +40,15 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
   }));
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div style={{
-        position: "relative",
-        background: "linear-gradient(135deg, var(--navy) 0%, rgba(28,48,88,1) 100%)",
-        borderRadius: 12,
-        padding: "32px 28px",
-        color: "white",
-        overflow: "hidden"
-      }}>
-        <div style={{
-          position: "absolute",
-          top: -40,
-          right: -60,
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)",
-          pointerEvents: "none"
-        }} />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "12px", color: "rgba(255,255,255,0.7)" }}>
-            Facility Booking
-          </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, fontFamily: "var(--font-display)", marginBottom: "8px" }}>
-            Book a Facility
-          </h1>
-          <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.9)" }}>
+    <div className="max-w-4xl space-y-6 animate-fade-in">
+      <div className="page-hero relative z-10 overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-72 h-72 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
+        />
+        <div className="relative z-10">
+          <p className="section-eyebrow mb-3">Facility Booking</p>
+          <h1 className="page-title text-[2rem] mb-2">Book a Facility</h1>
+          <p className="page-hero-muted text-[0.95rem]">
             Select a facility and your preferred time slot.
           </p>
         </div>

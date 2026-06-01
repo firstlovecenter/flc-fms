@@ -18,74 +18,37 @@ export default function SuperAdminShell({
   const close  = useCallback(() => setMenuOpen(false), []);
 
   return (
-    <div style={{ display: "flex", height: "100dvh", background: "var(--cream)", overflow: "hidden" }}>
+    <div className="flex h-dvh bg-[var(--cream)] dark:bg-transparent overflow-hidden">
       <SuperAdminSidebar initials={initials} name={name} isOpen={menuOpen} onClose={close} />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header
-          style={{
-            height: 58,
-            background: "var(--white)",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 16px",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <header className="h-[58px] bg-white dark:bg-[rgba(10,17,29,0.88)] border-b border-[var(--border)] flex items-center justify-between px-4 shrink-0">
+          <div className="flex items-center gap-2.5">
             {/* Hamburger — mobile only */}
             <button
               onClick={toggle}
-              className="lg:hidden"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: "rgba(10,22,40,0.05)",
-                border: "1px solid var(--border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "var(--navy)",
-                flexShrink: 0,
-              }}
+              className="btn-icon lg:hidden"
               aria-label="Open menu"
             >
               <Menu size={18} />
             </button>
-            <div style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 500 }}>
+            <div className="text-[0.78rem] text-[var(--text-muted)] font-medium">
               <span className="hidden sm:inline">Super Admin · Single Tenant</span>
               <span className="sm:hidden">Super Admin</span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                background: "var(--navy)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                color: "var(--gold-bright)",
-              }}
-            >
+          <div className="flex items-center gap-2">
+            <div className="w-[30px] h-[30px] rounded-full bg-[var(--navy)] flex items-center justify-center text-[0.7rem] font-bold text-[var(--gold-bright)] flex-shrink-0">
               {initials}
             </div>
-            <span className="hidden sm:inline" style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--navy)" }}>
+            <span className="hidden sm:inline text-[0.82rem] font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">
               {name}
             </span>
           </div>
         </header>
 
-        <main className="campus-main" style={{ flex: 1, overflowY: "auto" }}>
+        <main className="campus-main flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

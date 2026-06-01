@@ -132,7 +132,7 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead style={{ background: "linear-gradient(135deg, rgba(10,22,40,0.03) 0%, rgba(10,22,40,0.01) 100%)", borderBottom: "1px solid var(--border)" }}>
+              <thead className="bg-gradient-to-br from-[rgba(10,22,40,0.03)] to-[rgba(10,22,40,0.01)] border-b border-[var(--border)]">
                 <tr>
                   {["Type", "Ceremony Date", "Venue", "Couple / Family", "Code", "Amount", "Status", "Actions"].map((h) => (
                     <th key={h} className="text-left py-3 px-4 font-semibold text-[var(--navy)] text-xs">{h}</th>

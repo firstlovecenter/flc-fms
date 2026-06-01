@@ -316,8 +316,7 @@ export default function BookingsListClient({
             <button
               key={b.id}
               type="button"
-              className="card block w-full text-left hover:shadow-md transition-shadow"
-              style={{ padding: "12px 16px" }}
+              className="card block w-full text-left hover:shadow-md transition-shadow p-3 px-4"
               onClick={() => openModal(b)}
             >
               <div className="flex items-center justify-between gap-3">

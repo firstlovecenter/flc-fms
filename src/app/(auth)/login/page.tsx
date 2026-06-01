@@ -7,8 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const LEFT_SPLIT_VIDEO_PRIMARY = "/left-split-bg.mp4";
-const LEFT_SPLIT_VIDEO_FALLBACK = "/splash-bg.mp4";
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 
@@ -18,8 +16,7 @@ function SubmitBtn() {
     <button
       type="submit"
       disabled={pending}
-      className="btn-primary w-full"
-      style={{ minHeight: 44, justifyContent: "center" }}
+      className="btn-primary w-full justify-center min-h-[44px]"
     >
       {pending ? "Signing in…" : <><span>Sign In</span> <ArrowRight size={15} /></>}
     </button>
@@ -73,7 +70,7 @@ function LoginContent() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", position: "relative", background: "var(--cream)" }} className="lg:bg-navy dark:bg-transparent">
+    <div className="min-h-dvh flex relative bg-[var(--cream)] dark:bg-transparent lg:bg-navy">
       {showLaunchSplash && (
         <div
           style={{
@@ -97,10 +94,6 @@ function LoginContent() {
             onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
-          <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-            <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-            <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-          </video>
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.86) 0%, rgba(10,22,40,0.68) 100%)" }} />
 
           <div
@@ -130,94 +123,83 @@ function LoginContent() {
       )}
 
       {/* ── Desktop left panel ─────────────────────────────────────── */}
-      <div
-        className="hidden lg:flex lg:w-3/5"
-        style={{ flex: "0 0 60%", alignItems: "center", justifyContent: "center", padding: "60px", position: "relative", overflow: "hidden" }}
-      >
+      <div className="hidden lg:flex lg:w-3/5 flex-[0_0_60%] items-center justify-center p-[60px] relative overflow-hidden">
         {/* Background media */}
         <img
           src={leftSplitImage}
           alt=""
           aria-hidden="true"
           onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-          <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
-          <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
-        </video>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(6,15,30,0.84) 0%, rgba(8,20,40,0.68) 48%, rgba(17,33,59,0.6) 100%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(224, 186, 112, 0.14) 0%, rgba(224, 186, 112, 0) 70%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(75% 55% at 88% 14%, rgba(150, 174, 215, 0.2) 0%, rgba(150, 174, 215, 0) 75%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(3,8,16,0.38) 0%, rgba(3,8,16,0) 55%)" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(6,15,30,0.84)] via-[rgba(8,20,40,0.68)] to-[rgba(17,33,59,0.6)]" />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(80% 60% at 14% 86%, rgba(224,186,112,0.14) 0%, transparent 70%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(75% 55% at 88% 14%, rgba(150,174,215,0.2) 0%, transparent 75%)" }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,8,16,0.38)] via-transparent" />
 
-        <div style={{ position: "relative", maxWidth: 440 }}>
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="relative max-w-[440px]">
+          {/* Logo mark */}
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-11 h-11 rounded-xl bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.3)] flex items-center justify-center flex-shrink-0">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
             </div>
             <div>
-              <div style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", fontWeight: 700, color: "#fff" }}>First Love Center</div>
-              <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.07em", textTransform: "uppercase" }}>Facility Management</div>
+              <div className="text-[1.2rem] font-bold text-white leading-none" style={{ fontFamily: "var(--font-display)" }}>
+                First Love Center
+              </div>
+              <div className="text-[0.62rem] text-[rgba(255,255,255,0.3)] uppercase tracking-[0.07em] mt-1">
+                Facility Management
+              </div>
             </div>
           </div>
 
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2.8rem", fontWeight: 700, color: "#fff", lineHeight: 1.15, marginBottom: 20 }}>
-            Welcome back<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>to Revival Campus</em>
+          <h1 className="text-[2.8rem] font-bold text-white leading-[1.15] mb-5" style={{ fontFamily: "var(--font-display)" }}>
+            Welcome back<br /><em className="text-[var(--gold)] italic">to Revival Campus</em>
           </h1>
         </div>
       </div>
 
       {/* ── Form panel (full-width on mobile, fixed-width on desktop) ── */}
-      <div
-        style={{
-          background: "var(--cream)",
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-          // Desktop: wider auth panel; Mobile: full viewport
-        }}
-        className="w-full lg:w-2/5 lg:shrink-0 min-h-dvh lg:min-h-0"
-      >
+      <div className="w-full lg:w-2/5 lg:shrink-0 min-h-dvh lg:min-h-0 bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.96)] flex flex-col overflow-y-auto">
         {/* Mobile-only header */}
-        <div
-          className="flex lg:hidden items-center gap-3 px-6 py-5"
-          style={{ borderBottom: "1px solid var(--border)" }}
-        >
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div className="flex lg:hidden items-center gap-3 px-6 py-5 border-b border-[var(--border)]">
+          <div className="w-9 h-9 rounded-[10px] bg-[var(--navy)] flex items-center justify-center flex-shrink-0">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "1rem", fontWeight: 700, color: "var(--navy)", lineHeight: 1 }}>First Love Center</div>
-            <div style={{ fontSize: "0.6rem", color: "var(--muted)", letterSpacing: "0.07em", textTransform: "uppercase", marginTop: 2 }}>Facility Management</div>
+            <div className="text-[1rem] font-bold text-[var(--navy)] leading-none" style={{ fontFamily: "var(--font-display)" }}>
+              First Love Center
+            </div>
+            <div className="text-[0.6rem] text-[var(--text-muted)] uppercase tracking-[0.07em] mt-0.5">
+              Facility Management
+            </div>
           </div>
         </div>
 
         {/* Form content */}
-        <div
-          className="flex flex-1 items-center justify-center px-6 py-10 sm:px-10"
-        >
-          <div style={{ width: "100%", maxWidth: 380 }}>
-            <div style={{ marginBottom: 32, textAlign: "center" }}>
+        <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-10">
+          <div className="w-full max-w-[380px]">
+            <div className="mb-8 text-center">
               {/* Mobile-only welcome heading */}
-              <div className="lg:hidden" style={{ marginBottom: 16 }}>
-                <p style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", fontWeight: 600, color: "var(--navy)", lineHeight: 1.3 }}>
+              <div className="lg:hidden mb-4">
+                <p className="text-[1.1rem] font-semibold text-[var(--navy)] leading-snug" style={{ fontFamily: "var(--font-display)" }}>
                   Welcome back to{" "}
-                  <em style={{ color: "var(--gold)", fontStyle: "italic" }}>Revival Campus Facilities</em>
+                  <em className="text-[var(--gold)] italic">Revival Campus Facilities</em>
                 </p>
               </div>
-              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.9rem", fontWeight: 700, color: "var(--navy)", marginBottom: 6 }}>Sign In</h2>
-              <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>Enter your credentials below.</p>
+              <h2 className="text-[1.9rem] font-bold text-[var(--navy)] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
+                Sign In
+              </h2>
+              <p className="text-[0.85rem] text-[var(--text-muted)]">Enter your credentials below.</p>
             </div>
 
-            <form action={action} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <form action={action} className="flex flex-col gap-[18px]">
               {state?.error && (
                 <div className="alert alert-error">{state.error as string}</div>
               )}
@@ -228,9 +210,7 @@ function LoginContent() {
               </div>
 
               <div className="form-group">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <label className="label" style={{ margin: 0 }}>Password</label>
-                </div>
+                <label className="label">Password</label>
                 <input name="password" type="password" required className="input" placeholder="••••••••" autoComplete="current-password" />
               </div>
 
@@ -238,22 +218,23 @@ function LoginContent() {
                 <SubmitBtn />
                 <Link
                   href="/patron/register"
-                  className="btn-secondary w-full"
-                  style={{ minHeight: 44, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  className="btn-secondary w-full inline-flex items-center justify-center min-h-[44px] no-underline"
                 >
                   Create Account
                 </Link>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "center", marginTop: -2 }}>
-                <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none" }}>
+              <div className="flex justify-center -mt-0.5">
+                <Link href="/forgot-password" className="link-gold text-[0.8rem]">
                   Forgot password?
                 </Link>
               </div>
             </form>
 
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 10 }}>
-              <Link href="/" className="btn-secondary" style={{ fontSize: "0.85rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>← Back to Home</Link>
+            <div className="flex justify-center mt-2.5">
+              <Link href="/" className="btn-secondary text-[0.85rem] inline-flex items-center gap-1.5">
+                ← Back to Home
+              </Link>
             </div>
           </div>
         </div>

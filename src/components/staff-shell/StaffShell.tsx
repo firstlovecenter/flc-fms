@@ -41,10 +41,7 @@ export default function StaffShell({
         )}
         <Topbar name={name} role={role} profilePicture={profilePicture} onMenuToggle={toggle} />
         <OfflineQueueBanner />
-        <main
-          className="staff-main"
-          style={{ flex: 1, overflowY: "auto" }}
-        >
+        <main className="staff-main flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

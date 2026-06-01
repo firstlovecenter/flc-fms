@@ -115,7 +115,7 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
                     >
                       <UserCog size={14} /> {loading === "impersonate" ? "Starting…" : "Impersonate"}
                     </button>
-                    <div style={{ height: 1, background: "var(--border)", margin: "2px 0" }} />
+                    <div className="h-px bg-[var(--border)] my-0.5" />
                   </>
                 )}
                 <button

@@ -25,7 +25,7 @@ export default function OfflinePage() {
   return (
     <div className="min-h-[100dvh] bg-[var(--cream)] flex items-center justify-center px-4 py-8">
       <div className="card w-full max-w-md p-6 sm:p-7 text-center">
-        <img src="/fl-logo.webp" alt="First Love Center" width={80} height={80} style={{ margin: "0 auto 20px" }} />
+        <img src="/fl-logo.webp" alt="First Love Center" width={80} height={80} className="mx-auto mb-5 block" />
         <h1 className="text-2xl font-bold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
           You are offline
         </h1>

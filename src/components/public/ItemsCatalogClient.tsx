@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Package, Layers, Tag, ShoppingCart, ChevronDown, ChevronUp, ArrowRight, X, Plus, Minus } from "lucide-react";
+import { Package, Layers, ShoppingCart, ChevronDown, ChevronUp, ArrowRight, X, Plus, Minus } from "lucide-react";
 
 type BookableItem = {
   id: string;
@@ -72,7 +72,6 @@ export default function ItemsCatalogClient({
   }
 
   const total = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0);
-
   const cartParams = cart.map(l => `${l.type === "item" ? "item" : "bundle"}=${l.id}:${l.qty}`).join(",");
   const bookUrl = `/guest/book?type=items&lines=${encodeURIComponent(cartParams)}`;
 
@@ -80,7 +79,7 @@ export default function ItemsCatalogClient({
     <div className="space-y-4">
       {/* Items grid */}
       {mode === "items" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {items.map(item => (
             <ItemCard
               key={item.id}
@@ -93,7 +92,7 @@ export default function ItemsCatalogClient({
 
       {/* Bundles grid */}
       {mode === "packages" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 stagger-children">
           {bundles.map(bundle => (
             <BundleCard
               key={bundle.id}
@@ -108,20 +107,11 @@ export default function ItemsCatalogClient({
 
       {/* Floating Cart */}
       {cart.length > 0 && (
-        <div
-          className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-50"
-          style={{ filter: "drop-shadow(0 8px 24px rgba(10,22,40,0.22))" }}
-        >
+        <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-50 [filter:drop-shadow(0_8px_24px_rgba(10,22,40,0.22))]">
           {showCart ? (
-            <div
-              className="rounded-2xl overflow-hidden w-full sm:w-80"
-              style={{ background: "var(--white)", border: "1px solid var(--border)" }}
-            >
+            <div className="card rounded-2xl overflow-hidden w-full sm:w-80 p-0">
               {/* Cart header */}
-              <div
-                className="flex items-center justify-between px-4 py-3"
-                style={{ background: "var(--navy)", color: "#fff" }}
-              >
+              <div className="flex items-center justify-between px-4 py-3 bg-[var(--navy)] text-white">
                 <span className="font-semibold flex items-center gap-2">
                   <ShoppingCart size={16} /> Your Selection
                 </span>
@@ -134,8 +124,8 @@ export default function ItemsCatalogClient({
                 {cart.map(line => (
                   <div key={line.id} className="flex items-center gap-3 px-4 py-3 text-sm text-[var(--slate)]">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[var(--navy)] truncate">{line.name}</p>
-                      <p className="text-[var(--muted)]">GH₵{line.unitPrice.toFixed(2)} / {line.unit}</p>
+                      <p className="font-medium text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] truncate">{line.name}</p>
+                      <p className="text-[var(--text-muted)]">GH₵{line.unitPrice.toFixed(2)} / {line.unit}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -150,7 +140,7 @@ export default function ItemsCatalogClient({
                     </div>
                     <button
                       onClick={() => updateQty(line.id, line.type, -line.qty)}
-                      className="text-[var(--muted)] hover:text-red-500"
+                      className="text-[var(--text-muted)] hover:text-red-500"
                     ><X size={14} /></button>
                   </div>
                 ))}
@@ -159,16 +149,12 @@ export default function ItemsCatalogClient({
               <div className="px-4 py-3 border-t border-[var(--border)]">
                 <div className="flex justify-between text-sm font-semibold mb-3">
                   <span>Total estimate</span>
-                  <span style={{ color: "var(--navy)" }}>GH₵{total.toFixed(2)}</span>
+                  <span className="text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">GH₵{total.toFixed(2)}</span>
                 </div>
-                <Link
-                  href={bookUrl}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-sm"
-                  style={{ background: "var(--gold)", color: "var(--navy)" }}
-                >
+                <Link href={bookUrl} className="btn-gold w-full justify-center">
                   Book Now <ArrowRight size={15} />
                 </Link>
-                <p className="text-center text-xs text-[var(--muted)] mt-2">
+                <p className="text-center text-xs text-[var(--text-muted)] mt-2">
                   Final price confirmed by staff after submission
                 </p>
               </div>
@@ -176,12 +162,11 @@ export default function ItemsCatalogClient({
           ) : (
             <button
               onClick={() => setShowCart(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm shadow-lg"
-              style={{ background: "var(--navy)", color: "#fff" }}
+              className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm shadow-lg bg-[var(--navy)] text-white hover:bg-[var(--navy-mid)] transition-colors"
             >
               <ShoppingCart size={16} />
               {cart.reduce((s, l) => s + l.qty, 0)} item{cart.reduce((s, l) => s + l.qty, 0) !== 1 ? "s" : ""}
-              <span style={{ color: "var(--gold)" }}>• GH₵{total.toFixed(2)}</span>
+              <span className="text-[var(--gold)]">• GH₵{total.toFixed(2)}</span>
               <ChevronUp size={16} />
             </button>
           )}
@@ -196,27 +181,18 @@ export default function ItemsCatalogClient({
 function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
   const img = item.images[0];
   return (
-    <div
-      className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5"
-      style={{ background: "var(--white)", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
-    >
+    <div className="card rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
       {img ? (
         <img src={img} alt={item.name} className="w-full h-40 object-cover" />
       ) : (
-        <div
-          className="w-full h-40 flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, rgba(10,22,40,0.05) 0%, rgba(200,163,90,0.08) 100%)" }}
-        >
-          <Package size={36} style={{ color: "var(--gold)" }} />
+        <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-[rgba(10,22,40,0.05)] to-[rgba(200,163,90,0.08)] dark:from-[rgba(200,163,90,0.05)] dark:to-[rgba(200,163,90,0.12)]">
+          <Package size={36} className="text-[var(--gold)]" />
         </div>
       )}
       <div className="p-4 flex flex-col flex-1 gap-2">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-[var(--navy)] text-base leading-snug">{item.name}</h3>
-          <span
-            className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(200,163,90,0.12)", color: "var(--navy)", border: "1px solid rgba(200,163,90,0.3)" }}
-          >
+          <h3 className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-base leading-snug">{item.name}</h3>
+          <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-[rgba(200,163,90,0.12)] text-[var(--navy)] border border-[rgba(200,163,90,0.3)]">
             {item.quantity} avail.
           </span>
         </div>
@@ -226,7 +202,7 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
         {item.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-auto">
             {item.tags.slice(0, 3).map(t => (
-              <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--cream)", color: "var(--muted)" }}>
+              <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-[var(--cream)] dark:bg-[rgba(255,255,255,0.06)] text-[var(--text-muted)]">
                 {t}
               </span>
             ))}
@@ -234,13 +210,12 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
         )}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2 pt-2 border-t border-[var(--border)]">
           <div>
-            <span className="font-bold text-[var(--navy)] text-lg">GH₵{Number(item.pricePerUnit).toFixed(2)}</span>
-            <span className="text-xs text-[var(--muted)] ml-1">/ {item.unit}</span>
+            <span className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-lg">GH₵{Number(item.pricePerUnit).toFixed(2)}</span>
+            <span className="text-xs text-[var(--text-muted)] ml-1">/ {item.unit}</span>
           </div>
           <button
             onClick={onAdd}
-            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors"
-            style={{ background: "var(--navy)", color: "#fff" }}
+            className="btn-primary w-full sm:w-auto text-xs py-2 px-3"
           >
             <Plus size={13} /> Add
           </button>
@@ -265,39 +240,30 @@ function BundleCard({
 }) {
   const img = bundle.images[0];
   return (
-    <div
-      className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5"
-      style={{ background: "var(--white)", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(10,22,40,0.05)" }}
-    >
+    <div className="card rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
       {img ? (
         <img src={img} alt={bundle.name} className="w-full h-44 object-cover" />
       ) : (
-        <div
-          className="w-full h-44 flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, rgba(10,22,40,0.06) 0%, rgba(200,163,90,0.1) 100%)" }}
-        >
-          <Layers size={40} style={{ color: "var(--gold)" }} />
+        <div className="w-full h-44 flex items-center justify-center bg-gradient-to-br from-[rgba(10,22,40,0.06)] to-[rgba(200,163,90,0.1)] dark:from-[rgba(200,163,90,0.05)] dark:to-[rgba(200,163,90,0.15)]">
+          <Layers size={40} className="text-[var(--gold)]" />
         </div>
       )}
       <div className="p-5 flex flex-col flex-1 gap-3">
         {/* Badge */}
-        <div className="flex items-center gap-2">
-          <span
-            className="text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(200,163,90,0.15)", color: "var(--navy)", border: "1px solid rgba(200,163,90,0.35)" }}
-          >
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[rgba(200,163,90,0.15)] text-[var(--navy)] dark:text-[rgba(232,238,248,0.85)] border border-[rgba(200,163,90,0.35)]">
             <Layers size={10} className="inline mr-1" />Package
           </span>
           {bundle.tags.slice(0, 2).map(t => (
-            <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--cream)", color: "var(--muted)" }}>
+            <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-[var(--cream)] dark:bg-[rgba(255,255,255,0.06)] text-[var(--text-muted)]">
               {t}
             </span>
           ))}
         </div>
 
         <div>
-          <h3 className="font-bold text-[var(--navy)] text-lg leading-snug">{bundle.name}</h3>
-          {bundle.tagline && <p className="text-sm font-medium" style={{ color: "var(--gold)" }}>{bundle.tagline}</p>}
+          <h3 className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-lg leading-snug">{bundle.name}</h3>
+          {bundle.tagline && <p className="text-sm font-medium text-[var(--gold)]">{bundle.tagline}</p>}
           {bundle.description && (
             <p className="text-sm text-[var(--slate)] mt-1 leading-relaxed">{bundle.description}</p>
           )}
@@ -306,8 +272,7 @@ function BundleCard({
         {/* Components toggle */}
         <button
           onClick={onToggleExpand}
-          className="flex items-center gap-1.5 text-xs font-semibold"
-          style={{ color: "var(--navy)" }}
+          className="flex items-center gap-1.5 text-xs font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.8)] hover:text-[var(--gold)] transition-colors"
         >
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {bundle.components.length} item{bundle.components.length !== 1 ? "s" : ""} included
@@ -316,15 +281,12 @@ function BundleCard({
         {expanded && (
           <ul className="space-y-1.5 text-sm pl-1">
             {bundle.components.map(c => (
-              <li key={c.id} className="flex items-center gap-2" style={{ color: "var(--slate)" }}>
-                <span
-                  className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold shrink-0"
-                  style={{ background: "var(--cream)", color: "var(--navy)" }}
-                >
+              <li key={c.id} className="flex items-center gap-2 text-[var(--slate)]">
+                <span className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold shrink-0 bg-[var(--cream)] dark:bg-[rgba(255,255,255,0.08)] text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">
                   {c.quantity}
                 </span>
                 <span>{c.label ?? c.item.name}</span>
-                <span className="ml-auto text-xs" style={{ color: "var(--muted)" }}>({c.item.unit})</span>
+                <span className="ml-auto text-xs text-[var(--text-muted)]">({c.item.unit})</span>
               </li>
             ))}
           </ul>
@@ -332,13 +294,12 @@ function BundleCard({
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto pt-3 border-t border-[var(--border)]">
           <div>
-            <span className="font-bold text-[var(--navy)] text-xl">GH₵{Number(bundle.price).toFixed(2)}</span>
-            <span className="text-xs text-[var(--muted)] ml-1">flat rate</span>
+            <span className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-xl">GH₵{Number(bundle.price).toFixed(2)}</span>
+            <span className="text-xs text-[var(--text-muted)] ml-1">flat rate</span>
           </div>
           <button
             onClick={onAdd}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
-            style={{ background: "var(--navy)", color: "#fff" }}
+            className="btn-primary w-full sm:w-auto text-sm"
           >
             <ShoppingCart size={14} /> Select
           </button>

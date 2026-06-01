@@ -48,7 +48,7 @@ export default async function EditBundlePage({ params }: { params: { id: string 
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 720 }}>
+      <div className="card max-w-[720px]">
         <div className="card-inset">
           <AddBundleForm
             bundleId={bundle.id}
