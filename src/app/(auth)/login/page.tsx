@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
@@ -73,50 +74,25 @@ function LoginContent() {
     <div className="min-h-dvh flex relative bg-[var(--cream)] dark:bg-transparent lg:bg-navy">
       {showLaunchSplash && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 120,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            transition: "opacity 0.7s ease, transform 0.7s ease",
-            opacity: launchSplashExiting ? 0 : 1,
-            transform: launchSplashExiting ? "translateY(-24px)" : "translateY(0)",
-            pointerEvents: "none",
-          }}
-          aria-hidden="true"
+          className={cn(
+            "fixed inset-0 z-[120] flex items-center justify-center overflow-hidden pointer-events-none transition-all duration-700",
+            launchSplashExiting ? "opacity-0 -translate-y-6" : "opacity-100 translate-y-0"
+          )}
+          aria-hidden
         >
           <img
             src={leftSplitImage}
             alt=""
             onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(10,22,40,0.86) 0%, rgba(10,22,40,0.68) 100%)" }} />
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 10,
-              padding: "0 24px",
-              textAlign: "center",
-            }}
-          >
-            <img src="/fl-logo-white.webp" alt="FLC FMS" style={{ width: 86, height: 86, objectFit: "contain" }} />
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#fff", margin: 0, lineHeight: 1.2 }}>
-              FLC FMS
-            </p>
-            <p style={{ color: "rgba(255,255,255,0.84)", margin: 0, fontSize: "0.84rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Preparing Sign-In
-            </p>
-            <div style={{ width: 140, height: 2, marginTop: 8, background: "rgba(255,255,255,0.18)", borderRadius: 999, overflow: "hidden" }}>
-              <div style={{ width: "100%", height: "100%", background: "var(--gold)", transformOrigin: "left", animation: "splashBar 2800ms linear forwards" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(10,22,40,0.86)] to-[rgba(10,22,40,0.68)]" />
+          <div className="relative z-10 flex flex-col items-center gap-2.5 px-6 text-center">
+            <img src="/fl-logo-white.webp" alt="FLC FMS" className="w-[86px] h-[86px] object-contain" />
+            <p className="font-display text-heading-lg text-white m-0">FLC FMS</p>
+            <p className="text-eyebrow text-white/85 m-0">Preparing Sign-In</p>
+            <div className="w-[140px] h-0.5 mt-2 bg-white/20 rounded-full overflow-hidden">
+              <div className="w-full h-full bg-[var(--gold)] origin-left animate-[splashBar_2800ms_linear_forwards]" />
             </div>
           </div>
         </div>

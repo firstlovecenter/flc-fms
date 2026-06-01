@@ -6,7 +6,8 @@ export type PublicNavPage =
   | "weddings"
   | "namings"
   | "catalog"
-  | "ceremony-request";
+  | "ceremony-request"
+  | "faq";
 
 export const PUBLIC_NAV_ITEMS: { href: string; id: PublicNavPage; label: string }[] = [
   { href: "/", id: "home", label: "Home" },
@@ -14,4 +15,5 @@ export const PUBLIC_NAV_ITEMS: { href: string; id: PublicNavPage; label: string 
   { href: "/guest/checkin", id: "checkin", label: "Check-In" },
   { href: "/catalog/weddings", id: "weddings", label: "Weddings" },
   { href: "/catalog/namings", id: "namings", label: "Namings" },
+  { href: "/ceremony-code-request", id: "ceremony-request", label: "Ceremony Code" },
 ];

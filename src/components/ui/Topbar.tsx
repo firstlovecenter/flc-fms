@@ -5,6 +5,7 @@ import { Menu, Search } from "lucide-react";
 import Image from "next/image";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 import CommandSearch from "@/components/ui/CommandSearch";
+import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN:      "Super Admin",
@@ -83,7 +84,7 @@ export default function Topbar({
           <Search size={15} />
         </button>
 
-        {/* Push notifications */}
+        <ThemeModeSwitcher />
         <PushNotificationToggle compact />
 
         {/* Divider */}

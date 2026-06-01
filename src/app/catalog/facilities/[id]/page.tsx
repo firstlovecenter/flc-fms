@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { ArrowRight, CalendarRange, Clock3, Users, ChevronLeft, MapPin, Sparkles } from "lucide-react";
-import PublicTopNav from "@/components/public/PublicTopNav";
+import PublicShell from "@/components/public/PublicShell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -33,19 +33,8 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
     : 0;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 selection:bg-[var(--gold-pale)]">
-      {/* Immersive Background Blur / Gradient */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[70%] rounded-full bg-[var(--gold)]/10 blur-[120px]" />
-        <div className="absolute top-[40%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[var(--navy)]/5 blur-[100px]" />
-        <div className="absolute -bottom-[20%] right-[20%] w-[40%] h-[40%] rounded-full bg-[#1c3058]/5 blur-[80px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-      </div>
-
-      <div className="relative z-10 w-full">
-        <PublicTopNav current="catalog" />
-
-        <main className="max-w-[1200px] mx-auto px-5 md:px-8 py-10 md:py-16 space-y-10">
+    <PublicShell layout="top" current="catalog" maxWidth="xl" className="selection:bg-[var(--gold-pale)]">
+      <div className="space-y-10">
           
           {/* Header Section */}
           <section className="relative">
@@ -254,7 +243,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
           {/* Super-CTA Section */}
           <section className="relative mt-12 rounded-[2rem] overflow-hidden group">
             <div className="absolute inset-0 bg-[var(--navy)]">
-              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
+              <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] bg-[length:4px_4px]" aria-hidden />
               <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out"></div>
             </div>
             
@@ -283,8 +272,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
             </div>
           </section>
 
-        </main>
       </div>
-    </div>
+    </PublicShell>
   );
 }

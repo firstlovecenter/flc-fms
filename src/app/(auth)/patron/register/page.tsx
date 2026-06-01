@@ -5,7 +5,7 @@ import Link from "next/link";
 import { registerPatron } from "@/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Home } from "lucide-react";
+import AuthShell, { AuthBrandLink } from "@/components/layout/AuthShell";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,20 +28,8 @@ export default function PatronRegisterPage() {
   }, [state, router]);
 
   return (
-    <div className="min-h-screen bg-[var(--cream)] dark:bg-transparent flex items-center justify-center p-6 animate-fade-in">
-      <div className="w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="text-center mb-7">
-          <Link href="/" className="inline-flex items-center gap-2 no-underline">
-            <div className="w-9 h-9 bg-[var(--navy)] rounded-[9px] flex items-center justify-center">
-              <Home size={17} className="text-[var(--gold)]" />
-            </div>
-            <span className="text-[1.25rem] font-semibold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
-              First Love Center
-            </span>
-          </Link>
-        </div>
-
+    <AuthShell>
+        <AuthBrandLink />
         <div className="card p-9">
           <h1 className="text-[1.6rem] font-semibold text-[var(--navy)] mb-1" style={{ fontFamily: "var(--font-display)" }}>
             Create Account
@@ -79,7 +67,6 @@ export default function PatronRegisterPage() {
             <Link href="/patron/login" className="link-gold">Sign in →</Link>
           </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

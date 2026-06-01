@@ -2,7 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import GuestBookingForm from "@/components/public/GuestBookingForm";
 import GuestItemBookingForm from "@/components/public/GuestItemBookingForm";
-import PublicTopNav from "@/components/public/PublicTopNav";
+import PublicShell from "@/components/public/PublicShell";
+import GuestPageHero from "@/components/public/GuestPageHero";
 import { getCeremonyFacilityIds, getCeremonyDays } from "@/actions/ceremony-venue.actions";
 
 type SearchParams = {
@@ -141,29 +142,17 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
   const minStartTime = `${minStartDate.getFullYear()}-${pad(minStartDate.getMonth() + 1)}-${pad(minStartDate.getDate())}T${pad(minStartDate.getHours())}:${pad(minStartDate.getMinutes())}`;
 
   return (
-    <div className="min-h-screen bg-[var(--cream)] dark:bg-transparent relative overflow-hidden">
-      <div className="absolute -top-[220px] -right-[180px] w-[560px] h-[560px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.15) 0%, rgba(200,163,90,0) 70%)" }}
-      />
-
-      <PublicTopNav current="guest" />
-
-      <main className="max-w-5xl mx-auto px-5 md:px-8 py-8 md:py-12 space-y-6">
-        {/* Hero card */}
-        <section className="rounded-[20px] border relative overflow-hidden p-[26px_22px] bg-gradient-to-br from-[rgba(10,22,40,0.97)] to-[rgba(28,48,88,0.94)] dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl border-[rgba(200,163,90,0.34)] dark:border-[rgba(255,255,255,0.08)] shadow-xl text-white">
-          <p className="text-xs uppercase tracking-wider text-white/65">
-            {isItemBooking ? "Items & Packages Booking" : "Public Booking"}
-          </p>
-          <h1 className="text-[clamp(1.9rem,3vw,2.6rem)] leading-[1.1]" style={{ fontFamily: "var(--font-display)" }}>
-            {isItemBooking ? "Item Booking Request" : "Guest Booking Request"}
-          </h1>
-          <p className="text-white/75 mt-1.5 max-w-[700px]">
-            {isItemBooking
+    <PublicShell layout="top" current="guest" maxWidth="md">
+      <div className="space-y-6">
+        <GuestPageHero
+          eyebrow={isItemBooking ? "Items & Packages Booking" : "Public Booking"}
+          title={isItemBooking ? "Item Booking Request" : "Guest Booking Request"}
+          description={
+            isItemBooking
               ? "Reserve items or packages for your external event. Our team will confirm availability and pricing."
               : <>Submit a booking as a guest, or <Link href="/patron/register" className="text-[var(--gold-pale)] underline">create an account</Link> to track your booking status.</>
-            }
-          </p>
-          <div className="flex flex-wrap gap-2 mt-4">
+          }
+        >
             {isItemBooking ? (
               <>
                 <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
@@ -186,8 +175,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
                 </Link>
               </>
             )}
-          </div>
-        </section>
+        </GuestPageHero>
 
         <section>
           {isItemBooking ? (
@@ -206,7 +194,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
             />
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </PublicShell>
   );
 }
