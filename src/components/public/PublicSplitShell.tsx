@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { ReactNode, useState } from "react";
-import { Phone, Mail } from "lucide-react";
+import { Phone, Mail, Check } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
+import { cn } from "@/lib/utils";
 
 type CurrentPage = "home" | "guest" | "checkin" | "patron" | "weddings" | "namings";
 
@@ -30,126 +31,126 @@ const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 
 function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: ReactNode }) {
   return (
-    <div
-      style={{
-        width: "100%",
-        position: "relative",
-        maxWidth: 560,
-        borderRadius: 24,
-        padding: "34px 34px 30px",
-        background: "linear-gradient(145deg, rgba(7, 18, 34, 0.72) 0%, rgba(12, 27, 50, 0.58) 100%)",
-        border: "1px solid rgba(181, 203, 238, 0.18)",
-        backdropFilter: "blur(8px)",
-        boxShadow: "0 22px 52px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="card-glass-dark w-full max-w-[560px] rounded-[24px] p-[34px_34px_30px] animate-fade-in">
+      {/* Logo mark */}
+      <div className="flex items-center gap-3 mb-12">
+        <div className="w-11 h-11 rounded-xl bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.3)] flex items-center justify-center flex-shrink-0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
         </div>
         <div>
-          <div style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", fontWeight: 700, color: "#fff" }}>First Love Center</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.07em", textTransform: "uppercase" }}>Facility Management</div>
+          <div className="text-[1.15rem] font-bold text-white leading-none" style={{ fontFamily: "var(--font-display)" }}>
+            First Love Center
+          </div>
+          <div className="text-[0.62rem] text-[rgba(255,255,255,0.3)] uppercase tracking-[0.07em] mt-1">
+            Facility Management
+          </div>
         </div>
       </div>
 
-      <p style={{ color: "#D7BF8E", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.7rem", marginBottom: 10 }}>{eyebrow}</p>
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2.7rem", fontWeight: 700, color: "#fff", lineHeight: 1.15, marginBottom: 18 }}>{title}</h1>
-      <p style={{ color: "rgba(232,240,255,0.72)", lineHeight: 1.75, marginBottom: 40 }}>{subtitle}</p>
+      {/* Hero copy */}
+      <p className="section-eyebrow mb-2">{eyebrow}</p>
+      <h1 className="text-[2.6rem] font-bold text-white leading-[1.15] mb-4" style={{ fontFamily: "var(--font-display)" }}>
+        {title}
+      </h1>
+      <p className="text-[rgba(232,240,255,0.72)] leading-[1.75] mb-10 text-[0.95rem]">
+        {subtitle}
+      </p>
 
-      {FEATURES.map((item) => (
-        <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(200,163,90,0.15)", border: "1px solid rgba(200,163,90,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+      {/* Feature list */}
+      <div className="space-y-3.5">
+        {FEATURES.map((item) => (
+          <div key={item} className="flex items-center gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center flex-shrink-0">
+              <Check size={10} className="text-[var(--gold)]" strokeWidth={3} />
+            </div>
+            <span className="text-[0.85rem] text-[rgba(232,240,255,0.78)]">{item}</span>
           </div>
-          <span style={{ fontSize: "0.85rem", color: "rgba(232,240,255,0.78)" }}>{item}</span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
-export default function PublicSplitShell({ current, eyebrow, title, subtitle, children, officePhone, officeEmail }: PublicSplitShellProps) {
-  const active = "var(--navy)";
-  const idle = "var(--muted)";
+const NAV_ITEMS: { href: string; label: string; id: CurrentPage }[] = [
+  { href: "/",                id: "home",     label: "Home" },
+  { href: "/guest/book",      id: "guest",    label: "Guest Booking" },
+  { href: "/guest/checkin",   id: "checkin",  label: "Check-In" },
+  { href: "/catalog/weddings",id: "weddings", label: "Weddings" },
+  { href: "/catalog/namings", id: "namings",  label: "Namings" },
+];
 
+export default function PublicSplitShell({ current, eyebrow, title, subtitle, children, officePhone, officeEmail }: PublicSplitShellProps) {
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
 
   return (
-    <div style={{ display: "flex", position: "relative", overflowX: "hidden", minHeight: "100dvh" }} className="bg-navy dark:bg-transparent lg:h-screen lg:overflow-hidden">
+    <div className="flex relative overflow-x-hidden min-h-dvh bg-[var(--navy)] dark:bg-transparent lg:h-screen lg:overflow-hidden">
 
       {/* ── Desktop left panel ── */}
-      <div style={{ flex: 2, position: "relative", overflow: "hidden" }} className="hidden lg:flex items-center justify-center">
+      <div className="hidden lg:flex flex-[2] relative overflow-hidden items-center justify-center">
         {/* Background media */}
         <img
           src={leftSplitImage}
           alt=""
           aria-hidden="true"
           onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <video autoPlay muted loop playsInline poster={leftSplitImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+        <video
+          autoPlay muted loop playsInline
+          poster={leftSplitImage}
+          className="absolute inset-0 w-full h-full object-cover"
+        >
           <source src={LEFT_SPLIT_VIDEO_PRIMARY} type="video/mp4" />
           <source src={LEFT_SPLIT_VIDEO_FALLBACK} type="video/mp4" />
         </video>
-        {/* Tint + depth */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(6,15,30,0.84) 0%, rgba(8,20,40,0.68) 48%, rgba(17,33,59,0.6) 100%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(224, 186, 112, 0.14) 0%, rgba(224, 186, 112, 0) 70%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(75% 55% at 88% 14%, rgba(150, 174, 215, 0.2) 0%, rgba(150, 174, 215, 0) 75%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(3,8,16,0.38) 0%, rgba(3,8,16,0) 55%)" }} />
+        {/* Layered tints */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(6,15,30,0.84)] via-[rgba(8,20,40,0.68)] to-[rgba(17,33,59,0.6)]" />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(80% 60% at 14% 86%, rgba(224,186,112,0.14) 0%, transparent 70%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(75% 55% at 88% 14%, rgba(150,174,215,0.2) 0%, transparent 75%)" }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,8,16,0.38)] via-transparent" />
         {/* Content */}
-        <div style={{ position: "relative", zIndex: 1, padding: "60px", width: "100%" }}>
+        <div className="relative z-10 p-[60px] w-full">
           <BrandingPanel eyebrow={eyebrow} title={title} subtitle={subtitle} />
         </div>
       </div>
 
       {/* ── Right panel ── */}
-      <div style={{ flex: 3, background: "var(--cream)", display: "flex", flexDirection: "column" }}>
+      <div className="flex-[3] bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.96)] flex flex-col">
         {/* Sticky Navigation */}
-        <div
-          className="px-4 py-5 sm:px-8 lg:px-[50px]"
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-            background: "var(--cream)",
-            borderBottom: "1px solid rgba(10,22,40,0.08)",
-            boxShadow: "0 1px 3px rgba(10,22,40,0.03)"
-          }}>
-          <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-            <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
-              <Link href="/" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "home" ? active : idle }}>
-                Home
-              </Link>
-              <Link href="/guest/book" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "guest" ? active : idle }}>
-                Guest Booking
-              </Link>
-              <Link href="/guest/checkin" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "checkin" ? active : idle }}>
-                Check-In
-              </Link>
-              <Link href="/catalog/weddings" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "weddings" ? active : idle }}>
-                Weddings
-              </Link>
-              <Link href="/catalog/namings" className="btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm" style={{ color: current === "namings" ? active : idle }}>
-                Namings
-              </Link>
+        <div className="px-4 py-4 sm:px-8 lg:px-[50px] sticky top-0 z-10 bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.92)] dark:backdrop-blur-md border-b border-[rgba(10,22,40,0.08)] dark:border-[rgba(255,255,255,0.06)] shadow-[0_1px_3px_rgba(10,22,40,0.03)]">
+          <div className="max-w-[900px] mx-auto w-full">
+            <div className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap scrollbar-thin">
+              {NAV_ITEMS.map(({ href, label, id }) => (
+                <Link
+                  key={id}
+                  href={href}
+                  className={cn(
+                    "btn-ghost shrink-0 px-3 py-2 text-xs sm:text-sm transition-colors",
+                    current === id
+                      ? "text-[var(--navy)] dark:text-white font-semibold"
+                      : "text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-white"
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <Link href="/login" className="btn-primary px-3 py-2 text-xs sm:text-sm">Sign In</Link>
                 <ThemeModeSwitcher />
               </div>
             </div>
             {(officePhone || officeEmail) && (
-              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-[rgba(10,22,40,0.06)] text-[0.7rem] text-[var(--muted)]">
+              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-[rgba(10,22,40,0.06)] dark:border-[rgba(255,255,255,0.05)] text-[0.7rem] text-[var(--text-muted)]">
                 {officePhone && (
-                  <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                  <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors">
                     <Phone size={11} /> {officePhone}
                   </a>
                 )}
                 {officeEmail && (
-                  <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] transition-colors">
+                  <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors">
                     <Mail size={11} /> {officeEmail}
                   </a>
                 )}
@@ -159,8 +160,8 @@ export default function PublicSplitShell({ current, eyebrow, title, subtitle, ch
         </div>
 
         {/* Scrollable Content */}
-        <div className="px-4 py-8 sm:px-8 lg:px-[50px] lg:overflow-y-auto" style={{ flex: 1 }}>
-          <div style={{ width: "100%", maxWidth: 900, margin: "0 auto" }}>
+        <div className="px-4 py-8 sm:px-8 lg:px-[50px] lg:overflow-y-auto flex-1 animate-fade-in">
+          <div className="w-full max-w-[900px] mx-auto">
             {children}
           </div>
         </div>

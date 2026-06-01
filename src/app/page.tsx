@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowRight, CheckCircle2, MapPin, Package, Layers } from "lucide-react";
+import { ArrowRight, CheckCircle2, MapPin, Package, Layers, Heart, Bird } from "lucide-react";
 import PublicSplitShell from "@/components/public/PublicSplitShell";
 import FacilityCatalogClient from "@/components/public/FacilityCatalogClient";
 import ItemsCatalogClient from "@/components/public/ItemsCatalogClient";
@@ -99,6 +99,7 @@ export default async function PublicHomePage({
       }
     >
       {/* Tab navigation */}
+      <div className="animate-fade-in" />
       <CatalogTabs
         active={tab}
         counts={{ venues: facilities.length, items: items.length, packages: bundles.length }}
@@ -111,11 +112,11 @@ export default async function PublicHomePage({
           For wedding or naming ceremony bookings, visit the dedicated ceremony catalogs.
         </p>
         <div className="flex gap-2 shrink-0">
-          <Link href="/catalog/weddings" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors">
-            💍 Weddings
+          <Link href="/catalog/weddings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors min-h-[36px]">
+            <Heart size={12} /> Weddings
           </Link>
-          <Link href="/catalog/namings" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors">
-            🕊 Namings
+          <Link href="/catalog/namings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors min-h-[36px]">
+            <Bird size={12} /> Namings
           </Link>
         </div>
       </div>
@@ -188,13 +189,13 @@ export default async function PublicHomePage({
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-            <Link href="/guest/book" className="inline-flex items-center justify-center bg-[var(--gold)] text-slate-900 hover:bg-[var(--gold-bright)] shadow-xl font-bold h-14 px-8 rounded-full text-lg transition-colors">
-              Guest Booking <ArrowRight size={18} className="ml-2" />
+            <Link href="/guest/book" className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-base">
+              Guest Booking <ArrowRight size={18} />
             </Link>
-            <Link href="/faq" className="inline-flex items-center justify-center bg-white/10 border border-white/25 text-white hover:bg-white/20 h-14 px-8 rounded-full font-medium text-lg transition-colors">
+            <Link href="/faq" className="page-hero-btn inline-flex items-center justify-center px-8 py-4 text-base">
               FAQs
             </Link>
-            <Link href="/patron/register" className="inline-flex items-center justify-center bg-transparent border border-white/20 text-white hover:bg-white/10 dark:border-slate-400/30 dark:hover:bg-slate-200/10 h-14 px-8 rounded-full font-medium text-lg transition-colors">
+            <Link href="/patron/register" className="page-hero-btn inline-flex items-center justify-center px-8 py-4 text-base">
               Create Account
             </Link>
           </div>
@@ -206,12 +207,12 @@ export default async function PublicHomePage({
 
 function EmptyState({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="py-20 px-6 text-center bg-white/40 backdrop-blur-md border border-dashed border-slate-300 dark:bg-slate-900/50 dark:border-slate-700 rounded-3xl mt-4">
-      <div className="w-20 h-20 rounded-full bg-[var(--gold)]/10 flex items-center justify-center mx-auto mb-6">
+    <div className="empty-state card border-dashed mt-4 py-20">
+      <div className="w-20 h-20 rounded-full bg-[var(--gold)]/10 flex items-center justify-center mb-6">
         {icon}
       </div>
-      <h3 className="font-display text-2xl text-[var(--navy)] font-bold mb-3">{title}</h3>
-      <p className="text-slate-500 dark:text-slate-300 max-w-md mx-auto">Check back soon — our team is adding more options.</p>
+      <h3>{title}</h3>
+      <p>Check back soon — our team is adding more options.</p>
     </div>
   );
 }

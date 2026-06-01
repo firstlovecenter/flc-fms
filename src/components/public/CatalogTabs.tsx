@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Building2, Package, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Tab = "venues" | "items" | "packages";
 
@@ -19,31 +20,29 @@ export default function CatalogTabs({
   counts: { venues: number; items: number; packages: number };
 }) {
   return (
-    <div
-      className="flex gap-1 mb-8 p-1 rounded-2xl overflow-x-auto"
-      style={{ background: "rgba(10,22,40,0.06)", border: "1px solid var(--border)" }}
-    >
+    <div className="flex gap-1 mb-8 p-1 rounded-2xl overflow-x-auto bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.04)] border border-[var(--border)] scrollbar-thin">
       {TABS.map(({ id, label, icon: Icon }) => {
         const isActive = active === id;
         return (
           <Link
             key={id}
             href={id === "venues" ? "/" : `/?tab=${id}`}
-            className="min-w-[96px] sm:min-w-0 flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all"
-            style={{
-              background: isActive ? "var(--navy-glass)" : "transparent",
-              color: isActive ? "#fff" : "var(--slate)",
-              boxShadow: isActive ? "0 2px 8px rgba(10,22,40,0.18)" : "none",
-            }}
+            className={cn(
+              "min-w-[96px] sm:min-w-0 flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200",
+              isActive
+                ? "bg-[var(--navy)] dark:bg-[var(--navy-light)] text-white shadow-[0_2px_8px_rgba(10,22,40,0.18)]"
+                : "text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-white hover:bg-[rgba(10,22,40,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)]"
+            )}
           >
-            <Icon size={15} />
+            <Icon size={15} className="shrink-0" />
             {label}
             <span
-              className="ml-1 text-xs px-1.5 py-0.5 rounded-full font-bold"
-              style={{
-                background: isActive ? "rgba(200,163,90,0.25)" : "rgba(10,22,40,0.08)",
-                color: isActive ? "var(--gold-pale)" : "var(--muted)",
-              }}
+              className={cn(
+                "ml-1 text-xs px-1.5 py-0.5 rounded-full font-bold tabular-nums",
+                isActive
+                  ? "bg-[rgba(200,163,90,0.25)] text-[var(--gold-pale)]"
+                  : "bg-[rgba(10,22,40,0.08)] dark:bg-[rgba(255,255,255,0.08)] text-[var(--text-muted)]"
+              )}
             >
               {counts[id]}
             </span>
