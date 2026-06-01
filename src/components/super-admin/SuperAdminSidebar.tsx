@@ -5,6 +5,7 @@ import { LayoutDashboard, Users, FileText, LogOut, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { logout } from "@/actions/auth.actions";
+import { cn } from "@/lib/utils";
 
 interface SuperAdminSidebarProps {
   initials: string;
@@ -15,16 +16,16 @@ interface SuperAdminSidebarProps {
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/users", label: "Manage Users", icon: Users },
-  { href: "/audit", label: "Audit Logs", icon: FileText },
+  { href: "/users",     label: "Manage Users", icon: Users },
+  { href: "/audit",     label: "Audit Logs", icon: FileText },
 ];
 
 export default function SuperAdminSidebar({ initials, name, isOpen = false, onClose }: SuperAdminSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Close on route change
-  useEffect(() => { onClose?.(); /* eslint-disable-next-line */ }, [pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onClose?.(); }, [pathname]);
 
   async function handleLogout() {
     await logout();
@@ -32,109 +33,32 @@ export default function SuperAdminSidebar({ initials, name, isOpen = false, onCl
   }
 
   const sidebarContent = (
-    <aside
-      style={{
-        width: 240,
-        background: "var(--navy)",
-        display: "flex",
-        flexDirection: "column",
-        flexShrink: 0,
-        position: "relative",
-        overflow: "hidden",
-        height: "100%",
-      }}
-    >
+    <aside className="w-[240px] bg-[var(--navy)] flex flex-col shrink-0 relative overflow-hidden h-full">
       {/* Gold glow */}
-      <div
-        style={{
-          position: "absolute",
-          top: -60,
-          left: -60,
-          width: 240,
-          height: 240,
-          background: "radial-gradient(circle, rgba(200,163,90,0.1) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
+      <div className="absolute -top-[60px] -left-[60px] w-[240px] h-[240px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.1) 0%, transparent 70%)" }}
       />
 
       {/* Logo */}
-      <div
-        style={{
-          padding: "20px 20px 18px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            background: "rgba(200,163,90,0.15)",
-            border: "1px solid rgba(200,163,90,0.25)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--gold)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+      <div className="px-5 py-[20px] pb-[18px] border-b border-white/[0.06] flex items-center gap-2.5">
+        <div className="w-[34px] h-[34px] rounded-[9px] bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.25)] flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1rem",
-              fontWeight: 700,
-              color: "#fff",
-              lineHeight: 1,
-            }}
-          >
+        <div className="flex-1 min-w-0">
+          <div className="text-[1rem] font-bold text-white leading-none" style={{ fontFamily: "var(--font-display)" }}>
             First Love Center
           </div>
-          <div
-            style={{
-              fontSize: "0.6rem",
-              color: "rgba(255,255,255,0.3)",
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              marginTop: 3,
-            }}
-          >
+          <div className="text-[0.6rem] text-white/30 tracking-[0.07em] uppercase mt-[3px]">
             Super Admin
           </div>
         </div>
-        {/* Mobile close button */}
         {onClose && (
           <button
             onClick={onClose}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 30,
-              height: 30,
-              borderRadius: 6,
-              background: "rgba(255,255,255,0.08)",
-              border: "none",
-              cursor: "pointer",
-              color: "rgba(255,255,255,0.6)",
-              flexShrink: 0,
-            }}
+            className="w-[30px] h-[30px] rounded-[6px] bg-white/[0.08] border-0 flex items-center justify-center cursor-pointer text-white/60 hover:text-white/90 hover:bg-white/[0.12] transition-colors shrink-0"
             aria-label="Close menu"
           >
             <X size={16} />
@@ -142,149 +66,48 @@ export default function SuperAdminSidebar({ initials, name, isOpen = false, onCl
         )}
       </div>
 
-      <div style={{ padding: "20px 20px 8px" }}>
-        <span
-          style={{
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.2)",
-          }}
-        >
+      <div className="px-5 pt-5 pb-2">
+        <span className="text-[0.6rem] font-bold tracking-[0.1em] uppercase text-white/20">
           Navigation
         </span>
       </div>
 
-      <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
+      <nav className="flex-1 px-3 overflow-y-auto">
         {NAV.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 12px",
-                borderRadius: 8,
-                marginBottom: 2,
-                fontSize: "0.83rem",
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.5)",
-                border: isActive ? "1px solid rgba(200,163,90,0.28)" : "1px solid transparent",
-                background: isActive ? "rgba(200,163,90,0.14)" : "transparent",
-                textDecoration: "none",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                if (pathname !== href) {
-                  el.style.background = "rgba(255,255,255,0.06)";
-                  el.style.color = "rgba(255,255,255,0.85)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                if (pathname !== href) {
-                  el.style.background = "transparent";
-                  el.style.color = "rgba(255,255,255,0.5)";
-                }
-              }}
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-[9px] rounded-lg mb-0.5 text-[0.83rem] border transition-all duration-150 no-underline",
+                isActive
+                  ? "font-semibold text-white/95 border-[rgba(200,163,90,0.28)] bg-[rgba(200,163,90,0.14)]"
+                  : "font-normal text-white/50 border-transparent hover:bg-white/[0.06] hover:text-white/85"
+              )}
             >
-              <Icon size={16} style={{ opacity: isActive ? 0.9 : 0.6 }} />
+              <Icon size={16} className={isActive ? "opacity-90" : "opacity-60"} />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      <div
-        style={{
-          padding: "12px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 12px",
-            marginBottom: 6,
-          }}
-        >
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: "50%",
-              background: "var(--navy-mid)",
-              border: "1px solid rgba(200,163,90,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              color: "var(--gold-bright)",
-              flexShrink: 0,
-            }}
-          >
+      <div className="p-3 border-t border-white/[0.06]">
+        <div className="flex items-center gap-2.5 px-3 py-[10px] mb-1.5">
+          <div className="w-[30px] h-[30px] rounded-full bg-[var(--navy-mid)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold-bright)] shrink-0">
             {initials}
           </div>
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.8)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {name}
-            </div>
-            <div
-              style={{
-                fontSize: "0.62rem",
-                color: "rgba(255,255,255,0.28)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Super Admin
-            </div>
+          <div className="min-w-0">
+            <div className="text-[0.78rem] font-semibold text-white/80 truncate">{name}</div>
+            <div className="text-[0.62rem] text-white/28 uppercase tracking-[0.06em]">Super Admin</div>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            width: "100%",
-            padding: "9px 12px",
-            borderRadius: 8,
-            fontSize: "0.82rem",
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.4)",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-            (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-            (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.4)";
-          }}
+          className="flex items-center gap-2.5 w-full px-3 py-[9px] rounded-lg text-[0.82rem] font-medium text-white/40 bg-transparent border-0 cursor-pointer hover:bg-white/[0.06] hover:text-white/70 transition-all duration-150"
         >
-          <LogOut size={15} style={{ opacity: 0.6 }} /> Sign Out
+          <LogOut size={15} className="opacity-60" /> Sign Out
         </button>
       </div>
     </aside>
@@ -293,51 +116,22 @@ export default function SuperAdminSidebar({ initials, name, isOpen = false, onCl
   return (
     <>
       {/* Desktop: always visible */}
-      <div className="hidden lg:flex" style={{ flexShrink: 0, height: "100%" }}>
+      <div className="hidden lg:flex shrink-0 h-full">
         {sidebarContent}
       </div>
 
       {/* Mobile: backdrop + slide-in drawer */}
       {isOpen && (
-        <div
-          className="lg:hidden"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-            display: "flex",
-          }}
-        >
+        <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
             onClick={onClose}
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(10,22,40,0.6)",
-              backdropFilter: "blur(2px)",
-            }}
+            className="absolute inset-0 bg-[rgba(10,22,40,0.6)] backdrop-blur-[2px]"
           />
-          <div
-            style={{
-              position: "relative",
-              height: "100%",
-              width: 240,
-              zIndex: 51,
-              display: "flex",
-              flexDirection: "column",
-              animation: "slideInSidebar 0.22s ease-out",
-            }}
-          >
+          <div className="relative h-full w-[240px] z-[51] flex flex-col animate-[slideInSidebar_0.22s_ease-out]">
             {sidebarContent}
           </div>
         </div>
       )}
     </>
   );
-}
-
-
-interface SuperAdminSidebarProps {
-  initials: string;
-  name: string;
 }

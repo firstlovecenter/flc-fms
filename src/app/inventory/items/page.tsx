@@ -13,7 +13,7 @@ function ConditionBadge({ condition }: { condition: string }) {
     DISPOSED:  { label: "Disposed",  bg: "#f1f5f9", color: "#64748b" },
   };
   const s = map[condition] ?? { label: condition, bg: "#f1f5f9", color: "#64748b" };
-  return <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "2px 8px", borderRadius: 99, backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -26,7 +26,7 @@ function StatusBadge({ status }: { status: string }) {
     LOST:              { label: "Lost",        bg: "#fee2e2", color: "#dc2626" },
   };
   const s = map[status] ?? { label: status, bg: "#f1f5f9", color: "#64748b" };
-  return <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "2px 8px", borderRadius: 99, backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
 }
 
 export default async function InventoryItemsPage({
@@ -49,37 +49,37 @@ export default async function InventoryItemsPage({
   ]);
 
   return (
-    <div className="space-y-5 animate-fade-in" style={{ position: "relative" }}>
+    <div className="space-y-5 animate-fade-in relative">
       {/* Header */}
-      <div className="card" style={{ padding: "24px 28px", background: "linear-gradient(135deg, var(--navy) 0%, rgba(28,48,88,1) 100%)", borderColor: "rgba(200,163,90,0.3)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
         <div>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8, color: "rgba(255,255,255,0.6)" }}>
-            <Link href="/inventory" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>Inventory</Link> / Items
+          <p className="section-eyebrow mb-3">
+            <Link href="/inventory" className="opacity-70 hover:opacity-100 transition-opacity">Inventory</Link> / Items
           </p>
-          <h1 style={{ fontSize: "clamp(1.5rem, 2.2vw, 2rem)", fontWeight: 700, fontFamily: "var(--font-display)", color: "#fff", marginBottom: 6 }}>All Items</h1>
-          <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.7)" }}>{total} item{total !== 1 ? "s" : ""} found</p>
+          <h1 className="page-title text-[2rem] mb-2">All Items</h1>
+          <p className="page-hero-muted text-[0.95rem]">{total} item{total !== 1 ? "s" : ""} found</p>
         </div>
         {canManage && (
-          <Link href="/inventory/items/new" className="btn-gold" style={{ fontSize: "0.85rem" }}>+ Add Item</Link>
+          <Link href="/inventory/items/new" className="btn-gold inline-flex items-center gap-2 flex-shrink-0 mt-3">+ Add Item</Link>
         )}
       </div>
 
       {/* Filters */}
-      <form method="get" className="card" style={{ padding: "16px 20px", display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 160 }}>
-          <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--slate)" }}>Search</label>
-          <input name="search" defaultValue={searchParams.search ?? ""} className="input" style={{ padding: "6px 10px", fontSize: "0.85rem" }} placeholder="Name, serial, asset tag…" />
+      <form method="get" className="card p-4 px-5 flex flex-wrap gap-3 items-end">
+        <div className="flex flex-col gap-1 min-w-[160px]">
+          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Search</label>
+          <input name="search" defaultValue={searchParams.search ?? ""} className="input text-[0.85rem] py-1.5 px-2.5" placeholder="Name, serial, asset tag…" />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 150 }}>
-          <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--slate)" }}>Category</label>
-          <select name="categoryId" defaultValue={searchParams.categoryId ?? ""} className="input" style={{ padding: "6px 10px", fontSize: "0.85rem" }}>
+        <div className="flex flex-col gap-1 min-w-[150px]">
+          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Category</label>
+          <select name="categoryId" defaultValue={searchParams.categoryId ?? ""} className="input text-[0.85rem] py-1.5 px-2.5">
             <option value="">All Categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 140 }}>
-          <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--slate)" }}>Status</label>
-          <select name="status" defaultValue={searchParams.status ?? ""} className="input" style={{ padding: "6px 10px", fontSize: "0.85rem" }}>
+        <div className="flex flex-col gap-1 min-w-[140px]">
+          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Status</label>
+          <select name="status" defaultValue={searchParams.status ?? ""} className="input text-[0.85rem] py-1.5 px-2.5">
             <option value="">All Statuses</option>
             <option value="AVAILABLE">Available</option>
             <option value="IN_USE">In Use</option>
@@ -89,47 +89,47 @@ export default async function InventoryItemsPage({
             <option value="LOST">Lost</option>
           </select>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="submit" className="btn-primary" style={{ fontSize: "0.85rem", padding: "6px 16px" }}>Apply</button>
-          <Link href="/inventory/items" className="btn-secondary" style={{ fontSize: "0.85rem", padding: "6px 14px" }}>Clear</Link>
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary text-[0.85rem] py-1.5 px-4">Apply</button>
+          <Link href="/inventory/items" className="btn-secondary text-[0.85rem] py-1.5 px-3.5">Clear</Link>
         </div>
       </form>
 
       {/* Table */}
-      <div className="card overflow-hidden" style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ overflowX: "auto" }}>
+      <div className="card overflow-hidden relative z-10">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead style={{ background: "linear-gradient(135deg, rgba(10,22,40,0.03) 0%, rgba(10,22,40,0.06) 100%)", borderBottom: "1px solid var(--border)" }}>
+            <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
               <tr>
                 {["Item", "Category", "Location", "Serial / Asset Tag", "Qty", "Condition", "Status", "Actions"].map((h) => (
-                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.4px", color: "var(--navy)", whiteSpace: "nowrap" }}>{h}</th>
+                  <th key={h} className="py-3 px-4 text-left text-[0.72rem] font-bold uppercase tracking-[0.4px] text-[var(--navy)] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-[var(--cream)]">
-                  <td style={{ padding: "12px 16px" }}>
-                    <Link href={`/inventory/items/${item.id}`} style={{ textDecoration: "none" }}>
-                      <p style={{ fontWeight: 600, color: "var(--navy)", fontSize: "0.875rem" }}>{item.name}</p>
-                      {item.description && <p style={{ fontSize: "0.72rem", color: "var(--muted)", marginTop: 2 }}>{item.description.slice(0, 55)}{item.description.length > 55 ? "…" : ""}</p>}
+                <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                  <td className="py-3 px-4">
+                    <Link href={`/inventory/items/${item.id}`} className="no-underline">
+                      <p className="font-semibold text-[var(--navy)] text-[0.875rem]">{item.name}</p>
+                      {item.description && <p className="text-[0.72rem] text-[var(--muted)] mt-0.5">{item.description.slice(0, 55)}{item.description.length > 55 ? "…" : ""}</p>}
                     </Link>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "var(--slate)", fontSize: "0.85rem", whiteSpace: "nowrap" }}>{item.category?.name ?? "—"}</td>
-                  <td style={{ padding: "12px 16px", color: "var(--slate)", fontSize: "0.85rem" }}>{item.location ?? "—"}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    {item.serialNumber && <p style={{ fontSize: "0.78rem", color: "var(--slate)", fontFamily: "monospace" }}>S/N: {item.serialNumber}</p>}
-                    {item.assetTag    && <p style={{ fontSize: "0.78rem", color: "var(--muted)", fontFamily: "monospace" }}># {item.assetTag}</p>}
-                    {!item.serialNumber && !item.assetTag && <span style={{ color: "var(--muted)" }}>—</span>}
+                  <td className="py-3 px-4 text-[var(--slate)] text-[0.85rem] whitespace-nowrap">{item.category?.name ?? "—"}</td>
+                  <td className="py-3 px-4 text-[var(--slate)] text-[0.85rem]">{item.location ?? "—"}</td>
+                  <td className="py-3 px-4">
+                    {item.serialNumber && <p className="text-[0.78rem] text-[var(--slate)] font-mono">S/N: {item.serialNumber}</p>}
+                    {item.assetTag    && <p className="text-[0.78rem] text-[var(--muted)] font-mono"># {item.assetTag}</p>}
+                    {!item.serialNumber && !item.assetTag && <span className="text-[var(--muted)]">—</span>}
                   </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600, color: "var(--navy)" }}>{item.quantity}</td>
-                  <td style={{ padding: "12px 16px" }}><ConditionBadge condition={item.condition} /></td>
-                  <td style={{ padding: "12px 16px" }}><StatusBadge status={item.status} /></td>
-                  <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <Link href={`/inventory/items/${item.id}`} style={{ fontSize: "0.78rem", color: "var(--navy)", fontWeight: 600, textDecoration: "none", padding: "3px 10px", border: "1px solid var(--border)", borderRadius: 6 }}>View</Link>
+                  <td className="py-3 px-4 text-center font-semibold text-[var(--navy)]">{item.quantity}</td>
+                  <td className="py-3 px-4"><ConditionBadge condition={item.condition} /></td>
+                  <td className="py-3 px-4"><StatusBadge status={item.status} /></td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <div className="flex gap-2">
+                      <Link href={`/inventory/items/${item.id}`} className="btn-secondary text-[0.78rem] py-0.5 px-2.5">View</Link>
                       {canManage && (
-                        <Link href={`/inventory/items/${item.id}/edit`} style={{ fontSize: "0.78rem", color: "var(--gold)", fontWeight: 600, textDecoration: "none", padding: "3px 10px", border: "1px solid rgba(200,163,90,0.4)", borderRadius: 6 }}>Edit</Link>
+                        <Link href={`/inventory/items/${item.id}/edit`} className="text-[0.78rem] font-semibold text-[var(--gold)] py-0.5 px-2.5 rounded border border-[rgba(200,163,90,0.4)] hover:border-[rgba(200,163,90,0.7)] transition-colors">Edit</Link>
                       )}
                     </div>
                   </td>
@@ -137,9 +137,9 @@ export default async function InventoryItemsPage({
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: "40px 16px", textAlign: "center", color: "var(--muted)" }}>
+                  <td colSpan={8} className="py-10 px-4 text-center text-[var(--muted)]">
                     No items found.{" "}
-                    {canManage && <Link href="/inventory/items/new" style={{ color: "var(--gold)", fontWeight: 600 }}>Add the first item →</Link>}
+                    {canManage && <Link href="/inventory/items/new" className="text-[var(--gold)] font-semibold">Add the first item →</Link>}
                   </td>
                 </tr>
               )}
@@ -149,14 +149,14 @@ export default async function InventoryItemsPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Page {page} of {pages}</span>
-            <div style={{ display: "flex", gap: 8 }}>
+          <div className="py-3.5 px-5 border-t border-[var(--border)] flex justify-between items-center">
+            <span className="text-[0.8rem] text-[var(--muted)]">Page {page} of {pages}</span>
+            <div className="flex gap-2">
               {page > 1 && (
-                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page - 1) })}`} style={{ fontSize: "0.8rem", padding: "4px 12px", border: "1px solid var(--border)", borderRadius: 6, textDecoration: "none", color: "var(--navy)" }}>← Prev</Link>
+                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page - 1) })}`} className="btn-secondary text-[0.8rem] py-1 px-3">← Prev</Link>
               )}
               {page < pages && (
-                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page + 1) })}`} style={{ fontSize: "0.8rem", padding: "4px 12px", border: "1px solid var(--border)", borderRadius: 6, textDecoration: "none", color: "var(--navy)" }}>Next →</Link>
+                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page + 1) })}`} className="btn-primary text-[0.8rem] py-1 px-3">Next →</Link>
               )}
             </div>
           </div>

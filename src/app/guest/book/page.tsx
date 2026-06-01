@@ -141,57 +141,47 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
   const minStartTime = `${minStartDate.getFullYear()}-${pad(minStartDate.getMonth() + 1)}-${pad(minStartDate.getDate())}T${pad(minStartDate.getHours())}:${pad(minStartDate.getMinutes())}`;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute", top: -220, right: -180, width: 560, height: 560,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(200,163,90,0.15) 0%, rgba(200,163,90,0) 70%)",
-          pointerEvents: "none",
-        }}
+    <div className="min-h-screen bg-[var(--cream)] dark:bg-transparent relative overflow-hidden">
+      <div className="absolute -top-[220px] -right-[180px] w-[560px] h-[560px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.15) 0%, rgba(200,163,90,0) 70%)" }}
       />
 
       <PublicTopNav current="guest" />
 
       <main className="max-w-5xl mx-auto px-5 md:px-8 py-8 md:py-12 space-y-6">
         {/* Hero card */}
-        <section
-          className="rounded-[20px] border relative overflow-hidden bg-gradient-to-br from-[rgba(10,22,40,0.97)] to-[rgba(28,48,88,0.94)] dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl border-[rgba(200,163,90,0.34)] dark:border-[rgba(255,255,255,0.08)] shadow-xl text-white"
-          style={{
-            padding: "26px 22px",
-          }}
-        >
-          <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.65)" }}>
+        <section className="rounded-[20px] border relative overflow-hidden p-[26px_22px] bg-gradient-to-br from-[rgba(10,22,40,0.97)] to-[rgba(28,48,88,0.94)] dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl border-[rgba(200,163,90,0.34)] dark:border-[rgba(255,255,255,0.08)] shadow-xl text-white">
+          <p className="text-xs uppercase tracking-wider text-white/65">
             {isItemBooking ? "Items & Packages Booking" : "Public Booking"}
           </p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.9rem, 3vw, 2.6rem)", lineHeight: 1.1 }}>
+          <h1 className="text-[clamp(1.9rem,3vw,2.6rem)] leading-[1.1]" style={{ fontFamily: "var(--font-display)" }}>
             {isItemBooking ? "Item Booking Request" : "Guest Booking Request"}
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.76)", marginTop: 6, maxWidth: 700 }}>
+          <p className="text-white/75 mt-1.5 max-w-[700px]">
             {isItemBooking
               ? "Reserve items or packages for your external event. Our team will confirm availability and pricing."
-              : <>Submit a booking as a guest, or <Link href="/patron/register" style={{ color: "var(--gold-pale)", textDecoration: "underline" }}>create an account</Link> to track your booking status.</>
+              : <>Submit a booking as a guest, or <Link href="/patron/register" className="text-[var(--gold-pale)] underline">create an account</Link> to track your booking status.</>
             }
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {isItemBooking ? (
               <>
-                <span className="badge" style={{ background: "rgba(200,163,90,0.15)", color: "var(--gold-pale)", border: "1px solid rgba(200,163,90,0.45)" }}>
+                <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
                   {initialLines.length} item type{initialLines.length !== 1 ? "s" : ""} selected
                 </span>
-                <Link href="/?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
+                <Link href="/?tab=items" className="badge bg-white/10 text-white border border-white/25 no-underline">
                   ← Back to Home
                 </Link>
               </>
             ) : (
               <>
-                <span className="badge" style={{ background: "rgba(200,163,90,0.15)", color: "var(--gold-pale)", border: "1px solid rgba(200,163,90,0.45)" }}>
+                <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
                   {facilities.length} facilities available
                 </span>
-                <span className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>
+                <span className="badge bg-white/10 text-white border border-white/25">
                   Same-day review by staff
                 </span>
-                <Link href="/?tab=items" className="badge" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none" }}>
+                <Link href="/?tab=items" className="badge bg-white/10 text-white border border-white/25 no-underline">
                   Browse items →
                 </Link>
               </>

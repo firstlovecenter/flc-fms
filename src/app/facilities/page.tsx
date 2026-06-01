@@ -56,7 +56,7 @@ export default async function FacilitiesPage() {
             {canManage && <Link href="/facilities/new" className="btn-primary mt-4 inline-block">Add your first facility</Link>}
           </div>
         ) : facilities.map((f) => (
-          <Link key={f.id} href={`/facilities/${f.id}`} className="card block hover:shadow-md transition-shadow" style={{ padding: "12px 16px", opacity: f.isActive ? 1 : 0.6 }}>
+          <Link key={f.id} href={`/facilities/${f.id}`} className="card block hover:shadow-md transition-shadow p-3 px-4" style={{ opacity: f.isActive ? 1 : 0.6 }}>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

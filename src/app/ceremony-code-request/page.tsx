@@ -11,9 +11,9 @@ export const metadata = {
 export default async function CeremonyCodeRequestPage() {
   const siteSettings = await getSiteSettings();
   return (
-    <div style={{ minHeight: "100vh", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
+    <div className="min-h-screen bg-[var(--cream)] dark:bg-transparent relative overflow-hidden">
       {/* Background decorations */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-[var(--gold)]/5 blur-[100px]" />
         <div className="absolute top-[40%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[var(--navy)]/5 blur-[100px]" />
       </div>

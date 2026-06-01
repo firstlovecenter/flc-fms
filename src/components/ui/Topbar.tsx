@@ -101,13 +101,7 @@ export default function Topbar({
               className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[rgba(200,163,90,0.2)]"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold)] flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, rgba(200,163,90,0.22) 0%, rgba(200,163,90,0.1) 100%)",
-                border: "1px solid rgba(200,163,90,0.2)",
-                boxShadow: "0 2px 8px rgba(200,163,90,0.08)",
-              }}
-            >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.72rem] font-bold text-[var(--gold)] flex-shrink-0 bg-gradient-to-br from-[rgba(200,163,90,0.22)] to-[rgba(200,163,90,0.1)] border border-[rgba(200,163,90,0.2)] shadow-[0_2px_8px_rgba(200,163,90,0.08)]">
               {initials}
             </div>
           )}

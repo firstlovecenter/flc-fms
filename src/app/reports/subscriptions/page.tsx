@@ -12,28 +12,15 @@ export default async function ReportSubscriptionsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="card" style={{
-        padding: "24px 28px",
-        background: "linear-gradient(135deg, var(--navy) 0%, rgba(28,48,88,1) 100%)",
-        borderColor: "rgba(200,163,90,0.3)",
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap",
-      }}>
+      <div className="page-hero flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 700 }}>
-            Reports
-          </p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.5rem, 2vw, 2rem)", fontWeight: 700, color: "#fff", lineHeight: 1.1, marginBottom: 4 }}>
-            Scheduled Report Subscriptions
-          </h1>
-          <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.75)" }}>
+          <p className="section-eyebrow mb-3">Reports</p>
+          <h1 className="page-title text-[clamp(1.5rem,2vw,2rem)] mb-1">Scheduled Report Subscriptions</h1>
+          <p className="page-hero-muted text-[0.9rem]">
             Manage who receives automated report emails and at what cadence.
           </p>
         </div>
-        <Link
-          href="/reports"
-          className="flex items-center gap-2 btn-secondary text-sm"
-          style={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.1)" }}
-        >
+        <Link href="/reports" className="btn-ghost flex items-center gap-2 text-sm flex-shrink-0 mt-1 text-white/80 hover:text-white border-white/20">
           <ArrowLeft size={15} /> Back to Reports
         </Link>
       </div>

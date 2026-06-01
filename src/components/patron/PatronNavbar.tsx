@@ -39,15 +39,13 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
 
           {/* Logo */}
           <Link href="/patron/dashboard" className="flex items-center gap-2.5 no-underline group">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 group-hover:bg-[var(--navy-mid)]"
-              style={{ background: "var(--navy)" }}
-            >
+            <div className="w-8 h-8 rounded-lg bg-[var(--navy)] flex items-center justify-center flex-shrink-0 transition-colors duration-200 group-hover:bg-[var(--navy-mid)]">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <span className="font-bold text-[var(--navy)] leading-none" style={{ fontFamily: "var(--font-display)", fontSize: "1rem" }}>
+            <span className="font-bold text-[var(--navy)] leading-none text-base" style={{ fontFamily: "var(--font-display)" }}>
               <span className="hidden sm:inline">First Love Center</span>
               <span className="sm:hidden">FLC</span>
             </span>
@@ -81,9 +79,7 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
           <div className="flex items-center gap-2">
             {/* User + logout — desktop */}
             <div className="hidden md:flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.7rem] font-bold flex-shrink-0"
-                style={{ background: "var(--navy)", color: "var(--gold-bright)" }}
-              >
+              <div className="w-8 h-8 rounded-full bg-[var(--navy)] text-[var(--gold-bright)] flex items-center justify-center text-[0.7rem] font-bold flex-shrink-0">
                 {initials}
               </div>
               <span className="text-[0.82rem] font-semibold text-[var(--navy)]">{name.split(" ")[0]}</span>
