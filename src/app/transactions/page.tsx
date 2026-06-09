@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-reac
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
-import { isTransactionLocked } from "@/lib/transaction-lock";
+import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { hasVicarPermission } from "@/lib/staff-permissions";
@@ -410,7 +410,7 @@ export default async function TransactionsPage({
                                 Upload Receipt
                               </Link>
                             )}
-                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={e.status !== "PENDING" && isTransactionLocked(e.createdAt)} />}
+                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={isExpenseLocked(e.createdAt, e.status)} />}
                             {isFM && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={false} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>

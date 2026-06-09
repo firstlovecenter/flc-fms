@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { isTransactionLocked } from "@/lib/transaction-lock";
+import { isExpenseLocked } from "@/lib/transaction-lock";
 import ExpenseEditForm from "@/components/expenses/ExpenseEditForm";
 
 export default async function EditExpensePage({ params }: { params: { id: string } }) {
@@ -31,7 +31,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
     notFound();
   }
 
-  if (isTransactionLocked(expense.createdAt) && !requesterReceiptOnly) {
+  if (isExpenseLocked(expense.createdAt, expense.status) && !requesterReceiptOnly) {
     return (
       <div className="w-full max-w-2xl space-y-4">
         <h1 className="page-title">Edit Expense</h1>

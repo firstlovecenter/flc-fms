@@ -10,7 +10,7 @@ import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
 import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
-import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
+import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { requirePermission } from "@/lib/auth/guards";
 
 const ExpenseSchema = z.object({
@@ -80,10 +80,10 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
   // Quick pre-flight: verify existence + lock window before entering the serialised path
   const preCheck = await prisma.expense.findFirst({
     where: { id: expenseId, status: "PENDING", deletedAt: null },
-    select: { createdAt: true, amount: true },
+    select: { createdAt: true, amount: true, status: true },
   });
   if (!preCheck) return { error: "Expense not found or is no longer pending." };
-  if (isTransactionLocked(preCheck.createdAt)) return { error: transactionLockMessage() };
+  if (isExpenseLocked(preCheck.createdAt, preCheck.status)) return { error: transactionLockMessage() };
 
   // Run the balance check + approval inside a transaction protected by an advisory lock.
   // pg_advisory_xact_lock releases when the transaction commits, so by the time the next
@@ -194,7 +194,7 @@ export async function rejectExpense(expenseId: string, reason: string) {
   if (existing.isTransactionCharge) {
     return { error: "Transaction charge entries cannot be rejected." };
   }
-  if (isTransactionLocked(existing.createdAt)) {
+  if (isExpenseLocked(existing.createdAt, existing.status)) {
     return { error: transactionLockMessage() };
   }
 
@@ -264,7 +264,7 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 
   if (canManage) {
     const validated = UpdateExpenseSchema.parse(data);
-    if (isTransactionLocked(existing.createdAt)) {
+    if (isExpenseLocked(existing.createdAt, existing.status)) {
       return { error: transactionLockMessage() };
     }
 
@@ -300,12 +300,12 @@ export async function deleteExpense(expenseId: string) {
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, isTransactionCharge: true },
+    select: { createdAt: true, status: true, isTransactionCharge: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
   if (existing.isTransactionCharge) return { error: "Transaction charge entries cannot be deleted." };
-  if (isTransactionLocked(existing.createdAt)) {
+  if (isExpenseLocked(existing.createdAt, existing.status)) {
     return { error: transactionLockMessage() };
   }
 

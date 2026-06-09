@@ -5,6 +5,12 @@ export function isTransactionLocked(createdAt: Date) {
   return new Date() > lockAt;
 }
 
+/** Pending expenses are never time-locked — they still need review. */
+export function isExpenseLocked(createdAt: Date, status: string) {
+  if (status === "PENDING") return false;
+  return isTransactionLocked(createdAt);
+}
+
 export function transactionLockMessage() {
   return "This transaction is locked because it is older than one week.";
 }

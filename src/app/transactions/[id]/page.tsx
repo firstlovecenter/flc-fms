@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText, User, DollarSign, Clock, Zap } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { isTransactionLocked } from "@/lib/transaction-lock";
+import { isExpenseLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 
@@ -25,7 +25,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canUploadReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
   const isPending = expense.status === "PENDING";
-  const isLocked = isTransactionLocked(expense.createdAt);
+  const isLocked = isExpenseLocked(expense.createdAt, expense.status);
 
   return (
     <div className="w-full max-w-2xl space-y-6">
