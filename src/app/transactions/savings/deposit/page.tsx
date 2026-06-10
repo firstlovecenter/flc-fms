@@ -8,8 +8,8 @@ export default async function SavingsDepositPage() {
   return (
     <div className="w-full max-w-2xl space-y-6">
       <div>
-        <h1 className="page-title">Deposit to Savings</h1>
-        <p className="text-sm page-subtitle">Move funds from the operating balance into the savings reserve.</p>
+        <h1 className="page-title">Transfer to Savings</h1>
+        <p className="text-sm page-subtitle">Move money from the operating account into the savings account.</p>
       </div>
       <SavingsDepositForm availableBalance={availableBalance} />
     </div>

@@ -9,6 +9,7 @@ import { notifyMaintenanceUpdate, notifyFMMaintenanceRequested } from "@/lib/not
 import { sendMaintenanceOpenedEmail, sendExpenseNotificationEmail } from "@/lib/notifications/email";
 
 const CreateSchema = z.object({
+  taskId:         z.string().optional(), // when converting a personal task
   facilityId:     z.string().optional(),
   title:          z.string().min(2).max(200),
   description:    z.string().min(5),
@@ -70,6 +71,19 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
       estimatedCost:  validated.estimatedCost ?? null,
     },
   });
+
+  // ── Converted from a personal task: link it and mark it done ──────────────
+  if (validated.taskId) {
+    await prisma.task.updateMany({
+      where: {
+        id: validated.taskId,
+        maintenanceRequestId: null,
+        OR: [{ createdById: session.sub }, { assignedToId: session.sub }],
+      },
+      data: { maintenanceRequestId: request.id, completedAt: new Date() },
+    });
+    revalidatePath("/tasks");
+  }
 
   // Only hard-lock the facility for unscheduled (emergency) maintenance
   if (validated.facilityId && isEmergency) {

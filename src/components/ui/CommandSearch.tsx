@@ -17,6 +17,7 @@ import {
   FileText,
   ClipboardCheck,
   ClipboardList,
+  ListTodo,
   ShieldAlert,
   Plus,
   X,
@@ -34,6 +35,7 @@ type SearchItem = {
 
 const NAV_ITEMS: SearchItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, keywords: ["home", "overview"], group: "Navigate" },
+  { label: "Tasks", href: "/tasks", icon: ListTodo, keywords: ["todo", "to-do", "inbox", "task list"], group: "Navigate" },
   { label: "Duty Logs", href: "/duty", icon: ClipboardList, keywords: ["duty", "schedule", "checklist", "man on duty"], group: "Navigate" },
   { label: "Bookings", href: "/bookings", icon: CalendarDays, keywords: ["reservations", "booking list"], group: "Navigate" },
   { label: "Check-In", href: "/checkin", icon: ClipboardCheck, keywords: ["checkin", "arrival"], group: "Navigate" },

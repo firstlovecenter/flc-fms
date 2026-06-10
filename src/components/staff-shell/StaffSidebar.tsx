@@ -23,6 +23,7 @@ import {
   Settings,
   UserCircle,
   ClipboardList,
+  ListTodo,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
@@ -41,6 +42,7 @@ const NAV_GROUPS = [
     label: null,
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/tasks",     label: "Tasks",     icon: ListTodo },
       { href: "/duty",      label: "Duty Logs", icon: ClipboardList },
     ],
   },

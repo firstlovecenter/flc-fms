@@ -21,8 +21,12 @@ type FormData = z.infer<typeof schema>;
 
 export default function MaintenanceForm({
   facilities,
+  initialTitle,
+  taskId,
 }: {
   facilities: { id: string; name: string }[];
+  initialTitle?: string;
+  taskId?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export default function MaintenanceForm({
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { priority: "MEDIUM" },
+    defaultValues: { priority: "MEDIUM", title: initialTitle ?? "" },
   });
 
   const watchedFacilityId = watch("facilityId");
@@ -38,6 +42,7 @@ export default function MaintenanceForm({
   async function onSubmit(data: FormData) {
     setError(null);
     const result = await createMaintenanceRequest({
+      taskId:         taskId || undefined,
       facilityId:     data.facilityId || undefined,
       title:          data.title,
       description:    data.description,

@@ -41,6 +41,8 @@ model User {
   dutyLogsCreated       DutyLog[]           @relation("DutyCreatedBy")
   dutyLogsSupervised     DutyLog[]           @relation("DutySupervisor")
   dutyItemsSigned       DutyLogItem[]       @relation("DutyItemSignedBy")
+  tasksCreated          Task[]              @relation("TasksCreated")
+  tasksAssigned         Task[]              @relation("TasksAssigned")
 
   @@index([role])
   @@index([role, isActive])
@@ -338,9 +340,32 @@ model MaintenanceRequest {
   facility       Facility?           @relation(fields: [facilityId], references: [id])
   requestedBy    User                @relation("RequestedMaint", fields: [requestedById], references: [id])
   expense        Expense?
+  task           Task?
 
   @@index([status, priority])
   @@map("maintenance_requests")
+}
+
+// ─── Personal Tasks (quick-capture inbox for staff) ───────────────────────────
+
+model Task {
+  id                   String              @id @default(cuid())
+  title                String
+  priority             TaskPriority?
+  dueDate              DateTime?
+  completedAt          DateTime?
+  createdById          String
+  assignedToId         String?
+  maintenanceRequestId String?             @unique
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  createdBy            User                @relation("TasksCreated", fields: [createdById], references: [id])
+  assignedTo           User?               @relation("TasksAssigned", fields: [assignedToId], references: [id])
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+
+  @@index([createdById, completedAt])
+  @@index([assignedToId, completedAt])
+  @@map("tasks")
 }
 
 model InventoryCategory {
@@ -526,6 +551,12 @@ enum MaintenancePriority {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum InventoryCondition {

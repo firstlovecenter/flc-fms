@@ -29,6 +29,73 @@ export async function getNetSavings(): Promise<number> {
   return deposits - withdrawals;
 }
 
+export interface SavingsStatementRow {
+  id: string;
+  type: "DEPOSIT" | "WITHDRAWAL";
+  amount: number;
+  narration: string;
+  createdAt: Date;
+  createdByName: string;
+  /** Savings balance after this transaction, computed over the full history. */
+  balanceAfter: number;
+}
+
+export interface SavingsStatement {
+  rows: SavingsStatementRow[]; // newest first, filtered
+  deposits: number;            // unfiltered totals
+  withdrawals: number;
+  netSavings: number;
+}
+
+/**
+ * Bank-statement view of the savings account. The running balance is always
+ * computed over the FULL history so it stays correct when filters are applied.
+ */
+export async function getSavingsStatement(filters?: {
+  type?: "DEPOSIT" | "WITHDRAWAL";
+  from?: Date;
+  to?: Date;
+}): Promise<SavingsStatement> {
+  const all = await prisma.savingsTransaction.findMany({
+    include: { createdBy: { select: { name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  let balance = 0;
+  let deposits = 0;
+  let withdrawals = 0;
+  const withBalance: SavingsStatementRow[] = all.map((t) => {
+    const amount = Number(t.amount);
+    if (t.type === "DEPOSIT") {
+      balance += amount;
+      deposits += amount;
+    } else {
+      balance -= amount;
+      withdrawals += amount;
+    }
+    return {
+      id: t.id,
+      type: t.type,
+      amount,
+      narration: t.narration,
+      createdAt: t.createdAt,
+      createdByName: t.createdBy.name,
+      balanceAfter: balance,
+    };
+  });
+
+  const rows = withBalance
+    .filter((r) => {
+      if (filters?.type && r.type !== filters.type) return false;
+      if (filters?.from && r.createdAt < filters.from) return false;
+      if (filters?.to && r.createdAt > filters.to) return false;
+      return true;
+    })
+    .reverse(); // newest first
+
+  return { rows, deposits, withdrawals, netSavings: balance };
+}
+
 export async function getAvailableBalance(): Promise<{
   totalIncome: number;
   totalApprovedExpenses: number;

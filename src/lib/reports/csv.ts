@@ -227,3 +227,42 @@ export function maintenanceToCSV(data: {
 
   return `BY STATUS\n${status}\n\nBY PRIORITY\n${priority}\n\nSUMMARY\n${summary}`;
 }
+
+// ── Savings ───────────────────────────────────────────────────────────────────
+
+export function savingsToCSV(data: {
+  rows: {
+    createdAt: Date;
+    type: "DEPOSIT" | "WITHDRAWAL";
+    narration: string;
+    createdByName: string;
+    amount: number;
+    balanceAfter: number;
+  }[];
+  deposits: number;
+  withdrawals: number;
+  netSavings: number;
+}): string {
+  const statement = toCSV(
+    ["Date", "Type", "Narration", "Recorded By", "Amount (GH₵)", "Balance (GH₵)"],
+    data.rows.map((r) => [
+      r.createdAt.toISOString().slice(0, 10),
+      r.type === "DEPOSIT" ? "Transfer In" : "Transfer Out",
+      r.narration,
+      r.createdByName,
+      (r.type === "DEPOSIT" ? r.amount : -r.amount).toFixed(2),
+      r.balanceAfter.toFixed(2),
+    ])
+  );
+
+  const summary = toCSV(
+    ["Metric", "Value (GH₵)"],
+    [
+      ["Total Transferred In", data.deposits.toFixed(2)],
+      ["Total Transferred Out", data.withdrawals.toFixed(2)],
+      ["Savings Balance", data.netSavings.toFixed(2)],
+    ]
+  );
+
+  return `SAVINGS STATEMENT\n${statement}\n\nSUMMARY\n${summary}`;
+}

@@ -2,7 +2,11 @@ import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceForm from "@/components/maintenance/MaintenanceForm";
 
-export default async function NewMaintenancePage() {
+export default async function NewMaintenancePage({
+  searchParams,
+}: {
+  searchParams: { taskId?: string; title?: string };
+}) {
   await requireStaff("FACILITY_MANAGER", "VICAR");
 
   const facilities = await prisma.facility.findMany({
@@ -17,7 +21,11 @@ export default async function NewMaintenancePage() {
         <h1 className="page-title">New Maintenance Request</h1>
         <p className="text-sm page-subtitle">The facility will be locked from bookings until resolved.</p>
       </div>
-      <MaintenanceForm facilities={facilities} />
+      <MaintenanceForm
+        facilities={facilities}
+        initialTitle={searchParams.title}
+        taskId={searchParams.taskId}
+      />
     </div>
   );
 }

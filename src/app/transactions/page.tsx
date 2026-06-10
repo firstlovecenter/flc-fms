@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
+import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -14,7 +14,7 @@ import ExpenseRowActions from "@/components/expenses/ExpenseRowActions";
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: { tab?: string; status?: string; page?: string };
+  searchParams: { tab?: string; status?: string; page?: string; sType?: string; sFrom?: string; sTo?: string };
 }) {
   const session = await requireStaff();
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
@@ -35,11 +35,32 @@ export default async function TransactionsPage({
     ...(["VICAR", "BOOKING_MANAGER"].includes(session.role) ? { createdById: session.sub } : {}),
   };
 
+  // Savings statement filters (prefixed to avoid clashing with expense params)
+  const sType: "DEPOSIT" | "WITHDRAWAL" | undefined =
+    searchParams.sType === "DEPOSIT" || searchParams.sType === "WITHDRAWAL"
+      ? searchParams.sType : undefined;
+  const sFromDate = searchParams.sFrom ? new Date(searchParams.sFrom) : undefined;
+  // Include the whole "to" day
+  const sToDate = searchParams.sTo
+    ? new Date(new Date(searchParams.sTo).getTime() + 24 * 60 * 60 * 1000 - 1)
+    : undefined;
+  const savingsFilters = {
+    type: sType,
+    from: sFromDate && !isNaN(sFromDate.getTime()) ? sFromDate : undefined,
+    to:   sToDate   && !isNaN(sToDate.getTime())   ? sToDate   : undefined,
+  };
+  const hasSavingsFilters = Boolean(savingsFilters.type || savingsFilters.from || savingsFilters.to);
+  const savingsExportQuery = new URLSearchParams({
+    ...(sType ? { sType } : {}),
+    ...(searchParams.sFrom ? { sFrom: searchParams.sFrom } : {}),
+    ...(searchParams.sTo ? { sTo: searchParams.sTo } : {}),
+  }).toString();
+
   // Fetch data in parallel
   const [
     expenses, expenseTotal, expenseSummary,
     incomeRecords, incomeTotals, incomeByCategory,
-    savingsRecords, savingsAgg,
+    savingsStatement, savingsAgg,
   ] = await Promise.all([
     prisma.expense.findMany({
       where: expenseWhere,
@@ -74,11 +95,9 @@ export default async function TransactionsPage({
       _count: true,
       orderBy: { _sum: { amount: "desc" } },
     }) : Promise.resolve([]),
-    isFM ? prisma.savingsTransaction.findMany({
-      include: { createdBy: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }) : Promise.resolve([]),
+    isFM && tab === "savings"
+      ? getSavingsStatement(savingsFilters)
+      : Promise.resolve(null),
     isFM ? prisma.savingsTransaction.groupBy({
       by: ["type"],
       _sum: { amount: true },
@@ -142,7 +161,7 @@ export default async function TransactionsPage({
           )}
           {isFM && (
             <Link href="/transactions/savings/deposit" className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto">
-              <PiggyBank size={16} /> Move to Savings
+              <PiggyBank size={16} /> Transfer to Savings
             </Link>
           )}
         </div>
@@ -440,15 +459,15 @@ export default async function TransactionsPage({
           {/* Savings summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card p-4 border-green-200 bg-green-50">
-              <p className="text-xs font-medium text-green-700">Total Deposited</p>
+              <p className="text-xs font-medium text-green-700">Total Transferred In</p>
               <p className="text-2xl font-bold text-green-800">{formatCurrency(savingsDeposits)}</p>
             </div>
             <div className="card p-4 border-orange-200 bg-orange-50">
-              <p className="text-xs font-medium text-orange-700">Total Withdrawn</p>
+              <p className="text-xs font-medium text-orange-700">Total Transferred Out</p>
               <p className="text-2xl font-bold text-orange-800">{formatCurrency(savingsWithdrawals)}</p>
             </div>
             <div className="card p-4 border-purple-200 bg-purple-50">
-              <p className="text-xs font-medium text-purple-700">Net Savings Balance</p>
+              <p className="text-xs font-medium text-purple-700">Savings Balance</p>
               <p className="text-2xl font-bold text-purple-800">{formatCurrency(netSavings)}</p>
             </div>
           </div>
@@ -456,23 +475,62 @@ export default async function TransactionsPage({
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2">
             <Link href="/transactions/savings/deposit" className="btn-gold flex items-center gap-2">
-              <PiggyBank size={16} /> Deposit to Savings
+              <PiggyBank size={16} /> Transfer to Savings
             </Link>
             <Link href="/transactions/savings/withdrawal" className="btn-secondary flex items-center gap-2">
-              <ArrowUpRight size={16} /> Withdraw from Savings
+              <ArrowUpRight size={16} /> Transfer to Operating
             </Link>
+            <a
+              href={`/api/savings/export${savingsExportQuery ? `?${savingsExportQuery}` : ""}`}
+              className="btn-secondary flex items-center gap-2"
+              download
+            >
+              <ArrowDownLeft size={16} /> Export CSV
+            </a>
           </div>
 
-          {/* Savings history */}
-          <div className="card overflow-hidden">
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-purple-50">
-              <h3 className="font-semibold text-purple-800 text-sm">Savings History</h3>
+          {/* Statement filters */}
+          <form action="/transactions" method="get" className="card p-4 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="tab" value="savings" />
+            <div>
+              <label className="block text-xs font-medium text-[var(--slate)] mb-1">Type</label>
+              <select name="sType" defaultValue={sType ?? ""} className="input text-sm py-1.5">
+                <option value="">All</option>
+                <option value="DEPOSIT">Transfers In</option>
+                <option value="WITHDRAWAL">Transfers Out</option>
+              </select>
             </div>
-            {savingsRecords.length === 0 ? (
-              <div className="p-12 text-center text-[var(--muted)]">No savings transactions yet.</div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--slate)] mb-1">From</label>
+              <input type="date" name="sFrom" defaultValue={searchParams.sFrom ?? ""} className="input text-sm py-1.5" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--slate)] mb-1">To</label>
+              <input type="date" name="sTo" defaultValue={searchParams.sTo ?? ""} className="input text-sm py-1.5" />
+            </div>
+            <button type="submit" className="btn-primary text-sm py-1.5 px-4">Apply</button>
+            {hasSavingsFilters && (
+              <Link href="/transactions?tab=savings" className="btn-secondary text-sm py-1.5 px-4">
+                Clear
+              </Link>
+            )}
+          </form>
+
+          {/* Savings statement */}
+          <div className="card overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)] bg-purple-50 flex items-center justify-between">
+              <h3 className="font-semibold text-purple-800 text-sm">Savings Account Statement</h3>
+              {hasSavingsFilters && (
+                <span className="text-xs text-purple-700">Filtered — balances reflect full history</span>
+              )}
+            </div>
+            {!savingsStatement || savingsStatement.rows.length === 0 ? (
+              <div className="p-12 text-center text-[var(--muted)]">
+                {hasSavingsFilters ? "No savings transactions match these filters." : "No savings transactions yet."}
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
+                <table className="w-full min-w-[760px] text-sm">
                   <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
                     <tr>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Type</th>
@@ -480,10 +538,11 @@ export default async function TransactionsPage({
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">By</th>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Date</th>
                       <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Amount</th>
+                      <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Balance</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {savingsRecords.map((s) => (
+                    {savingsStatement.rows.map((s) => (
                       <tr key={s.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -491,14 +550,17 @@ export default async function TransactionsPage({
                               ? "bg-green-100 text-green-700 border border-green-200"
                               : "bg-orange-100 text-orange-700 border border-orange-200"
                           }`}>
-                            {s.type === "DEPOSIT" ? "Deposit" : "Withdrawal"}
+                            {s.type === "DEPOSIT" ? "Transfer In" : "Transfer Out"}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-[var(--slate)]">{s.narration}</td>
-                        <td className="py-3 px-4 text-[var(--slate)]">{s.createdBy.name}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">{s.createdByName}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(s.createdAt)}</td>
                         <td className={`py-3 px-4 text-right font-semibold ${s.type === "DEPOSIT" ? "text-green-700" : "text-orange-700"}`}>
-                          {s.type === "DEPOSIT" ? "+" : "−"}{formatCurrency(Number(s.amount))}
+                          {s.type === "DEPOSIT" ? "+" : "−"}{formatCurrency(s.amount)}
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-purple-800 tabular-nums">
+                          {formatCurrency(s.balanceAfter)}
                         </td>
                       </tr>
                     ))}

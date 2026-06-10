@@ -54,7 +54,7 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
 
       {isLocked && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-700 text-sm">
-          There are no funds available to move into savings right now.
+          There are no funds in the operating account to transfer into savings right now.
         </div>
       )}
 
@@ -80,7 +80,7 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Narration *</label>
         <textarea {...register("narration")} className="input" rows={3}
-          placeholder="Reason for depositing to savings…"
+          placeholder="Reason for transferring to savings…"
           disabled={isLocked}
         />
         {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
@@ -88,7 +88,7 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
         <button type="submit" disabled={isSubmitting || isLocked} className="btn-primary w-full sm:w-auto">
-          {isSubmitting ? "Depositing…" : "Deposit to Savings"}
+          {isSubmitting ? "Transferring…" : "Transfer to Savings"}
         </button>
         <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">
           Cancel
