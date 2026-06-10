@@ -158,7 +158,7 @@ export default function ExpenseForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="expense-amount">Amount (GH₵) *</Label>
-          <Input id="expense-amount" {...register("amount")} type="number" step="0.01" placeholder="0.00" />
+          <Input id="expense-amount" {...register("amount")} type="text" inputMode="decimal" placeholder="0.00" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>

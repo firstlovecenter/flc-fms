@@ -136,7 +136,7 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="expense-edit-amount">Amount (GH₵) *</Label>
-          <Input id="expense-edit-amount" {...register("amount")} type="number" step="0.01" disabled={receiptOnly} />
+          <Input id="expense-edit-amount" {...register("amount")} type="text" inputMode="decimal" disabled={receiptOnly} />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
