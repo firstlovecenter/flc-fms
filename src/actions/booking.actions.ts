@@ -21,14 +21,13 @@ type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 // Prisma interactive-transaction client type
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-const BookingSchema = z.object({
+const BookingFieldsSchema = z.object({
   facilityId:  z.string().min(1, "Facility is required"),
   category:    z.string().min(1, "Category is required"),
   title:       z.string().min(2).max(200),
   description: z.string().optional(),
   startTime:   z.coerce.date(),
   endTime:     z.coerce.date(),
-  contactEmail: z.string().min(1, "Email is required").email("Enter a valid email"),
   useAirConditioner: z.boolean().optional().default(false),
   notes:       z.string().optional(),
   acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
@@ -36,10 +35,25 @@ const BookingSchema = z.object({
     .default([]),
   ceremonyDetails: CeremonyDetailsSchema.optional(),
   ceremonyCodeId: z.string().optional(),
-}).refine(d => d.endTime > d.startTime, {
-  message: "End time must be after start time",
-  path: ["endTime"],
 });
+
+const endAfterStartRefine = {
+  refine: (d: { startTime: Date; endTime: Date }) => d.endTime > d.startTime,
+  message: "End time must be after start time" as const,
+  path: ["endTime"] as const,
+};
+
+const BookingBaseSchema = BookingFieldsSchema.refine(
+  endAfterStartRefine.refine,
+  { message: endAfterStartRefine.message, path: [...endAfterStartRefine.path] },
+);
+
+const BookingCreateSchema = BookingFieldsSchema.extend({
+  contactEmail: z.string().min(1, "Email is required").email("Enter a valid email"),
+}).refine(
+  endAfterStartRefine.refine,
+  { message: endAfterStartRefine.message, path: [...endAfterStartRefine.path] },
+);
 
 // Lead-time enforcement: bookings limited to 30 days ahead
 const LEAD_TIME_HOURS = MAX_BOOKING_ADVANCE_HOURS;
@@ -207,9 +221,9 @@ async function countOverlappingBookings(
 
 // ── Create booking (staff) ────────────────────────────────────────────────────
 
-export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
+export async function createStaffBooking(data: z.infer<typeof BookingCreateSchema>) {
   const session  = await requirePermission("canCreateBookings");
-  const validated = BookingSchema.parse(data);
+  const validated = BookingCreateSchema.parse(data);
 
   // Rate limit: 20 booking creations per staff member per 10 minutes
   const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
@@ -390,9 +404,9 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
 
 // ── Create booking (patron) ───────────────────────────────────────────────────
 
-export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
+export async function createPatronBooking(data: z.infer<typeof BookingCreateSchema>) {
   const session  = await requirePatron();
-  const validated = BookingSchema.parse(data);
+  const validated = BookingCreateSchema.parse(data);
 
   // Rate limit: 10 booking creations per patron per 10 minutes
   const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
@@ -1006,7 +1020,7 @@ export async function completeBooking(bookingId: string) {
 
 // ── Manager Update ────────────────────────────────────────────────────────────
 
-const ManagerBookingUpdateSchema = BookingSchema;
+const ManagerBookingUpdateSchema = BookingBaseSchema;
 
 export async function updateBookingByManager(bookingId: string, data: z.input<typeof ManagerBookingUpdateSchema>) {
   const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN");
