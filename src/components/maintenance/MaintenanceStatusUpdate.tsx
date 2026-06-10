@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateMaintenanceRequest } from "@/actions/maintenance.actions";
+import { Button } from "@/components/ui/button";
 
 export default function MaintenanceStatusUpdate({
   requestId,
@@ -14,13 +15,13 @@ export default function MaintenanceStatusUpdate({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const nextStatuses: Record<string, { label: string; value: string; cls: string }[]> = {
-    OPEN:        [{ label: "Start", value: "IN_PROGRESS", cls: "btn-primary" }],
+  const nextStatuses: Record<string, { label: string; value: string; variant: "default" | "outline" }[]> = {
+    OPEN:        [{ label: "Start", value: "IN_PROGRESS", variant: "default" }],
     IN_PROGRESS: [
-      { label: "Resolve", value: "RESOLVED",    cls: "btn-primary" },
-      { label: "Close",   value: "CLOSED",      cls: "btn-secondary" },
+      { label: "Resolve", value: "RESOLVED",    variant: "default" },
+      { label: "Close",   value: "CLOSED",      variant: "outline" },
     ],
-    RESOLVED:    [{ label: "Close", value: "CLOSED", cls: "btn-secondary" }],
+    RESOLVED:    [{ label: "Close", value: "CLOSED", variant: "outline" }],
   };
 
   const actions = nextStatuses[currentStatus] ?? [];
@@ -36,14 +37,15 @@ export default function MaintenanceStatusUpdate({
   return (
     <div className="flex gap-2 shrink-0">
       {actions.map((a) => (
-        <button
+        <Button
           key={a.value}
+          variant={a.variant}
+          size="sm"
           onClick={() => handleUpdate(a.value)}
           disabled={loading}
-          className={`${a.cls} text-xs disabled:opacity-50`}
         >
           {loading ? "…" : a.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { createBookableItem, updateBookableItem } from "@/actions/bookable-items.actions";
 import { Plus, X } from "lucide-react";
 import MediaUploader from "@/components/ui/MediaUploader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AddItemForm({ defaultValues, itemId }: {
   defaultValues?: Partial<{
@@ -58,48 +62,49 @@ export default function AddItemForm({ defaultValues, itemId }: {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="label">Item Name *</label>
-          <input name="name" className="input" required defaultValue={defaultValues?.name} placeholder="e.g. Plastic Chair, Tent 10x10, PA System" />
+          <Label htmlFor="item-name">Item Name *</Label>
+          <Input id="item-name" name="name" required defaultValue={defaultValues?.name} placeholder="e.g. Plastic Chair, Tent 10x10, PA System" />
         </div>
         <div className="md:col-span-2">
-          <label className="label">Description</label>
-          <textarea name="description" className="input" rows={2} defaultValue={defaultValues?.description} placeholder="Brief description visible to guests" />
+          <Label htmlFor="item-description">Description</Label>
+          <Textarea id="item-description" name="description" rows={2} defaultValue={defaultValues?.description} placeholder="Brief description visible to guests" />
         </div>
         <div>
-          <label className="label">Unit *</label>
-          <input name="unit" className="input" required defaultValue={defaultValues?.unit ?? "piece"} placeholder="piece, set, day, microphone..." />
+          <Label htmlFor="item-unit">Unit *</Label>
+          <Input id="item-unit" name="unit" required defaultValue={defaultValues?.unit ?? "piece"} placeholder="piece, set, day, microphone..." />
           <p className="text-xs text-[var(--muted)] mt-1">What counts as one unit? Shown as &quot;GH₵X / {"{unit}"}&quot;</p>
         </div>
         <div>
-          <label className="label">Price per Unit (GH₵) *</label>
-          <input name="pricePerUnit" type="number" step="0.01" min="0" className="input" required defaultValue={defaultValues?.pricePerUnit ?? "0"} />
+          <Label htmlFor="item-price">Price per Unit (GH₵) *</Label>
+          <Input id="item-price" name="pricePerUnit" type="number" step="0.01" min="0" required defaultValue={defaultValues?.pricePerUnit ?? "0"} />
         </div>
         <div>
-          <label className="label">Stock Quantity *</label>
-          <input name="quantity" type="number" min="1" className="input" required defaultValue={defaultValues?.quantity ?? 1} />
+          <Label htmlFor="item-quantity">Stock Quantity *</Label>
+          <Input id="item-quantity" name="quantity" type="number" min="1" required defaultValue={defaultValues?.quantity ?? 1} />
           <p className="text-xs text-[var(--muted)] mt-1">Total units available for booking</p>
         </div>
         <div>
-          <label className="label">Sort Order</label>
-          <input name="sortOrder" type="number" className="input" defaultValue={defaultValues?.sortOrder ?? 0} />
+          <Label htmlFor="item-sort-order">Sort Order</Label>
+          <Input id="item-sort-order" name="sortOrder" type="number" defaultValue={defaultValues?.sortOrder ?? 0} />
           <p className="text-xs text-[var(--muted)] mt-1">Lower = appears earlier in catalog</p>
         </div>
       </div>
 
       {/* Tags */}
       <div>
-        <label className="label">Tags</label>
+        <Label htmlFor="item-tags">Tags</Label>
         <div className="flex gap-2">
-          <input
-            className="input flex-1"
+          <Input
+            id="item-tags"
+            className="flex-1"
             placeholder="Type a tag and press Add (e.g. audio, outdoor, furniture)"
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
           />
-          <button type="button" onClick={addTag} className="btn-secondary px-3 flex items-center gap-1 text-sm">
+          <Button type="button" variant="outline" onClick={addTag} className="gap-1">
             <Plus size={14} /> Add
-          </button>
+          </Button>
         </div>
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -154,12 +159,12 @@ export default function AddItemForm({ defaultValues, itemId }: {
       />
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={loading} className="btn-gold flex-1" style={{ paddingBlock: 10 }}>
+        <Button type="submit" disabled={loading} variant="gold" className="flex-1">
           {loading ? (itemId ? "Updating…" : "Saving…") : (itemId ? "Update Item" : "Save Item")}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary px-6">
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

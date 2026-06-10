@@ -6,6 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { createEvent } from "@/actions/event.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   facilityId:   z.string().min(1, "Please select a facility"),
@@ -48,69 +54,69 @@ export default function EventForm({ facilities }: { facilities: Facility[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Facility *</label>
-        <select {...register("facilityId")} className="input">
+        <Label htmlFor="event-facility">Facility *</Label>
+        <select id="event-facility" {...register("facilityId")} className={cn(inputStyles)}>
           <option value="">Choose a facility…</option>
           {facilities.map((f) => (
             <option key={f.id} value={f.id}>{f.name} (cap. {f.capacity.toLocaleString()})</option>
           ))}
         </select>
-        {errors.facilityId && <p className="text-red-500 text-xs mt-1">{errors.facilityId.message}</p>}
+        {errors.facilityId && <p className="text-danger text-xs mt-1">{errors.facilityId.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Event Title *</label>
-        <input {...register("title")} className="input" placeholder="e.g. Sunday Worship Service, Youth Conference" />
-        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+        <Label htmlFor="event-title">Event Title *</Label>
+        <Input id="event-title" {...register("title")} placeholder="e.g. Sunday Worship Service, Youth Conference" />
+        {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Description</label>
-        <textarea {...register("description")} className="input" rows={3}
+        <Label htmlFor="event-description">Description</Label>
+        <Textarea id="event-description" {...register("description")} rows={3}
           placeholder="Describe the event…" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Start *</label>
-          <input {...register("startTime")} type="datetime-local" className="input" />
-          {errors.startTime && <p className="text-red-500 text-xs mt-1">{errors.startTime.message}</p>}
+          <Label htmlFor="event-start">Start *</Label>
+          <Input id="event-start" {...register("startTime")} type="datetime-local" />
+          {errors.startTime && <p className="text-danger text-xs mt-1">{errors.startTime.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">End *</label>
-          <input {...register("endTime")} type="datetime-local" className="input" />
-          {errors.endTime && <p className="text-red-500 text-xs mt-1">{errors.endTime.message}</p>}
+          <Label htmlFor="event-end">End *</Label>
+          <Input id="event-end" {...register("endTime")} type="datetime-local" />
+          {errors.endTime && <p className="text-danger text-xs mt-1">{errors.endTime.message}</p>}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Max Attendees</label>
-        <input {...register("maxAttendees")} type="number" className="input" placeholder="Leave blank for unlimited" />
+        <Label htmlFor="event-max-attendees">Max Attendees</Label>
+        <Input id="event-max-attendees" {...register("maxAttendees")} type="number" placeholder="Leave blank for unlimited" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input {...register("isPublic")} type="checkbox" className="w-4 h-4 rounded accent-brand-500" />
+          <input {...register("isPublic")} type="checkbox" className="w-4 h-4 rounded accent-gold" />
           <span className="text-sm text-[var(--slate)]">Public event (visible to patrons)</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input {...register("isRecurring")} type="checkbox" className="w-4 h-4 rounded accent-brand-500" />
+          <input {...register("isRecurring")} type="checkbox" className="w-4 h-4 rounded accent-gold" />
           <span className="text-sm text-[var(--slate)]">Recurring</span>
         </label>
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? "Creating…" : "Create Event"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

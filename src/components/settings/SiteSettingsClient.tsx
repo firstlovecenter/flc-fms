@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { Phone, Mail, Save } from "lucide-react";
 import { updateSiteSettings, type SiteSettings } from "@/actions/site-settings.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 export default function SiteSettingsClient({
   initialSettings,
@@ -30,7 +34,7 @@ export default function SiteSettingsClient({
   }
 
   return (
-    <div className="card p-6 space-y-6">
+    <Card className="p-6 space-y-6">
       <div>
         <h2 className="text-base font-semibold text-[var(--navy)] mb-1">Office Contact Information</h2>
         <p className="text-sm text-[var(--muted)]">
@@ -46,14 +50,14 @@ export default function SiteSettingsClient({
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1.5">
+          <Label htmlFor="site-office-phone">
             <span className="flex items-center gap-1.5"><Phone size={14} /> Office Phone Number</span>
-          </label>
-          <input
+          </Label>
+          <Input
+            id="site-office-phone"
             type="tel"
             value={settings.officePhone}
             onChange={e => setSettings(s => ({ ...s, officePhone: e.target.value }))}
-            className="input"
             placeholder="+233 XX XXX XXXX"
             disabled={!canEdit}
           />
@@ -61,14 +65,14 @@ export default function SiteSettingsClient({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1.5">
+          <Label htmlFor="site-office-email">
             <span className="flex items-center gap-1.5"><Mail size={14} /> Office Email Address</span>
-          </label>
-          <input
+          </Label>
+          <Input
+            id="site-office-email"
             type="email"
             value={settings.officeEmail}
             onChange={e => setSettings(s => ({ ...s, officeEmail: e.target.value }))}
-            className="input"
             placeholder="office@firstlovecenter.org"
             disabled={!canEdit}
           />
@@ -76,11 +80,11 @@ export default function SiteSettingsClient({
         </div>
 
         {canEdit && (
-          <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
+          <Button type="submit" disabled={saving} className="gap-2">
             <Save size={16} /> {saving ? "Saving…" : "Save Settings"}
-          </button>
+          </Button>
         )}
       </form>
-    </div>
+    </Card>
   );
 }

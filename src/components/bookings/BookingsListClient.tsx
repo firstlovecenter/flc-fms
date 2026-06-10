@@ -2,9 +2,14 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
+import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
 import { Phone, MessageCircle, Search, Filter, X } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
@@ -52,6 +57,10 @@ function normalizeTel(phone: string) {
 function normalizeWhatsApp(phone: string) {
   return phone.replace(/\D/g, "");
 }
+
+const selectClassName = cn(
+  "min-h-11 w-full min-w-0 rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--field-bg,var(--surface))] px-3 py-2 text-body text-[var(--field-fg,var(--navy))] transition-colors outline-none focus-visible:border-[var(--navy-mid)] focus-visible:ring-[3px] focus-visible:ring-gold/25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+);
 
 export default function BookingsListClient({
   initialBookings,
@@ -237,33 +246,34 @@ export default function BookingsListClient({
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-            <input
+            <Input
               type="text"
               placeholder="Search by name, booker, phone, facility..."
-              className="input w-full pl-9 pr-3 py-2 text-sm"
+              className="w-full pl-9 pr-3 text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn-secondary flex items-center gap-1.5 text-sm shrink-0 ${showFilters ? "bg-[var(--navy)] text-white" : ""}`}
+            className={cn("gap-1.5 shrink-0", showFilters && "bg-[var(--navy)] text-white")}
           >
             <Filter size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[var(--gold)]" />}
-          </button>
+          </Button>
           {hasActiveFilters && (
-            <button type="button" onClick={clearFilters} className="btn-secondary text-xs shrink-0 flex items-center gap-1">
+            <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="shrink-0 gap-1">
               <X size={12} /> Clear
-            </button>
+            </Button>
           )}
         </div>
 
         {showFilters && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-white border border-[var(--border)]">
             <div>
-              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Facility</label>
-              <select className="input w-full text-sm" value={filterFacility} onChange={(e) => setFilterFacility(e.target.value)}>
+              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Facility</Label>
+              <select className={cn(selectClassName, "text-sm")} value={filterFacility} onChange={(e) => setFilterFacility(e.target.value)}>
                 <option value="">All facilities</option>
                 {facilities.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
@@ -271,8 +281,8 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Category</label>
-              <select className="input w-full text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Category</Label>
+              <select className={cn(selectClassName, "text-sm")} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
                 <option value="">All categories</option>
                 {categories.map((c) => (
                   <option key={c.slug} value={c.slug}>{c.name}</option>
@@ -280,8 +290,8 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Day of Week</label>
-              <select className="input w-full text-sm" value={filterDay} onChange={(e) => setFilterDay(e.target.value)}>
+              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Day of Week</Label>
+              <select className={cn(selectClassName, "text-sm")} value={filterDay} onChange={(e) => setFilterDay(e.target.value)}>
                 <option value="">Any day</option>
                 {DAYS_OF_WEEK.map((d, i) => (
                   <option key={i} value={i}>{d}</option>
@@ -289,12 +299,12 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">From Date</label>
-              <input type="date" className="input w-full text-sm" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
+              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">From Date</Label>
+              <Input type="date" className="w-full text-sm" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--muted)] mb-1">To Date</label>
-              <input type="date" className="input w-full text-sm" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
+              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">To Date</Label>
+              <Input type="date" className="w-full text-sm" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
             </div>
           </div>
         )}
@@ -308,16 +318,23 @@ export default function BookingsListClient({
 
       <div className="space-y-2">
         {filtered.length === 0 ? (
-          <div className="card p-10 text-center text-[var(--muted)]">
+          <Card className="p-10 text-center text-[var(--muted)] gap-0 py-10">
             {hasActiveFilters ? "No bookings match your filters." : "No bookings found."}
-          </div>
+          </Card>
         ) : (
           filtered.map((b) => (
-            <button
+            <Card
               key={b.id}
-              type="button"
-              className="card block w-full text-left hover:shadow-md transition-shadow p-3 px-4"
+              role="button"
+              tabIndex={0}
+              className="block w-full text-left hover:shadow-md transition-shadow p-3 px-4 gap-0 py-3 cursor-pointer"
               onClick={() => openModal(b)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openModal(b);
+                }
+              }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -340,7 +357,7 @@ export default function BookingsListClient({
                           href={`https://wa.me/${normalizeWhatsApp(b.bookerPhone)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-green-700 hover:underline"
+                          className="inline-flex items-center gap-1 text-success hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MessageCircle size={12} /> WhatsApp
@@ -358,7 +375,7 @@ export default function BookingsListClient({
                   <span className="text-xs text-[var(--muted)]">Open</span>
                 </div>
               </div>
-            </button>
+            </Card>
           ))
         )}
       </div>
@@ -371,7 +388,7 @@ export default function BookingsListClient({
                 <h2 className="text-lg font-semibold text-[var(--navy)]">{selected.title}</h2>
                 <p className="text-xs text-[var(--muted)] mt-1">{selected.facilityName} • {labelForCategory(selected.category, categories)}</p>
               </div>
-              <button type="button" className="btn-secondary text-xs" onClick={closeModal}>Close</button>
+              <Button type="button" variant="outline" size="sm" onClick={closeModal}>Close</Button>
             </div>
 
             <div className="p-5 space-y-4">
@@ -380,14 +397,14 @@ export default function BookingsListClient({
               {!editing ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="card p-3">
+                    <Card className="p-3 gap-0 py-3">
                       <p className="text-xs text-[var(--muted)] mb-1.5">Status</p>
                       <StatusBadge status={selected.status} size="sm" />
-                    </div>
-                    <div className="card p-3">
+                    </Card>
+                    <Card className="p-3 gap-0 py-3">
                       <p className="text-xs text-[var(--muted)]">Amount</p>
                       <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
-                    </div>
+                    </Card>
                   </div>
 
                   <div className="text-sm">
@@ -406,7 +423,7 @@ export default function BookingsListClient({
                           href={`https://wa.me/${normalizeWhatsApp(selected.bookerPhone)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-green-700 hover:underline"
+                          className="inline-flex items-center gap-1 text-xs text-success hover:underline"
                         >
                           <MessageCircle size={12} /> WhatsApp Booker
                         </a>
@@ -417,11 +434,11 @@ export default function BookingsListClient({
                     <p><strong>Duration:</strong> {durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours</p>
                     {selected.description && <p className="mt-2"><strong>Description:</strong> {selected.description}</p>}
                     {selected.notes && <p className="mt-2"><strong>Notes:</strong> {selected.notes}</p>}
-                    {selected.rejectionReason && <p className="mt-2 text-red-700"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
+                    {selected.rejectionReason && <p className="mt-2 text-danger"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border)]">
-                    {canManage && (selected.status === "PENDING" || isSuperAdmin) && <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>Edit</button>}
+                    {canManage && (selected.status === "PENDING" || isSuperAdmin) && <Button type="button" variant="outline" onClick={() => setEditing(true)}>Edit</Button>}
                     {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
                     {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
                     {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
@@ -440,8 +457,8 @@ export default function BookingsListClient({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Facility</label>
-                      <select className="input" value={form.facilityId} onChange={(e) => {
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Facility</Label>
+                      <select className={selectClassName} value={form.facilityId} onChange={(e) => {
                           const fid = e.target.value;
                           const fac = facilities.find((f) => f.id === fid) ?? null;
                           const cats = fac ? categories.filter((c) => fac.categories.includes(c.slug)) : categories;
@@ -454,8 +471,8 @@ export default function BookingsListClient({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Category</label>
-                      <select className="input" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Category</Label>
+                      <select className={selectClassName} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
                         <option value="">Select category...</option>
                         {formCategories.map((c) => (
                           <option key={c.slug} value={c.slug}>{c.name}</option>
@@ -463,30 +480,30 @@ export default function BookingsListClient({
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Title</label>
-                      <input className="input" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Title</Label>
+                      <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Start</label>
-                      <input type="datetime-local" className="input" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Start</Label>
+                      <Input type="datetime-local" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">End</label>
-                      <input type="datetime-local" className="input" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">End</Label>
+                      <Input type="datetime-local" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Description</label>
-                      <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Description</Label>
+                      <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-semibold text-[var(--muted)] mb-1">Notes</label>
-                      <textarea className="input" rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Notes</Label>
+                      <Textarea rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border)]">
-                    <button type="button" className="btn-primary" disabled={isPending} onClick={saveEdit}>Save Changes</button>
-                    <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
+                    <Button type="button" disabled={isPending} onClick={saveEdit}>Save Changes</Button>
+                    <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
                   </div>
                 </>
               )}

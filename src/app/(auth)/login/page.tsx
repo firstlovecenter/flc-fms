@@ -7,6 +7,10 @@ import { ArrowRight } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const LEFT_SPLIT_IMAGE_PRIMARY = "/left-split-bg.jpg";
 const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
@@ -14,13 +18,13 @@ const LEFT_SPLIT_IMAGE_FALLBACK = "/fl-logo-white.webp";
 function SubmitBtn() {
   const { pending } = useFormStatus();
   return (
-    <button
+    <Button
       type="submit"
       disabled={pending}
-      className="btn-primary w-full justify-center min-h-[44px]"
+      className="w-full min-h-[44px]"
     >
       {pending ? "Signing in…" : <><span>Sign In</span> <ArrowRight size={15} /></>}
-    </button>
+    </Button>
   );
 }
 
@@ -181,20 +185,20 @@ function LoginContent() {
               )}
 
               <div className="form-group">
-                <label className="label">Email address</label>
-                <input name="email" type="email" required className="input" placeholder="you@organization.org" autoComplete="email" />
+                <Label htmlFor="login-email">Email address</Label>
+                <Input id="login-email" name="email" type="email" required placeholder="you@organization.org" autoComplete="email" />
               </div>
 
               <div className="form-group">
-                <label className="label">Password</label>
-                <input name="password" type="password" required className="input" placeholder="••••••••" autoComplete="current-password" />
+                <Label htmlFor="login-password">Password</Label>
+                <Input id="login-password" name="password" type="password" required placeholder="••••••••" autoComplete="current-password" />
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-2">
                 <SubmitBtn />
                 <Link
                   href="/patron/register"
-                  className="btn-secondary w-full inline-flex items-center justify-center min-h-[44px] no-underline"
+                  className={cn(buttonVariants({ variant: "outline" }), "w-full min-h-[44px] no-underline")}
                 >
                   Create Account
                 </Link>
@@ -208,7 +212,7 @@ function LoginContent() {
             </form>
 
             <div className="flex justify-center mt-2.5">
-              <Link href="/" className="btn-secondary text-[0.85rem] inline-flex items-center gap-1.5">
+              <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
                 ← Back to Home
               </Link>
             </div>

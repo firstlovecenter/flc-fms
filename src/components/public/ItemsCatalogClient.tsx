@@ -3,6 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Package, Layers, ShoppingCart, ChevronDown, ChevronUp, ArrowRight, X, Plus, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 type BookableItem = {
   id: string;
@@ -109,13 +113,13 @@ export default function ItemsCatalogClient({
       {cart.length > 0 && (
         <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-50 [filter:drop-shadow(0_8px_24px_rgba(10,22,40,0.22))]">
           {showCart ? (
-            <div className="card rounded-2xl overflow-hidden w-full sm:w-80 p-0">
+            <Card className="rounded-2xl overflow-hidden w-full sm:w-80 p-0">
               {/* Cart header */}
               <div className="flex items-center justify-between px-4 py-3 bg-[var(--navy)] text-white">
                 <span className="font-semibold flex items-center gap-2">
                   <ShoppingCart size={16} /> Your Selection
                 </span>
-                <button onClick={() => setShowCart(false)} className="opacity-70 hover:opacity-100">
+                <button onClick={() => setShowCart(false)} aria-label="Collapse cart" className="opacity-70 hover:opacity-100">
                   <ChevronDown size={18} />
                 </button>
               </div>
@@ -130,17 +134,20 @@ export default function ItemsCatalogClient({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => updateQty(line.id, line.type, -1)}
+                        aria-label={`Decrease quantity of ${line.name}`}
                         className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Minus size={12} /></button>
                       <span className="w-6 text-center font-bold">{line.qty}</span>
                       <button
                         onClick={() => updateQty(line.id, line.type, 1)}
+                        aria-label={`Increase quantity of ${line.name}`}
                         className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Plus size={12} /></button>
                     </div>
                     <button
                       onClick={() => updateQty(line.id, line.type, -line.qty)}
-                      className="text-[var(--text-muted)] hover:text-red-500"
+                      aria-label={`Remove ${line.name} from cart`}
+                      className="text-[var(--text-muted)] hover:text-danger"
                     ><X size={14} /></button>
                   </div>
                 ))}
@@ -151,14 +158,14 @@ export default function ItemsCatalogClient({
                   <span>Total estimate</span>
                   <span className="text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">GH₵{total.toFixed(2)}</span>
                 </div>
-                <Link href={bookUrl} className="btn-gold w-full justify-center">
+                <Link href={bookUrl} className={cn(buttonVariants({ variant: "gold" }), "w-full gap-2")}>
                   Book Now <ArrowRight size={15} />
                 </Link>
                 <p className="text-center text-xs text-[var(--text-muted)] mt-2">
                   Final price confirmed by staff after submission
                 </p>
               </div>
-            </div>
+            </Card>
           ) : (
             <button
               onClick={() => setShowCart(true)}
@@ -181,7 +188,7 @@ export default function ItemsCatalogClient({
 function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
   const img = item.images[0];
   return (
-    <div className="card rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
+    <Card className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
       {img ? (
         <img src={img} alt={item.name} className="w-full h-40 object-cover" />
       ) : (
@@ -213,15 +220,16 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
             <span className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-lg">GH₵{Number(item.pricePerUnit).toFixed(2)}</span>
             <span className="text-xs text-[var(--text-muted)] ml-1">/ {item.unit}</span>
           </div>
-          <button
+          <Button
+            size="sm"
             onClick={onAdd}
-            className="btn-primary w-full sm:w-auto text-xs py-2 px-3"
+            className="w-full sm:w-auto"
           >
             <Plus size={13} /> Add
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -240,7 +248,7 @@ function BundleCard({
 }) {
   const img = bundle.images[0];
   return (
-    <div className="card rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
+    <Card className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 p-0">
       {img ? (
         <img src={img} alt={bundle.name} className="w-full h-44 object-cover" />
       ) : (
@@ -297,14 +305,15 @@ function BundleCard({
             <span className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-xl">GH₵{Number(bundle.price).toFixed(2)}</span>
             <span className="text-xs text-[var(--text-muted)] ml-1">flat rate</span>
           </div>
-          <button
+          <Button
             onClick={onAdd}
-            className="btn-primary w-full sm:w-auto text-sm"
+            size="sm"
+            className="w-full sm:w-auto"
           >
             <ShoppingCart size={14} /> Select
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

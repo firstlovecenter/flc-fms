@@ -6,13 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import MaintenanceStatusUpdate from "@/components/maintenance/MaintenanceStatusUpdate";
-
-const PRIORITY_COLORS: Record<string, string> = {
-  LOW:      "bg-gray-100 text-[var(--slate)]",
-  MEDIUM:   "bg-yellow-100 text-yellow-800",
-  HIGH:     "bg-orange-100 text-orange-800",
-  CRITICAL: "bg-red-100 text-red-800",
-};
+import { Card } from "@/components/ui/card";
 
 export default async function MaintenanceDetailPage({ params }: { params: { id: string } }) {
   const session  = await requireStaff("FACILITY_MANAGER", "VICAR");
@@ -43,9 +37,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="page-title">{req.title}</h1>
             <StatusBadge status={req.status} size="sm" />
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${PRIORITY_COLORS[req.priority]}`}>
-              {req.priority}
-            </span>
+            <StatusBadge status={req.priority} size="sm" />
           </div>
           <p className="text-sm text-[var(--muted)] mt-0.5">#{req.id.slice(-8).toUpperCase()}</p>
         </div>
@@ -53,15 +45,15 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
 
       {/* Description */}
       {req.description && (
-        <div className="card p-5">
+        <Card className="p-5">
           <p className="text-sm font-semibold text-[var(--muted)] mb-2 uppercase tracking-wide text-xs">Description</p>
           <p className="text-sm text-[var(--slate)] whitespace-pre-wrap leading-relaxed">{req.description}</p>
-        </div>
+        </Card>
       )}
 
       {/* Meta grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-4">
+        <Card className="p-4">
           <div className="flex items-center gap-1.5 text-[var(--muted)] text-xs font-medium mb-1.5">
             <Building2 size={12} /> Facility
           </div>
@@ -72,21 +64,21 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
           ) : (
             <p className="text-sm font-medium text-[var(--muted)]">General / No facility</p>
           )}
-        </div>
-        <div className="card p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-1.5 text-[var(--muted)] text-xs font-medium mb-1.5">
             <User size={12} /> Reported By
           </div>
           <p className="text-sm font-semibold text-[var(--navy)]">{req.requestedBy.name}</p>
           <p className="text-xs text-[var(--muted)]">{req.requestedBy.email}</p>
-        </div>
-        <div className="card p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-1.5 text-[var(--muted)] text-xs font-medium mb-1.5">
             <Clock size={12} /> Reported
           </div>
           <p className="text-sm font-semibold text-[var(--navy)]">{formatDateTime(req.createdAt)}</p>
-        </div>
-        <div className="card p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-1.5 text-[var(--muted)] text-xs font-medium mb-1.5">
             <DollarSign size={12} /> Cost
           </div>
@@ -98,13 +90,13 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
               Actual: {formatCurrency(Number(req.actualCost))}
             </p>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Assigned to */}
       {req.assignedTo && (
-        <div className="card p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
+        <Card className="p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-info/10 text-info flex items-center justify-center text-sm font-bold flex-shrink-0">
             {req.assignedTo.name.charAt(0)}
           </div>
           <div>
@@ -114,12 +106,12 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
               <p className="text-xs text-[var(--muted)]">{req.assignedTo.email}</p>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Linked expense */}
       {req.expense ? (
-        <div className="card p-5 border-l-4 border-l-[var(--gold)]">
+        <Card className="p-5 border-l-4 border-l-[var(--gold)]">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg bg-[rgba(200,163,90,0.12)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center flex-shrink-0">
@@ -150,18 +142,18 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
               to approve or reject it.
             </p>
           )}
-        </div>
+        </Card>
       ) : (req.estimatedCost || req.actualCost) ? (
-        <div className="card p-4 border border-dashed border-[var(--border)] bg-[var(--cream)]">
+        <Card className="p-4 border border-dashed border-[var(--border)] bg-[var(--cream)]">
           <p className="text-sm text-[var(--muted)]">
             No expense request linked yet. Set an actual cost below to generate one automatically.
           </p>
-        </div>
+        </Card>
       ) : null}
 
       {/* Resolution timeline */}
       {(req.resolvedAt || req.closedAt) && (
-        <div className="card p-5 border-l-4 border-l-emerald-400">
+        <Card className="p-5 border-l-4 border-l-success">
           <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">Timeline</p>
           {req.resolvedAt && (
             <p className="text-sm text-[var(--slate)]">✓ Resolved: {formatDateTime(req.resolvedAt)}</p>
@@ -169,16 +161,16 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
           {req.closedAt && (
             <p className="text-sm text-[var(--slate)] mt-1">✓ Closed: {formatDateTime(req.closedAt)}</p>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Maintenance lock warning */}
       {isOpen && req.facility && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+        <div className="bg-maintenance/10 border border-maintenance/25 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle size={18} className="text-maintenance flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-orange-800">Facility locked for maintenance</p>
-            <p className="text-xs text-orange-600 mt-0.5">
+            <p className="text-sm font-semibold text-maintenance">Facility locked for maintenance</p>
+            <p className="text-xs text-maintenance/80 mt-0.5">
               {req.facility.name} is marked as under maintenance until this request is resolved or closed.
             </p>
           </div>
@@ -187,10 +179,10 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
 
       {/* Status update form */}
       {canManage && isOpen && (
-        <div className="card p-6">
+        <Card className="p-6">
           <h2 className="font-semibold text-[var(--navy)] mb-4">Update Status</h2>
           <MaintenanceStatusUpdate requestId={req.id} currentStatus={req.status} />
-        </div>
+        </Card>
       )}
     </div>
   );

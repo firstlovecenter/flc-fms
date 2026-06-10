@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { createDutyTemplate } from "@/actions/duty.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   normalizeTemplateItemsForSave,
   type TemplateFormItemRow,
 } from "@/lib/duty/template-form";
 import type { DutyTemplateType, DutyTimeType } from "@prisma/client";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 type ItemRow = TemplateFormItemRow;
 
@@ -81,28 +86,29 @@ export default function CreateDutyTemplateForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit} ><Card className="p-6 space-y-6 max-w-2xl">
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
+        <Label htmlFor="duty-template-name" className="text-[var(--navy)] mb-1">
           Form name
-        </label>
-        <input
+        </Label>
+        <Input
+          id="duty-template-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="input w-full"
           placeholder="e.g. Evening Security Rounds"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
+        <Label htmlFor="duty-template-type" className="text-[var(--navy)] mb-1">
           Form type
-        </label>
+        </Label>
         <select
+          id="duty-template-type"
           value={type}
           onChange={(e) => setTemplateType(e.target.value as DutyTemplateType)}
-          className="input w-full"
+          className={cn(inputStyles)}
         >
           {(Object.keys(TYPE_LABELS) as DutyTemplateType[]).map((key) => (
             <option key={key} value={key}>
@@ -138,18 +144,18 @@ export default function CreateDutyTemplateForm() {
                 <button
                   type="button"
                   onClick={() => removeItem(index)}
-                  className="text-red-600 hover:text-red-700 p-0.5"
+                  className="text-danger hover:text-danger/80 p-0.5"
                   title="Remove task"
+                  aria-label="Remove task"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            <input
+            <Input
               value={item.description}
               onChange={(e) => updateItem(index, { description: e.target.value })}
-              className="input w-full"
               placeholder="Task description"
               required
             />
@@ -157,8 +163,9 @@ export default function CreateDutyTemplateForm() {
             {type !== "CHECKLIST" && (
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[var(--muted)] mb-1">When</label>
+                  <Label htmlFor={`duty-task-${index}-when`} className="text-xs text-[var(--muted)] mb-1">When</Label>
                   <select
+                    id={`duty-task-${index}-when`}
                     value={item.timeType}
                     onChange={(e) =>
                       updateItem(index, {
@@ -167,7 +174,7 @@ export default function CreateDutyTemplateForm() {
                           e.target.value === "SPECIFIC" ? item.scheduledTime || "06:00" : "",
                       })
                     }
-                    className="input w-full"
+                    className={cn(inputStyles)}
                   >
                     <option value="SPECIFIC">Specific time</option>
                     <option value="END_OF_DAY">End of day</option>
@@ -176,14 +183,14 @@ export default function CreateDutyTemplateForm() {
                 </div>
                 {item.timeType === "SPECIFIC" && (
                   <div>
-                    <label className="block text-xs text-[var(--muted)] mb-1">Time (HH:MM)</label>
-                    <input
+                    <Label htmlFor={`duty-task-${index}-time`} className="text-xs text-[var(--muted)] mb-1">Time (HH:MM)</Label>
+                    <Input
+                      id={`duty-task-${index}-time`}
                       type="time"
                       value={item.scheduledTime}
                       onChange={(e) =>
                         updateItem(index, { scheduledTime: e.target.value })
                       }
-                      className="input w-full"
                       required
                     />
                   </div>
@@ -195,17 +202,17 @@ export default function CreateDutyTemplateForm() {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={pending} className="btn-primary">
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Create form"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn-secondary"
+          variant="outline"
           onClick={() => router.push("/duty/templates")}
         >
           Cancel
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

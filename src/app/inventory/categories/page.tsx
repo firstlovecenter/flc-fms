@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Tag } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { getInventoryCategories } from "@/actions/inventory.actions";
 import InventoryCategoryManager from "@/components/inventory/InventoryCategoryManager";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default async function InventoryCategoriesPage() {
   const session    = await requireStaff();
@@ -11,21 +11,14 @@ export default async function InventoryCategoriesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">
-            <Link href="/inventory" className="opacity-70 hover:opacity-100 transition-opacity">Inventory</Link> / Categories
-          </p>
-          <h1 className="page-title text-[2rem] mb-2">Item Categories</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            {categories.length} categor{categories.length !== 1 ? "ies" : "y"} &bull; Organise inventory by type
-          </p>
-        </div>
-        <div className="flex items-center gap-2 mt-3">
-          <Tag size={20} className="text-[rgba(200,163,90,0.7)]" />
-        </div>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Inventory · Categories"
+        title="Item Categories"
+        description={`${categories.length} categor${categories.length !== 1 ? "ies" : "y"} · Organise inventory by type`}
+        className="relative z-10"
+        actions={<Tag size={20} className="text-[rgba(200,163,90,0.7)]" />}
+      />
 
       {/* Manager */}
       <InventoryCategoryManager initialCategories={categories} canManage={canManage} />

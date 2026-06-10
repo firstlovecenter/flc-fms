@@ -5,12 +5,17 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateDutyTemplate } from "@/actions/duty.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   mapTemplateItemsToFormRows,
   normalizeTemplateItemsForSave,
   type TemplateFormItemRow,
 } from "@/lib/duty/template-form";
 import type { DutyTemplateType, DutyTimeType } from "@prisma/client";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 type ItemRow = TemplateFormItemRow;
 
@@ -104,34 +109,35 @@ export default function EditDutyTemplateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit} ><Card className="p-6 space-y-6 max-w-2xl">
       {assignmentCount > 0 && (
-        <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
+        <p className="text-sm text-warning bg-warning/10 border border-warning/25 rounded-lg px-3 py-2">
           This form has {assignmentCount} assignment{assignmentCount !== 1 ? "s" : ""}.
           Editing tasks only affects future assignments; existing logs keep their copied tasks.
         </p>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
+        <Label htmlFor="edit-duty-template-name" className="text-[var(--navy)] mb-1">
           Form name
-        </label>
-        <input
+        </Label>
+        <Input
+          id="edit-duty-template-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="input w-full"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
+        <Label htmlFor="edit-duty-template-type" className="text-[var(--navy)] mb-1">
           Form type
-        </label>
+        </Label>
         <select
+          id="edit-duty-template-type"
           value={type}
           onChange={(e) => setTemplateType(e.target.value as DutyTemplateType)}
-          className="input w-full"
+          className={cn(inputStyles)}
           disabled={assignmentCount > 0}
         >
           {(Object.keys(TYPE_LABELS) as DutyTemplateType[]).map((key) => (
@@ -168,18 +174,19 @@ export default function EditDutyTemplateForm({
                 <button
                   type="button"
                   onClick={() => removeItem(index)}
-                  className="text-red-600 hover:text-red-700 dark:text-red-400 p-0.5"
+                  className="text-danger hover:text-danger/80 p-0.5"
                   title="Remove task"
+                  aria-label="Remove task"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            <input
+            <Input
+              id={`edit-duty-task-${index}`}
               value={item.description}
               onChange={(e) => updateItem(index, { description: e.target.value })}
-              className="input w-full"
               placeholder="Task description"
               required
             />
@@ -187,8 +194,9 @@ export default function EditDutyTemplateForm({
             {type !== "CHECKLIST" && (
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[var(--muted)] mb-1">When</label>
+                  <Label htmlFor={`edit-duty-task-${index}-when`} className="text-xs text-[var(--muted)] mb-1">When</Label>
                   <select
+                    id={`edit-duty-task-${index}-when`}
                     value={item.timeType}
                     onChange={(e) =>
                       updateItem(index, {
@@ -199,7 +207,7 @@ export default function EditDutyTemplateForm({
                             : "",
                       })
                     }
-                    className="input w-full"
+                    className={cn(inputStyles)}
                   >
                     <option value="SPECIFIC">Specific time</option>
                     <option value="END_OF_DAY">End of day</option>
@@ -208,14 +216,14 @@ export default function EditDutyTemplateForm({
                 </div>
                 {item.timeType === "SPECIFIC" && (
                   <div>
-                    <label className="block text-xs text-[var(--muted)] mb-1">Time (HH:MM)</label>
-                    <input
+                    <Label htmlFor={`edit-duty-task-${index}-time`} className="text-xs text-[var(--muted)] mb-1">Time (HH:MM)</Label>
+                    <Input
+                      id={`edit-duty-task-${index}-time`}
                       type="time"
                       value={item.scheduledTime}
                       onChange={(e) =>
                         updateItem(index, { scheduledTime: e.target.value })
                       }
-                      className="input w-full"
                       required
                     />
                   </div>
@@ -227,17 +235,17 @@ export default function EditDutyTemplateForm({
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={pending} className="btn-primary">
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save changes"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn-secondary"
+          variant="outline"
           onClick={() => router.push("/duty/templates")}
         >
           Cancel
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

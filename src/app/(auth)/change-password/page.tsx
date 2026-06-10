@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -46,7 +49,7 @@ export default function ChangePasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-full bg-gold-bright text-navy-light flex items-center justify-center mx-auto mb-3">
             <KeyRound size={22} />
           </div>
           <h1 className="text-2xl font-bold text-[var(--navy)]">Set Your Password</h1>
@@ -55,23 +58,23 @@ export default function ChangePasswordPage() {
           </p>
         </div>
 
-        <div className="card p-6">
+        <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+              <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Current (Temporary) Password</label>
               <div className="relative">
-                <input
+                <Input
                   name="current"
                   type={showCurrent ? "text" : "password"}
                   required
-                  className="input pr-10"
+                  className="pr-10"
                   autoComplete="current-password"
                 />
-                <button type="button" onClick={() => setShowCurrent(s => !s)}
+                <button type="button" aria-label={showCurrent ? "Hide password" : "Show password"} onClick={() => setShowCurrent(s => !s)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                   {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -81,16 +84,16 @@ export default function ChangePasswordPage() {
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">New Password</label>
               <div className="relative">
-                <input
+                <Input
                   name="new"
                   type={showNew ? "text" : "password"}
                   required
                   minLength={8}
-                  className="input pr-10"
+                  className="pr-10"
                   autoComplete="new-password"
                   placeholder="Min. 8 characters"
                 />
-                <button type="button" onClick={() => setShowNew(s => !s)}
+                <button type="button" aria-label={showNew ? "Hide password" : "Show password"} onClick={() => setShowNew(s => !s)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                   {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -99,20 +102,19 @@ export default function ChangePasswordPage() {
 
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Confirm New Password</label>
-              <input
+              <Input
                 name="confirm"
                 type="password"
                 required
-                className="input"
                 autoComplete="new-password"
               />
             </div>
 
-            <button type="submit" disabled={loading} className="btn-primary w-full">
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Saving…" : "Set New Password"}
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   );

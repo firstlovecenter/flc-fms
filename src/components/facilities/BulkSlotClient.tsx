@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import { Copy, Layers, CheckCircle, AlertTriangle, Check } from "lucide-react";
 import { bulkCreateTimeSlots, copyTimeSlotsToFacilities } from "@/actions/facility.actions";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,7 +113,7 @@ function ResultSummary({ result, onDismiss }: { result: BulkResult; onDismiss: (
 
       {result.created.length > 0 && (
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-green-700">
+          <div className="flex items-center gap-2 text-success">
             <CheckCircle size={14} />
             <span className="text-sm font-medium">
               Created {result.created.length} slot{result.created.length !== 1 ? "s" : ""}
@@ -126,7 +129,7 @@ function ResultSummary({ result, onDismiss }: { result: BulkResult; onDismiss: (
 
       {result.skipped.length > 0 && (
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-amber-700">
+          <div className="flex items-center gap-2 text-warning">
             <AlertTriangle size={14} />
             <span className="text-sm font-medium">
               Skipped {result.skipped.length} slot{result.skipped.length !== 1 ? "s" : ""}
@@ -227,19 +230,19 @@ function DefineAndApplyTab({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg p-2">{error}</p>
+        <p className="text-danger text-xs bg-danger/10 border border-danger/25 rounded-lg p-2">{error}</p>
       )}
 
       {result && <ResultSummary result={result} onDismiss={() => setResult(null)} />}
 
       {/* Slot definition */}
-      <div className="card p-4 space-y-3">
+      <Card className="p-4 space-y-3">
         <h3 className="text-sm font-semibold text-[var(--navy)]">Slot Definition</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="col-span-2">
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Slot Label *</label>
-            <input
-              className="input text-sm"
+            <Input
+              className="text-sm"
               placeholder="e.g. Morning Session"
               value={form.label}
               onChange={(e) => set("label", e.target.value)}
@@ -247,33 +250,33 @@ function DefineAndApplyTab({
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Day of Week</label>
-            <select className="input text-sm" value={form.dayOfWeek} onChange={(e) => set("dayOfWeek", Number(e.target.value))}>
+            <select className={cn(inputStyles, "text-sm")} value={form.dayOfWeek} onChange={(e) => set("dayOfWeek", Number(e.target.value))}>
               {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Category *</label>
-            <select className="input text-sm" value={form.category} onChange={(e) => set("category", e.target.value)}>
+            <select className={cn(inputStyles, "text-sm")} value={form.category} onChange={(e) => set("category", e.target.value)}>
               <option value="">Select category...</option>
               {bookingCategories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Start Time *</label>
-            <input type="time" className="input text-sm" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
+            <Input type="time" className="text-sm" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">End Time *</label>
-            <input type="time" className="input text-sm" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
+            <Input type="time" className="text-sm" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Max Concurrent Bookings</label>
-            <input type="number" min={1} className="input text-sm" value={form.maxBookings} onChange={(e) => set("maxBookings", e.target.value)} />
+            <Input type="number" min={1} className="text-sm" value={form.maxBookings} onChange={(e) => set("maxBookings", e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--slate)] mb-1">Price Override (/hr)</label>
-            <input
-              type="number" min={0} step={0.01} className="input text-sm"
+            <Input
+              type="number" min={0} step={0.01} className="text-sm"
               placeholder="Leave blank to use venue rate"
               value={form.pricePerHourOverride}
               onChange={(e) => set("pricePerHourOverride", e.target.value)}
@@ -299,10 +302,10 @@ function DefineAndApplyTab({
             <span className="text-[var(--slate)]">Free slot</span>
           </label>
         </div>
-      </div>
+      </Card>
 
       {/* Facility selection */}
-      <div className="card p-4 space-y-3">
+      <Card className="p-4 space-y-3">
         <h3 className="text-sm font-semibold text-[var(--navy)]">Apply to Facilities</h3>
         {form.category && (
           <p className="text-xs text-[var(--muted)]">
@@ -317,11 +320,11 @@ function DefineAndApplyTab({
           onClearAll={() => setSelected(new Set())}
           filterCategory={form.category || undefined}
         />
-      </div>
+      </Card>
 
-      <button type="submit" disabled={isPending || selected.size === 0} className="btn-primary text-sm">
+      <Button type="submit" disabled={isPending || selected.size === 0}>
         {isPending ? "Creating…" : `Create Slot for ${selected.size} Facilit${selected.size === 1 ? "y" : "ies"}`}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -378,17 +381,17 @@ function CopyFromVenueTab({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg p-2">{error}</p>
+        <p className="text-danger text-xs bg-danger/10 border border-danger/25 rounded-lg p-2">{error}</p>
       )}
 
       {result && <ResultSummary result={result} onDismiss={() => setResult(null)} />}
 
       {/* Source facility */}
-      <div className="card p-4 space-y-3">
+      <Card className="p-4 space-y-3">
         <h3 className="text-sm font-semibold text-[var(--navy)]">Source Facility</h3>
         <p className="text-xs text-[var(--muted)]">All active time slots from this facility will be copied to selected targets.</p>
         <select
-          className="input text-sm"
+          className={cn(inputStyles, "text-sm")}
           value={sourceId}
           onChange={(e) => {
             setSourceId(e.target.value);
@@ -405,10 +408,10 @@ function CopyFromVenueTab({
             {sourceFacility.slotCount} active slot{sourceFacility.slotCount !== 1 ? "s" : ""} will be copied.
           </p>
         )}
-      </div>
+      </Card>
 
       {/* Target facilities */}
-      <div className="card p-4 space-y-3">
+      <Card className="p-4 space-y-3">
         <h3 className="text-sm font-semibold text-[var(--navy)]">Target Facilities</h3>
         <FacilityChecklist
           facilities={facilities}
@@ -418,11 +421,11 @@ function CopyFromVenueTab({
           onClearAll={() => setSelected(new Set())}
           excludeId={sourceId || undefined}
         />
-      </div>
+      </Card>
 
-      <button type="submit" disabled={isPending || !sourceId || selected.size === 0} className="btn-primary text-sm">
+      <Button type="submit" disabled={isPending || !sourceId || selected.size === 0}>
         {isPending ? "Copying…" : `Copy Slots to ${selected.size} Facilit${selected.size === 1 ? "y" : "ies"}`}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -4,6 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
 import AuthShell, { AuthBrandLink } from "@/components/layout/AuthShell";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -75,8 +81,8 @@ export default function ForgotPasswordPage() {
     return (
       <AuthShell>
         <div className="text-center">
-          <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle size={26} className="text-emerald-600 dark:text-emerald-400" />
+          <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle size={26} className="text-success" />
           </div>
           <h2 className="text-[1.5rem] font-bold text-[var(--navy)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
             Password Reset
@@ -84,7 +90,7 @@ export default function ForgotPasswordPage() {
           <p className="text-[var(--text-muted)] text-[0.9rem] mb-6">
             Your password has been reset successfully.
           </p>
-          <Link href="/login" className="btn-primary inline-flex">
+          <Link href="/login" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
             Sign In <ArrowRight size={15} />
           </Link>
         </div>
@@ -95,7 +101,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell>
         <AuthBrandLink />
-        <div className="card p-9">
+        <Card className="p-9">
           <div className="text-center mb-7">
             <h2 className="text-[1.5rem] font-bold text-[var(--navy)] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
               {step === "email" ? "Forgot Password" : "Reset Password"}
@@ -112,11 +118,11 @@ export default function ForgotPasswordPage() {
           {step === "email" ? (
             <form onSubmit={handleRequestOTP} className="flex flex-col gap-[18px]">
               <div className="form-group">
-                <label className="label">Email address</label>
-                <input
+                <Label htmlFor="forgot-email">Email address</Label>
+                <Input
+                  id="forgot-email"
                   type="email"
                   required
-                  className="input"
                   placeholder="you@organization.org"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -124,18 +130,19 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-3">
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? "Sending…" : <><span>Send Reset Code</span> <ArrowRight size={15} /></>}
-              </button>
+              </Button>
             </form>
           ) : (
             <form onSubmit={handleResetPassword} className="flex flex-col gap-[18px]">
               <div className="form-group">
-                <label className="label">Reset Code</label>
-                <input
+                <Label htmlFor="reset-otp">Reset Code</Label>
+                <Input
+                  id="reset-otp"
                   type="text"
                   required
-                  className="input text-center text-[1.2rem] tracking-[0.3em]"
+                  className="text-center text-[1.2rem] tracking-[0.3em]"
                   placeholder="123456"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
@@ -146,11 +153,11 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="form-group">
-                <label className="label">New Password</label>
-                <input
+                <Label htmlFor="reset-password">New Password</Label>
+                <Input
+                  id="reset-password"
                   type="password"
                   required
-                  className="input"
                   placeholder="Min. 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -160,11 +167,11 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="form-group">
-                <label className="label">Confirm Password</label>
-                <input
+                <Label htmlFor="reset-confirm">Confirm Password</Label>
+                <Input
+                  id="reset-confirm"
                   type="password"
                   required
-                  className="input"
                   placeholder="Re-enter password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
@@ -173,9 +180,9 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-3">
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? "Resetting…" : <><span>Reset Password</span> <ArrowRight size={15} /></>}
-              </button>
+              </Button>
 
               <button
                 type="button"
@@ -192,7 +199,7 @@ export default function ForgotPasswordPage() {
               <ArrowLeft size={14} /> Back to Sign In
             </Link>
           </p>
-        </div>
+        </Card>
     </AuthShell>
   );
 }

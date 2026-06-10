@@ -4,6 +4,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const money = (v: number) => `GH₵${v.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`;
 
@@ -33,23 +37,23 @@ export default function MaintenanceTab({ data, downloadUrl }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Requests",       value: total,                             cls: "text-[var(--navy)]" },
-          { label: "Resolved in Period",   value: data.resolvedCount,               cls: "text-green-700" },
-          { label: "Maintenance Cost",     value: money(data.totalMaintenanceCost), cls: "text-red-700" },
-          { label: "Avg Resolution",       value: `${data.avgResolutionHours}h`,    cls: "text-blue-700" },
+          { label: "Resolved in Period",   value: data.resolvedCount,               cls: "text-success" },
+          { label: "Maintenance Cost",     value: money(data.totalMaintenanceCost), cls: "text-danger" },
+          { label: "Avg Resolution",       value: `${data.avgResolutionHours}h`,    cls: "text-info" },
         ].map(({ label, value, cls }) => (
-          <div key={label} className="card p-4 border border-[var(--border)]">
+          <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className={`text-xl font-bold mt-1 ${cls}`}>{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status donut */}
-        <div className="card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--navy)]">By Status</h3>
-            <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+            <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
           </div>
           {data.statusBreakdown.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No maintenance requests.</p>
@@ -69,10 +73,10 @@ export default function MaintenanceTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
 
         {/* Priority bar */}
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">By Priority</h3>
           {data.priorityBreakdown.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No data.</p>
@@ -91,25 +95,24 @@ export default function MaintenanceTab({ data, downloadUrl }: Props) {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Status summary cards */}
-      <div className="card p-6">
+      <Card className="p-6">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Status Summary</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => {
             const count = data.statusBreakdown.find((s) => s.status === status)?.count ?? 0;
             return (
-              <div key={status} className="rounded-lg p-3 text-center border border-[var(--border)]"
-                style={{ background: `${STATUS_COLORS[status]}10`, borderColor: `${STATUS_COLORS[status]}30` }}>
-                <p className="text-2xl font-bold" style={{ color: STATUS_COLORS[status] }}>{count}</p>
-                <p className="text-xs text-[var(--muted)] mt-0.5">{status.replace("_", " ")}</p>
+              <div key={status} className="rounded-lg p-3 text-center border border-[var(--border)]">
+                <p className="text-2xl font-bold text-[var(--navy)]">{count}</p>
+                <StatusBadge status={status} size="xs" className="mt-1" />
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { User, KeyRound, Save, Eye, EyeOff, Camera, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 export default function PatronProfilePage() {
   const [profile, setProfile] = useState({ name: "", email: "", phone: "", profilePicture: "" });
@@ -105,7 +108,7 @@ export default function PatronProfilePage() {
       <h1 className="page-title">My Profile</h1>
 
       {/* Profile picture */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <User size={18} /> Profile Picture
         </div>
@@ -127,6 +130,7 @@ export default function PatronProfilePage() {
             )}
             <button
               type="button"
+              aria-label="Change profile photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -135,27 +139,27 @@ export default function PatronProfilePage() {
             </button>
           </div>
           <div>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="btn-secondary text-sm"
             >
               {uploading ? "Uploading…" : "Change Photo"}
-            </button>
+            </Button>
             <p className="text-xs text-[var(--muted)] mt-1">JPG, PNG or WebP · max 5 MB</p>
           </div>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         {message && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {message.text}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Profile details */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <User size={18} /> Profile Details
         </div>
@@ -163,30 +167,30 @@ export default function PatronProfilePage() {
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name</label>
-            <input name="name" defaultValue={profile.name} required className="input" />
+            <Input name="name" defaultValue={profile.name} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email Address</label>
-            <input name="email" type="email" defaultValue={profile.email} required className="input" />
+            <Input name="email" type="email" defaultValue={profile.email} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone Number *</label>
-            <input name="phone" type="tel" required defaultValue={profile.phone} className="input" placeholder="+233..." />
+            <Input name="phone" type="tel" required defaultValue={profile.phone} placeholder="+233..." />
           </div>
-          <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
+          <Button type="submit" disabled={saving} className="gap-2">
             <Save size={16} /> {saving ? "Saving…" : "Save Changes"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
       {/* Change password */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <KeyRound size={18} /> Change Password
         </div>
 
         {pwMessage && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {pwMessage.text}
           </div>
         )}
@@ -195,8 +199,8 @@ export default function PatronProfilePage() {
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Current Password</label>
             <div className="relative">
-              <input name="current" type={showCurrent ? "text" : "password"} required className="input pr-10" autoComplete="current-password" />
-              <button type="button" onClick={() => setShowCurrent(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+              <Input name="current" type={showCurrent ? "text" : "password"} required className="pr-10" autoComplete="current-password" />
+              <button type="button" aria-label={showCurrent ? "Hide password" : "Show password"} onClick={() => setShowCurrent(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
@@ -204,21 +208,21 @@ export default function PatronProfilePage() {
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">New Password</label>
             <div className="relative">
-              <input name="new" type={showNew ? "text" : "password"} required minLength={8} className="input pr-10" autoComplete="new-password" placeholder="Min. 8 characters" />
-              <button type="button" onClick={() => setShowNew(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+              <Input name="new" type={showNew ? "text" : "password"} required minLength={8} className="pr-10" autoComplete="new-password" placeholder="Min. 8 characters" />
+              <button type="button" aria-label={showNew ? "Hide password" : "Show password"} onClick={() => setShowNew(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Confirm New Password</label>
-            <input name="confirm" type="password" required className="input" autoComplete="new-password" />
+            <Input name="confirm" type="password" required autoComplete="new-password" />
           </div>
-          <button type="submit" disabled={pwLoading} className="btn-primary flex items-center gap-2">
+          <Button type="submit" disabled={pwLoading} className="gap-2">
             <KeyRound size={16} /> {pwLoading ? "Updating…" : "Update Password"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

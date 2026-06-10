@@ -9,6 +9,12 @@ import { getPublicBookingCategories } from "@/actions/availability.actions";
 import { Package, Layers, Minus, Plus, CheckCircle2 } from "lucide-react";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   guestName:      z.string().min(2, "Name is required"),
@@ -126,8 +132,8 @@ export default function GuestItemBookingForm({
   if (bookingId) {
     return (
       <div className="py-10 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
-          <CheckCircle2 size={32} className="text-emerald-500" />
+        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+          <CheckCircle2 size={32} className="text-success" />
         </div>
         <h3 className="font-display text-2xl font-bold text-[var(--navy)] dark:text-gray-100">Booking Request Submitted!</h3>
         <p className="text-[var(--slate)] dark:text-gray-300 max-w-sm mx-auto">
@@ -167,12 +173,12 @@ export default function GuestItemBookingForm({
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => updateQty(line.id, -1)}
+                  <button type="button" aria-label={`Decrease quantity of ${line.name}`} onClick={() => updateQty(line.id, -1)}
                     className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
                     <Minus size={11} />
                   </button>
                   <span className="w-6 text-center font-bold text-sm">{line.qty}</span>
-                  <button type="button" onClick={() => updateQty(line.id, 1)}
+                  <button type="button" aria-label={`Increase quantity of ${line.name}`} onClick={() => updateQty(line.id, 1)}
                     className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
                     <Plus size={11} />
                   </button>
@@ -194,82 +200,83 @@ export default function GuestItemBookingForm({
       </div>
 
       {/* GUEST INFO */}
-      <div className="card p-4 md:p-5">
+      <Card className="p-4 md:p-5">
         <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Your Information
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="label">Full Name</label>
-            <input {...register("guestName")} className="input" />
-            {errors.guestName && <p className="text-xs text-red-600 mt-1">{errors.guestName.message}</p>}
+            <Label htmlFor="gib-guest-name">Full Name</Label>
+            <Input id="gib-guest-name" {...register("guestName")} />
+            {errors.guestName && <p className="text-xs text-danger mt-1">{errors.guestName.message}</p>}
           </div>
           <div>
-            <label className="label">Email</label>
-            <input {...register("guestEmail")} type="email" className="input" />
-            {errors.guestEmail && <p className="text-xs text-red-600 mt-1">{errors.guestEmail.message}</p>}
+            <Label htmlFor="gib-guest-email">Email</Label>
+            <Input id="gib-guest-email" {...register("guestEmail")} type="email" />
+            {errors.guestEmail && <p className="text-xs text-danger mt-1">{errors.guestEmail.message}</p>}
           </div>
         </div>
         <div className="mt-4">
-          <label className="label">Phone</label>
-          <input {...register("guestPhone")} className="input" />
-          {errors.guestPhone && <p className="text-xs text-red-600 mt-1">{errors.guestPhone.message}</p>}
+          <Label htmlFor="gib-guest-phone">Phone</Label>
+          <Input id="gib-guest-phone" {...register("guestPhone")} />
+          {errors.guestPhone && <p className="text-xs text-danger mt-1">{errors.guestPhone.message}</p>}
         </div>
         <div className="mt-4">
-          <label className="label">Group / Ministry</label>
-          <input {...register("groupMinistry")} className="input" placeholder="e.g. Youth Ministry, Choir, Cell Group 5" />
-          {errors.groupMinistry && <p className="text-xs text-red-600 mt-1">{errors.groupMinistry.message}</p>}
+          <Label htmlFor="gib-group-ministry">Group / Ministry</Label>
+          <Input id="gib-group-ministry" {...register("groupMinistry")} placeholder="e.g. Youth Ministry, Choir, Cell Group 5" />
+          {errors.groupMinistry && <p className="text-xs text-danger mt-1">{errors.groupMinistry.message}</p>}
         </div>
-      </div>
+      </Card>
 
       {/* BOOKING DETAILS */}
-      <div className="card p-4 md:p-5">
+      <Card className="p-4 md:p-5">
         <p className="text-xs uppercase tracking-wider mb-3 font-bold text-[var(--muted)] dark:text-gray-400">
           Event Details
         </p>
         <div>
-          <label className="label">Booking Title</label>
-          <input {...register("title")} className="input" placeholder="e.g. Wedding reception, fundraiser gala" />
-          {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title.message}</p>}
+          <Label htmlFor="gib-title">Booking Title</Label>
+          <Input id="gib-title" {...register("title")} placeholder="e.g. Wedding reception, fundraiser gala" />
+          {errors.title && <p className="text-xs text-danger mt-1">{errors.title.message}</p>}
         </div>
 
         {publicCategories.length > 0 && (
           <div className="mt-4">
-            <label className="label">Event Type</label>
-            <select
+            <Label htmlFor="gib-category">Event Type</Label>
+            <NativeSelect
+              id="gib-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="input"
+              className="w-full"
             >
               <option value="">Select event type (optional)</option>
               {publicCategories.map((c) => (
                 <option key={c.slug} value={c.slug}>{c.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         )}
 
         <div className="mt-4">
-          <label className="label">Description (optional)</label>
-          <textarea {...register("description")} className="input" rows={2} placeholder="Briefly describe your event" />
+          <Label htmlFor="gib-description">Description (optional)</Label>
+          <Textarea id="gib-description" {...register("description")} rows={2} placeholder="Briefly describe your event" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="label">Event Start</label>
-            <input {...register("startTime")} type="datetime-local" min={minStartTime} className="input" />
-            {errors.startTime && <p className="text-xs text-red-600 mt-1">{errors.startTime.message}</p>}
+            <Label htmlFor="gib-start-time">Event Start</Label>
+            <Input id="gib-start-time" {...register("startTime")} type="datetime-local" min={minStartTime} />
+            {errors.startTime && <p className="text-xs text-danger mt-1">{errors.startTime.message}</p>}
           </div>
           <div>
-            <label className="label">Event End</label>
-            <input {...register("endTime")} type="datetime-local" className="input" />
-            {errors.endTime && <p className="text-xs text-red-600 mt-1">{errors.endTime.message}</p>}
+            <Label htmlFor="gib-end-time">Event End</Label>
+            <Input id="gib-end-time" {...register("endTime")} type="datetime-local" />
+            {errors.endTime && <p className="text-xs text-danger mt-1">{errors.endTime.message}</p>}
           </div>
         </div>
         <div className="mt-4">
-          <label className="label">Additional Notes (optional)</label>
-          <textarea {...register("notes")} className="input" rows={2} placeholder="Delivery location, special requirements..." />
+          <Label htmlFor="gib-notes">Additional Notes (optional)</Label>
+          <Textarea id="gib-notes" {...register("notes")} rows={2} placeholder="Delivery location, special requirements..." />
         </div>
-      </div>
+      </Card>
 
       {requiresBookingTerms && <BookingTermsAndFaq title="Booking Terms and Conditions" />}
       {requiresItemTerms && <ItemBookingTerms />}
@@ -289,14 +296,14 @@ export default function GuestItemBookingForm({
         </label>
       )}
 
-      <button
+      <Button
         type="submit"
+        variant="gold"
         disabled={isSubmitting || lines.length === 0 || (termsRequired && !agreedToTerms)}
-        className="btn-gold w-full"
-        style={{ paddingBlock: 12 }}
+        className="w-full"
       >
         {isSubmitting ? "Submitting..." : "Submit Item Booking Request"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -1,6 +1,7 @@
 import PublicShell from "@/components/public/PublicShell";
 import GuestCheckInFlow from "@/components/public/GuestCheckInFlow";
 import GuestPageHero from "@/components/public/GuestPageHero";
+import { Card } from "@/components/ui/card";
 
 export const metadata = {
   title: "Guest Check-In — FLC FMS",
@@ -16,9 +17,9 @@ export default function GuestCheckInPage() {
           title="Guest Check-In"
           description="Look up your booking by phone number and request check-in. Staff will confirm your arrival."
         />
-        <section className="card p-6 md:p-8">
+        <Card className="p-6 md:p-8">
           <GuestCheckInFlow />
-        </section>
+        </Card>
       </div>
     </PublicShell>
   );

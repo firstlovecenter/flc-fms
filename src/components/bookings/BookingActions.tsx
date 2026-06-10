@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { approveBooking, rejectBooking } from "@/actions/booking.actions";
+import { Input } from "@/components/ui/input";
 
 export default function BookingActions({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -52,24 +53,26 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
   if (showReject) {
     return (
       <div className="flex flex-col gap-1">
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
         <div className="flex items-center gap-1">
-        <input
+        <Input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason…"
-          className="input text-xs py-1 w-28"
+          className="text-xs py-1 w-28"
           autoFocus
         />
         <button
           onClick={handleReject}
           disabled={!reason.trim() || loading === "reject"}
-          className="p-1.5 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50"
+          aria-label="Confirm rejection"
+          className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/20 disabled:opacity-50"
         >
           <Check size={12} />
         </button>
         <button
           onClick={() => setShowReject(false)}
+          aria-label="Cancel rejection"
           className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
         >
           <X size={12} />
@@ -81,7 +84,7 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
 
   return (
     <div className="flex flex-col gap-1">
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1 text-xs text-[var(--muted)] cursor-pointer">
           <input
@@ -95,15 +98,17 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
         <button
           onClick={handleApprove}
           disabled={loading === "approve"}
-          className="p-1.5 rounded bg-green-100 text-green-600 hover:bg-green-200 disabled:opacity-50"
+          className="p-1.5 rounded bg-success/10 text-success hover:bg-success/20 disabled:opacity-50"
           title="Approve"
+          aria-label="Approve"
         >
           <Check size={14} />
         </button>
         <button
           onClick={() => setShowReject(true)}
-          className="p-1.5 rounded bg-red-100 text-red-600 hover:bg-red-200"
+          className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/20"
           title="Reject"
+          aria-label="Reject"
         >
           <X size={14} />
         </button>

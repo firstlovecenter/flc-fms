@@ -29,7 +29,7 @@ export default function StaffShell({
   const close  = useCallback(() => setMenuOpen(false), []);
 
   return (
-    <div className="flex h-[100dvh] bg-cream overflow-hidden">
+    <div className="surface-cool flex h-[100dvh] bg-cream overflow-hidden">
       <StaffSidebar role={role} name={name} profilePicture={profilePicture} isOpen={menuOpen} onClose={close} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {impersonatedBy && (

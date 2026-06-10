@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Save, RotateCcw } from "lucide-react";
 import { updateVicarPermissions } from "@/actions/staff.actions";
+import { Button } from "@/components/ui/button";
 import type { VicarPermissions } from "@/lib/staff-permissions";
+import { Card } from "@/components/ui/card";
 
 interface Props {
   vicarId: string;
@@ -85,7 +87,7 @@ export default function PermissionsEditor({ vicarId, vicarName, currentPermissio
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="card p-4 flex items-center justify-between">
+      <Card className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-[var(--slate)]">
           <Shield size={16} className="text-[var(--gold)]" />
           <span>
@@ -94,12 +96,12 @@ export default function PermissionsEditor({ vicarId, vicarName, currentPermissio
           </span>
         </div>
         <div className="flex gap-2">
-          <button onClick={resetToDefaults} className="btn-secondary text-xs flex items-center gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={resetToDefaults} className="gap-1">
             <RotateCcw size={12} /> Defaults
-          </button>
-          <button onClick={enableAll} className="btn-secondary text-xs">Enable All</button>
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={enableAll}>Enable All</Button>
         </div>
-      </div>
+      </Card>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
@@ -107,7 +109,7 @@ export default function PermissionsEditor({ vicarId, vicarName, currentPermissio
 
       {/* Permission groups */}
       {PERMISSION_GROUPS.map((group) => (
-        <div key={group.title} className="card p-5">
+        <Card key={group.title} className="p-5">
           <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-4">{group.title}</h3>
           <div className="space-y-3">
             {group.keys.map((key) => (
@@ -142,19 +144,20 @@ export default function PermissionsEditor({ vicarId, vicarName, currentPermissio
               </label>
             ))}
           </div>
-        </div>
+        </Card>
       ))}
 
       {/* Save button */}
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          type="button"
           onClick={handleSave}
           disabled={saving}
-          className="btn-primary flex items-center gap-2"
+          className="gap-2"
         >
           <Save size={16} />
           {saving ? "Saving…" : saved ? "✓ Saved" : "Save Permissions"}
-        </button>
+        </Button>
         {saved && (
           <p className="text-sm text-green-600 font-medium">Changes saved successfully.</p>
         )}

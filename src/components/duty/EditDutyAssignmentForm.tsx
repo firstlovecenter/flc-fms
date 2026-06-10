@@ -4,6 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateDutyAssignment } from "@/actions/duty.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export default function EditDutyAssignmentForm({
   dutyLogId,
@@ -41,30 +46,29 @@ export default function EditDutyAssignmentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-5 max-w-lg">
+    <form onSubmit={handleSubmit} ><Card className="p-6 space-y-5 max-w-lg">
       <p className="text-sm text-[var(--muted)]">
         Form: <strong className="text-[var(--navy)]">{formName}</strong> (cannot be changed)
       </p>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">Date</label>
-        <input
+        <Label htmlFor="edit-duty-assignment-date">Date</Label>
+        <Input
+          id="edit-duty-assignment-date"
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="input w-full"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
-          Assigned to
-        </label>
+        <Label htmlFor="edit-duty-assignment-staff">Assigned to</Label>
         <select
+          id="edit-duty-assignment-staff"
           value={assignedToId}
           onChange={(e) => setAssignedToId(e.target.value)}
-          className="input w-full"
+          className={cn(inputStyles)}
           required
         >
           {staff.map((s) => (
@@ -76,17 +80,13 @@ export default function EditDutyAssignmentForm({
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={pending} className="btn-primary">
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save changes"}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => router.back()}
-        >
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

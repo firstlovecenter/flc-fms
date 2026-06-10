@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { KeyRound, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
 import { updateAccessCode } from "@/actions/facility.actions";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface Props {
   facilityId: string;
@@ -74,7 +76,7 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
   if (!enabled && !canEdit) return null;
 
   return (
-    <div className="card p-5">
+    <Card className="p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide flex items-center gap-2">
           <KeyRound size={14} className="text-[var(--gold)]" />
@@ -117,16 +119,16 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-2 text-danger text-xs mb-3">{error}</div>
       )}
 
       {!enabled ? (
         <p className="text-sm text-[var(--muted)]">No access code set. Toggle on to add one.</p>
       ) : editing ? (
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
-            className="input flex-1"
+            className="flex-1"
             value={newCode}
             onChange={(e) => setNewCode(e.target.value)}
             placeholder="Enter access code"
@@ -137,8 +139,9 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="p-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors disabled:opacity-50"
             title="Save"
+            aria-label="Save"
           >
             <Check size={16} />
           </button>
@@ -167,6 +170,6 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
       {enabled && !canEdit && (
         <p className="text-xs text-[var(--muted)] mt-2">Contact a Facility Manager to change the access code.</p>
       )}
-    </div>
+    </Card>
   );
 }

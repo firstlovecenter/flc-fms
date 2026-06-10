@@ -35,6 +35,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import { Card } from "@/components/ui/card";
 
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -54,9 +61,9 @@ export type SerializedTask = {
 type Staff = { id: string; name: string; role: string };
 
 const PRIORITY_STYLES: Record<TaskPriority, string> = {
-  HIGH:   "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/25",
-  MEDIUM: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/25",
-  LOW:    "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/25",
+  HIGH:   "text-danger bg-danger/10 border-danger/25",
+  MEDIUM: "text-warning bg-warning/10 border-warning/25",
+  LOW:    "text-info bg-info/10 border-info/25",
 };
 
 function startOfDay(d: Date) {
@@ -79,8 +86,8 @@ function dueTone(iso: string, completed: boolean) {
   if (completed) return "text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)] border-transparent";
   const due = startOfDay(new Date(iso)).getTime();
   const today = startOfDay(new Date()).getTime();
-  if (due < today)  return "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/25";
-  if (due === today) return "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/25";
+  if (due < today)  return "text-danger bg-danger/10 border-danger/25";
+  if (due === today) return "text-warning bg-warning/10 border-warning/25";
   return "text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)] border-transparent";
 }
 
@@ -156,31 +163,19 @@ export default function TaskInbox({
       />
 
       {/* Hero header */}
-      <div className="page-hero relative z-10">
-        <p className="section-eyebrow mb-3">Facility Management</p>
-        <h1 className="page-title text-[2rem] mb-2">Tasks</h1>
-        <p className="page-hero-muted text-[0.95rem]">
-          {openTasks.length} open task{openTasks.length !== 1 ? "s" : ""}
-        </p>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Facility Management"
+        title="Tasks"
+        description={`${openTasks.length} open task${openTasks.length !== 1 ? "s" : ""}`}
+        className="relative z-10"
+      />
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-4 relative z-10 stagger-children">
-        <div className="stat-card" data-accent="blue">
-          <div className="stat-accent" />
-          <p className="stat-label">To Do</p>
-          <p className="stat-value">{openTasks.length}</p>
-        </div>
-        <div className="stat-card" data-accent="yellow">
-          <div className="stat-accent" />
-          <p className="stat-label">Due Today</p>
-          <p className="stat-value">{dueToday}</p>
-        </div>
-        <div className="stat-card" data-accent="red">
-          <div className="stat-accent" />
-          <p className="stat-label">Overdue</p>
-          <p className="stat-value">{overdue}</p>
-        </div>
+        <StatCard label="To Do"     value={openTasks.length} color="gold" />
+        <StatCard label="Due Today" value={dueToday}         color="warning" />
+        <StatCard label="Overdue"   value={overdue}          color="danger" />
       </div>
 
       {/* View + filter chips */}
@@ -303,8 +298,8 @@ function TaskRow({
         className={cn(
           "flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all duration-150",
           done
-            ? "bg-emerald-500 border-emerald-500 text-[#fff]"
-            : "border-[rgba(200,163,90,0.5)] hover:border-emerald-500 hover:scale-110"
+            ? "bg-success border-success text-white"
+            : "border-[rgba(200,163,90,0.5)] hover:border-success hover:scale-110"
         )}
       >
         {done && <Check size={13} strokeWidth={3} />}
@@ -355,7 +350,7 @@ function TaskRow({
             {task.maintenanceRequestId && (
               <Link
                 href={`/maintenance/${task.maintenanceRequestId}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-[var(--gold,#C8A35A)] bg-[rgba(200,163,90,0.1)] border border-[rgba(200,163,90,0.25)] hover:bg-[rgba(200,163,90,0.18)]"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-gold bg-gold/10 border border-gold/25 hover:bg-gold/20"
               >
                 <Wrench size={11} /> Maintenance
               </Link>
@@ -436,37 +431,37 @@ function QuickAddBar({
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[560px] z-30">
-      <div className="card shadow-[0_12px_32px_rgba(10,22,40,0.25)] border-[rgba(200,163,90,0.3)] p-3 space-y-2 backdrop-blur-md">
+      <Card className="shadow-[0_12px_32px_rgba(10,22,40,0.25)] border-[rgba(200,163,90,0.3)] p-3 space-y-2 backdrop-blur-md">
         {showDetails && (
           <div className="grid grid-cols-3 gap-2 animate-fade-in">
             <div>
               <label className="block text-[0.65rem] font-semibold text-[var(--muted)] mb-1 uppercase tracking-wide">Due</label>
-              <input
+              <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="input !py-1.5 !text-[0.8rem]"
+                className="text-[0.8rem]"
               />
             </div>
             <div>
               <label className="block text-[0.65rem] font-semibold text-[var(--muted)] mb-1 uppercase tracking-wide">Priority</label>
-              <select
+              <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as "" | TaskPriority)}
-                className="input !py-1.5 !text-[0.8rem]"
+                className="!py-1.5 !text-[0.8rem]"
               >
                 <option value="">None</option>
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className="block text-[0.65rem] font-semibold text-[var(--muted)] mb-1 uppercase tracking-wide">Assign to</label>
-              <select
+              <NativeSelect
                 value={assignedToId}
                 onChange={(e) => setAssignedToId(e.target.value)}
-                className="input !py-1.5 !text-[0.8rem]"
+                className="!py-1.5 !text-[0.8rem]"
               >
                 <option value="">Me</option>
                 {staff
@@ -474,19 +469,19 @@ function QuickAddBar({
                   .map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         )}
 
         <div className="flex items-center gap-2">
-          <input
+          <Input
             ref={inputRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
             placeholder="Add a taskâ€¦"
-            className="input flex-1 !py-2"
+            className="flex-1"
             maxLength={300}
           />
           <button
@@ -502,16 +497,16 @@ function QuickAddBar({
           >
             <ChevronDown size={16} className={cn("transition-transform", showDetails && "rotate-180")} />
           </button>
-          <button
+          <Button
             type="button"
             onClick={submit}
             disabled={!title.trim() || isPending}
-            className="btn-primary !px-3.5 !py-2 inline-flex items-center gap-1.5 disabled:opacity-50"
+            className="gap-1.5"
           >
             <Plus size={16} /> Add
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -565,59 +560,57 @@ function EditTaskDialog({
         <div className="space-y-4 pt-1">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Title</label>
-            <input
+            <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && save()}
-              className="input"
               maxLength={300}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Due date</label>
-              <input
+              <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Due date</Label>
+              <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Priority</label>
-              <select
+              <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Priority</Label>
+              <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as "" | TaskPriority)}
-                className="input"
+                className="w-full"
               >
                 <option value="">None</option>
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Assigned to</label>
-            <select
+            <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Assigned to</Label>
+            <NativeSelect
               value={assignedToId}
               onChange={(e) => setAssignedToId(e.target.value)}
-              className="input"
+              className="w-full"
             >
               <option value="">Unassigned (mine)</option>
               {staff.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="flex gap-3 pt-1">
-            <button onClick={save} disabled={!title.trim() || isPending} className="btn-primary flex-1">
+            <Button onClick={save} disabled={!title.trim() || isPending} className="flex-1">
               {isPending ? "Savingâ€¦" : "Save"}
-            </button>
-            <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+            </Button>
+            <Button onClick={onClose} variant="outline" className="flex-1">Cancel</Button>
           </div>
         </div>
       </DialogContent>

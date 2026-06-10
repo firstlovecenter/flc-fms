@@ -1,5 +1,7 @@
-import { formatDateTime, formatCurrency, statusBadgeClass } from "@/lib/utils";
+import { formatDateTime, formatCurrency } from "@/lib/utils";
 import Link from "next/link";
+import { DataTable } from "@/components/layout/DataTable";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface Booking {
   id: string; title: string; status: string; startTime: Date; totalAmount: unknown;
@@ -16,8 +18,7 @@ export default function RecentBookings({ bookings }: { bookings: Booking[] }) {
   }
 
   return (
-    <div className="table-scroll-wrapper">
-      <table className="data-table">
+    <DataTable>
         <thead>
           <tr>
             <th>Booking</th><th>Facility</th><th>Booked by</th>
@@ -32,12 +33,11 @@ export default function RecentBookings({ bookings }: { bookings: Booking[] }) {
               <td className="text-[var(--slate)]">{(b.patron ?? b.user)?.name ?? "—"}</td>
               <td className="text-[var(--slate)] text-[0.82rem]">{formatDateTime(b.startTime)}</td>
               <td className="font-medium text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">{formatCurrency(Number(b.totalAmount))}</td>
-              <td><span className={statusBadgeClass(b.status) + " badge"}>{b.status}</span></td>
+              <td><StatusBadge status={b.status} size="xs" /></td>
               <td><Link href={`/bookings/${b.id}`} className="link-gold text-[0.78rem] font-medium">View →</Link></td>
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+    </DataTable>
   );
 }

@@ -9,6 +9,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { VariantProps } from "class-variance-authority";
+import { Button } from "@/components/ui/button";
+import type { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import AssignDutyForm from "./AssignDutyForm";
 
 type Template = { id: string; name: string; type: string };
@@ -18,11 +22,13 @@ export default function CreateDutyDialog({
   templates,
   staff,
   defaultDate,
+  triggerVariant = "default",
   triggerClassName,
 }: {
   templates: Template[];
   staff: Staff[];
   defaultDate: string;
+  triggerVariant?: VariantProps<typeof buttonVariants>["variant"];
   triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,9 +40,12 @@ export default function CreateDutyDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className={
-          triggerClassName ??
-          "btn-primary inline-flex items-center gap-2"
+        render={
+          <Button
+            variant={triggerVariant}
+            size="sm"
+            className={cn("gap-2", triggerClassName)}
+          />
         }
       >
         <Plus className="h-4 w-4" />

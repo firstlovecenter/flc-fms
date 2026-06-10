@@ -6,13 +6,17 @@ import { registerPatron } from "@/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AuthShell, { AuthBrandLink } from "@/components/layout/AuthShell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-gold w-full justify-center py-3">
+    <Button type="submit" variant="gold" disabled={pending} className="w-full">
       {pending ? "Creating account…" : "Create Account"}
-    </button>
+    </Button>
   );
 }
 
@@ -30,7 +34,7 @@ export default function PatronRegisterPage() {
   return (
     <AuthShell>
         <AuthBrandLink />
-        <div className="card p-9">
+        <Card className="p-9">
           <h1 className="text-[1.6rem] font-semibold text-[var(--navy)] mb-1" style={{ fontFamily: "var(--font-display)" }}>
             Create Account
           </h1>
@@ -42,20 +46,20 @@ export default function PatronRegisterPage() {
 
           <form action={action} className="flex flex-col gap-3.5">
             <div className="form-group">
-              <label className="label">Full Name</label>
-              <input name="name" required className="input" placeholder="Kwame Asante" />
+              <Label htmlFor="reg-name">Full Name</Label>
+              <Input id="reg-name" name="name" required placeholder="Kwame Asante" />
             </div>
             <div className="form-group">
-              <label className="label">Email Address</label>
-              <input name="email" type="email" required className="input" placeholder="kwame@example.com" />
+              <Label htmlFor="reg-email">Email Address</Label>
+              <Input id="reg-email" name="email" type="email" required placeholder="kwame@example.com" />
             </div>
             <div className="form-group">
-              <label className="label">Phone Number</label>
-              <input name="phone" type="tel" required className="input" placeholder="+233..." />
+              <Label htmlFor="reg-phone">Phone Number</Label>
+              <Input id="reg-phone" name="phone" type="tel" required placeholder="+233..." />
             </div>
             <div className="form-group">
-              <label className="label">Password</label>
-              <input name="password" type="password" required minLength={8} className="input" placeholder="Min. 8 characters" />
+              <Label htmlFor="reg-password">Password</Label>
+              <Input id="reg-password" name="password" type="password" required minLength={8} placeholder="Min. 8 characters" />
             </div>
             <div className="mt-1.5">
               <SubmitButton />
@@ -66,7 +70,7 @@ export default function PatronRegisterPage() {
             Already have an account?{" "}
             <Link href="/patron/login" className="link-gold">Sign in →</Link>
           </p>
-        </div>
+        </Card>
     </AuthShell>
   );
 }

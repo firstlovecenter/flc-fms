@@ -13,6 +13,8 @@ import {
 import { formatDutyDate, formatDutyTime } from "@/lib/duty/format";
 import type { SerializedDutyLog } from "./types";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type DutyLogPanelProps = {
   log: SerializedDutyLog;
@@ -98,9 +100,9 @@ export default function DutyLogPanel({
   const assigneeLabel = isChecklist ? "Vicar" : "Name of man on duty";
 
   return (
-    <article
+    <Card
       className={cn(
-        "card rounded-xl overflow-hidden shadow-sm",
+        "rounded-xl overflow-hidden shadow-sm",
         compact && "text-sm",
       )}
     >
@@ -298,15 +300,16 @@ export default function DutyLogPanel({
                   {format(new Date(log.supervisorSignedAt), "d MMM yyyy, h:mm a")}
                 </p>
               ) : canSignSupervisor ? (
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   disabled={pending}
                   onClick={handleSupervisorSign}
-                  className="btn-primary text-xs py-1.5 px-3 inline-flex items-center gap-1"
+                  className="text-xs py-1.5 px-3 gap-1"
                 >
                   {pending && <Loader2 className="h-3 w-3 animate-spin" />}
                   Supervisor sign-off
-                </button>
+                </Button>
               ) : (
                 <p className="text-[var(--muted)]">Pending</p>
               )}
@@ -325,21 +328,22 @@ export default function DutyLogPanel({
                 {format(new Date(log.supervisorSignedAt), "d MMM yyyy, h:mm a")}
               </p>
             ) : canSignSupervisor ? (
-              <button
+              <Button
                 type="button"
+                size="sm"
                 disabled={pending}
                 onClick={handleSupervisorSign}
-                className="btn-primary text-xs py-1.5 px-3 inline-flex items-center gap-1"
+                className="text-xs py-1.5 px-3 gap-1"
               >
                 {pending && <Loader2 className="h-3 w-3 animate-spin" />}
                 Supervisor sign-off
-              </button>
+              </Button>
             ) : (
               <p className="text-[var(--muted)] text-sm">Pending</p>
             )}
           </div>
         )}
       </footer>
-    </article>
+    </Card>
   );
 }

@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { getAllDutyTemplates } from "@/lib/duty/queries";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import PageHeader from "@/components/layout/PageHeader";
 import DutyTemplateRowActions from "@/components/duty/DutyTemplateRowActions";
+import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Duty Forms" };
 
@@ -19,23 +24,24 @@ export default async function DutyTemplatesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link href="/duty" className="text-sm text-[var(--gold)] hover:underline">
-            ← Duty logs
-          </Link>
-          <h1 className="text-2xl font-bold text-[var(--navy)] mt-2">Duty forms</h1>
-          <p className="text-[var(--muted)] text-sm mt-1">
-            Reusable checklists and logs used when assigning duties.
-          </p>
-        </div>
-        <Link href="/duty/templates/new" className="btn-primary inline-flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New form
+      <div className="space-y-2">
+        <Link href="/duty" className="text-sm text-[var(--gold)] hover:underline">
+          ← Duty logs
         </Link>
+        <PageHeader
+          variant="hero"
+          title="Duty forms"
+          description="Reusable checklists and logs used when assigning duties."
+          actions={
+            <Link href="/duty/templates/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
+              <Plus className="h-4 w-4" />
+              New form
+            </Link>
+          }
+        />
       </div>
 
-      <div className="card overflow-hidden">
+      <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--cream-dark)]">
@@ -75,11 +81,9 @@ export default async function DutyTemplatesPage() {
                   <td className="px-4 py-3">{t._count.dutyLogs}</td>
                   <td className="px-4 py-3">
                     {t.isActive ? (
-                      <span className="text-emerald-700 dark:text-emerald-300 text-xs font-medium">
-                        Active
-                      </span>
+                      <StatusBadge status="APPROVED" label="Active" size="xs" />
                     ) : (
-                      <span className="text-[var(--muted)] text-xs">Inactive</span>
+                      <StatusBadge status="CANCELLED" label="Inactive" size="xs" />
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -103,7 +107,7 @@ export default async function DutyTemplatesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

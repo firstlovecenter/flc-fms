@@ -16,7 +16,10 @@ import {
   Phone,
 } from "lucide-react";
 import { cn, formatDateTime } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { performCheckIn, performCheckOut, getInventoryRequirements } from "@/actions/checkin.actions";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 type Booking = {
   id: string;
@@ -123,11 +126,11 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
     const invReqs = booking.facility ? inventoryCache[booking.facility.id] : undefined;
 
     return (
-      <div
+      <Card
         className={cn(
-          "card border transition-all duration-150",
+          "border transition-all duration-150",
           booking.checkInRequested && mode === "pending"
-            ? "border-amber-300 bg-amber-50/50"
+            ? "border-warning/40 bg-warning/10"
             : "border-gray-100"
         )}
       >
@@ -141,17 +144,17 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-[var(--navy)] text-sm truncate">{booking.title}</span>
               {booking.checkInRequested && mode === "pending" && (
-                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold bg-warning/10 text-warning border border-warning/25 px-2 py-0.5 rounded-full">
                   <Clock size={10} /> Requested
                 </span>
               )}
               {mode === "checked-in" && (
-                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold bg-success/10 text-success border border-success/25 px-2 py-0.5 rounded-full">
                   <CheckCircle2 size={10} /> Checked In
                 </span>
               )}
               {mode === "checked-out" && (
-                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold bg-foreground/5 text-muted-foreground border border-foreground/10 px-2 py-0.5 rounded-full">
                   <LogOut size={10} /> Checked Out
                 </span>
               )}
@@ -213,14 +216,14 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
                           key={req.id}
                           className={cn(
                             "flex items-center justify-between text-xs px-2 py-1.5 rounded",
-                            req.isRequired && !ok ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700"
+                            req.isRequired && !ok ? "bg-danger/10 text-danger" : "bg-gray-50 text-gray-700"
                           )}
                         >
                           <span>
                             {req.item.name} × {req.quantity}
                             {req.isRequired ? "" : " (optional)"}
                           </span>
-                          <span className={cn("font-medium", ok ? "text-green-600" : "text-red-600")}>
+                          <span className={cn("font-medium", ok ? "text-success" : "text-danger")}>
                             {ok ? "✓ Available" : `⚠ ${req.item.status}`}
                           </span>
                         </div>
@@ -249,47 +252,48 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
             {/* Action: Check-In */}
             {mode === "pending" && (
               <div className="space-y-2">
-                <textarea
+                <Textarea
                   placeholder="Notes (optional)…"
                   value={notes[booking.id] || ""}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [booking.id]: e.target.value }))}
-                  className="input w-full text-sm"
+                  className="w-full text-sm"
                   rows={2}
                 />
-                <button
+                <Button
                   onClick={() => handleCheckIn(booking.id)}
                   disabled={isLoading || isPending}
-                  className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+                  className="gap-2"
                 >
                   <LogIn size={14} />
                   {isLoading ? "Checking in…" : "Approve Check-In"}
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Action: Check-Out */}
             {mode === "checked-in" && (
               <div className="space-y-2">
-                <textarea
+                <Textarea
                   placeholder="Check-out notes (optional)…"
                   value={notes[booking.id] || ""}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [booking.id]: e.target.value }))}
-                  className="input w-full text-sm"
+                  className="w-full text-sm"
                   rows={2}
                 />
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleCheckOut(booking.id)}
                   disabled={isLoading || isPending}
-                  className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
+                  className="gap-2"
                 >
                   <LogOut size={14} />
                   {isLoading ? "Checking out…" : "Check Out"}
-                </button>
+                </Button>
               </div>
             )}
           </div>
         )}
-      </div>
+      </Card>
     );
   }
 

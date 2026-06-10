@@ -4,6 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { assignDuty } from "@/actions/duty.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 type Template = { id: string; name: string; type: string };
 type Staff = { id: string; name: string };
@@ -52,19 +57,18 @@ export default function AssignDutyForm({
     });
   }
 
+  const FormShell = embedded ? "div" : Card;
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={embedded ? "space-y-5" : "card p-6 space-y-5 max-w-lg"}
-    >
+    <form onSubmit={handleSubmit}>
+      <FormShell className={embedded ? "space-y-5" : "p-6 space-y-5 max-w-lg"}>
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
-          Duty form
-        </label>
+        <Label htmlFor="assign-duty-template">Duty form</Label>
         <select
+          id="assign-duty-template"
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
-          className="input w-full"
+          className={cn(inputStyles)}
           required
         >
           {templates.map((t) => (
@@ -76,26 +80,23 @@ export default function AssignDutyForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
-          Date
-        </label>
-        <input
+        <Label htmlFor="assign-duty-date">Date</Label>
+        <Input
+          id="assign-duty-date"
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="input w-full"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--navy)] mb-1">
-          Assigned to
-        </label>
+        <Label htmlFor="assign-duty-staff">Assigned to</Label>
         <select
+          id="assign-duty-staff"
           value={assignedToId}
           onChange={(e) => setAssignedToId(e.target.value)}
-          className="input w-full"
+          className={cn(inputStyles)}
           required
         >
           {staff.map((s) => (
@@ -107,19 +108,16 @@ export default function AssignDutyForm({
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={pending} className="btn-primary">
+        <Button type="submit" disabled={pending}>
           {pending ? "Assigning…" : "Assign duty"}
-        </button>
+        </Button>
         {!embedded && (
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
-          </button>
+          </Button>
         )}
       </div>
+      </FormShell>
     </form>
   );
 }

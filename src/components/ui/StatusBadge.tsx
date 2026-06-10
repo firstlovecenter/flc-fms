@@ -40,143 +40,49 @@ type Status =
   | "DISPOSED"
   | string;
 
+/** Semantic tones — all colors flow from design tokens, dark mode adapts
+    automatically because the token channels brighten in `.dark`. */
+const TONE = {
+  success: "bg-success/10 text-success border-success/25",
+  warning: "bg-warning/10 text-warning border-warning/25",
+  danger:  "bg-danger/10 text-danger border-danger/25",
+  info:    "bg-info/10 text-info border-info/25",
+  violet:  "bg-inventory/10 text-inventory border-inventory/25",
+  orange:  "bg-maintenance/10 text-maintenance border-maintenance/25",
+  neutral: "bg-foreground/5 text-muted-foreground border-foreground/10",
+} as const;
+
+type Tone = keyof typeof TONE;
+
 interface StatusConfig {
   label: string;
   icon: React.ElementType;
-  className: string;
+  tone: Tone;
   pulse?: boolean;
 }
 
 const STATUS_MAP: Record<string, StatusConfig> = {
-  PENDING: {
-    label: "Pending",
-    icon: Clock,
-    className:
-      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/40",
-    pulse: true,
-  },
-  APPROVED: {
-    label: "Approved",
-    icon: CheckCircle2,
-    className:
-      "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/40",
-  },
-  REJECTED: {
-    label: "Rejected",
-    icon: XCircle,
-    className:
-      "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/40",
-  },
-  CANCELLED: {
-    label: "Cancelled",
-    icon: Ban,
-    className:
-      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
-  },
-  COMPLETED: {
-    label: "Completed",
-    icon: CheckCheck,
-    className:
-      "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40",
-  },
-  PAID: {
-    label: "Paid",
-    icon: CreditCard,
-    className:
-      "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/40",
-  },
-  UNPAID: {
-    label: "Unpaid",
-    icon: AlertCircle,
-    className:
-      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/40",
-  },
-  FAILED: {
-    label: "Failed",
-    icon: XCircle,
-    className:
-      "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/40",
-  },
-  REFUNDED: {
-    label: "Refunded",
-    icon: RefreshCw,
-    className:
-      "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/40",
-  },
-  OPEN: {
-    label: "Open",
-    icon: CircleDot,
-    className:
-      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/40",
-    pulse: true,
-  },
-  IN_PROGRESS: {
-    label: "In Progress",
-    icon: TrendingUp,
-    className:
-      "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40",
-  },
-  RESOLVED: {
-    label: "Resolved",
-    icon: CheckCircle2,
-    className:
-      "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/40",
-  },
-  CLOSED: {
-    label: "Closed",
-    icon: Ban,
-    className:
-      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
-  },
-  LOW: {
-    label: "Low",
-    icon: CircleDot,
-    className:
-      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
-  },
-  MEDIUM: {
-    label: "Medium",
-    icon: AlertCircle,
-    className:
-      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/40",
-  },
-  HIGH: {
-    label: "High",
-    icon: AlertCircle,
-    className:
-      "bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800/40",
-  },
-  CRITICAL: {
-    label: "Critical",
-    icon: XCircle,
-    className:
-      "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/40",
-    pulse: true,
-  },
-  AVAILABLE: {
-    label: "Available",
-    icon: CheckCircle2,
-    className:
-      "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/40",
-  },
-  CHECKED_OUT: {
-    label: "Checked Out",
-    icon: Package,
-    className:
-      "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/40",
-  },
-  UNDER_MAINTENANCE: {
-    label: "Maintenance",
-    icon: Wrench,
-    className:
-      "bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800/40",
-  },
-  DISPOSED: {
-    label: "Disposed",
-    icon: Ban,
-    className:
-      "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
-  },
+  PENDING:           { label: "Pending",     icon: Clock,        tone: "warning", pulse: true },
+  APPROVED:          { label: "Approved",    icon: CheckCircle2, tone: "success" },
+  REJECTED:          { label: "Rejected",    icon: XCircle,      tone: "danger" },
+  CANCELLED:         { label: "Cancelled",   icon: Ban,          tone: "neutral" },
+  COMPLETED:         { label: "Completed",   icon: CheckCheck,   tone: "info" },
+  PAID:              { label: "Paid",        icon: CreditCard,   tone: "success" },
+  UNPAID:            { label: "Unpaid",      icon: AlertCircle,  tone: "warning" },
+  FAILED:            { label: "Failed",      icon: XCircle,      tone: "danger" },
+  REFUNDED:          { label: "Refunded",    icon: RefreshCw,    tone: "violet" },
+  OPEN:              { label: "Open",        icon: CircleDot,    tone: "orange", pulse: true },
+  IN_PROGRESS:       { label: "In Progress", icon: TrendingUp,   tone: "info" },
+  RESOLVED:          { label: "Resolved",    icon: CheckCircle2, tone: "success" },
+  CLOSED:            { label: "Closed",      icon: Ban,          tone: "neutral" },
+  LOW:               { label: "Low",         icon: CircleDot,    tone: "neutral" },
+  MEDIUM:            { label: "Medium",      icon: AlertCircle,  tone: "warning" },
+  HIGH:              { label: "High",        icon: AlertCircle,  tone: "orange" },
+  CRITICAL:          { label: "Critical",    icon: XCircle,      tone: "danger", pulse: true },
+  AVAILABLE:         { label: "Available",   icon: CheckCircle2, tone: "success" },
+  CHECKED_OUT:       { label: "Checked Out", icon: Package,      tone: "info" },
+  UNDER_MAINTENANCE: { label: "Maintenance", icon: Wrench,       tone: "orange" },
+  DISPOSED:          { label: "Disposed",    icon: Ban,          tone: "neutral" },
 };
 
 interface StatusBadgeProps {
@@ -200,8 +106,7 @@ export function StatusBadge({
   const config = STATUS_MAP[status] ?? {
     label: status,
     icon: CircleDot,
-    className:
-      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
+    tone: "neutral" as Tone,
   };
 
   const Icon = config.icon;
@@ -217,7 +122,7 @@ export function StatusBadge({
       className={cn(
         "inline-flex items-center rounded-md border font-semibold leading-none tracking-wide whitespace-nowrap select-none",
         sizeClasses[size],
-        config.className,
+        TONE[config.tone],
         className,
       )}
     >

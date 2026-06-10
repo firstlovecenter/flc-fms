@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Laptop, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function ThemeModeSwitcher() {
+export function ThemeModeSwitcher({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -13,7 +15,7 @@ export function ThemeModeSwitcher() {
   }, []);
 
   if (!mounted) {
-    return <div className="btn-icon w-[34px] h-[34px]" aria-hidden />;
+    return <div className={cn("size-[34px]", className)} aria-hidden />;
   }
 
   const currentTheme = theme ?? "system";
@@ -34,14 +36,19 @@ export function ThemeModeSwitcher() {
     : Laptop;
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon-sm"
       onClick={() => setTheme(nextTheme)}
-      className="btn-icon border border-[var(--border)] hover:border-[var(--gold)] hover:text-[var(--gold)]"
+      className={cn(
+        "border border-[var(--border)] hover:border-gold hover:text-gold",
+        className
+      )}
       aria-label={`${label} — click to switch`}
       title={`${label} (click to switch)`}
     >
       <Icon size={16} />
-    </button>
+    </Button>
   );
 }

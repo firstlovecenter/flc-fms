@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteDutyLog } from "@/actions/duty.actions";
 import { formatDutyDate } from "@/lib/duty/format";
 import type { SerializedDutyLog } from "./types";
+import { Card } from "@/components/ui/card";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE:
@@ -47,15 +50,14 @@ export default function DutyLogListClient({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <form method="get" className="flex items-center gap-2">
-          <label htmlFor="date" className="text-sm text-[var(--muted)]">
+          <Label htmlFor="date" className="text-sm text-[var(--muted)]">
             Date
-          </label>
-          <input
+          </Label>
+          <Input
             id="date"
             name="date"
             type="date"
             defaultValue={selectedDate}
-            className="input"
             onChange={(e) => {
               const params = new URLSearchParams();
               params.set("date", e.target.value);
@@ -66,7 +68,7 @@ export default function DutyLogListClient({
       </div>
 
       {logs.length === 0 ? (
-        <div className="card p-10 text-center text-[var(--muted)]">
+        <Card className="p-10 text-center text-[var(--muted)]">
           <p>
             {canManage
               ? `No duty logs for ${formatDutyDate(new Date(selectedDate))}.`
@@ -78,9 +80,9 @@ export default function DutyLogListClient({
               the header to create one.
             </p>
           )}
-        </div>
+        </Card>
       ) : (
-        <div className="card overflow-hidden">
+        <Card className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--cream-dark)]">
@@ -153,7 +155,7 @@ export default function DutyLogListClient({
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
     </div>
   );

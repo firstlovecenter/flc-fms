@@ -3,6 +3,12 @@
 import { useState, useRef } from "react";
 import { Upload, X, FileImage } from "lucide-react";
 import { requestCeremonyCode } from "@/actions/ceremony-code.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 export default function CeremonyCodeRequestForm() {
   const [form, setForm] = useState({
@@ -99,10 +105,10 @@ export default function CeremonyCodeRequestForm() {
 
   if (success) {
     return (
-      <div className="card p-8 text-center space-y-3">
-        <div className="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+      <Card className="p-8 text-center space-y-3">
+        <div className="w-14 h-14 mx-auto rounded-full bg-success/10 flex items-center justify-center">
           <svg
-            className="w-7 h-7 text-green-600"
+            className="w-7 h-7 text-success"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -122,63 +128,60 @@ export default function CeremonyCodeRequestForm() {
           Your request has been received. You will receive your booking code via
           SMS and email once your payment is confirmed.
         </p>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-8 space-y-5 max-w-lg mx-auto">
+    <form onSubmit={handleSubmit} ><Card className="p-8 space-y-5 max-w-lg mx-auto">
       <div className="form-group">
-        <label className="label" htmlFor="ceremony-type">Ceremony Type</label>
-        <select
+        <Label htmlFor="ceremony-type">Ceremony Type</Label>
+        <NativeSelect
           id="ceremony-type"
           name="ceremonyType"
           value={form.ceremonyType}
           onChange={handleChange}
-          className="input"
+          className="w-full"
           required
         >
           <option value="WEDDING">Wedding</option>
           <option value="NAMING">Naming Ceremony</option>
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="form-group">
-        <label className="label" htmlFor="ceremony-name">Full Name *</label>
-        <input
+        <Label htmlFor="ceremony-name">Full Name *</Label>
+        <Input
           id="ceremony-name"
           name="name"
           value={form.name}
           onChange={handleChange}
-          className="input"
           placeholder="Your full name"
           required
         />
       </div>
 
       <div className="form-group">
-        <label className="label" htmlFor="ceremony-phone">Phone Number *</label>
-        <input
+        <Label htmlFor="ceremony-phone">Phone Number *</Label>
+        <Input
           id="ceremony-phone"
           name="phone"
           type="tel"
           value={form.phone}
           onChange={handleChange}
-          className="input"
           placeholder="e.g. 0244000000"
           required
         />
       </div>
 
       <div className="form-group">
-        <label className="label" htmlFor="ceremony-email">Email Address *</label>
-        <input
+        <Label htmlFor="ceremony-email">Email Address *</Label>
+        <Input
           id="ceremony-email"
           name="email"
           type="email"
           value={form.email}
           onChange={handleChange}
-          className="input"
           placeholder="you@email.com"
           required
         />
@@ -186,9 +189,9 @@ export default function CeremonyCodeRequestForm() {
 
       {/* Payment Receipt Upload */}
       <div>
-        <label className="label">
+        <Label htmlFor="receipt-upload">
           Payment Receipt / Screenshot *
-        </label>
+        </Label>
         <p className="text-xs text-[var(--muted)] mb-2">
           Upload a screenshot or photo of your payment confirmation. Accepted formats: JPEG, PNG, WebP, PDF (max 5MB).
         </p>
@@ -231,40 +234,41 @@ export default function CeremonyCodeRequestForm() {
             <button
               type="button"
               onClick={removeFile}
-              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center hover:bg-red-50"
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center hover:bg-danger/10"
               title="Remove file"
+              aria-label="Remove file"
             >
-              <X size={12} className="text-red-500" />
+              <X size={12} className="text-danger" />
             </button>
           </div>
         )}
 
         {uploadError && (
-          <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+          <p className="text-xs text-danger mt-1">{uploadError}</p>
         )}
       </div>
 
       <div>
-        <label className="label">Notes (optional)</label>
-        <textarea
+        <Label htmlFor="ceremony-notes">Notes (optional)</Label>
+        <Textarea
+          id="ceremony-notes"
           name="notes"
           value={form.notes}
           onChange={handleChange}
-          className="input"
           rows={3}
           placeholder="e.g. preferred date range, any special requests"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
+      {error && <p className="text-sm text-danger" role="alert">{error}</p>}
 
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="btn-primary w-full disabled:opacity-50"
+        className="w-full"
       >
         {loading ? "Submitting…" : "Request Booking Code"}
-      </button>
-    </form>
+      </Button>
+    </Card></form>
   );
 }

@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
 import { sendCustomSMSToBooker } from "@/actions/sms.actions";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const TEMPLATES = [
   { label: "Access Code", template: "Your access code for booking \"{title}\" is: [CODE]. Please present this at the reception desk." },
@@ -52,13 +54,14 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => { setOpen(true); setError(null); setSuccess(null); }}
-        className="btn-secondary inline-flex items-center gap-1.5 text-sm"
+        className="gap-1.5"
       >
         <MessageSquare size={14} /> Send SMS
-      </button>
+      </Button>
 
       {open && (
         <div
@@ -76,14 +79,14 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
                   To: {bookerName} ({bookerPhone})
                 </p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="p-1 rounded hover:bg-gray-100">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="p-1 rounded hover:bg-gray-100">
                 <X size={18} className="text-gray-500" />
               </button>
             </div>
 
             <div className="p-5 space-y-4">
-              {error && <div className="bg-red-50 text-red-700 text-sm rounded-lg p-3 border border-red-200">{error}</div>}
-              {success && <div className="bg-green-50 text-green-700 text-sm rounded-lg p-3 border border-green-200">{success}</div>}
+              {error && <div className="bg-danger/10 text-danger text-sm rounded-lg p-3 border border-danger/25">{error}</div>}
+              {success && <div className="bg-success/10 text-success text-sm rounded-lg p-3 border border-success/25">{success}</div>}
 
               <div>
                 <label className="block text-xs font-semibold text-[var(--muted)] mb-1.5">Quick Templates</label>
@@ -105,8 +108,8 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
                 <label className="block text-xs font-semibold text-[var(--muted)] mb-1.5">
                   Message <span className="font-normal">({message.length}/480)</span>
                 </label>
-                <textarea
-                  className="input w-full"
+                <Textarea
+                  className="w-full"
                   rows={4}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -116,17 +119,17 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
               </div>
 
               <div className="flex justify-end gap-2">
-                <button type="button" className="btn-secondary text-sm" onClick={() => setOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn-primary inline-flex items-center gap-1.5 text-sm"
+                  className="gap-1.5"
                   disabled={isPending || !message.trim()}
                   onClick={handleSend}
                 >
                   <Send size={14} /> {isPending ? "Sending…" : "Send SMS"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

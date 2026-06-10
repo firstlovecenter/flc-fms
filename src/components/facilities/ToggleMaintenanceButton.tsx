@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Wrench, X, Calendar } from "lucide-react";
 import { toggleMaintenanceLock } from "@/actions/facility.actions";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ToggleMaintenanceButton({
   facilityId,
@@ -53,7 +55,7 @@ export default function ToggleMaintenanceButton({
           onClick={handleUnlock}
           disabled={loading}
           title="End maintenance period"
-          className="p-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-50 bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 flex items-center gap-1.5"
+          className="p-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-50 bg-maintenance/10 text-maintenance border-maintenance/25 hover:bg-maintenance/20 flex items-center gap-1.5"
         >
           <Wrench size={14} />
           <span className="text-xs">End Maintenance</span>
@@ -75,14 +77,15 @@ export default function ToggleMaintenanceButton({
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
             <button
               onClick={() => setShowModal(false)}
+              aria-label="Close"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
             >
               <X size={18} />
             </button>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                <Wrench size={18} className="text-orange-600" />
+              <div className="w-10 h-10 rounded-xl bg-maintenance/10 flex items-center justify-center">
+                <Wrench size={18} className="text-maintenance" />
               </div>
               <div>
                 <h2 className="font-bold text-[var(--navy)] text-lg leading-tight">Set Maintenance Period</h2>
@@ -95,11 +98,11 @@ export default function ToggleMaintenanceButton({
                 <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
                   <Calendar size={13} /> Start Date *
                 </label>
-                <input
+                <Input
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="input w-full"
+                  className="w-full"
                   required
                 />
               </div>
@@ -107,32 +110,33 @@ export default function ToggleMaintenanceButton({
                 <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
                   <Calendar size={13} /> End Date <span className="text-slate-400 font-normal">(optional)</span>
                 </label>
-                <input
+                <Input
                   type="date"
                   value={endDate}
                   min={startDate}
                   onChange={e => setEndDate(e.target.value)}
-                  className="input w-full"
+                  className="w-full"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Leave blank for indefinite maintenance</p>
               </div>
             </div>
 
             <div className="flex gap-2 mt-6">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setShowModal(false)}
-                className="flex-1 btn-secondary"
+                className="flex-1"
                 disabled={loading}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleLock}
                 disabled={loading || !startDate}
-                className="flex-1 btn-primary bg-orange-500 hover:bg-orange-600 border-orange-500 disabled:opacity-50"
+                className="flex-1 bg-maintenance hover:bg-maintenance/90"
               >
                 {loading ? "Saving…" : "Lock Facility"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

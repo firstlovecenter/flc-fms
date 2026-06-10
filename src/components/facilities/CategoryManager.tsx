@@ -8,6 +8,9 @@ import {
   toggleBookingCategory,
   deleteBookingCategory,
 } from "@/actions/category.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface Category {
   id: string;
@@ -92,9 +95,9 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   }
 
   return (
-    <div className="card p-6 space-y-4">
+    <Card className="p-6 space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div className="space-y-2">
@@ -102,17 +105,17 @@ export default function CategoryManager({ initialCategories }: { initialCategori
           <div key={cat.id} className="flex items-center justify-between py-3 px-4 bg-white border border-[var(--border)] rounded-xl">
             {editingId === cat.id ? (
               <div className="flex items-center gap-3 flex-1">
-                <input
-                  className="input text-sm flex-1"
+                <Input
+                  className="text-sm flex-1"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Category name"
                   autoFocus
                 />
-                <button onClick={handleSave} disabled={isPending} className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
+                <button onClick={handleSave} disabled={isPending} aria-label="Save" className="p-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20">
                   <Check size={14} />
                 </button>
-                <button onClick={cancel} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+                <button onClick={cancel} aria-label="Cancel" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
                   <X size={14} />
                 </button>
               </div>
@@ -130,7 +133,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                     disabled={isPending}
                     className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                       cat.isActive
-                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        ? "bg-success/10 text-success border-success/25 hover:bg-success/20"
                         : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                     }`}
                   >
@@ -138,6 +141,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                   </button>
                   <button
                     onClick={() => startEdit(cat)}
+                    aria-label="Edit category"
                     className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)]"
                   >
                     <Pencil size={13} />
@@ -145,8 +149,9 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                   <button
                     onClick={() => handleDelete(cat)}
                     disabled={isPending}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-[var(--muted)] hover:text-red-600 disabled:opacity-50"
+                    className="p-1.5 rounded-lg hover:bg-danger/10 text-[var(--muted)] hover:text-danger disabled:opacity-50"
                     title="Delete category"
+                    aria-label="Delete category"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -158,18 +163,18 @@ export default function CategoryManager({ initialCategories }: { initialCategori
       </div>
 
       {adding ? (
-        <div className="flex items-center gap-3 py-3 px-4 bg-brand-50 border border-[var(--navy)] rounded-xl">
-          <input
-            className="input text-sm flex-1"
+        <div className="flex items-center gap-3 py-3 px-4 bg-gold-pale border border-[var(--navy)] rounded-xl">
+          <Input
+            className="text-sm flex-1"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="New category name"
             autoFocus
           />
-          <button onClick={handleSave} disabled={isPending} className="btn-primary text-sm py-1.5 px-4">
+          <Button onClick={handleSave} disabled={isPending}>
             {isPending ? "Saving…" : "Add"}
-          </button>
-          <button onClick={cancel} className="btn-secondary text-sm py-1.5 px-4">Cancel</button>
+          </Button>
+          <Button variant="outline" onClick={cancel}>Cancel</Button>
         </div>
       ) : (
         <button
@@ -179,6 +184,6 @@ export default function CategoryManager({ initialCategories }: { initialCategori
           <Plus size={15} /> Add Category
         </button>
       )}
-    </div>
+    </Card>
   );
 }

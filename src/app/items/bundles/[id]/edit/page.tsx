@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { getBookableItems } from "@/actions/bookable-items.actions";
 import AddBundleForm from "@/components/items/AddBundleForm";
+import { Card } from "@/components/ui/card";
 
 export default async function EditBundlePage({ params }: { params: { id: string } }) {
   await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
@@ -48,7 +49,7 @@ export default async function EditBundlePage({ params }: { params: { id: string 
         </div>
       </div>
 
-      <div className="card max-w-[720px]">
+      <Card className="max-w-[720px]">
         <div className="card-inset">
           <AddBundleForm
             bundleId={bundle.id}
@@ -56,7 +57,7 @@ export default async function EditBundlePage({ params }: { params: { id: string 
             defaultValues={defaultValues}
           />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -2,31 +2,33 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth/guards";
 import { getInventoryItems, getInventoryCategories } from "@/actions/inventory.actions";
 import type { InventoryStatus } from "@prisma/client";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import PageHeader from "@/components/layout/PageHeader";
+import { Card } from "@/components/ui/card";
 
 function ConditionBadge({ condition }: { condition: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    EXCELLENT: { label: "Excellent", bg: "#dcfce7", color: "#15803d" },
-    GOOD:      { label: "Good",      bg: "#dbeafe", color: "#1d4ed8" },
-    FAIR:      { label: "Fair",      bg: "#fef9c3", color: "#854d0e" },
-    POOR:      { label: "Poor",      bg: "#fee2e2", color: "#dc2626" },
-    DAMAGED:   { label: "Damaged",   bg: "#fce7f3", color: "#9d174d" },
-    DISPOSED:  { label: "Disposed",  bg: "#f1f5f9", color: "#64748b" },
+  const map: Record<string, { label: string; classes: string }> = {
+    EXCELLENT: { label: "Excellent", classes: "bg-success/10 text-success border border-success/25" },
+    GOOD:      { label: "Good",      classes: "bg-info/10 text-info border border-info/25" },
+    FAIR:      { label: "Fair",      classes: "bg-warning/10 text-warning border border-warning/25" },
+    POOR:      { label: "Poor",      classes: "bg-danger/10 text-danger border border-danger/25" },
+    DAMAGED:   { label: "Damaged",   classes: "bg-danger/10 text-danger border border-danger/25" },
+    DISPOSED:  { label: "Disposed",  classes: "bg-foreground/5 text-muted-foreground border border-foreground/10" },
   };
-  const s = map[condition] ?? { label: condition, bg: "#f1f5f9", color: "#64748b" };
-  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+  const s = map[condition] ?? { label: condition, classes: "bg-foreground/5 text-muted-foreground border border-foreground/10" };
+  return <span className={`text-[0.72rem] font-bold px-2 py-0.5 rounded-full ${s.classes}`}>{s.label}</span>;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    AVAILABLE:         { label: "Available",   bg: "#dcfce7", color: "#15803d" },
-    IN_USE:            { label: "In Use",      bg: "#dbeafe", color: "#1d4ed8" },
-    CHECKED_OUT:       { label: "Checked Out", bg: "#fef9c3", color: "#854d0e" },
-    UNDER_MAINTENANCE: { label: "Maintenance", bg: "#fce7f3", color: "#9d174d" },
-    DISPOSED:          { label: "Disposed",    bg: "#f1f5f9", color: "#64748b" },
-    LOST:              { label: "Lost",        bg: "#fee2e2", color: "#dc2626" },
-  };
-  const s = map[status] ?? { label: status, bg: "#f1f5f9", color: "#64748b" };
-  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+function ItemStatusBadge({ status }: { status: string }) {
+  if (status === "IN_USE") return <StatusBadge status="CHECKED_OUT" label="In Use" />;
+  if (status === "LOST")   return <StatusBadge status="FAILED" label="Lost" />;
+  return <StatusBadge status={status} />;
 }
 
 export default async function InventoryItemsPage({
@@ -50,36 +52,37 @@ export default async function InventoryItemsPage({
 
   return (
     <div className="space-y-5 animate-fade-in relative">
-      {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">
-            <Link href="/inventory" className="opacity-70 hover:opacity-100 transition-opacity">Inventory</Link> / Items
-          </p>
-          <h1 className="page-title text-[2rem] mb-2">All Items</h1>
-          <p className="page-hero-muted text-[0.95rem]">{total} item{total !== 1 ? "s" : ""} found</p>
-        </div>
-        {canManage && (
-          <Link href="/inventory/items/new" className="btn-gold inline-flex items-center gap-2 flex-shrink-0 mt-3">+ Add Item</Link>
-        )}
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Inventory · Items"
+        title="All Items"
+        description={`${total} item${total !== 1 ? "s" : ""} found`}
+        className="relative z-10"
+        actions={
+          canManage ? (
+            <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "gold" }), "gap-2 flex-shrink-0")}>
+              + Add Item
+            </Link>
+          ) : undefined
+        }
+      />
 
       {/* Filters */}
-      <form method="get" className="card p-4 px-5 flex flex-wrap gap-3 items-end">
+      <form method="get" ><Card className="p-4 px-5 flex flex-wrap gap-3 items-end">
         <div className="flex flex-col gap-1 min-w-[160px]">
-          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Search</label>
-          <input name="search" defaultValue={searchParams.search ?? ""} className="input text-[0.85rem] py-1.5 px-2.5" placeholder="Name, serial, asset tag…" />
+          <Label className="text-[0.75rem] font-semibold text-[var(--slate)]">Search</Label>
+          <Input name="search" defaultValue={searchParams.search ?? ""} className="text-[0.85rem]" placeholder="Name, serial, asset tag…" />
         </div>
         <div className="flex flex-col gap-1 min-w-[150px]">
-          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Category</label>
-          <select name="categoryId" defaultValue={searchParams.categoryId ?? ""} className="input text-[0.85rem] py-1.5 px-2.5">
+          <Label className="text-[0.75rem] font-semibold text-[var(--slate)]">Category</Label>
+          <NativeSelect name="categoryId" defaultValue={searchParams.categoryId ?? ""} className="w-full text-[0.85rem]">
             <option value="">All Categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          </NativeSelect>
         </div>
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-[0.75rem] font-semibold text-[var(--slate)]">Status</label>
-          <select name="status" defaultValue={searchParams.status ?? ""} className="input text-[0.85rem] py-1.5 px-2.5">
+          <Label className="text-[0.75rem] font-semibold text-[var(--slate)]">Status</Label>
+          <NativeSelect name="status" defaultValue={searchParams.status ?? ""} className="w-full text-[0.85rem]">
             <option value="">All Statuses</option>
             <option value="AVAILABLE">Available</option>
             <option value="IN_USE">In Use</option>
@@ -87,16 +90,16 @@ export default async function InventoryItemsPage({
             <option value="UNDER_MAINTENANCE">Maintenance</option>
             <option value="DISPOSED">Disposed</option>
             <option value="LOST">Lost</option>
-          </select>
+          </NativeSelect>
         </div>
         <div className="flex gap-2">
-          <button type="submit" className="btn-primary text-[0.85rem] py-1.5 px-4">Apply</button>
-          <Link href="/inventory/items" className="btn-secondary text-[0.85rem] py-1.5 px-3.5">Clear</Link>
+          <Button type="submit" size="sm">Apply</Button>
+          <Link href="/inventory/items" className={buttonVariants({ variant: "outline", size: "sm" })}>Clear</Link>
         </div>
-      </form>
+      </Card></form>
 
       {/* Table */}
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
@@ -124,10 +127,10 @@ export default async function InventoryItemsPage({
                   </td>
                   <td className="py-3 px-4 text-center font-semibold text-[var(--navy)]">{item.quantity}</td>
                   <td className="py-3 px-4"><ConditionBadge condition={item.condition} /></td>
-                  <td className="py-3 px-4"><StatusBadge status={item.status} /></td>
+                  <td className="py-3 px-4"><ItemStatusBadge status={item.status} /></td>
                   <td className="py-3 px-4 whitespace-nowrap">
                     <div className="flex gap-2">
-                      <Link href={`/inventory/items/${item.id}`} className="btn-secondary text-[0.78rem] py-0.5 px-2.5">View</Link>
+                      <Link href={`/inventory/items/${item.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>View</Link>
                       {canManage && (
                         <Link href={`/inventory/items/${item.id}/edit`} className="text-[0.78rem] font-semibold text-[var(--gold)] py-0.5 px-2.5 rounded border border-[rgba(200,163,90,0.4)] hover:border-[rgba(200,163,90,0.7)] transition-colors">Edit</Link>
                       )}
@@ -153,15 +156,15 @@ export default async function InventoryItemsPage({
             <span className="text-[0.8rem] text-[var(--muted)]">Page {page} of {pages}</span>
             <div className="flex gap-2">
               {page > 1 && (
-                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page - 1) })}`} className="btn-secondary text-[0.8rem] py-1 px-3">← Prev</Link>
+                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page - 1) })}`} className={buttonVariants({ variant: "outline", size: "sm" })}>← Prev</Link>
               )}
               {page < pages && (
-                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page + 1) })}`} className="btn-primary text-[0.8rem] py-1 px-3">Next →</Link>
+                <Link href={`?${new URLSearchParams({ ...searchParams, page: String(page + 1) })}`} className={buttonVariants({ variant: "default", size: "sm" })}>Next →</Link>
               )}
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

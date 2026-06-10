@@ -4,6 +4,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", notation: "compact" }).format(v);
@@ -40,24 +44,24 @@ export default function BookingsTab({ data, downloadUrl }: Props) {
           { label: "Avg Booking Value", value: money(data.avgValue) },
           { label: "Paid Bookings",     value: data.totalPaid },
         ].map(({ label, value }) => (
-          <div key={label} className="card p-4 border border-[var(--border)]">
+          <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className="text-xl font-bold mt-1 text-[var(--navy)]">{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* By Status */}
-        <div className="card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--navy)]">Bookings by Status</h3>
-            <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+            <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
           </div>
           <div className="space-y-3">
             {data.statusBreakdown.map((b) => (
               <div key={b.status} className="flex items-center gap-3">
-                <span className="text-xs font-bold w-24 text-[var(--slate)]">{b.status}</span>
+                <StatusBadge status={b.status} size="xs" className="w-24 justify-center" />
                 <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
                   <div
                     className="h-full rounded-full"
@@ -72,10 +76,10 @@ export default function BookingsTab({ data, downloadUrl }: Props) {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* By Category donut */}
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">By Category</h3>
           {data.categoryBreakdown.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No data.</p>
@@ -93,11 +97,11 @@ export default function BookingsTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Top Facilities bar */}
-      <div className="card p-6">
+      <Card className="p-6">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Revenue by Facility</h3>
         {data.facilityBreakdown.length === 0 ? (
           <p className="text-sm text-[var(--muted)] text-center py-8">No facility bookings in this period.</p>
@@ -118,7 +122,7 @@ export default function BookingsTab({ data, downloadUrl }: Props) {
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

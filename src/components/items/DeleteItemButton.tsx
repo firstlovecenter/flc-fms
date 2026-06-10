@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBookableItem, deleteBookableBundle } from "@/actions/bookable-items.actions";
 import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function DeleteItemButton({
   id,
@@ -32,31 +33,34 @@ export default function DeleteItemButton({
   if (confirming) {
     return (
       <span className="flex gap-1">
-        <button
+        <Button
+          variant="destructive"
+          size="sm"
           onClick={handleDelete}
           disabled={loading}
-          className="text-xs px-2 py-1 rounded font-semibold"
-          style={{ background: "#dc2626", color: "#fff" }}
         >
           {loading ? "…" : "Confirm"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setConfirming(false)}
-          className="btn-secondary text-xs px-2 py-1"
         >
           Cancel
-        </button>
+        </Button>
       </span>
     );
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
+      size="sm"
       onClick={() => setConfirming(true)}
-      className="btn-secondary text-xs px-2 py-1 flex items-center gap-1"
+      className="gap-1"
       title={`Delete ${name}`}
     >
       <Trash2 size={12} /> Delete
-    </button>
+    </Button>
   );
 }

@@ -22,6 +22,13 @@ import {
   removeCeremonyDateOverride,
 } from "@/actions/ceremony-venue.actions";
 import { getFirstSaturdaysForMonths, toDateStr } from "@/lib/ceremony-utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Card } from "@/components/ui/card";
 
 type Code = {
   id: string;
@@ -65,12 +72,17 @@ const EMPTY_FORM: FormState = { name: "", phone: "", email: "", ceremonyType: "W
 
 const STATUS_TABS = ["ALL", "PENDING", "ACTIVE", "USED", "EXPIRED"] as const;
 
-const STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  ACTIVE:  "bg-green-100 text-green-700",
-  USED:    "bg-blue-100 text-blue-700",
-  EXPIRED: "bg-gray-100 text-gray-500",
+const CEREMONY_STATUS_MAP: Record<string, { status: string; label?: string }> = {
+  PENDING: { status: "PENDING" },
+  ACTIVE:  { status: "APPROVED", label: "Active" },
+  USED:    { status: "COMPLETED", label: "Used" },
+  EXPIRED: { status: "CANCELLED", label: "Expired" },
 };
+
+function CeremonyCodeStatus({ status }: { status: string }) {
+  const cfg = CEREMONY_STATUS_MAP[status] ?? { status };
+  return <StatusBadge status={cfg.status} label={cfg.label} size="xs" />;
+}
 
 function fmt(d: Date) {
   return new Date(d).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
@@ -80,13 +92,13 @@ function fmt(d: Date) {
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="card w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+      <Card className="w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)]">{title}</h2>
           <button onClick={onClose} className="p-1 rounded hover:bg-gray-100"><X size={16} /></button>
         </div>
         {children}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -111,38 +123,38 @@ function CodeForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="label text-xs">Ceremony Type</label>
-        <select value={f.ceremonyType} onChange={(e) => set("ceremonyType", e.target.value as "WEDDING" | "NAMING")} className="input text-sm">
+        <Label className="text-xs">Ceremony Type</Label>
+        <NativeSelect value={f.ceremonyType} onChange={(e) => set("ceremonyType", e.target.value as "WEDDING" | "NAMING")} className="w-full text-sm">
           <option value="WEDDING">Wedding</option>
           <option value="NAMING">Naming Ceremony</option>
-        </select>
+        </NativeSelect>
       </div>
       <div>
-        <label className="label text-xs">Full Name *</label>
-        <input value={f.name} onChange={(e) => set("name", e.target.value)} className="input text-sm" placeholder="Requester's full name" />
+        <Label className="text-xs">Full Name *</Label>
+        <Input value={f.name} onChange={(e) => set("name", e.target.value)} className="text-sm" placeholder="Requester's full name" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-xs">Phone *</label>
-          <input value={f.phone} onChange={(e) => set("phone", e.target.value)} className="input text-sm" placeholder="0244000000" />
+          <Label className="text-xs">Phone *</Label>
+          <Input value={f.phone} onChange={(e) => set("phone", e.target.value)} className="text-sm" placeholder="0244000000" />
         </div>
         <div>
-          <label className="label text-xs">Email *</label>
-          <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} className="input text-sm" placeholder="email@example.com" />
+          <Label className="text-xs">Email *</Label>
+          <Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} className="text-sm" placeholder="email@example.com" />
         </div>
       </div>
       <div>
-        <label className="label text-xs">Notes (optional)</label>
-        <textarea value={f.notes} onChange={(e) => set("notes", e.target.value)} className="input text-sm" rows={2} />
+        <Label className="text-xs">Notes (optional)</Label>
+        <Textarea value={f.notes} onChange={(e) => set("notes", e.target.value)} className="text-sm" rows={2} />
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      <button
+      {error && <p className="text-xs text-danger">{error}</p>}
+      <Button
         onClick={() => onSubmit(f)}
         disabled={loading || !f.name.trim() || !f.phone.trim() || !f.email.trim()}
-        className="btn-primary w-full text-sm disabled:opacity-50"
+        className="w-full text-sm"
       >
         {loading ? "Saving…" : submitLabel}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -344,7 +356,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
           )}
 
           {/* Auto first Saturdays */}
-          <div className="card overflow-hidden">
+          <Card className="overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-[var(--navy)] text-sm">Automatic Ceremony Days</h3>
@@ -378,21 +390,22 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
           {/* Extra ceremony days added by staff */}
-          <div className="card overflow-hidden">
+          <Card className="overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Saturdays</h3>
                 <p className="text-xs text-[var(--muted)] mt-0.5">Additional Saturdays designated as ceremony-only days</p>
               </div>
-              <button
+              <Button
                 onClick={() => { setShowAddDate(true); setDateError(null); setNewDate(""); setNewDateNote(""); }}
-                className="btn-primary text-xs flex items-center gap-1"
+                size="sm"
+                className="text-xs gap-1"
               >
                 <Plus size={12} /> Add Saturday
-              </button>
+              </Button>
             </div>
             {dateOverrides.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-[var(--muted)]">
@@ -433,7 +446,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                 </table>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Add date modal */}
           {showAddDate && (
@@ -443,31 +456,31 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               </p>
               <div className="space-y-3">
                 <div>
-                  <label className="label text-xs">Date (must be a Saturday) *</label>
-                  <input
+                  <Label className="text-xs">Date (must be a Saturday) *</Label>
+                  <Input
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="input text-sm"
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="label text-xs">Note (optional)</label>
-                  <input
+                  <Label className="text-xs">Note (optional)</Label>
+                  <Input
                     value={newDateNote}
                     onChange={(e) => setNewDateNote(e.target.value)}
-                    className="input text-sm"
+                    className="text-sm"
                     placeholder="e.g. Special event date"
                   />
                 </div>
-                {dateError && <p className="text-xs text-red-600">{dateError}</p>}
-                <button
+                {dateError && <p className="text-xs text-danger">{dateError}</p>}
+                <Button
                   onClick={handleAddDate}
                   disabled={!newDate || dateActionLoading === "add"}
-                  className="btn-primary w-full text-sm disabled:opacity-50"
+                  className="w-full text-sm"
                 >
                   {dateActionLoading === "add" ? "Adding…" : "Add Ceremony Day"}
-                </button>
+                </Button>
               </div>
             </Modal>
           )}
@@ -493,18 +506,19 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
           ))}
         </div>
         <div className="flex gap-2">
-          <input
+          <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, email, phone, code…"
-            className="input text-sm flex-1 min-w-0"
+            className="text-sm flex-1 min-w-0"
           />
-          <button
+          <Button
             onClick={() => { setShowCreate(true); setCreateError(null); }}
-            className="btn-primary text-sm flex items-center gap-1.5 whitespace-nowrap"
+            size="sm"
+            className="gap-1.5 whitespace-nowrap"
           >
             <Plus size={14} /> New Code
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -515,7 +529,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       )}
 
       {/* Table */}
-      <div className="card overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
@@ -565,9 +579,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[c.status] ?? ""}`}>
-                        {c.status}
-                      </span>
+                      <CeremonyCodeStatus status={c.status} />
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-xs text-[var(--muted)]">
                       {fmt(c.createdAt)}
@@ -689,7 +701,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       <p className="text-xs text-[var(--muted)] text-right">
         {filtered.length} of {total} total
@@ -735,16 +747,17 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <strong>{deleteTarget.requesterName}</strong>? This cannot be undone.
           </p>
           <div className="flex gap-2 pt-1">
-            <button
+            <Button
               onClick={handleDelete}
               disabled={deleteLoading}
-              className="btn-primary bg-red-600 hover:bg-red-700 text-sm flex-1 disabled:opacity-50"
+              variant="destructive"
+              className="text-sm flex-1"
             >
               {deleteLoading ? "Deleting…" : "Delete"}
-            </button>
-            <button onClick={() => setDeleteTarget(null)} className="flex-1 text-sm border border-[var(--border)] rounded-lg px-4 py-2 hover:bg-gray-50">
+            </Button>
+            <Button onClick={() => setDeleteTarget(null)} variant="outline" className="flex-1 text-sm">
               Cancel
-            </button>
+            </Button>
           </div>
         </Modal>
       )}

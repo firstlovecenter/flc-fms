@@ -4,6 +4,8 @@ import { ArrowLeft, Shield, Key } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
 import StaffRowActions from "@/components/staff/StaffRowActions";
 
 interface Props { params: { id: string } }
@@ -41,15 +43,19 @@ export default async function StaffDetailPage({ params }: Props) {
     <div className="max-w-3xl space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-3">
-        <Link href="/staff" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+        <Link
+          href="/staff"
+          aria-label="Back to staff"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-gray-500")}
+        >
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-900">{member.name}</h1>
           <p className="text-sm text-gray-400">{ROLE_LABELS[member.role] ?? member.role}</p>
         </div>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-          member.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+          member.isActive ? "bg-success/10 text-success border-success/25" : "bg-danger/10 text-danger border-danger/25"
         }`}>
           {member.isActive ? "Active" : "Inactive"}
         </span>
@@ -84,7 +90,7 @@ export default async function StaffDetailPage({ params }: Props) {
           {member.role === "VICAR" && (
             <Link
               href={`/staff/${member.id}/permissions`}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors"
             >
               <Shield size={15} />
               Edit Permissions

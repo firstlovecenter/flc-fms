@@ -37,44 +37,65 @@ type StaffSidebarProps = {
   onClose?: () => void;
 };
 
+type NavAccent =
+  | "gold"
+  | "bookings"
+  | "facilities"
+  | "inventory"
+  | "maintenance"
+  | "finance"
+  | "duty";
+
+/** Static class strings so Tailwind sees them at build time. Accents resolve
+    to their bright variants inside the `.on-navy` sidebar scope. */
+const ACTIVE_ACCENT: Record<NavAccent, string> = {
+  gold:        "bg-gold/15 border-gold/25 [&_svg]:text-gold",
+  bookings:    "bg-bookings/15 border-bookings/25 [&_svg]:text-bookings",
+  facilities:  "bg-facilities/15 border-facilities/25 [&_svg]:text-facilities",
+  inventory:   "bg-inventory/15 border-inventory/25 [&_svg]:text-inventory",
+  maintenance: "bg-maintenance/15 border-maintenance/25 [&_svg]:text-maintenance",
+  finance:     "bg-finance/15 border-finance/25 [&_svg]:text-finance",
+  duty:        "bg-duty/15 border-duty/25 [&_svg]:text-duty",
+};
+
 const NAV_GROUPS = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/tasks",     label: "Tasks",     icon: ListTodo },
-      { href: "/duty",      label: "Duty Logs", icon: ClipboardList },
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, accent: "gold" as NavAccent },
+      { href: "/tasks",     label: "Tasks",     icon: ListTodo,        accent: "gold" as NavAccent },
+      { href: "/duty",      label: "Duty Logs", icon: ClipboardList,   accent: "duty" as NavAccent },
     ],
   },
   {
     label: "Bookings",
     items: [
-      { href: "/bookings", label: "Bookings", icon: CalendarDays },
-      { href: "/checkin", label: "Check-In", icon: ClipboardCheck },
-      { href: "/bookings/content", label: "Booking Content", icon: FileText, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-      { href: "/ceremony-codes", label: "Ceremony Codes", icon: KeyRound, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
+      { href: "/bookings", label: "Bookings", icon: CalendarDays, accent: "bookings" as NavAccent },
+      { href: "/checkin", label: "Check-In", icon: ClipboardCheck, accent: "bookings" as NavAccent },
+      { href: "/bookings/content", label: "Booking Content", icon: FileText, accent: "bookings" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
+      { href: "/ceremony-codes", label: "Ceremony Codes", icon: KeyRound, accent: "bookings" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
     ],
   },
   {
     label: "Facilities & Inventory",
     items: [
-      { href: "/facilities", label: "Facilities", icon: Building2 },
-      { href: "/items", label: "Items & Packages", icon: Package },
-      { href: "/inventory", label: "Inventory", icon: Boxes },
+      { href: "/facilities", label: "Facilities", icon: Building2, accent: "facilities" as NavAccent },
+      { href: "/items", label: "Items & Packages", icon: Package, accent: "inventory" as NavAccent },
+      { href: "/inventory", label: "Inventory", icon: Boxes, accent: "inventory" as NavAccent },
     ],
   },
   {
     label: "Finance",
     items: [
-      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-      { href: "/reports", label: "Reports", icon: BarChart3, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
+      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, accent: "finance" as NavAccent },
+      { href: "/reports", label: "Reports", icon: BarChart3, accent: "finance" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
     ],
   },
   {
     label: "People",
     items: [
-      { href: "/staff", label: "Staff", icon: Users, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
-      { href: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["FACILITY_MANAGER", "VICAR", "SUPER_ADMIN"] },
+      { href: "/staff", label: "Staff", icon: Users, accent: "gold" as NavAccent, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
+      { href: "/maintenance", label: "Maintenance", icon: Wrench, accent: "maintenance" as NavAccent, roles: ["FACILITY_MANAGER", "VICAR", "SUPER_ADMIN"] },
     ],
   },
 ];
@@ -93,21 +114,19 @@ function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 }
 
-function NavItem({ href, label, Icon, isActive }: { href: string; label: string; Icon: React.ElementType; isActive: boolean }) {
+function NavItem({ href, label, Icon, isActive, accent = "gold" }: { href: string; label: string; Icon: React.ElementType; isActive: boolean; accent?: NavAccent }) {
   return (
     <Link
       href={href}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-[0.82rem] transition-all duration-150 relative",
+        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-[0.82rem] transition-all duration-150 relative border",
         isActive
-          ? "font-semibold text-white bg-[rgba(200,163,90,0.14)] border border-[rgba(200,163,90,0.28)] pl-3"
-          : "font-normal text-[rgba(255,255,255,0.5)] hover:text-[rgba(255,255,255,0.85)] hover:bg-[rgba(255,255,255,0.06)] border border-transparent"
+          ? cn("font-semibold text-white", ACTIVE_ACCENT[accent])
+          : "font-normal border-transparent text-[rgba(255,255,255,0.5)] hover:text-[rgba(255,255,255,0.85)] hover:bg-[rgba(255,255,255,0.06)]"
       )}
     >
-      {isActive && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[var(--gold)] rounded-r-full" />
-      )}
-      <Icon size={15} className={cn("shrink-0 transition-opacity", isActive ? "opacity-90" : "opacity-55")} />
+      <Icon size={15} className={cn("shrink-0 transition-opacity", isActive ? "opacity-100" : "opacity-55")} />
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -126,7 +145,7 @@ export default function StaffSidebar({ role, name, profilePicture, isOpen = fals
   }
 
   const sidebarContent = (
-    <aside className="bg-[var(--navy)] dark:bg-[rgba(7,18,34,0.92)] dark:backdrop-blur-md dark:border-r dark:border-[rgba(181,203,238,0.08)] flex flex-col flex-shrink-0 relative overflow-hidden h-full w-[240px]">
+    <aside className="on-navy bg-navy dark:bg-[rgba(7,18,34,0.92)] dark:backdrop-blur-md dark:border-r dark:border-[rgba(181,203,238,0.08)] flex flex-col flex-shrink-0 relative overflow-hidden h-full w-[240px]">
       {/* Ambient glow */}
       <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-[radial-gradient(circle,rgba(200,163,90,0.10)_0%,transparent_70%)] pointer-events-none" />
 
@@ -170,9 +189,9 @@ export default function StaffSidebar({ role, name, profilePicture, isOpen = fals
                 </p>
               )}
               <div className="space-y-0.5">
-                {visible.map(({ href, label, icon: Icon }) => {
+                {visible.map(({ href, label, icon: Icon, accent }) => {
                   const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
-                  return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} />;
+                  return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} accent={accent} />;
                 })}
               </div>
             </div>

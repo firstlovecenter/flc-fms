@@ -1,0 +1,242 @@
+
+> cfms@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.4.2 -> 7.8.0                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (v7.4.2) to .\node_modules\@prisma\client in 2.29s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+  ▲ Next.js 14.2.5
+  - Environments: .env
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\handle-externals.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+
+warn - The class `duration-[0.35s]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;0.35s&rsqb;` to silence this warning.
+
+warn - The class `ease-[cubic-bezier(0.22,1,0.36,1)]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb;` to silence this warning.
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/(auth)/login/page.tsx
+83:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+91:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+104:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/catalog/facilities/[id]/page.tsx
+85:22  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+90:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+95:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/offline/page.tsx
+28:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/facilities/FacilityCard.tsx
+55:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/CeremonyCatalogClient.tsx
+105:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+182:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/CeremonyCodeRequestForm.tsx
+217:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/FacilityCatalogClient.tsx
+321:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+416:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/ItemsCatalogClient.tsx
+186:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+245:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/PublicShell.tsx
+112:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/staff-shell/StaffSidebar.tsx
+142:96  Warning: React Hook useEffect has a missing dependency: 'onClose'. Either include it or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./src/components/theme/global-dark-background.tsx
+33:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/82) ...
+(node:25556) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+   Generating static pages (20/82) 
+   Generating static pages (40/82) 
+   Generating static pages (61/82) 
+(node:25360) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ Generating static pages (82/82)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                Size     First Load JS
+┌ ƒ /                                      11.4 kB         154 kB
+├ ○ /_not-found                            879 B          88.3 kB
+├ ƒ /api/auth/change-password              0 B                0 B
+├ ƒ /api/auth/forgot-password              0 B                0 B
+├ ƒ /api/auth/reset-password               0 B                0 B
+├ ƒ /api/cron/access-codes                 0 B                0 B
+├ ƒ /api/cron/close-bookings               0 B                0 B
+├ ƒ /api/cron/reports/monthly              0 B                0 B
+├ ƒ /api/cron/reports/quarterly            0 B                0 B
+├ ƒ /api/cron/reports/weekly               0 B                0 B
+├ ƒ /api/cron/reports/yearly               0 B                0 B
+├ ○ /api/facilities/sanity                 0 B                0 B
+├ ○ /api/offline/catalog                   0 B                0 B
+├ ƒ /api/patron/change-password            0 B                0 B
+├ ƒ /api/patron/profile                    0 B                0 B
+├ ƒ /api/profile                           0 B                0 B
+├ ○ /api/public/booking-content            0 B                0 B
+├ ○ /api/push/public-key                   0 B                0 B
+├ ƒ /api/push/subscribe                    0 B                0 B
+├ ƒ /api/reports/download/[type]/[format]  0 B                0 B
+├ ƒ /api/savings/export                    0 B                0 B
+├ ƒ /api/upload                            0 B                0 B
+├ ƒ /api/upload-media                      0 B                0 B
+├ ƒ /api/upload-receipt                    0 B                0 B
+├ ƒ /audit                                 194 B          94.4 kB
+├ ƒ /bookings                              7.12 kB         112 kB
+├ ƒ /bookings/[id]                         1.47 kB        99.1 kB
+├ ƒ /bookings/content                      3.66 kB        98.5 kB
+├ ƒ /bookings/new                          642 B           145 kB
+├ ○ /catalog                               162 B          87.6 kB
+├ ƒ /catalog/facilities/[id]               2.5 kB          108 kB
+├ ƒ /catalog/namings                       156 B           148 kB
+├ ƒ /catalog/weddings                      157 B           148 kB
+├ ○ /ceremony-code-request                 5.22 kB         111 kB
+├ ƒ /ceremony-codes                        7.67 kB         115 kB
+├ ○ /change-password                       2.34 kB        89.8 kB
+├ ƒ /checkin                               4.18 kB          99 kB
+├ ƒ /dashboard                             1.69 kB         103 kB
+├ ƒ /duty                                  4.97 kB         139 kB
+├ ƒ /duty/[id]                             200 B           115 kB
+├ ƒ /duty/[id]/edit                        1.34 kB         100 kB
+├ ƒ /duty/display                          2.43 kB         118 kB
+├ ƒ /duty/new                              1.44 kB         100 kB
+├ ƒ /duty/templates                        2.33 kB         101 kB
+├ ƒ /duty/templates/[id]                   161 B          87.6 kB
+├ ƒ /duty/templates/[id]/edit              3.28 kB         102 kB
+├ ƒ /duty/templates/new                    3.07 kB         102 kB
+├ ƒ /events                                1.63 kB        95.9 kB
+├ ƒ /events/[id]                           1.63 kB        95.9 kB
+├ ƒ /events/new                            1.69 kB         111 kB
+├ ƒ /facilities                            194 B          94.4 kB
+├ ƒ /facilities/[id]                       5.42 kB         105 kB
+├ ƒ /facilities/[id]/edit                  151 B           121 kB
+├ ƒ /facilities/[id]/slots                 4.68 kB         106 kB
+├ ƒ /facilities/bulk-slots                 4.72 kB          99 kB
+├ ƒ /facilities/categories                 2.69 kB        90.1 kB
+├ ƒ /facilities/new                        151 B           121 kB
+├ ○ /faq                                   5.9 kB          111 kB
+├ ○ /forgot-password                       2.69 kB         104 kB
+├ ƒ /guest/book                            5.88 kB         170 kB
+├ ○ /guest/checkin                         5.12 kB         111 kB
+├ ƒ /inventory                             194 B          94.4 kB
+├ ƒ /inventory/categories                  3.42 kB        97.7 kB
+├ ƒ /inventory/items                       194 B          94.4 kB
+├ ƒ /items                                 1.96 kB        96.2 kB
+├ ƒ /items/[id]/edit                       193 B           104 kB
+├ ƒ /items/bundles/[id]/edit               192 B           105 kB
+├ ƒ /items/bundles/new                     299 B          98.2 kB
+├ ƒ /items/new                             301 B          97.6 kB
+├ ○ /login                                 3.47 kB         105 kB
+├ ƒ /maintenance                           2.73 kB         104 kB
+├ ƒ /maintenance/[id]                      3.08 kB         105 kB
+├ ƒ /maintenance/new                       2.13 kB         112 kB
+├ ○ /offline                               988 B          95.2 kB
+├ ƒ /patron/book                           587 B           145 kB
+├ ƒ /patron/bookings                       194 B          94.4 kB
+├ ƒ /patron/bookings/[id]                  2.77 kB          97 kB
+├ ƒ /patron/dashboard                      2.4 kB          104 kB
+├ ○ /patron/login                          161 B          87.6 kB
+├ ƒ /patron/profile                        3.6 kB         96.4 kB
+├ ○ /patron/register                       2.27 kB         104 kB
+├ ƒ /profile                               3.69 kB        96.5 kB
+├ ○ /pwa                                   8.01 kB         113 kB
+├ ƒ /reports                               113 kB          207 kB
+├ ƒ /reports/subscriptions                 3.5 kB         97.8 kB
+├ ƒ /settings                              2.26 kB        89.7 kB
+├ ƒ /staff                                 2.4 kB          123 kB
+├ ƒ /staff/[id]                            199 B           127 kB
+├ ƒ /staff/[id]/permissions                3.11 kB        97.4 kB
+├ ƒ /tasks                                 34.7 kB         169 kB
+├ ƒ /transactions                          4.19 kB         106 kB
+├ ƒ /transactions/[id]                     2.24 kB        96.5 kB
+├ ƒ /transactions/expenses/[id]/edit       3.33 kB         113 kB
+├ ƒ /transactions/income/[id]/edit         1.59 kB         111 kB
+├ ƒ /transactions/new-expense              4.51 kB         114 kB
+├ ƒ /transactions/new-income               1.87 kB         112 kB
+├ ƒ /transactions/savings/deposit          1.41 kB         111 kB
+├ ƒ /transactions/savings/withdrawal       1.4 kB          111 kB
+├ ○ /unauthorized                          194 B          94.4 kB
+├ ƒ /users                                 4.23 kB        91.7 kB
+└ ƒ /venue/[id]                            162 B          87.6 kB
++ First Load JS shared by all              87.4 kB
+  ├ chunks/7023-a6c6e18ee68ab2ac.js        31.7 kB
+  ├ chunks/fd9d1056-c0e8e2a16991fb04.js    53.6 kB
+  └ other shared chunks (total)            2.12 kB
+
+
+ƒ Middleware                               33.6 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

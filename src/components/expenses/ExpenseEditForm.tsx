@@ -8,6 +8,12 @@ import { useState } from "react";
 import { updateExpense } from "@/actions/expense.actions";
 import { uploadMedia } from "@/lib/upload-media";
 import { Upload, Loader2, Link2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   title: z.string().min(2, "Title is required"),
@@ -103,24 +109,24 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Title *</label>
-        <input {...register("title")} className="input" disabled={receiptOnly} />
+        <Label htmlFor="expense-edit-title">Title *</Label>
+        <Input id="expense-edit-title" {...register("title")} disabled={receiptOnly} />
         {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">
+        <Label htmlFor="expense-edit-narration">
           Narration * <span className="font-normal text-[var(--muted)]">(comprehensive description)</span>
-        </label>
-        <textarea
+        </Label>
+        <Textarea
+          id="expense-edit-narration"
           {...register("narration")}
-          className="input"
           rows={4}
           disabled={receiptOnly}
         />
@@ -129,13 +135,13 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GH₵) *</label>
-          <input {...register("amount")} type="number" step="0.01" className="input" disabled={receiptOnly} />
+          <Label htmlFor="expense-edit-amount">Amount (GH₵) *</Label>
+          <Input id="expense-edit-amount" {...register("amount")} type="number" step="0.01" disabled={receiptOnly} />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Category *</label>
-          <select {...register("category")} className="input" disabled={receiptOnly}>
+          <Label htmlFor="expense-edit-category">Category *</Label>
+          <select id="expense-edit-category" {...register("category")} className={cn(inputStyles)} disabled={receiptOnly}>
             <option value="">Select…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -144,7 +150,7 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Receipt (optional)</label>
+        <Label>Receipt (optional)</Label>
         <div className="flex flex-wrap items-center gap-2">
           <label className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-lg border border-dashed border-[var(--border)] text-[var(--muted)] hover:border-[var(--navy)] hover:text-[var(--navy)] transition-colors cursor-pointer">
             {uploadingReceipt ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
@@ -183,11 +189,11 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? "Saving…" : receiptOnly ? "Save Receipt" : "Update Expense"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

@@ -2,11 +2,15 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { buttonVariants } from "@/components/ui/button-variants";
 import PageHeader from "@/components/layout/PageHeader";
 import { DataTable } from "@/components/layout/DataTable";
 import { CalendarDays, CheckCircle2, Clock, Plus, ArrowRight } from "lucide-react";
+import StatCard from "@/components/ui/StatCard";
+import { Card } from "@/components/ui/card";
+import { DataTableEmpty } from "@/components/layout/DataTable";
 
 export default async function PatronDashboardPage() {
 	const session = await getSession();
@@ -38,56 +42,38 @@ export default async function PatronDashboardPage() {
 				title={`${session.name.split(" ")[0]}'s Bookings`}
 				description="Manage your facility reservations and browse available venues"
 				actions={
-					<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2 flex-shrink-0">
+					<Link href="/patron/book" className={cn(buttonVariants({ variant: "gold" }), "gap-2 flex-shrink-0")}>
 						<Plus size={15} aria-hidden /> Book Facility
 					</Link>
 				}
 				className="relative z-10"
 			/>
 
-			{/* Stats */}
 			<div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
-				<Link href="/patron/bookings"
-					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
-					data-accent="gold"
-				>
-					<div className="stat-accent" />
-					<div className="w-10 h-10 rounded-xl bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center flex-shrink-0">
-						<CalendarDays size={18} className="text-[var(--gold)]" />
-					</div>
-					<div>
-						<p className="stat-label mb-0.5">My Bookings</p>
-						<p className="text-2xl font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]" style={{ fontFamily: "var(--font-display)" }}>{bookings.length}</p>
-					</div>
-				</Link>
-
-				<Link href="/patron/bookings?status=APPROVED"
-					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
-					data-accent="green"
-				>
-					<div className="stat-accent" />
-					<div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center flex-shrink-0">
-						<CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
-					</div>
-					<div>
-						<p className="stat-label mb-0.5">Approved</p>
-						<p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400" style={{ fontFamily: "var(--font-display)" }}>{approved}</p>
-					</div>
-				</Link>
-
-				<Link href="/patron/bookings?status=PENDING"
-					className="stat-card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 no-underline"
-					data-accent="yellow"
-				>
-					<div className="stat-accent" />
-					<div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-center flex-shrink-0">
-						<Clock size={18} className="text-amber-600 dark:text-amber-400" />
-					</div>
-					<div>
-						<p className="stat-label mb-0.5">Pending</p>
-						<p className="text-2xl font-bold text-amber-600 dark:text-amber-400" style={{ fontFamily: "var(--font-display)" }}>{pending}</p>
-					</div>
-				</Link>
+				<StatCard
+					label="My Bookings"
+					value={bookings.length}
+					color="gold"
+					href="/patron/bookings"
+					compact
+					icon={<CalendarDays size={18} />}
+				/>
+				<StatCard
+					label="Approved"
+					value={approved}
+					color="finance"
+					href="/patron/bookings?status=APPROVED"
+					compact
+					icon={<CheckCircle2 size={18} />}
+				/>
+				<StatCard
+					label="Pending"
+					value={pending}
+					color="warning"
+					href="/patron/bookings?status=PENDING"
+					compact
+					icon={<Clock size={18} />}
+				/>
 			</div>
 
 			{/* Latest Bookings */}
@@ -104,19 +90,18 @@ export default async function PatronDashboardPage() {
 					</Link>
 				</div>
 
-				<div className="card overflow-hidden">
+				<Card className="overflow-hidden py-0">
 					{bookings.length === 0 ? (
-						<div className="empty-state py-14">
-							<div className="w-14 h-14 rounded-2xl bg-[var(--cream-dark)] dark:bg-[rgba(255,255,255,0.05)] border border-[var(--border)] flex items-center justify-center mx-auto mb-4">
-								<CalendarDays size={24} className="text-[var(--text-muted)]" />
+						<DataTableEmpty>
+							<div className="w-14 h-14 rounded-2xl bg-cream-dark dark:bg-[rgba(255,255,255,0.05)] border border-[var(--border)] flex items-center justify-center mx-auto mb-4">
+								<CalendarDays size={24} className="text-muted-foreground" />
 							</div>
 							<p className="font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] mb-1">No bookings yet</p>
-							<p className="text-sm text-[var(--text-muted)]">Book a facility to get started</p>
-							<Link href="/patron/book" className="btn-primary mt-4 inline-flex">Start Booking Now</Link>
-						</div>
+							<p className="text-sm text-muted-foreground">Book a facility to get started</p>
+							<Link href="/patron/book" className={cn(buttonVariants({ variant: "default" }), "mt-4")}>Start Booking Now</Link>
+						</DataTableEmpty>
 					) : (
-						<div className="table-scroll-wrapper">
-							<table className="data-table">
+						<DataTable>
 								<thead>
 									<tr>
 										<th>Facility</th>
@@ -136,29 +121,29 @@ export default async function PatronDashboardPage() {
 												<StatusBadge status={b.status} size="xs" />
 											</td>
 											<td>
-												<Link href={`/patron/bookings/${b.id}`} className="btn-secondary text-xs py-1 px-3">
+												<Link href={`/patron/bookings/${b.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
 													View
 												</Link>
 											</td>
 										</tr>
 									))}
 								</tbody>
-							</table>
-						</div>
+						</DataTable>
 					)}
-				</div>
+				</Card>
 			</div>
 
-			{/* CTA banner */}
-			<div className="page-hero text-center relative z-10">
-				<p className="font-bold text-[1.1rem] text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
-					{facilitiesOpen} venue{facilitiesOpen !== 1 ? "s" : ""} available
-				</p>
-				<p className="text-sm mb-5 text-[rgba(255,255,255,0.65)]">Browse and reserve your preferred space</p>
-				<Link href="/patron/book" className="btn-gold inline-flex items-center gap-2">
-					Browse & Book Now <ArrowRight size={15} />
-				</Link>
-			</div>
+			<PageHeader
+				variant="hero"
+				className="relative z-10 text-center [&>div]:items-center [&>div]:text-center"
+				title={`${facilitiesOpen} venue${facilitiesOpen !== 1 ? "s" : ""} available`}
+				description="Browse and reserve your preferred space"
+				actions={
+					<Link href="/patron/book" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>
+						Browse & Book Now <ArrowRight size={15} />
+					</Link>
+				}
+			/>
 		</div>
 	);
 }

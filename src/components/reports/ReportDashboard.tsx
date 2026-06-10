@@ -3,6 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import FinancialTab  from "./tabs/FinancialTab";
 import BookingsTab   from "./tabs/BookingsTab";
 import FacilitiesTab from "./tabs/FacilitiesTab";
@@ -10,6 +14,7 @@ import InventoryTab  from "./tabs/InventoryTab";
 import CeremonyTab   from "./tabs/CeremonyTab";
 import PatronsTab    from "./tabs/PatronsTab";
 import MaintenanceTab from "./tabs/MaintenanceTab";
+import { Card } from "@/components/ui/card";
 
 type Tab = "financial" | "bookings" | "facilities" | "inventory" | "ceremony" | "patrons" | "maintenance";
 
@@ -107,7 +112,7 @@ export default function ReportDashboard({
   return (
     <div className="space-y-6">
       {/* Date range controls */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
+      <Card className="p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
         <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
           <Calendar size={14} />
           <span>Period:</span>
@@ -139,27 +144,27 @@ export default function ReportDashboard({
         </div>
         {period === "custom" && (
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="input text-sm py-1.5 px-2"
+              className="text-sm py-1.5 px-2 w-auto"
             />
             <span className="text-[var(--muted)] text-xs">to</span>
-            <input
+            <Input
               type="date" value={to} onChange={(e) => setTo(e.target.value)}
-              className="input text-sm py-1.5 px-2"
+              className="text-sm py-1.5 px-2 w-auto"
             />
-            <button onClick={handleCustom} className="btn-primary text-xs py-1.5 px-3">Apply</button>
+            <Button onClick={handleCustom} size="sm">Apply</Button>
           </div>
         )}
         {isPending && <span className="text-xs text-[var(--muted)] animate-pulse">Loading…</span>}
 
         {/* Download button */}
         <div className="sm:ml-auto">
-          <a href={downloadUrl} className="flex items-center gap-2 btn-secondary text-xs py-1.5 px-3">
+          <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}>
             <Download size={13} /> Download CSV
           </a>
         </div>
-      </div>
+      </Card>
 
       {/* Tab navigation */}
       <div className="flex gap-1 flex-wrap border-b border-[var(--border)]">

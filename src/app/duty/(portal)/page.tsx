@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth/guards";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
+import PageHeader from "@/components/layout/PageHeader";
 import {
   dutyDateFromInput,
   formatDutyDateInput,
@@ -13,6 +16,8 @@ import {
 import { serializeDutyLog } from "@/components/duty/types";
 import DutyLogListClient from "@/components/duty/DutyLogListClient";
 import CreateDutyDialog from "@/components/duty/CreateDutyDialog";
+
+import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Duty Logs" };
 
@@ -54,32 +59,47 @@ export default async function DutyPage({
   const canCreate =
     canManage && templateOptions.length > 0 && staffOptions.length > 0;
 
+  const heroBtnOutline = buttonVariants({ variant: "heroOutline", size: "sm" });
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="page-hero">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {canManage ? "Duty Logs" : "My Duties"}
-            </h1>
-            <p className="page-hero-muted mt-1 text-sm">
+      <PageHeader
+        variant="hero"
+        title={canManage ? "Duty Logs" : "My Duties"}
+        description={
+          <>
+            <p>
               {canManage
                 ? "Assign and review duty forms for staff on duty."
                 : "Your assigned duty forms — open one to complete tasks and sign off."}
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-6 mt-4 text-sm text-[var(--page-hero-muted)]">
+              <span>
+                <strong className="text-[var(--page-hero-fg)]">{serialized.length}</strong>{" "}
+                {canManage ? "logs" : "assignments"}
+              </span>
+              <span>
+                <strong className="text-[var(--page-hero-fg)]">{active}</strong> in progress
+              </span>
+              <span>
+                <strong className="text-[var(--page-hero-fg)]">{signedOff}</strong> signed off
+              </span>
+            </div>
+          </>
+        }
+        actions={
+          <>
             <a
               href="/duty/display"
               target="_blank"
               rel="noopener noreferrer"
-              className="page-hero-btn"
+              className={heroBtnOutline}
             >
               Office display
             </a>
             {canManage && (
               <>
-                <Link href="/duty/templates" className="page-hero-btn">
+                <Link href="/duty/templates" className={heroBtnOutline}>
                   Manage forms
                 </Link>
                 {canCreate && (
@@ -87,34 +107,22 @@ export default async function DutyPage({
                     templates={templateOptions}
                     staff={staffOptions}
                     defaultDate={dateStr}
-                    triggerClassName="page-hero-btn page-hero-btn-primary"
+                    triggerVariant="hero"
                   />
                 )}
               </>
             )}
-          </div>
-        </div>
-        <div className="flex gap-6 mt-4 text-sm page-hero-stat page-hero-muted">
-          <span>
-            <strong>{serialized.length}</strong>{" "}
-            {canManage ? "logs" : "assignments"}
-          </span>
-          <span>
-            <strong>{active}</strong> in progress
-          </span>
-          <span>
-            <strong>{signedOff}</strong> signed off
-          </span>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {canManage && !canCreate && templateOptions.length === 0 && (
-        <div className="card p-4 text-sm text-[var(--muted)]">
+        <Card className="p-4 text-sm text-[var(--muted)]">
           No duty forms available.{" "}
           <Link href="/duty/templates/new" className="text-[var(--gold)] hover:underline">
             Create a duty form
           </Link>
-        </div>
+        </Card>
       )}
 
       <DutyLogListClient

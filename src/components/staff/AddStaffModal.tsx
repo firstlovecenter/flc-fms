@@ -8,6 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserPlus, X } from "lucide-react";
 import { createStaffUser } from "@/actions/auth.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   name:  z.string().min(2, "Name is required"),
@@ -52,9 +56,9 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn-primary flex items-center gap-2">
+      <Button onClick={() => setOpen(true)} className="gap-2">
         <UserPlus size={16} /> Add Staff
-      </button>
+      </Button>
 
       {open && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -73,7 +77,7 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
                   <p className="text-sm text-green-600">Login details have been sent through the configured notification channels.</p>
                 </div>
                 <p className="text-xs text-[var(--muted)] text-center">The staff member will still be required to change the temporary password on first login.</p>
-                <button onClick={handleClose} className="btn-primary w-full">Done</button>
+                <Button onClick={handleClose} className="w-full">Done</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
@@ -81,23 +85,23 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
-                  <input {...register("name")} className="input" placeholder="Ama Boateng" />
+                  <Label htmlFor="add-staff-name">Full Name *</Label>
+                  <Input id="add-staff-name" {...register("name")} placeholder="Ama Boateng" />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
-                  <input {...register("email")} type="email" className="input" placeholder="ama@campus.org" />
+                  <Label htmlFor="add-staff-email">Email *</Label>
+                  <Input id="add-staff-email" {...register("email")} type="email" placeholder="ama@campus.org" />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone *</label>
-                  <input {...register("phone")} className="input" placeholder="+233..." />
+                  <Label htmlFor="add-staff-phone">Phone *</Label>
+                  <Input id="add-staff-phone" {...register("phone")} placeholder="+233..." />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Role *</label>
-                  <select {...register("role")} className="input">
+                  <Label htmlFor="add-staff-role">Role *</Label>
+                  <select id="add-staff-role" {...register("role")} className={cn(inputStyles)}>
                     <option value="VICAR">Vicar</option>
                     <option value="BOOKING_MANAGER">Booking Manager</option>
                     <option value="FACILITY_MANAGER">Facility Manager</option>
@@ -108,10 +112,10 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
                   </p>
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
+                  <Button type="submit" disabled={isSubmitting} className="flex-1">
                     {isSubmitting ? "Creating…" : "Create Staff"}
-                  </button>
-                  <button type="button" onClick={handleClose} className="btn-secondary">Cancel</button>
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
                 </div>
               </form>
             )}

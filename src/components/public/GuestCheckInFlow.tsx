@@ -4,6 +4,9 @@ import { useState } from "react";
 import { Phone, ArrowRight, Clock, Building2, CheckCircle2, LogIn, Loader2, MapPin } from "lucide-react";
 import { lookupGuestCheckInBookings, requestGuestCheckIn } from "@/actions/checkin.actions";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 type BookingResult = {
   id: string;
@@ -99,33 +102,32 @@ export default function GuestCheckInFlow() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+          <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
         )}
 
         <form onSubmit={handleLookup} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone Number</label>
-            <input
+            <Input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="input w-full"
               placeholder="0201234567"
               required
               minLength={9}
             />
           </div>
-          <button
+          <Button
             type="submit"
             disabled={loading || !phone.trim()}
-            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full gap-2"
           >
             {loading ? (
               <><Loader2 size={16} className="animate-spin" /> Looking up…</>
             ) : (
               <>Find My Bookings <ArrowRight size={16} /></>
             )}
-          </button>
+          </Button>
         </form>
       </div>
     );
@@ -143,12 +145,12 @@ export default function GuestCheckInFlow() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div className="space-y-3">
         {bookings.map((b) => (
-          <div key={b.id} className="card p-4 border border-gray-100">
+          <Card key={b.id} className="p-4 border border-gray-100">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-semibold text-[var(--navy)] text-sm">{b.title}</p>
@@ -164,39 +166,41 @@ export default function GuestCheckInFlow() {
 
               <div className="shrink-0">
                 {b.alreadyCheckedIn ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-success bg-success/15 px-2.5 py-1 rounded-full">
                     <CheckCircle2 size={12} /> Checked In
                   </span>
                 ) : b.checkInRequested ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-warning bg-warning/15 px-2.5 py-1 rounded-full">
                     <Clock size={12} /> Requested
                   </span>
                 ) : (
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() => handleRequestCheckIn(b.id)}
                     disabled={requestingId === b.id}
-                    className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-50"
+                    className="gap-1.5"
                   >
                     {requestingId === b.id ? (
                       <><Loader2 size={12} className="animate-spin" /> Requesting…</>
                     ) : (
                       <><LogIn size={12} /> Request Check-In</>
                     )}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => { setStep("phone"); setBookings([]); setError(null); }}
-        className="btn-secondary w-full text-sm"
+        className="w-full"
       >
         ← Use a different phone number
-      </button>
+      </Button>
     </div>
   );
 }

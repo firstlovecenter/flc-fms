@@ -6,6 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState, useEffect } from "react";
 import { recordIncome, getBookingsForIncomeLink } from "@/actions/income.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   title:      z.string().min(2, "Title is required"),
@@ -67,31 +73,35 @@ export default function IncomeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Title *</label>
-        <input {...register("title")} className="input" placeholder="e.g. Sunday Offering — 5 Jan 2025" />
+        <Label htmlFor="income-title">Title *</Label>
+        <Input id="income-title" {...register("title")} placeholder="e.g. Sunday Offering — 5 Jan 2025" />
         {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Narration *</label>
-        <textarea {...register("narration")} className="input" rows={3}
-          placeholder="Detailed description of the income source, how it was collected, etc." />
+        <Label htmlFor="income-narration">Narration *</Label>
+        <Textarea
+          id="income-narration"
+          {...register("narration")}
+          rows={3}
+          placeholder="Detailed description of the income source, how it was collected, etc."
+        />
         {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GH₵) *</label>
-          <input {...register("amount")} type="number" step="0.01" className="input" placeholder="0.00" />
+          <Label htmlFor="income-amount">Amount (GH₵) *</Label>
+          <Input id="income-amount" {...register("amount")} type="number" step="0.01" placeholder="0.00" />
           {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Category *</label>
-          <select {...register("category")} className="input">
+          <Label htmlFor="income-category">Category *</Label>
+          <select id="income-category" {...register("category")} className={cn(inputStyles)}>
             <option value="">Select…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -101,20 +111,20 @@ export default function IncomeForm() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Source</label>
-          <input {...register("source")} className="input" placeholder="e.g. Church Service, Wire Transfer" />
+          <Label htmlFor="income-source">Source</Label>
+          <Input id="income-source" {...register("source")} placeholder="e.g. Church Service, Wire Transfer" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Date Received *</label>
-          <input {...register("receivedAt")} type="date" className="input" />
+          <Label htmlFor="income-received-at">Date Received *</Label>
+          <Input id="income-received-at" {...register("receivedAt")} type="date" />
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
       </div>
 
       {bookings.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Link to Booking (optional)</label>
-          <select {...register("bookingId")} className="input">
+          <Label htmlFor="income-booking">Link to Booking (optional)</Label>
+          <select id="income-booking" {...register("bookingId")} className={cn(inputStyles)}>
             <option value="">— No booking linked —</option>
             {bookings.map((b) => (
               <option key={b.id} value={b.id}>
@@ -127,11 +137,11 @@ export default function IncomeForm() {
       )}
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? "Saving…" : "Record Income"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

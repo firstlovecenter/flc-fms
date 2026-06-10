@@ -15,7 +15,14 @@ import { format, addDays } from "date-fns";
 import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { getCeremonyType, toDateStr } from "@/lib/ceremony-utils";
+import { Card } from "@/components/ui/card";
+
 import "react-day-picker/dist/style.css";
 
 interface Facility {
@@ -350,20 +357,20 @@ export default function GuestBookingForm({
 
   if (successMessage) {
     return (
-      <div className="card p-8 text-center space-y-4">
+      <Card className="p-8 text-center space-y-4">
         <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center bg-green-500/12 dark:bg-green-500/20">
           <Check size={28} className="text-green-600" />
         </div>
         <h2 className="font-display font-bold text-[var(--navy)] dark:text-gray-100 text-xl">Booking Submitted!</h2>
         <p className="text-sm text-[var(--slate)] dark:text-gray-300">{successMessage}</p>
-      </div>
+      </Card>
     );
   }
 
   // ─── STEP 1: Calendly-style picker ───────────────────────────────────────
   if (step === 1) {
     return (
-      <div className="card overflow-hidden">
+      <Card className="overflow-hidden">
         {/* Booking mode + selectors */}
         <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]">
           <div className="mb-3 inline-flex rounded-lg border border-[var(--border)] bg-white p-1">
@@ -393,7 +400,7 @@ export default function GuestBookingForm({
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
                 Event Category
               </label>
-              <select
+              <NativeSelect
                 value={category}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -401,7 +408,7 @@ export default function GuestBookingForm({
                   setSelectedSlot(null);
                   setSlots([]);
                 }}
-                className="input"
+                className="w-full"
               >
                 <option value="">Select event type...</option>
                 {bookingMode === "facility-first"
@@ -415,7 +422,7 @@ export default function GuestBookingForm({
                         {c.name}
                       </option>
                     ))}
-              </select>
+              </NativeSelect>
             </div>
             )}
 
@@ -424,7 +431,7 @@ export default function GuestBookingForm({
                 {isCeremonyBooking && defaultFacilityId ? "Venue" : "Select Venue"}
               </label>
               {isCeremonyBooking && defaultFacilityId ? (
-                <div className="input flex items-center justify-between cursor-default select-none opacity-80">
+                <div className={cn("flex min-h-11 w-full items-center justify-between rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--field-bg,var(--surface))] px-3 py-2 cursor-default select-none opacity-80")}>
                   <span className="font-medium text-[var(--navy)] dark:text-gray-100">
                     {selectedFacility?.name ?? "Loading…"}
                   </span>
@@ -435,17 +442,17 @@ export default function GuestBookingForm({
                   )}
                 </div>
               ) : (
-                <select
+                <NativeSelect
                   value={facilityId}
                   onChange={(e) => setFacilityId(e.target.value)}
-                  className="input"
+                  className="w-full"
                   disabled={bookingMode === "category-first" && (!category || !selectedDate)}
                 >
                   <option value="">Choose a venue...</option>
                   {(bookingMode === "category-first" ? bookableFacilities : facilities).map((f) => (
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
-                </select>
+                </NativeSelect>
               )}
             </div>
           </div>
@@ -650,18 +657,18 @@ export default function GuestBookingForm({
                 ? "Pick a time slot"
                 : `${format(selectedDate, "MMM d")} · ${formatTime(selectedSlot.startTime)}`}
             </p>
-            <button
+            <Button
               type="button"
               onClick={() => setStep(2)}
               disabled={!category || !selectedFacility || !selectedDate || !selectedSlot}
-              className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2"
+              className="w-full sm:w-auto gap-2"
               style={{ opacity: category && selectedFacility && selectedDate && selectedSlot ? 1 : 0.35 }}
             >
               Next <ArrowRight size={15} />
-            </button>
+            </Button>
           </div>
         )}
-      </div>
+      </Card>
     );
   }
 
@@ -686,7 +693,7 @@ export default function GuestBookingForm({
           {estimatedCost !== null && (
             <div className="text-right shrink-0">
               <p className="text-xs mb-0.5 text-white/50">Estimated</p>
-              <p className={`text-xl font-bold ${estimatedCost === 0 ? "text-green-400" : "text-[var(--gold)]"}`}>
+              <p className={`text-xl font-bold ${estimatedCost === 0 ? "text-success" : "text-[var(--gold)]"}`}>
                 {estimatedCost === 0 ? "FREE" : formatCurrency(estimatedCost)}
               </p>
             </div>
@@ -695,31 +702,29 @@ export default function GuestBookingForm({
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       {/* Guest information */}
       {mode === "guest" && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Guest Information</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Full Name *</label>
-              <input
+              <Input
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="input"
                 placeholder="John Doe"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
-              <input
+              <Input
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
                 type="email"
-                className="input"
                 placeholder="john@example.com"
                 required
               />
@@ -727,25 +732,24 @@ export default function GuestBookingForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Phone *</label>
-            <input
+            <Input
               value={guestPhone}
               onChange={(e) => setGuestPhone(e.target.value)}
-              className="input"
               placeholder="0201234567"
               required
             />
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Event type */}
       {categories.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Event Type *</label>
-          <select
+          <NativeSelect
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="input"
+            className="w-full"
             required
           >
             <option value="">Select event type…</option>
@@ -754,24 +758,23 @@ export default function GuestBookingForm({
                 {formatCategoryLabel(c.category)} — {formatCurrency(c.price)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       )}
 
       {/* Booking title */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Booking Title *</label>
-        <input
+        <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="input"
           placeholder="e.g. Wedding Reception, Corporate Conference"
           required
         />
       </div>
 
       {selectedFacility && Number(selectedFacility.acUsageFee ?? 0) > 0 && (
-        <div className="card p-4">
+        <Card className="p-4">
           <label className="flex items-start gap-3 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
             <input
               type="checkbox"
@@ -783,16 +786,15 @@ export default function GuestBookingForm({
               Add air conditioner usage for this booking (+{formatCurrency(Number(selectedFacility.acUsageFee))}).
             </span>
           </label>
-        </div>
+        </Card>
       )}
 
       {/* Description */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Description</label>
-        <textarea
+        <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="input"
           rows={3}
           placeholder="Tell us more about your event…"
         />
@@ -800,31 +802,31 @@ export default function GuestBookingForm({
 
       {/* ── Ceremony details ─────────────────────────────────────────── */}
       {isCeremonyBooking && ceremonyType === "wedding" && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Wedding Details</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Bride&apos;s Name *</label>
-              <input value={brideName} onChange={(e) => setBrideName(e.target.value)} className="input" placeholder="Full name" required />
+              <Input value={brideName} onChange={(e) => setBrideName(e.target.value)} placeholder="Full name" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Groom&apos;s Name *</label>
-              <input value={groomName} onChange={(e) => setGroomName(e.target.value)} className="input" placeholder="Full name" required />
+              <Input value={groomName} onChange={(e) => setGroomName(e.target.value)} placeholder="Full name" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Contact (WhatsApp) *</label>
-              <input value={coupleContact} onChange={(e) => setCoupleContact(e.target.value)} className="input" placeholder="0244000000" required />
+              <Input value={coupleContact} onChange={(e) => setCoupleContact(e.target.value)} placeholder="0244000000" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
-              <input type="email" value={coupleEmail} onChange={(e) => setCoupleEmail(e.target.value)} className="input" placeholder="couple@email.com" required />
+              <Input type="email" value={coupleEmail} onChange={(e) => setCoupleEmail(e.target.value)} placeholder="couple@email.com" required />
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {isCeremonyBooking && ceremonyType === "naming" && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Naming Ceremony Details</p>
 
           {/* Father */}
@@ -833,15 +835,15 @@ export default function GuestBookingForm({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Full Name *</label>
-                <input value={fatherName} onChange={(e) => setFatherName(e.target.value)} className="input text-sm" placeholder="Father's name" required />
+                <Input value={fatherName} onChange={(e) => setFatherName(e.target.value)} className="text-sm" placeholder="Father's name" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Contact Number *</label>
-                <input value={fatherPhone} onChange={(e) => setFatherPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+                <Input value={fatherPhone} onChange={(e) => setFatherPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">WhatsApp Number *</label>
-                <input value={fatherWhatsApp} onChange={(e) => setFatherWhatsApp(e.target.value)} className="input text-sm" placeholder="WhatsApp" required />
+                <Input value={fatherWhatsApp} onChange={(e) => setFatherWhatsApp(e.target.value)} className="text-sm" placeholder="WhatsApp" required />
               </div>
             </div>
           </div>
@@ -852,11 +854,11 @@ export default function GuestBookingForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Name(s) *</label>
-                <input value={childrenNames} onChange={(e) => setChildrenNames(e.target.value)} className="input text-sm" placeholder="Child's full name(s)" required />
+                <Input value={childrenNames} onChange={(e) => setChildrenNames(e.target.value)} className="text-sm" placeholder="Child's full name(s)" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Date of Birth (DD/MM/YYYY) *</label>
-                <input value={childBirthday} onChange={(e) => setChildBirthday(e.target.value)} className="input text-sm" placeholder="DD/MM/YYYY" required />
+                <Input value={childBirthday} onChange={(e) => setChildBirthday(e.target.value)} className="text-sm" placeholder="DD/MM/YYYY" required />
               </div>
             </div>
           </div>
@@ -867,11 +869,11 @@ export default function GuestBookingForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Full Name *</label>
-                <input value={motherName} onChange={(e) => setMotherName(e.target.value)} className="input text-sm" placeholder="Mother's name" required />
+                <Input value={motherName} onChange={(e) => setMotherName(e.target.value)} className="text-sm" placeholder="Mother's name" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Contact Number *</label>
-                <input value={motherPhone} onChange={(e) => setMotherPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+                <Input value={motherPhone} onChange={(e) => setMotherPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
               </div>
             </div>
           </div>
@@ -882,23 +884,23 @@ export default function GuestBookingForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Name *</label>
-                <input value={pastorName} onChange={(e) => setPastorName(e.target.value)} className="input text-sm" placeholder="Pastor's name" required />
+                <Input value={pastorName} onChange={(e) => setPastorName(e.target.value)} className="text-sm" placeholder="Pastor's name" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Contact *</label>
-                <input value={pastorPhone} onChange={(e) => setPastorPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+                <Input value={pastorPhone} onChange={(e) => setPastorPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Name *</label>
-                <input value={bishopName} onChange={(e) => setBishopName(e.target.value)} className="input text-sm" placeholder="Bishop's name" required />
+                <Input value={bishopName} onChange={(e) => setBishopName(e.target.value)} className="text-sm" placeholder="Bishop's name" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Contact *</label>
-                <input value={bishopPhone} onChange={(e) => setBishopPhone(e.target.value)} className="input text-sm" placeholder="Phone" required />
+                <Input value={bishopPhone} onChange={(e) => setBishopPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {requiresBookingTerms && <BookingTermsAndFaq title="Booking Terms and Conditions" />}
@@ -921,14 +923,15 @@ export default function GuestBookingForm({
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => setStep(1)}
-          className="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2"
+          className="w-full sm:w-auto gap-2"
         >
           <ChevronLeft size={16} /> Back
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={
             submitting ||
@@ -939,10 +942,10 @@ export default function GuestBookingForm({
             (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim())) ||
             (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !pastorName.trim() || !pastorPhone.trim() || !bishopName.trim() || !bishopPhone.trim()))
           }
-          className="btn-primary w-full sm:flex-1"
+          className="w-full sm:flex-1"
         >
           {submitting ? "Submitting…" : mode === "guest" ? "Submit Booking Request" : "Create Booking"}
-        </button>
+        </Button>
       </div>
     </form>
   );

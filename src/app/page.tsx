@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ArrowRight, CheckCircle2, MapPin, Package, Layers, Heart, Bird } from "lucide-react";
 import PublicSplitShell from "@/components/public/PublicSplitShell";
 import FacilityCatalogClient from "@/components/public/FacilityCatalogClient";
@@ -106,16 +107,16 @@ export default async function PublicHomePage({
       />
 
       {/* General-booking notice + ceremony catalog links */}
-      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 min-w-0">
-        <p className="text-sm text-amber-800 dark:text-amber-300 min-w-0 break-words">
+      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-warning/10 border border-warning/25 min-w-0">
+        <p className="text-sm text-warning min-w-0 break-words">
           <span className="font-semibold">General bookings only.</span>{" "}
           For wedding or naming ceremony bookings, visit the dedicated ceremony catalogs.
         </p>
         <div className="flex gap-2 shrink-0">
-          <Link href="/catalog/weddings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors min-h-[36px]">
+          <Link href="/catalog/weddings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-warning/15 text-warning hover:bg-warning/25 whitespace-nowrap transition-colors min-h-[36px]">
             <Heart size={12} /> Weddings
           </Link>
-          <Link href="/catalog/namings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 whitespace-nowrap transition-colors min-h-[36px]">
+          <Link href="/catalog/namings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-warning/15 text-warning hover:bg-warning/25 whitespace-nowrap transition-colors min-h-[36px]">
             <Bird size={12} /> Namings
           </Link>
         </div>
@@ -128,7 +129,7 @@ export default async function PublicHomePage({
             <div>
               <h2 className="font-display text-2xl font-bold text-[var(--navy)] mb-1">Venues & Halls</h2>
               <p className="text-sm text-slate-500 flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-emerald-500" /> Verified venues • Capacity up to {maxCapacity} guests
+                <CheckCircle2 size={15} className="text-success" /> Verified venues • Capacity up to {maxCapacity} guests
               </p>
             </div>
           </div>
@@ -189,13 +190,25 @@ export default async function PublicHomePage({
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-            <Link href="/guest/book" className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-base">
+            <Link href="/guest/book" className={cn(buttonVariants({ variant: "gold" }), "gap-2 px-8 py-4 text-base")}>
               Guest Booking <ArrowRight size={18} />
             </Link>
-            <Link href="/faq" className="page-hero-btn inline-flex items-center justify-center px-8 py-4 text-base">
+            <Link
+              href="/faq"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white px-8 py-4 text-base"
+              )}
+            >
               FAQs
             </Link>
-            <Link href="/patron/register" className="page-hero-btn inline-flex items-center justify-center px-8 py-4 text-base">
+            <Link
+              href="/patron/register"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white px-8 py-4 text-base"
+              )}
+            >
               Create Account
             </Link>
           </div>

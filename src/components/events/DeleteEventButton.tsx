@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { deleteEvent } from "@/actions/event.actions";
+import { Button } from "@/components/ui/button";
 
 export default function DeleteEventButton({ eventId, title }: { eventId: string; title: string }) {
   const router = useRouter();
@@ -18,13 +19,16 @@ export default function DeleteEventButton({ eventId, title }: { eventId: string;
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon-sm"
       onClick={handleDelete}
       disabled={loading}
-      className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40"
+      className="text-danger hover:bg-danger/10 hover:text-danger"
       title="Delete event"
+      aria-label={`Delete event ${title}`}
     >
       <Trash2 size={14} />
-    </button>
+    </Button>
   );
 }

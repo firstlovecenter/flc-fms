@@ -4,6 +4,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "#f59e0b", ACTIVE: "#3b82f6", USED: "#22c55e", EXPIRED: "#ef4444",
@@ -36,24 +40,24 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
           { label: "Total Codes",      value: data.total,          cls: "text-[var(--navy)]" },
-          { label: "Pending",          value: data.pending,        cls: "text-yellow-700" },
-          { label: "Active",           value: data.activated,      cls: "text-blue-700" },
-          { label: "Used / Booked",    value: data.used,           cls: "text-green-700" },
+          { label: "Pending",          value: data.pending,        cls: "text-warning" },
+          { label: "Active",           value: data.activated,      cls: "text-info" },
+          { label: "Used / Booked",    value: data.used,           cls: "text-success" },
           { label: "Conversion Rate",  value: `${data.conversionRate}%`, cls: "text-[var(--navy)]" },
         ].map(({ label, value, cls }) => (
-          <div key={label} className="card p-4 border border-[var(--border)]">
+          <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className={`text-xl font-bold mt-1 ${cls}`}>{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Funnel */}
-        <div className="card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--navy)]">Booking Funnel</h3>
-            <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+            <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={funnel}>
@@ -68,10 +72,10 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
 
         {/* Wedding vs Naming */}
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">Wedding vs Naming</h3>
           {data.typeBreakdown.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No data.</p>
@@ -89,16 +93,16 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Status breakdown bars */}
-      <div className="card p-6">
+      <Card className="p-6">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Code Status Breakdown</h3>
         <div className="space-y-3">
           {data.statusBreakdown.map((s) => (
             <div key={s.status} className="flex items-center gap-3">
-              <span className="text-xs font-bold w-24 text-[var(--slate)]">{s.status}</span>
+              <StatusBadge status={s.status} size="xs" className="w-24 justify-center" />
               <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
                 <div
                   className="h-full rounded-full"
@@ -112,7 +116,7 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

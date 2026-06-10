@@ -5,6 +5,11 @@ import { Plus, Trash2, Save } from "lucide-react";
 import type { BookingContentPayload } from "@/lib/booking-content-defaults";
 import { updateBookingContent } from "@/actions/booking-content.actions";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 type Tab = "terms" | "faqs" | "item-terms";
 
@@ -83,7 +88,7 @@ export default function BookingContentEditor({ initialContent }: Props) {
     <div className="space-y-6">
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="card overflow-hidden">
+      <Card className="overflow-hidden">
         {/* Tab bar */}
         <div className="border-b border-[var(--border)] bg-[var(--card)]">
           <nav className="flex">
@@ -117,18 +122,18 @@ export default function BookingContentEditor({ initialContent }: Props) {
               </div>
 
               <div>
-                <label className="label">Section Title</label>
-                <input
-                  className="input"
+                <Label htmlFor="booking-terms-title">Section Title</Label>
+                <Input
+                  id="booking-terms-title"
                   value={content.bookingTermsTitle}
                   onChange={(e) => setContent((prev) => ({ ...prev, bookingTermsTitle: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="label">Section Intro</label>
-                <textarea
-                  className="input"
+                <Label htmlFor="booking-terms-intro">Section Intro</Label>
+                <Textarea
+                  id="booking-terms-intro"
                   rows={3}
                   value={content.bookingTermsIntro}
                   onChange={(e) => setContent((prev) => ({ ...prev, bookingTermsIntro: e.target.value }))}
@@ -140,9 +145,10 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   <div key={`term-${index}`} className="card-inset p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-[var(--navy)]">Term {index + 1}</p>
-                      <button
+                      <Button
                         type="button"
-                        className="btn-secondary text-xs"
+                        variant="outline"
+                        size="sm"
                         onClick={() =>
                           setContent((prev) => ({
                             ...prev,
@@ -152,23 +158,23 @@ export default function BookingContentEditor({ initialContent }: Props) {
                         disabled={content.bookingTerms.length <= 1}
                       >
                         <Trash2 size={14} /> Remove
-                      </button>
+                      </Button>
                     </div>
 
                     <div>
-                      <label className="label">Title</label>
-                      <input className="input" value={term.title} onChange={(e) => updateTerm(index, "title", e.target.value)} />
+                      <Label htmlFor={`term-title-${index}`}>Title</Label>
+                      <Input id={`term-title-${index}`} value={term.title} onChange={(e) => updateTerm(index, "title", e.target.value)} />
                     </div>
 
                     <div>
-                      <label className="label">Body</label>
-                      <textarea className="input" rows={3} value={term.body ?? ""} onChange={(e) => updateTerm(index, "body", e.target.value)} />
+                      <Label htmlFor={`term-body-${index}`}>Body</Label>
+                      <Textarea id={`term-body-${index}`} rows={3} value={term.body ?? ""} onChange={(e) => updateTerm(index, "body", e.target.value)} />
                     </div>
 
                     <div>
-                      <label className="label">Bullets (one per line)</label>
-                      <textarea
-                        className="input"
+                      <Label htmlFor={`term-bullets-${index}`}>Bullets (one per line)</Label>
+                      <Textarea
+                        id={`term-bullets-${index}`}
                         rows={4}
                         value={(term.bullets ?? []).join("\n")}
                         onChange={(e) => updateTermBullets(index, e.target.value)}
@@ -177,9 +183,9 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   </div>
                 ))}
 
-                <button
+                <Button
                   type="button"
-                  className="btn-secondary"
+                  variant="outline"
                   onClick={() =>
                     setContent((prev) => ({
                       ...prev,
@@ -188,14 +194,14 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   }
                 >
                   <Plus size={14} /> Add Booking Term
-                </button>
+                </Button>
               </div>
 
               <div className="flex items-center gap-3 pt-1">
-                <button type="button" onClick={onSave} disabled={isPending} className="btn-primary">
+                <Button type="button" onClick={onSave} disabled={isPending}>
                   <Save size={15} /> {isPending ? "Saving..." : "Save Terms & Conditions"}
-                </button>
-                {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
+                </Button>
+                {saved && <span className="text-sm text-success font-medium">Saved successfully.</span>}
               </div>
             </div>
           )}
@@ -209,9 +215,9 @@ export default function BookingContentEditor({ initialContent }: Props) {
               </div>
 
               <div>
-                <label className="label">FAQ Title</label>
-                <input
-                  className="input"
+                <Label htmlFor="booking-faq-title">FAQ Title</Label>
+                <Input
+                  id="booking-faq-title"
                   value={content.bookingFaqTitle}
                   onChange={(e) => setContent((prev) => ({ ...prev, bookingFaqTitle: e.target.value }))}
                 />
@@ -222,9 +228,10 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   <div key={`faq-${index}`} className="card-inset p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-[var(--navy)]">FAQ {index + 1}</p>
-                      <button
+                      <Button
                         type="button"
-                        className="btn-secondary text-xs"
+                        variant="outline"
+                        size="sm"
                         onClick={() =>
                           setContent((prev) => ({
                             ...prev,
@@ -234,24 +241,24 @@ export default function BookingContentEditor({ initialContent }: Props) {
                         disabled={content.bookingFaq.length <= 1}
                       >
                         <Trash2 size={14} /> Remove
-                      </button>
+                      </Button>
                     </div>
 
                     <div>
-                      <label className="label">Question</label>
-                      <input className="input" value={faq.question} onChange={(e) => updateFaq(index, "question", e.target.value)} />
+                      <Label htmlFor={`faq-question-${index}`}>Question</Label>
+                      <Input id={`faq-question-${index}`} value={faq.question} onChange={(e) => updateFaq(index, "question", e.target.value)} />
                     </div>
 
                     <div>
-                      <label className="label">Answer</label>
-                      <textarea className="input" rows={3} value={faq.answer} onChange={(e) => updateFaq(index, "answer", e.target.value)} />
+                      <Label htmlFor={`faq-answer-${index}`}>Answer</Label>
+                      <Textarea id={`faq-answer-${index}`} rows={3} value={faq.answer} onChange={(e) => updateFaq(index, "answer", e.target.value)} />
                     </div>
                   </div>
                 ))}
 
-                <button
+                <Button
                   type="button"
-                  className="btn-secondary"
+                  variant="outline"
                   onClick={() =>
                     setContent((prev) => ({
                       ...prev,
@@ -260,14 +267,14 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   }
                 >
                   <Plus size={14} /> Add FAQ
-                </button>
+                </Button>
               </div>
 
               <div className="flex items-center gap-3 pt-1">
-                <button type="button" onClick={onSave} disabled={isPending} className="btn-primary">
+                <Button type="button" onClick={onSave} disabled={isPending}>
                   <Save size={15} /> {isPending ? "Saving..." : "Save FAQs"}
-                </button>
-                {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
+                </Button>
+                {saved && <span className="text-sm text-success font-medium">Saved successfully.</span>}
               </div>
             </div>
           )}
@@ -281,18 +288,18 @@ export default function BookingContentEditor({ initialContent }: Props) {
               </div>
 
               <div>
-                <label className="label">Section Title</label>
-                <input
-                  className="input"
+                <Label htmlFor="item-terms-title">Section Title</Label>
+                <Input
+                  id="item-terms-title"
                   value={content.itemTermsTitle}
                   onChange={(e) => setContent((prev) => ({ ...prev, itemTermsTitle: e.target.value }))}
                 />
               </div>
 
               <div>
-                <label className="label">Section Intro</label>
-                <textarea
-                  className="input"
+                <Label htmlFor="item-terms-intro">Section Intro</Label>
+                <Textarea
+                  id="item-terms-intro"
                   rows={3}
                   value={content.itemTermsIntro}
                   onChange={(e) => setContent((prev) => ({ ...prev, itemTermsIntro: e.target.value }))}
@@ -304,9 +311,10 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   <div key={`item-term-${index}`} className="card-inset p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-[var(--navy)]">Item Term {index + 1}</p>
-                      <button
+                      <Button
                         type="button"
-                        className="btn-secondary text-xs"
+                        variant="outline"
+                        size="sm"
                         onClick={() =>
                           setContent((prev) => ({
                             ...prev,
@@ -316,11 +324,10 @@ export default function BookingContentEditor({ initialContent }: Props) {
                         disabled={content.itemTerms.length <= 1}
                       >
                         <Trash2 size={14} /> Remove
-                      </button>
+                      </Button>
                     </div>
 
-                    <textarea
-                      className="input"
+                    <Textarea
                       rows={4}
                       value={term}
                       onChange={(e) => updateItemTerm(index, e.target.value)}
@@ -328,9 +335,9 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   </div>
                 ))}
 
-                <button
+                <Button
                   type="button"
-                  className="btn-secondary"
+                  variant="outline"
                   onClick={() =>
                     setContent((prev) => ({
                       ...prev,
@@ -339,20 +346,20 @@ export default function BookingContentEditor({ initialContent }: Props) {
                   }
                 >
                   <Plus size={14} /> Add Item Term
-                </button>
+                </Button>
               </div>
 
               <div className="flex items-center gap-3 pt-1">
-                <button type="button" onClick={onSave} disabled={isPending} className="btn-primary">
+                <Button type="button" onClick={onSave} disabled={isPending}>
                   <Save size={15} /> {isPending ? "Saving..." : "Save Item Booking Terms"}
-                </button>
-                {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
+                </Button>
+                {saved && <span className="text-sm text-success font-medium">Saved successfully.</span>}
               </div>
             </div>
           )}
 
         </div>
-      </div>
+      </Card>
     </div>
   );
-}
+}

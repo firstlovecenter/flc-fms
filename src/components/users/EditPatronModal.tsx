@@ -5,6 +5,10 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { updatePatron } from "@/actions/patron.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface Patron {
   id: string;
@@ -61,29 +65,29 @@ export default function EditPatronModal({ open, onClose, patron }: Props) {
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
-            <input name="name" required minLength={2} defaultValue={patron.name} className="input" />
+            <Label htmlFor="edit-patron-name">Full Name *</Label>
+            <Input id="edit-patron-name" name="name" required minLength={2} defaultValue={patron.name} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
-            <input name="email" type="email" required defaultValue={patron.email} className="input" />
+            <Label htmlFor="edit-patron-email">Email *</Label>
+            <Input id="edit-patron-email" name="email" type="email" required defaultValue={patron.email} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone *</label>
-            <input name="phone" type="tel" required minLength={9} defaultValue={patron.phone ?? ""} className="input" placeholder="+233..." />
+            <Label htmlFor="edit-patron-phone">Phone *</Label>
+            <Input id="edit-patron-phone" name="phone" type="tel" required minLength={9} defaultValue={patron.phone ?? ""} placeholder="+233..." />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Verification Status</label>
-            <select name="isVerified" defaultValue={String(patron.isVerified)} className="input">
+            <Label htmlFor="edit-patron-verified">Verification Status</Label>
+            <select id="edit-patron-verified" name="isVerified" defaultValue={String(patron.isVerified)} className={cn(inputStyles)}>
               <option value="true">Verified</option>
               <option value="false">Unverified</option>
             </select>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving} className="btn-primary flex-1">
+            <Button type="submit" disabled={saving} className="flex-1">
               {saving ? "Saving…" : "Save Changes"}
-            </button>
-            <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           </div>
         </form>
       </div>

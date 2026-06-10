@@ -4,6 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const CONDITION_COLORS: Record<string, string> = {
   EXCELLENT: "#22c55e", GOOD: "#3b82f6", FAIR: "#f59e0b",
@@ -31,23 +34,23 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Items",        value: data.totalItems,         cls: "text-[var(--navy)]" },
-          { label: "Checked Out",        value: data.checkedOut,         cls: "text-blue-700" },
-          { label: "Overdue",            value: data.overdue,            cls: data.overdue > 0 ? "text-red-600" : "text-[var(--navy)]" },
-          { label: "Under Maintenance",  value: data.underMaintenance,   cls: "text-yellow-700" },
+          { label: "Checked Out",        value: data.checkedOut,         cls: "text-info" },
+          { label: "Overdue",            value: data.overdue,            cls: data.overdue > 0 ? "text-danger" : "text-[var(--navy)]" },
+          { label: "Under Maintenance",  value: data.underMaintenance,   cls: "text-warning" },
         ].map(({ label, value, cls }) => (
-          <div key={label} className="card p-4 border border-[var(--border)]">
+          <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className={`text-xl font-bold mt-1 ${cls}`}>{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Checkout trend + condition breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-[var(--navy)]">Monthly Checkouts</h3>
-            <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+            <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
           </div>
           {data.checkoutByMonth.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No checkouts in period.</p>
@@ -62,9 +65,9 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
 
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">Item Condition Breakdown</h3>
           {data.conditionBreakdown.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No items found.</p>
@@ -84,12 +87,12 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Overdue items */}
       {data.overdueItems.length > 0 && (
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-red-700 mb-4">Overdue Checkouts</h3>
           <div className="space-y-2">
             {data.overdueItems.map((item) => (
@@ -102,11 +105,11 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Status breakdown */}
-      <div className="card p-6">
+      <Card className="p-6">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Items by Status</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {data.statusBreakdown.map((s) => (
@@ -116,7 +119,7 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

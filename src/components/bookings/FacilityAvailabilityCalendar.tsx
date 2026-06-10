@@ -5,6 +5,8 @@ import { DayPicker } from "react-day-picker";
 import { format, addDays, startOfDay } from "date-fns";
 import { getFacilityAvailability, getFacilityPricing } from "@/actions/availability.actions";
 import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import "react-day-picker/dist/style.css";
 
 interface TimeSlot {
@@ -155,8 +157,8 @@ export default function FacilityAvailabilityCalendar({
             disabled={[() => !category, ...disabledDays]}
             className="border rounded-lg p-2"
             modifiersClassNames={{
-              selected: "bg-brand-500 text-white",
-              today: "border-2 border-brand-500",
+              selected: "bg-gold text-white",
+              today: "border-2 border-gold",
             }}
             fromDate={addDays(new Date(), 1)}
             toDate={addDays(new Date(), 90)}
@@ -248,15 +250,14 @@ export default function FacilityAvailabilityCalendar({
                       </div>
                       <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
                         {slot.isFree ? (
-                          <span style={{
+                          <span
+                            className="bg-success/15 text-success border border-success/30"
+                            style={{
                             display: "inline-block",
                             padding: "4px 10px",
-                            background: "rgba(34, 197, 94, 0.15)",
-                            color: "#16a34a",
                             fontSize: "0.75rem",
                             fontWeight: 600,
                             borderRadius: "var(--r-xs)",
-                            border: "1px solid rgba(34, 197, 94, 0.3)",
                           }}>
                             ✓ FREE
                           </span>
@@ -274,9 +275,9 @@ export default function FacilityAvailabilityCalendar({
                     </div>
                     <div style={{ textAlign: "right" }}>
                       {slot.isAvailable ? (
-                        <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#16a34a" }}>✓ Available</span>
+                        <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--success)" }}>✓ Available</span>
                       ) : (
-                        <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#dc2626" }}>✗ Booked</span>
+                        <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--danger)" }}>✗ Booked</span>
                       )}
                       <div style={{ fontSize: "0.75rem", color: "var(--slate)", marginTop: "4px" }}>
                         {slot.currentBookings}/{slot.maxBookings}
@@ -323,13 +324,12 @@ export default function FacilityAvailabilityCalendar({
                 }}>
                   Start Time
                 </label>
-                <input
+                <Input
                   type="time"
                   value={customStartTime}
                   onChange={(e) => setCustomStartTime(e.target.value)}
                   min={selectedSlot.startTime}
                   max={selectedSlot.endTime}
-                  className="input"
                   style={{ fontSize: "0.9rem" }}
                 />
               </div>
@@ -343,30 +343,29 @@ export default function FacilityAvailabilityCalendar({
                 }}>
                   End Time
                 </label>
-                <input
+                <Input
                   type="time"
                   value={customEndTime}
                   onChange={(e) => setCustomEndTime(e.target.value)}
                   min={selectedSlot.startTime}
                   max={selectedSlot.endTime}
-                  className="input"
                   style={{ fontSize: "0.9rem" }}
                 />
               </div>
             </div>
 
             {estimatedCost() !== null && (
-              <div style={{
+              <div
+                className={selectedSlot?.isFree ? "bg-success/10 border border-success/20" : "bg-gold/10 border border-gold/20"}
+                style={{
                 fontSize: "0.95rem",
                 fontWeight: 600,
-                color: selectedSlot?.isFree ? "#16a34a" : "var(--navy)",
+                color: selectedSlot?.isFree ? "var(--success)" : "var(--navy)",
                 padding: "12px 16px",
-                background: selectedSlot?.isFree ? "rgba(34, 197, 94, 0.1)" : "rgba(200, 163, 90, 0.1)",
                 borderRadius: "var(--r-sm)",
-                border: `1px solid ${selectedSlot?.isFree ? "rgba(34, 197, 94, 0.2)" : "rgba(200, 163, 90, 0.2)"}`,
               }}>
                 {selectedSlot?.isFree ? (
-                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#16a34a" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--success)" }}>
                     ✓ This booking is FREE
                   </div>
                 ) : (
@@ -377,14 +376,13 @@ export default function FacilityAvailabilityCalendar({
               </div>
             )}
 
-            <button
+            <Button
               onClick={handleFlexibleTimeConfirm}
               disabled={!customStartTime || !customEndTime || parseTime(customEndTime) <= parseTime(customStartTime)}
-              className="btn btn-primary"
-              style={{ width: "100%" }}
+              className="w-full"
             >
               Confirm Time Selection
-            </button>
+            </Button>
           </div>
         </div>
       )}

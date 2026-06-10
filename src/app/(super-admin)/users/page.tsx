@@ -7,6 +7,13 @@ import AddPatronModal from "@/components/users/AddPatronModal";
 import PatronRowActions from "@/components/users/PatronRowActions";
 import PageHeader from "@/components/layout/PageHeader";
 import { DataTable, DataTableEmpty } from "@/components/layout/DataTable";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export default async function SuperAdminUsersPage({
   searchParams,
@@ -52,35 +59,35 @@ export default async function SuperAdminUsersPage({
       />
 
       {/* Filters */}
-      <div className="card p-5 relative z-10">
+      <Card className="p-5 relative z-10">
         <form method="get" className="flex flex-col sm:flex-row gap-2 items-start sm:items-center flex-wrap">
-          <input
+          <Input
             name="q"
             type="search"
             defaultValue={searchParams.q ?? ""}
             placeholder="Search name, email, or phone…"
-            className="input text-sm w-full sm:w-64"
+            className="text-sm w-full sm:w-64"
           />
-          <select
+          <NativeSelect
             name="status"
-            className="input w-full sm:w-auto text-sm"
+            className="w-full sm:w-auto text-sm"
             defaultValue={searchParams.status ?? ""}
           >
             <option value="">All Patrons</option>
             <option value="verified">Verified</option>
             <option value="unverified">Unverified</option>
-          </select>
-          <button type="submit" className="btn-secondary text-sm py-2 px-3">Search</button>
+          </NativeSelect>
+          <Button type="submit" variant="outline">Search</Button>
           {(searchParams.status || searchParams.q) && (
-            <a href="/users" className="btn-secondary text-sm py-2 px-3">Clear</a>
+            <a href="/users" className={cn(buttonVariants({ variant: "outline" }))}>Clear</a>
           )}
         </form>
         {patrons.length !== total && (
           <p className="text-xs text-[var(--muted)] mt-2">Showing {patrons.length} of {total} patrons</p>
         )}
-      </div>
+      </Card>
 
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10">
         {patrons.length === 0 ? (
           <DataTableEmpty><p>No patrons found</p></DataTableEmpty>
         ) : (
@@ -105,9 +112,11 @@ export default async function SuperAdminUsersPage({
                   <td>{p._count.bookings}</td>
                   <td className="whitespace-nowrap text-body-sm">{formatDate(p.createdAt)}</td>
                   <td>
-                    <span className={`badge ${p.isVerified ? "badge-approved" : "badge-pending"}`}>
-                      {p.isVerified ? "Verified" : "Unverified"}
-                    </span>
+                    <StatusBadge
+                      status={p.isVerified ? "APPROVED" : "PENDING"}
+                      label={p.isVerified ? "Verified" : "Unverified"}
+                      size="xs"
+                    />
                   </td>
                   <td>
                     <PatronRowActions
@@ -125,7 +134,7 @@ export default async function SuperAdminUsersPage({
             </tbody>
           </DataTable>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

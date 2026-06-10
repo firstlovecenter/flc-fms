@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import PublicSplitShell from "@/components/public/PublicSplitShell";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -80,8 +84,8 @@ export default function PwaEntryPage() {
   const statusTone = useMemo(
     () =>
       isOnline
-        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-        : "bg-amber-50 text-amber-700 border-amber-200",
+        ? "bg-success/10 text-success border-success/25"
+        : "bg-warning/10 text-warning border-warning/25",
     [isOnline],
   );
 
@@ -239,7 +243,7 @@ export default function PwaEntryPage() {
           </div>
         </div>
 
-        <section className="card p-6 sm:p-7">
+        <Card className="p-6 sm:p-7">
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Progressive Web App</p>
           <h1 className="mt-1 text-3xl font-bold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>
             FLC FMS Mobile
@@ -265,32 +269,33 @@ export default function PwaEntryPage() {
 
           <div className="mt-4 flex flex-col sm:flex-row gap-3">
             {installEvent ? (
-              <button
+              <Button
                 type="button"
+                variant="gold"
                 onClick={handleInstall}
                 disabled={installing}
-                className="btn-gold w-full sm:w-auto"
+                className="w-full sm:w-auto"
               >
                 {installing ? "Preparing install..." : "Install App"}
-              </button>
+              </Button>
             ) : (
-              <button type="button" className="btn-secondary w-full sm:w-auto" disabled>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" disabled>
                 Install via browser menu
-              </button>
+              </Button>
             )}
-            <Link href="/login" className="btn-primary w-full sm:w-auto text-center">Go to Login</Link>
+            <Link href="/login" className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto")}>Go to Login</Link>
           </div>
 
           {installMessage && <p className="mt-3 text-xs text-[var(--muted)]">{installMessage}</p>}
-        </section>
+        </Card>
 
-        <section className="card p-6 sm:p-7">
+        <Card className="p-6 sm:p-7">
           <p className="text-sm font-semibold text-[var(--navy)]">Quick actions</p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/" className="btn-secondary w-full text-center">Open Public Catalog</Link>
-            <Link href="/offline" className="btn-secondary w-full text-center">View Offline Screen</Link>
+            <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>Open Public Catalog</Link>
+            <Link href="/offline" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>View Offline Screen</Link>
           </div>
-        </section>
+        </Card>
       </div>
     </PublicSplitShell>
   );

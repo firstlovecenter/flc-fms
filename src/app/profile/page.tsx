@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { User, KeyRound, Save, Eye, EyeOff, Camera, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 export default function StaffProfilePage() {
   const [profile, setProfile] = useState({ name: "", email: "", phone: "", profilePicture: "" });
@@ -103,7 +107,7 @@ export default function StaffProfilePage() {
       <h1 className="page-title">My Profile</h1>
 
       {/* Profile picture */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <User size={18} /> Profile Picture
         </div>
@@ -119,12 +123,13 @@ export default function StaffProfilePage() {
                 className="w-20 h-20 rounded-full object-cover border-2 border-[var(--border)]"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-[rgba(200,163,90,0.15)] border-2 border-[rgba(200,163,90,0.25)] flex items-center justify-center text-2xl font-bold text-[var(--gold)]">
+              <div className="w-20 h-20 rounded-full bg-gold/15 border-2 border-gold/25 flex items-center justify-center text-2xl font-bold text-gold">
                 {initials || "?"}
               </div>
             )}
             <button
               type="button"
+              aria-label="Change profile photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -133,88 +138,88 @@ export default function StaffProfilePage() {
             </button>
           </div>
           <div>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="btn-secondary text-sm"
             >
               {uploading ? "Uploading…" : "Change Photo"}
-            </button>
+            </Button>
             <p className="text-xs text-[var(--muted)] mt-1">JPG, PNG or WebP · max 5 MB · saved to Sanity</p>
           </div>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         {message && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {message.text}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Profile details */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <User size={18} /> Profile Details
         </div>
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name</label>
-            <input name="name" defaultValue={profile.name} required className="input" />
+            <Label htmlFor="profile-name" className="text-[var(--slate)] mb-1">Full Name</Label>
+            <Input id="profile-name" name="name" defaultValue={profile.name} required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email Address</label>
-            <input value={profile.email} readOnly className="input bg-[var(--cream-dark)] text-[var(--muted)] cursor-not-allowed" title="Email cannot be changed here" />
+            <Label htmlFor="profile-email" className="text-[var(--slate)] mb-1">Email Address</Label>
+            <Input id="profile-email" value={profile.email} readOnly className="bg-[var(--cream-dark)] text-[var(--muted)] cursor-not-allowed" title="Email cannot be changed here" />
             <p className="text-xs text-[var(--muted)] mt-1">Email changes must be done by an administrator.</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone Number</label>
-            <input name="phone" type="tel" defaultValue={profile.phone} className="input" placeholder="+233..." />
+            <Label htmlFor="profile-phone" className="text-[var(--slate)] mb-1">Phone Number</Label>
+            <Input id="profile-phone" name="phone" type="tel" defaultValue={profile.phone} placeholder="+233..." />
           </div>
-          <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
+          <Button type="submit" disabled={saving} className="gap-2">
             <Save size={16} /> {saving ? "Saving…" : "Save Changes"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
       {/* Change password */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
           <KeyRound size={18} /> Change Password
         </div>
         {pwMessage && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {pwMessage.text}
           </div>
         )}
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Current Password</label>
+            <Label htmlFor="pw-current" className="text-[var(--slate)] mb-1">Current Password</Label>
             <div className="relative">
-              <input name="current" type={showCurrent ? "text" : "password"} required className="input pr-10" autoComplete="current-password" />
-              <button type="button" onClick={() => setShowCurrent(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+              <Input id="pw-current" name="current" type={showCurrent ? "text" : "password"} required className="pr-10" autoComplete="current-password" />
+              <button type="button" aria-label={showCurrent ? "Hide current password" : "Show current password"} onClick={() => setShowCurrent(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">New Password</label>
+            <Label htmlFor="pw-new" className="text-[var(--slate)] mb-1">New Password</Label>
             <div className="relative">
-              <input name="new" type={showNew ? "text" : "password"} required minLength={8} className="input pr-10" autoComplete="new-password" placeholder="Min. 8 characters" />
-              <button type="button" onClick={() => setShowNew(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+              <Input id="pw-new" name="new" type={showNew ? "text" : "password"} required minLength={8} className="pr-10" autoComplete="new-password" placeholder="Min. 8 characters" />
+              <button type="button" aria-label={showNew ? "Hide new password" : "Show new password"} onClick={() => setShowNew(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Confirm New Password</label>
-            <input name="confirm" type="password" required className="input" autoComplete="new-password" />
+            <Label htmlFor="pw-confirm" className="text-[var(--slate)] mb-1">Confirm New Password</Label>
+            <Input id="pw-confirm" name="confirm" type="password" required autoComplete="new-password" />
           </div>
-          <button type="submit" disabled={pwLoading} className="btn-primary flex items-center gap-2">
+          <Button type="submit" disabled={pwLoading} className="gap-2">
             <KeyRound size={16} /> {pwLoading ? "Updating…" : "Update Password"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

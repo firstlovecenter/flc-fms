@@ -2,7 +2,11 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { redirect } from "next/navigation";
-import { formatCurrency, formatDateTime, statusBadgeClass } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+
+import { Card } from "@/components/ui/card";
 
 export default async function PatronBookingsPage() {
 	const session = await getSession();
@@ -21,10 +25,10 @@ export default async function PatronBookingsPage() {
 					<h1 className="page-title">My Bookings</h1>
 					<p className="text-sm page-subtitle">{bookings.length} booking{bookings.length === 1 ? "" : "s"}</p>
 				</div>
-				<Link href="/patron/book" className="btn-primary flex-shrink-0">New Booking</Link>
+				<Link href="/patron/book" className={cn(buttonVariants({ variant: "default" }), "flex-shrink-0")}>New Booking</Link>
 			</div>
 
-			<div className="card overflow-hidden">
+			<Card className="overflow-hidden">
 				{bookings.length === 0 ? (
 					<div className="p-8 text-center text-[var(--muted)] text-sm">No bookings yet.</div>
 				) : (
@@ -48,14 +52,14 @@ export default async function PatronBookingsPage() {
 										<td className="py-3 px-4 text-[var(--slate)]">{b.facility?.name ?? "N/A"}</td>
 										<td className="py-3 px-4 text-[var(--muted)]">{formatDateTime(b.startTime)}</td>
 										<td className="py-3 px-4 text-[var(--slate)]">{formatCurrency(Number(b.totalAmount ?? 0))}</td>
-										<td className="py-3 px-4"><span className={`badge ${statusBadgeClass(b.status)}`}>{b.status}</span></td>
+										<td className="py-3 px-4"><StatusBadge status={b.status} size="xs" /></td>
 									</tr>
 								))}
 							</tbody>
 						</table>
 					</div>
 				)}
-			</div>
+			</Card>
 		</div>
 	);
 }

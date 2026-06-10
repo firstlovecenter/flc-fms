@@ -6,6 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { withdrawFromSavings } from "@/actions/savings.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 interface Props {
   savingsBalance: number;
@@ -41,7 +46,7 @@ export default function SavingsWithdrawalForm({ savingsBalance }: Props) {
   const isLocked = savingsBalance <= 0;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {/* Balance info banner */}
       <div className={`rounded-lg px-4 py-3 text-sm flex items-center justify-between border ${
         isLocked
@@ -63,14 +68,14 @@ export default function SavingsWithdrawalForm({ savingsBalance }: Props) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amount (GH₵) *</label>
-        <input
+        <Label htmlFor="savings-withdrawal-amount">Amount (GH₵) *</Label>
+        <Input
+          id="savings-withdrawal-amount"
           {...register("amount")}
           type="number"
           step="0.01"
           min="0.01"
           max={savingsBalance}
-          className="input"
           placeholder="0.00"
           disabled={isLocked}
         />
@@ -78,8 +83,11 @@ export default function SavingsWithdrawalForm({ savingsBalance }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Narration *</label>
-        <textarea {...register("narration")} className="input" rows={3}
+        <Label htmlFor="savings-withdrawal-narration">Narration *</Label>
+        <Textarea
+          id="savings-withdrawal-narration"
+          {...register("narration")}
+          rows={3}
           placeholder="Reason for transferring to the operating account…"
           disabled={isLocked}
         />
@@ -87,13 +95,13 @@ export default function SavingsWithdrawalForm({ savingsBalance }: Props) {
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting || isLocked} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting || isLocked} className="w-full sm:w-auto">
           {isSubmitting ? "Transferring…" : "Transfer to Operating"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
           Cancel
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

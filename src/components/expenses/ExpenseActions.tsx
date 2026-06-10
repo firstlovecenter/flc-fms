@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { approveExpense, rejectExpense } from "@/actions/expense.actions";
+import { Input } from "@/components/ui/input";
 
 export default function ExpenseActions({
   expenseId,
@@ -75,14 +76,14 @@ export default function ExpenseActions({
           </p>
         )}
         <div className="flex items-center gap-1">
-          <input
+          <Input
             type="number"
             min="0"
             step="0.01"
             value={chargeAmount}
             onChange={(e) => setChargeAmount(e.target.value)}
             placeholder="Charge (GH₵)…"
-            className="input text-xs py-1 w-28"
+            className="text-xs py-1 w-28 min-h-8"
             autoFocus
           />
           <button
@@ -116,8 +117,13 @@ export default function ExpenseActions({
           </p>
         )}
         <div className="flex items-center gap-1">
-          <input value={reason} onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason…" className="input text-xs py-1 w-32" autoFocus />
+          <Input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason…"
+            className="text-xs py-1 w-32 min-h-8"
+            autoFocus
+          />
           <button type="button" onClick={handleReject} disabled={!reason.trim() || loading}
             className="p-1.5 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">
             <Check size={12} />

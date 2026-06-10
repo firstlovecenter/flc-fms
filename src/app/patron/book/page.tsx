@@ -1,6 +1,7 @@
 import { requirePatron } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import PatronBookingForm from "@/components/patron/PatronBookingForm";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default async function PatronBookPage({ searchParams }: { searchParams: { facilityId?: string } }) {
   await requirePatron();
@@ -41,18 +42,12 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
 
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">
-      <div className="page-hero relative z-10 overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-72 h-72 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
-        />
-        <div className="relative z-10">
-          <p className="section-eyebrow mb-3">Facility Booking</p>
-          <h1 className="page-title text-[2rem] mb-2">Book a Facility</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            Select a facility and your preferred time slot.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Facility Booking"
+        title="Book a Facility"
+        description="Select a facility and your preferred time slot."
+      />
       <PatronBookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} />
     </div>
   );

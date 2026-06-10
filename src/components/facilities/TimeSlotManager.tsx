@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { Plus, Pencil, Trash2, Check, X, Clock } from "lucide-react";
 import { createTimeSlot, updateTimeSlot, deleteTimeSlot } from "@/actions/facility.actions";
 import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,14 +122,14 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
   return (
     <form onSubmit={handleSubmit} className="bg-[var(--cream)] border border-[var(--border)] rounded-xl p-4 space-y-3 mt-2">
       {error && (
-        <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded p-2">{error}</p>
+        <p className="text-danger text-xs bg-danger/10 border border-danger/25 rounded p-2">{error}</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Slot Label *</label>
-          <input
-            className="input text-sm"
+          <Input
+            className="text-sm"
             placeholder="e.g. Morning Session, 8 AM Slot"
             value={form.label}
             onChange={(e) => set("label", e.target.value)}
@@ -135,7 +139,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Day of Week</label>
           <select
-            className="input text-sm"
+            className={cn(inputStyles, "text-sm")}
             value={form.dayOfWeek}
             onChange={(e) => set("dayOfWeek", Number(e.target.value))}
           >
@@ -148,7 +152,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Category *</label>
           <select
-            className="input text-sm"
+            className={cn(inputStyles, "text-sm")}
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
           >
@@ -161,16 +165,16 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
 
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Start Time *</label>
-          <input
-            type="time" className="input text-sm"
+          <Input
+            type="time" className="text-sm"
             value={form.startTime}
             onChange={(e) => set("startTime", e.target.value)}
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">End Time *</label>
-          <input
-            type="time" className="input text-sm"
+          <Input
+            type="time" className="text-sm"
             value={form.endTime}
             onChange={(e) => set("endTime", e.target.value)}
           />
@@ -178,8 +182,8 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
 
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Max Concurrent Bookings</label>
-          <input
-            type="number" min={1} className="input text-sm"
+          <Input
+            type="number" min={1} className="text-sm"
             value={form.maxBookings}
             onChange={(e) => set("maxBookings", e.target.value)}
           />
@@ -187,8 +191,8 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
 
         <div>
           <label className="block text-xs font-medium text-[var(--slate)] mb-1">Price Override (₦/hr)</label>
-          <input
-            type="number" min={0} step={0.01} className="input text-sm"
+          <Input
+            type="number" min={0} step={0.01} className="text-sm"
             placeholder="Leave blank to use venue rate"
             value={form.pricePerHourOverride}
             onChange={(e) => set("pricePerHourOverride", e.target.value)}
@@ -218,12 +222,12 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
       </div>
 
       <div className="flex gap-2 pt-1">
-        <button type="submit" disabled={isPending} className="btn-primary text-sm py-1.5 px-4">
+        <Button type="submit" disabled={isPending}>
           {isPending ? "Saving…" : editingSlotId ? "Update Slot" : "Add Slot"}
-        </button>
-        <button type="button" onClick={onDone} className="btn-secondary text-sm py-1.5 px-4">
+        </Button>
+        <Button type="button" variant="outline" onClick={onDone}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -272,7 +276,7 @@ function SlotCard({
   return (
     <div className="flex items-center justify-between py-3 px-4 bg-white border border-[var(--border)] rounded-xl group hover:border-[var(--navy)] transition-colors">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="flex-shrink-0 bg-brand-50 text-[var(--navy)] rounded-lg p-2">
+        <div className="flex-shrink-0 bg-gold-pale text-[var(--navy)] rounded-lg p-2">
           <Clock size={14} />
         </div>
         <div className="min-w-0">
@@ -282,12 +286,12 @@ function SlotCard({
               {slot.startTime} – {slot.endTime}
             </span>
             {slot.isFlexible && (
-              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">Flexible</span>
+              <span className="text-xs bg-info/10 text-info border border-info/25 px-1.5 py-0.5 rounded-full">Flexible</span>
             )}
             {slot.isFree ? (
-              <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full">Free</span>
+              <span className="text-xs bg-success/10 text-success border border-success/25 px-1.5 py-0.5 rounded-full">Free</span>
             ) : slot.pricePerHourOverride != null ? (
-              <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-warning/10 text-warning border border-warning/25 px-1.5 py-0.5 rounded-full">
                 {formatCurrency(Number(slot.pricePerHourOverride))}/hr
               </span>
             ) : null}
@@ -308,6 +312,7 @@ function SlotCard({
           onClick={() => setEditing(true)}
           className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
           title="Edit slot"
+          aria-label="Edit slot"
         >
           <Pencil size={13} />
         </button>
@@ -316,8 +321,9 @@ function SlotCard({
             <button
               onClick={handleDelete}
               disabled={isPending}
-              className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+              className="p-1.5 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
               title="Confirm delete"
+              aria-label="Confirm delete"
             >
               <Check size={13} />
             </button>
@@ -325,6 +331,7 @@ function SlotCard({
               onClick={() => setConfirming(false)}
               className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] transition-colors"
               title="Cancel"
+              aria-label="Cancel"
             >
               <X size={13} />
             </button>
@@ -332,8 +339,9 @@ function SlotCard({
         ) : (
           <button
             onClick={() => setConfirming(true)}
-            className="p-1.5 rounded-lg hover:bg-red-50 text-[var(--muted)] hover:text-red-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-danger/10 text-[var(--muted)] hover:text-danger transition-colors"
             title="Delete slot"
+            aria-label="Delete slot"
           >
             <Trash2 size={13} />
           </button>
@@ -444,7 +452,7 @@ export default function TimeSlotManager({
   }
 
   return (
-    <div className="card p-6 space-y-5">
+    <Card className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-semibold text-[var(--navy)]">Time Slot Configuration</h2>
@@ -452,7 +460,7 @@ export default function TimeSlotManager({
             Define available booking windows. Bookers will see these options when scheduling.
           </p>
         </div>
-        <span className="text-xs bg-brand-50 border border-brand-200 text-[var(--navy)] px-2.5 py-1 rounded-full font-medium">
+        <span className="text-xs bg-gold-pale border border-gold text-[var(--navy)] px-2.5 py-1 rounded-full font-medium">
           {slots.length} slot{slots.length !== 1 ? "s" : ""} total
         </span>
       </div>
@@ -494,6 +502,6 @@ export default function TimeSlotManager({
         onDelete={handleDelete}
         bookingCategories={bookingCategories}
       />
-    </div>
+    </Card>
   );
 }

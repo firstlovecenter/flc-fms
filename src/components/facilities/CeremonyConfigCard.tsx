@@ -6,6 +6,11 @@ import Image from "next/image";
 import { upsertCeremonyVenueConfig } from "@/actions/ceremony-venue.actions";
 import MediaUploader from "@/components/ui/MediaUploader";
 import type { CeremonyVenueConfig } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 type Props = {
   facilityId: string;
@@ -56,7 +61,7 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
   }
 
   return (
-    <div className="card p-5 space-y-3">
+    <Card className="p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-[var(--navy)]">{label} Config</h3>
@@ -103,7 +108,7 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
           )}
           <p>
             <span
-              className={`text-xs font-semibold ${config.isActive ? "text-green-700" : "text-red-600"}`}
+              className={`text-xs font-semibold ${config.isActive ? "text-success" : "text-danger"}`}
             >
               {config.isActive ? "Active" : "Inactive"}
             </span>
@@ -124,25 +129,27 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
           />
 
           <div>
-            <label className="label text-xs">Flat Price (GH₵) *</label>
-            <input
+            <Label htmlFor={`ceremony-${type.toLowerCase()}-price`} className="text-xs">Flat Price (GH₵) *</Label>
+            <Input
+              id={`ceremony-${type.toLowerCase()}-price`}
               type="number"
               min="0"
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="input text-xs"
+              className="text-xs"
               placeholder="0.00"
               required
             />
           </div>
 
           <div>
-            <label className="label text-xs">Description (optional)</label>
-            <textarea
+            <Label htmlFor={`ceremony-${type.toLowerCase()}-description`} className="text-xs">Description (optional)</Label>
+            <Textarea
+              id={`ceremony-${type.toLowerCase()}-description`}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input text-xs"
+              className="text-xs"
               rows={2}
               placeholder="Brief description for the catalogue"
             />
@@ -150,12 +157,13 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
 
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="label text-xs">Sort Order</label>
-              <input
+              <Label htmlFor={`ceremony-${type.toLowerCase()}-sort-order`} className="text-xs">Sort Order</Label>
+              <Input
+                id={`ceremony-${type.toLowerCase()}-sort-order`}
                 type="number"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                className="input text-xs"
+                className="text-xs"
               />
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer mt-5">
@@ -169,16 +177,16 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
             </label>
           </div>
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-danger">{error}</p>}
 
           <div className="flex gap-2">
-            <button
+            <Button
+              size="sm"
               onClick={handleSave}
               disabled={loading}
-              className="btn-primary text-xs py-1.5 px-3 disabled:opacity-50"
             >
               {loading ? "Saving…" : "Save"}
-            </button>
+            </Button>
             <button
               onClick={() => setEditing(false)}
               className="text-xs text-[var(--muted)] hover:text-[var(--navy)]"
@@ -188,6 +196,6 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

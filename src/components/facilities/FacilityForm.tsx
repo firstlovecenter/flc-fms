@@ -7,6 +7,10 @@ import { z } from "zod";
 import { useState } from "react";
 import { createFacility, updateFacility } from "@/actions/facility.actions";
 import MediaUploader from "@/components/ui/MediaUploader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   name:          z.string().min(2, "Name is required"),
@@ -179,35 +183,35 @@ export default function FacilityForm({ facility, categories }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       {/* Name */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Facility Name *</label>
-        <input {...register("name")} className="input" placeholder="Main Auditorium" />
-        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+        <Input {...register("name")} placeholder="Main Auditorium" />
+        {errors.name && <p className="text-danger text-xs mt-1">{errors.name.message}</p>}
       </div>
 
       {/* Description */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Description</label>
-        <textarea {...register("description")} className="input" rows={3} placeholder="Brief description…" />
+        <Textarea {...register("description")} rows={3} placeholder="Brief description…" />
       </div>
 
       {/* Capacity */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Capacity *</label>
-          <input {...register("capacity")} type="number" className="input" placeholder="500" />
-          {errors.capacity && <p className="text-red-500 text-xs mt-1">{errors.capacity.message}</p>}
+          <Input {...register("capacity")} type="number" placeholder="500" />
+          {errors.capacity && <p className="text-danger text-xs mt-1">{errors.capacity.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">AC Usage Fee (Optional Add-on)</label>
-          <input {...register("acUsageFee")} type="number" min="0" step="0.01" className="input" placeholder="0" />
-          {errors.acUsageFee && <p className="text-red-500 text-xs mt-1">{errors.acUsageFee.message}</p>}
+          <Input {...register("acUsageFee")} type="number" min="0" step="0.01" placeholder="0" />
+          {errors.acUsageFee && <p className="text-danger text-xs mt-1">{errors.acUsageFee.message}</p>}
           <p className="text-xs text-[var(--muted)] mt-1">Applied only when a booker selects air conditioner usage.</p>
         </div>
       </div>
@@ -223,7 +227,7 @@ export default function FacilityForm({ facility, categories }: Props) {
               onClick={() => toggleDay(value)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                 selectedDays.includes(value)
-                  ? "bg-[var(--navy)] text-white border-brand-500"
+                  ? "bg-[var(--navy)] text-white border-gold"
                   : "bg-white text-[var(--slate)] border-gray-300 hover:bg-[var(--cream)]"
               }`}
             >
@@ -231,13 +235,13 @@ export default function FacilityForm({ facility, categories }: Props) {
             </button>
           ))}
         </div>
-        {errors.availableDays && <p className="text-red-500 text-xs mt-1">{errors.availableDays.message}</p>}
+        {errors.availableDays && <p className="text-danger text-xs mt-1">{errors.availableDays.message}</p>}
       </div>
 
       {/* Amenities */}
       <div>
         <label className="block text-sm font-medium text-[var(--slate)] mb-1">Amenities (comma-separated)</label>
-        <input {...register("amenities")} className="input" placeholder="AC, Projector, Sound System, Whiteboard" />
+        <Input {...register("amenities")} placeholder="AC, Projector, Sound System, Whiteboard" />
       </div>
 
       {/* GPS Coordinates for check-in verification */}
@@ -247,11 +251,11 @@ export default function FacilityForm({ facility, categories }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Latitude</label>
-            <input {...register("latitude")} type="number" step="any" className="input" placeholder="5.6037" />
+            <Input {...register("latitude")} type="number" step="any" placeholder="5.6037" />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Longitude</label>
-            <input {...register("longitude")} type="number" step="any" className="input" placeholder="-0.1870" />
+            <Input {...register("longitude")} type="number" step="any" placeholder="-0.1870" />
           </div>
         </div>
       </div>
@@ -280,10 +284,9 @@ export default function FacilityForm({ facility, categories }: Props) {
         {watch("hasAccessCode") && (
           <div className="mt-2">
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Access Code</label>
-            <input
+            <Input
               {...register("accessCode")}
               type="text"
-              className="input"
               placeholder="Enter access code"
               autoComplete="off"
             />
@@ -324,8 +327,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                 </div>
                 {mapping.enabled && (
                   <div className="space-y-3 mt-3">
-                    <input
-                      className="input"
+                    <Input
                       type="number"
                       min="0"
                       step="0.01"
@@ -351,7 +353,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                               }}
                               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                                 isSelected
-                                  ? "bg-[var(--navy)] text-white border-brand-500"
+                                  ? "bg-[var(--navy)] text-white border-gold"
                                   : "bg-white text-[var(--slate)] border-gray-300 hover:bg-[var(--cream)]"
                               }`}
                             >
@@ -361,8 +363,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                         })}
                       </div>
                     </div>
-                    <input
-                      className="input"
+                    <Input
                       placeholder="Description (optional)"
                       value={mapping.description}
                       onChange={(e) => updateMapping(mapping.category, { description: e.target.value })}
@@ -377,13 +378,13 @@ export default function FacilityForm({ facility, categories }: Props) {
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? "Saving…" : isEdit ? "Update Facility" : "Create Facility"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
           Cancel
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogIn, MapPin } from "lucide-react";
 import { requestCheckIn } from "@/actions/checkin.actions";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { Button } from "@/components/ui/button";
 
 export default function CheckInRequestButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -30,13 +31,13 @@ export default function CheckInRequestButton({ bookingId }: { bookingId: string 
   }
 
   return (
-    <button
+    <Button
       onClick={handleRequest}
       disabled={loading}
-      className="btn-primary flex items-center gap-2 disabled:opacity-50"
+      className="gap-2"
     >
       {loading ? <MapPin size={16} className="animate-pulse" /> : <LogIn size={16} />}
       {loading ? "Verifying location…" : "Request Check-In"}
-    </button>
+    </Button>
   );
 }

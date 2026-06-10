@@ -1,6 +1,7 @@
 "use client";
 
 import { useBookingContent } from "@/hooks/use-booking-content";
+import { Card } from "@/components/ui/card";
 
 type BookingTermsAndFaqProps = {
   title?: string;
@@ -13,8 +14,9 @@ export default function BookingTermsAndFaq({
   const sectionTitle = title ?? content.bookingTermsTitle;
 
   return (
-    <details className="card p-4" open={false}>
-      <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+    <Card className="p-4">
+      <details open={false}>
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
         <span className="text-sm font-semibold text-[var(--navy)]">{sectionTitle}</span>
         <span className="text-xs text-[var(--muted)]">Click to expand</span>
       </summary>
@@ -41,6 +43,7 @@ export default function BookingTermsAndFaq({
         </section>
 
       </div>
-    </details>
+      </details>
+    </Card>
   );
 }

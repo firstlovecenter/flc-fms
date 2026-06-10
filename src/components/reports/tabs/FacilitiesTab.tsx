@@ -3,6 +3,10 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const money = (v: number) => `GH₵${v.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`;
 
@@ -41,18 +45,18 @@ export default function FacilitiesTab({ data, downloadUrl }: Props) {
           { label: "Total Revenue",       value: money(totalRevenue) },
           { label: "Under Maintenance",   value: underMaint },
         ].map(({ label, value }) => (
-          <div key={label} className="card p-4 border border-[var(--border)]">
+          <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className="text-xl font-bold mt-1 text-[var(--navy)]">{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Utilization chart */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-[var(--navy)]">Bookings & Utilization by Facility</h3>
-          <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+          <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
         </div>
         {data.length === 0 ? (
           <p className="text-sm text-[var(--muted)] text-center py-8">No facilities found.</p>
@@ -69,10 +73,10 @@ export default function FacilitiesTab({ data, downloadUrl }: Props) {
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
 
       {/* Table */}
-      <div className="card p-6 overflow-x-auto">
+      <Card className="p-6 overflow-x-auto">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Facility Details</h3>
         <table className="w-full text-sm">
           <thead>
@@ -100,18 +104,18 @@ export default function FacilitiesTab({ data, downloadUrl }: Props) {
                 <td className="py-2 px-3 text-[var(--slate)]">{f.maintenanceCount} req</td>
                 <td className="py-2 px-3">
                   {f.underMaintenance ? (
-                    <span className="badge badge-pending">Maintenance</span>
+                    <StatusBadge status="UNDER_MAINTENANCE" label="Maintenance" size="xs" />
                   ) : f.isActive ? (
-                    <span className="badge badge-approved">Active</span>
+                    <StatusBadge status="APPROVED" label="Active" size="xs" />
                   ) : (
-                    <span className="badge badge-cancelled">Inactive</span>
+                    <StatusBadge status="CANCELLED" label="Inactive" size="xs" />
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

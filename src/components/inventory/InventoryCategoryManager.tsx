@@ -7,6 +7,9 @@ import {
   updateInventoryCategory,
   deleteInventoryCategory,
 } from "@/actions/inventory.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface Category {
   id: string;
@@ -97,7 +100,7 @@ export default function InventoryCategoryManager({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {error && (
-        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#dc2626", fontSize: "0.875rem" }}>
+        <div className="bg-danger/10 border border-danger/25 text-danger rounded-lg px-3.5 py-2.5 text-sm">
           {error}
         </div>
       )}
@@ -105,47 +108,39 @@ export default function InventoryCategoryManager({
       {/* Category list */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
         {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="card"
-            style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}
-          >
+          <Card key={cat.id} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
             {editingId === cat.id ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <input
-                  className="input"
-                  style={{ fontSize: "0.875rem" }}
+                <Input
+                  className="text-[0.875rem]"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Category name"
                   autoFocus
                 />
-                <input
-                  className="input"
-                  style={{ fontSize: "0.875rem" }}
+                <Input
+                  className="text-[0.875rem]"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Description (optional)"
                 />
-                <input
-                  className="input"
-                  style={{ fontSize: "0.875rem" }}
+                <Input
+                  className="text-[0.875rem]"
                   value={form.icon}
                   onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
                   placeholder="Icon name (optional)"
                 />
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button
+                  <Button
                     onClick={handleSave}
                     disabled={isPending}
-                    className="btn-primary"
-                    style={{ fontSize: "0.8rem", padding: "5px 14px" }}
+                    size="sm"
                   >
                     {isPending ? "Saving…" : "Save"}
-                  </button>
-                  <button onClick={cancel} className="btn-secondary" style={{ fontSize: "0.8rem", padding: "5px 12px" }}>
+                  </Button>
+                  <Button onClick={cancel} variant="outline" size="sm">
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -164,22 +159,28 @@ export default function InventoryCategoryManager({
                   </div>
                   {canManage && (
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
                         onClick={() => startEdit(cat)}
                         disabled={isPending}
-                        style={{ padding: "4px 6px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: "var(--muted)" }}
                         title="Edit"
+                        aria-label={`Edit ${cat.name}`}
+                        className="text-[var(--muted)]"
                       >
                         <Pencil size={13} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
                         onClick={() => handleDelete(cat)}
                         disabled={isPending}
-                        style={{ padding: "4px 6px", borderRadius: 6, border: "1px solid #fecaca", background: "transparent", cursor: "pointer", color: "#dc2626" }}
                         title="Delete"
+                        aria-label={`Delete ${cat.name}`}
+                        className="text-danger border-danger/25 hover:bg-danger/10 hover:text-danger"
                       >
                         <Trash2 size={13} />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -188,7 +189,7 @@ export default function InventoryCategoryManager({
                 )}
               </>
             )}
-          </div>
+          </Card>
         ))}
 
         {categories.length === 0 && !adding && (
@@ -201,37 +202,34 @@ export default function InventoryCategoryManager({
       {/* Add form */}
       {canManage && (
         adding ? (
-          <div className="card" style={{ padding: "18px 20px", border: "1px solid var(--navy)", display: "flex", flexDirection: "column", gap: 10 }}>
+          <Card style={{ padding: "18px 20px", border: "1px solid var(--navy)", display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ fontWeight: 700, color: "var(--navy)", fontSize: "0.875rem" }}>New Category</p>
-            <input
-              className="input"
-              style={{ fontSize: "0.875rem" }}
+            <Input
+              className="text-[0.875rem]"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Category name *"
               autoFocus
             />
-            <input
-              className="input"
-              style={{ fontSize: "0.875rem" }}
+            <Input
+              className="text-[0.875rem]"
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Description (optional)"
             />
-            <input
-              className="input"
-              style={{ fontSize: "0.875rem" }}
+            <Input
+              className="text-[0.875rem]"
               value={form.icon}
               onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
               placeholder="Icon name (optional)"
             />
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={handleSave} disabled={isPending} className="btn-primary" style={{ fontSize: "0.85rem" }}>
+              <Button onClick={handleSave} disabled={isPending} size="sm">
                 {isPending ? "Saving…" : "Add Category"}
-              </button>
-              <button onClick={cancel} className="btn-secondary" style={{ fontSize: "0.85rem" }}>Cancel</button>
+              </Button>
+              <Button onClick={cancel} variant="outline" size="sm">Cancel</Button>
             </div>
-          </div>
+          </Card>
         ) : (
           <button
             onClick={startAdd}

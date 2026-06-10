@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { KeyRound, Loader2 } from "lucide-react";
 import { sendAccessCodeToBooker } from "@/actions/sms.actions";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   bookingId: string;
@@ -30,23 +31,24 @@ export default function SendAccessCodeButton({ bookingId, bookerName }: Props) {
 
   return (
     <div className="inline-flex items-center gap-2">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={handleSend}
         disabled={isPending}
-        className="btn-secondary inline-flex items-center gap-1.5 text-sm disabled:opacity-50"
+        className="gap-1.5"
       >
         {isPending ? (
           <><Loader2 size={14} className="animate-spin" /> Sending…</>
         ) : (
           <><KeyRound size={14} /> Send Access Code</>
         )}
-      </button>
+      </Button>
       {status === "sent" && (
-        <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full">{message}</span>
+        <span className="text-xs text-success bg-success/10 px-2 py-1 rounded-full">{message}</span>
       )}
       {status === "error" && (
-        <span className="text-xs text-red-700 bg-red-50 px-2 py-1 rounded-full">{message}</span>
+        <span className="text-xs text-danger bg-danger/10 px-2 py-1 rounded-full">{message}</span>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 import { completeBooking } from "@/actions/booking.actions";
+import { Button } from "@/components/ui/button";
 
 export default function CompleteBookingButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -19,13 +20,13 @@ export default function CompleteBookingButton({ bookingId }: { bookingId: string
   }
 
   return (
-    <button
+    <Button
       onClick={handleComplete}
       disabled={loading}
-      className="btn-primary flex items-center gap-2 disabled:opacity-50"
+      className="gap-2"
     >
       <CheckCircle size={16} />
       {loading ? "Completing…" : "Mark Completed"}
-    </button>
+    </Button>
   );
 }

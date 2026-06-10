@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import AddItemForm from "@/components/items/AddItemForm";
+import { Card } from "@/components/ui/card";
 
 export default async function EditItemPage({ params }: { params: { id: string } }) {
   await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
@@ -36,11 +37,11 @@ export default async function EditItemPage({ params }: { params: { id: string } 
         </div>
       </div>
 
-      <div className="card max-w-[640px]">
+      <Card className="max-w-[640px]">
         <div className="card-inset">
           <AddItemForm itemId={item.id} defaultValues={defaultValues} />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

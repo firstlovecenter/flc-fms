@@ -1,8 +1,11 @@
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { cn, formatDate } from "@/lib/utils";
+import PageHeader from "@/components/layout/PageHeader";
 import AddStaffModal from "@/components/staff/AddStaffModal";
 import StaffRowActions from "@/components/staff/StaffRowActions";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function StaffPage() {
   const session = await requireStaff("FACILITY_MANAGER");
@@ -27,21 +30,16 @@ export default async function StaffPage() {
     <div className="space-y-6 animate-fade-in relative">
       <div className="absolute top-[-100px] right-[-80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Administration</p>
-          <h1 className="page-title mb-2">Staff Management</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            {activeStaff.length} active staff • {activeFms} Facility Manager
-            {activeFms !== 1 ? "s" : ""} • {activeVicars} Vicar{activeVicars !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="mt-1">
-          <AddStaffModal canAssignSuperAdmin={session.role === "SUPER_ADMIN"} />
-        </div>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Administration"
+        title="Staff Management"
+        description={`${activeStaff.length} active staff • ${activeFms} Facility Manager${activeFms !== 1 ? "s" : ""} • ${activeVicars} Vicar${activeVicars !== 1 ? "s" : ""}`}
+        className="relative z-10"
+        actions={<AddStaffModal canAssignSuperAdmin={session.role === "SUPER_ADMIN"} />}
+      />
 
-      <div className="card relative z-10">
+      <Card className="relative z-10 p-0 gap-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
@@ -66,10 +64,10 @@ export default async function StaffPage() {
                       className={cn(
                         "text-[0.8rem] font-semibold px-[10px] py-1 rounded-[20px]",
                         u.role === "SUPER_ADMIN"
-                          ? "bg-[rgba(168,85,247,0.1)] text-[#7c3aed]"
+                          ? "bg-inventory/10 text-inventory"
                           : u.role === "FACILITY_MANAGER"
-                            ? "bg-[rgba(200,163,90,0.1)] text-[var(--gold)]"
-                            : "bg-[rgba(217,119,6,0.1)] text-[#b45309]"
+                            ? "bg-gold/10 text-gold"
+                            : "bg-warning/10 text-warning"
                       )}
                     >
                       {u.role.replace("_", " ")}
@@ -79,7 +77,7 @@ export default async function StaffPage() {
                     {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
                   </td>
                   <td className="py-3 px-4">
-                    <span className="badge badge-approved">Active</span>
+                    <StatusBadge status="APPROVED" label="Active" size="xs" />
                   </td>
                   <td className="py-3 px-4">
                     <StaffRowActions
@@ -97,10 +95,10 @@ export default async function StaffPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       {inactiveStaff.length > 0 && (
-        <div className="card relative z-10 opacity-85">
+        <Card className="relative z-10 opacity-85 p-0 gap-0 overflow-hidden">
           <div className="px-4 py-3 border-b border-[var(--border)] font-semibold text-[var(--navy)]">
             Inactive Staff ({inactiveStaff.length})
           </div>
@@ -128,10 +126,10 @@ export default async function StaffPage() {
                         className={cn(
                           "text-[0.8rem] font-semibold px-[10px] py-1 rounded-[20px]",
                           u.role === "SUPER_ADMIN"
-                            ? "bg-[rgba(168,85,247,0.1)] text-[#7c3aed]"
+                            ? "bg-inventory/10 text-inventory"
                             : u.role === "FACILITY_MANAGER"
-                              ? "bg-[rgba(200,163,90,0.1)] text-[var(--gold)]"
-                              : "bg-[rgba(217,119,6,0.1)] text-[#b45309]"
+                              ? "bg-gold/10 text-gold"
+                              : "bg-warning/10 text-warning"
                         )}
                       >
                         {u.role.replace("_", " ")}
@@ -141,7 +139,7 @@ export default async function StaffPage() {
                       {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="badge badge-cancelled">Inactive</span>
+                      <StatusBadge status="CANCELLED" label="Inactive" size="xs" />
                     </td>
                     <td className="py-3 px-4">
                       <StaffRowActions
@@ -160,7 +158,7 @@ export default async function StaffPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

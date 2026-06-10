@@ -1,6 +1,7 @@
 "use client";
 
 import { useBookingContent } from "@/hooks/use-booking-content";
+import { Card } from "@/components/ui/card";
 
 type BookingFaqProps = {
   title?: string;
@@ -13,7 +14,7 @@ export default function BookingFaq({
   const sectionTitle = title ?? content.bookingFaqTitle;
 
   return (
-    <section className="card p-5 space-y-4">
+    <Card className="p-5 space-y-4">
       <h2 className="text-lg font-semibold text-[var(--navy)]">{sectionTitle}</h2>
 
       <ol className="list-decimal pl-5 space-y-2 text-sm text-[var(--slate)] leading-relaxed">
@@ -23,6 +24,6 @@ export default function BookingFaq({
           </li>
         ))}
       </ol>
-    </section>
+    </Card>
   );
 }

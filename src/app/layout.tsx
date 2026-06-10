@@ -1,6 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
 import PullToRefresh from "@/components/layout/PullToRefresh";
@@ -33,8 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${jakarta.variable}`}>
+      <body className="surface-warm font-sans antialiased">
         <ThemeProvider>
           <GlobalDarkBackground />
           <PullToRefresh />

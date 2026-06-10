@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 export default function UnauthorizedPage() {
   return (
@@ -9,7 +11,7 @@ export default function UnauthorizedPage() {
         <p className="text-gray-500 mb-6">
           You don&apos;t have permission to view this page. Contact your Facility Manager if you need access.
         </p>
-        <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
+        <Link href="/dashboard" className={cn(buttonVariants({ variant: "default" }))}>Go to Dashboard</Link>
       </div>
     </div>
   );

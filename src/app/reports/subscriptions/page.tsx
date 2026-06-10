@@ -1,8 +1,12 @@
 import { requireStaff } from "@/lib/auth/guards";
 import { listReportSubscriptions } from "@/actions/report-subscription.actions";
 import SubscriptionManager from "@/components/reports/SubscriptionManager";
+import PageHeader from "@/components/layout/PageHeader";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export default async function ReportSubscriptionsPage() {
   await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
@@ -12,30 +16,29 @@ export default async function ReportSubscriptionsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="section-eyebrow mb-3">Reports</p>
-          <h1 className="page-title text-[clamp(1.5rem,2vw,2rem)] mb-1">Scheduled Report Subscriptions</h1>
-          <p className="page-hero-muted text-[0.9rem]">
-            Manage who receives automated report emails and at what cadence.
-          </p>
-        </div>
-        <Link href="/reports" className="btn-ghost flex items-center gap-2 text-sm flex-shrink-0 mt-1 text-white/80 hover:text-white border-white/20">
-          <ArrowLeft size={15} /> Back to Reports
-        </Link>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Reports"
+        title="Scheduled Report Subscriptions"
+        description="Manage who receives automated report emails and at what cadence."
+        actions={
+          <Link href="/reports" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 flex-shrink-0 text-white/80 hover:text-white border-white/20")}>
+            <ArrowLeft size={15} /> Back to Reports
+          </Link>
+        }
+      />
 
       {/* Info banner */}
-      <div className="card p-4 flex items-start gap-3 bg-blue-50 border-blue-200">
-        <Mail size={18} className="text-blue-600 mt-0.5 shrink-0" />
-        <div className="text-sm text-blue-800">
+      <Card className="p-4 flex items-start gap-3 bg-info/10 border-info/25">
+        <Mail size={18} className="text-info mt-0.5 shrink-0" />
+        <div className="text-sm text-info">
           <p className="font-semibold">How scheduled reports work</p>
-          <p className="mt-1 text-blue-700">
+          <p className="mt-1 text-info">
             Each subscriber receives an email on the chosen cadence with a KPI summary and CSV attachments for each selected report type.
             Reports run automatically via cron: weekly (Mon 08:00), monthly (1st, 07:00), quarterly (Jan/Apr/Jul/Oct 1st), yearly (Jan 1).
           </p>
         </div>
-      </div>
+      </Card>
 
       <SubscriptionManager initialSubscriptions={subscriptions as any} />
     </div>

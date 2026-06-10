@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { UserPlus, X } from "lucide-react";
 import { createPatron } from "@/actions/patron.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AddPatronModal() {
   const router = useRouter();
@@ -40,9 +43,9 @@ export default function AddPatronModal() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn-primary flex items-center gap-2">
+      <Button onClick={() => setOpen(true)} className="gap-2">
         <UserPlus size={16} /> Add Patron
-      </button>
+      </Button>
 
       {open && mounted && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -60,7 +63,7 @@ export default function AddPatronModal() {
                   <p className="text-green-700 font-semibold mb-1">Patron account created!</p>
                   <p className="text-sm text-green-600">Login credentials have been sent via SMS and email.</p>
                 </div>
-                <button onClick={handleClose} className="btn-primary w-full">Done</button>
+                <Button onClick={handleClose} className="w-full">Done</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -68,23 +71,23 @@ export default function AddPatronModal() {
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
-                  <input name="name" required minLength={2} className="input" placeholder="Ama Boateng" />
+                  <Label htmlFor="add-patron-name">Full Name *</Label>
+                  <Input id="add-patron-name" name="name" required minLength={2} placeholder="Ama Boateng" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
-                  <input name="email" type="email" required className="input" placeholder="ama@email.com" />
+                  <Label htmlFor="add-patron-email">Email *</Label>
+                  <Input id="add-patron-email" name="email" type="email" required placeholder="ama@email.com" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone *</label>
-                  <input name="phone" type="tel" required minLength={9} className="input" placeholder="+233..." />
+                  <Label htmlFor="add-patron-phone">Phone *</Label>
+                  <Input id="add-patron-phone" name="phone" type="tel" required minLength={9} placeholder="+233..." />
                 </div>
                 <p className="text-xs text-[var(--muted)]">A temporary password will be generated and sent to the patron via SMS and email.</p>
                 <div className="flex gap-3 pt-2">
-                  <button type="submit" disabled={saving} className="btn-primary flex-1">
+                  <Button type="submit" disabled={saving} className="flex-1">
                     {saving ? "Creating…" : "Create Patron"}
-                  </button>
-                  <button type="button" onClick={handleClose} className="btn-secondary">Cancel</button>
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
                 </div>
               </form>
             )}

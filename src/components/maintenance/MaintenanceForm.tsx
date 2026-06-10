@@ -6,6 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { createMaintenanceRequest } from "@/actions/maintenance.actions";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   facilityId:     z.string().optional(),
@@ -61,17 +67,17 @@ export default function MaintenanceForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card p-6 space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       {/* Facility (optional) */}
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">
+        <Label htmlFor="maintenance-facility">
           Facility <span className="text-[var(--muted)] font-normal">(leave blank for general campus items)</span>
-        </label>
-        <select {...register("facilityId")} className="input">
+        </Label>
+        <select id="maintenance-facility" {...register("facilityId")} className={cn(inputStyles)}>
           <option value="">— General / Non-facility asset —</option>
           {facilities.map((f) => (
             <option key={f.id} value={f.id}>{f.name}</option>
@@ -80,22 +86,22 @@ export default function MaintenanceForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Issue Title *</label>
-        <input {...register("title")} className="input" placeholder="e.g. AC Unit Not Working" />
-        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+        <Label htmlFor="maintenance-title">Issue Title *</Label>
+        <Input id="maintenance-title" {...register("title")} placeholder="e.g. AC Unit Not Working" />
+        {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--slate)] mb-1">Description *</label>
-        <textarea {...register("description")} className="input" rows={4}
+        <Label htmlFor="maintenance-description">Description *</Label>
+        <Textarea id="maintenance-description" {...register("description")} rows={4}
           placeholder="Describe the problem in detail: when it started, what you observed, any safety concerns…" />
-        {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+        {errors.description && <p className="text-danger text-xs mt-1">{errors.description.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Priority *</label>
-          <select {...register("priority")} className="input">
+          <Label htmlFor="maintenance-priority">Priority *</Label>
+          <select id="maintenance-priority" {...register("priority")} className={cn(inputStyles)}>
             <option value="LOW">Low</option>
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
@@ -103,8 +109,8 @@ export default function MaintenanceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[var(--slate)] mb-1">Estimated Cost (GH₵)</label>
-          <input {...register("estimatedCost")} type="number" step="0.01" className="input" placeholder="Optional" />
+          <Label htmlFor="maintenance-cost">Estimated Cost (GH₵)</Label>
+          <Input id="maintenance-cost" {...register("estimatedCost")} type="number" step="0.01" placeholder="Optional" />
         </div>
       </div>
 
@@ -113,7 +119,7 @@ export default function MaintenanceForm({
         <button
           type="button"
           onClick={() => setHasSchedule((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-[var(--slate)] bg-[var(--cream)] hover:bg-amber-50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-[var(--slate)] bg-[var(--cream)] hover:bg-warning/10 transition-colors"
         >
           <span>📅 Schedule maintenance window <span className="text-[var(--muted)] font-normal">(optional)</span></span>
           <span className="text-xs">{hasSchedule ? "▲" : "▼"}</span>
@@ -127,18 +133,18 @@ export default function MaintenanceForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[var(--slate)] mb-1">Start date &amp; time</label>
-                <input {...register("scheduledStart")} type="datetime-local" className="input" />
+                <Input {...register("scheduledStart")} type="datetime-local" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--slate)] mb-1">End date &amp; time</label>
-                <input {...register("scheduledEnd")} type="datetime-local" className="input" />
+                <Input {...register("scheduledEnd")} type="datetime-local" />
               </div>
             </div>
           </div>
         ) : (
           watchedFacilityId ? (
-            <div className="px-4 py-3 bg-orange-50 border-t border-orange-100">
-              <p className="text-xs text-orange-700">
+            <div className="px-4 py-3 bg-maintenance/10 border-t border-maintenance/25">
+              <p className="text-xs text-maintenance">
                 ⚠️ Without a schedule, this will <strong>immediately hard-lock</strong> the facility from all bookings.
               </p>
             </div>
@@ -147,11 +153,11 @@ export default function MaintenanceForm({
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? "Submitting…" : "Submit Request"}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary w-full sm:w-auto">Cancel</button>
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
       </div>
-    </form>
+    </Card></form>
   );
 }

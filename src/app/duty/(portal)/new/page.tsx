@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { requireStaff } from "@/lib/auth/guards";
 import { getActiveStaffForDuty, getDutyTemplates } from "@/lib/duty/queries";
 import AssignDutyForm from "@/components/duty/AssignDutyForm";
+import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Create Duty" };
 
@@ -16,7 +17,7 @@ export default async function CreateDutyPage() {
 
   if (templates.length === 0) {
     return (
-      <div className="card p-8 text-center space-y-3">
+      <Card className="p-8 text-center space-y-3">
         <p className="text-[var(--muted)]">No duty forms available yet.</p>
         <Link href="/duty/templates/new" className="text-[var(--gold)] hover:underline text-sm">
           Create a duty form (facility manager)
@@ -24,18 +25,18 @@ export default async function CreateDutyPage() {
         <Link href="/duty" className="block text-[var(--gold)] hover:underline text-sm">
           Back to duty logs
         </Link>
-      </div>
+      </Card>
     );
   }
 
   if (staff.length === 0) {
     return (
-      <div className="card p-8 text-center">
+      <Card className="p-8 text-center">
         <p className="text-[var(--muted)]">No active staff to assign.</p>
         <Link href="/duty" className="text-[var(--gold)] hover:underline mt-4 inline-block">
           Back to duty logs
         </Link>
-      </div>
+      </Card>
     );
   }
 

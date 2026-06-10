@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { PUBLIC_NAV_ITEMS, type PublicNavPage } from "@/components/public/public-nav";
 
 type Variant = "split" | "top";
@@ -28,7 +29,7 @@ export default function PublicSiteNav({
     cn(
       isTop
         ? "px-4 py-1.5 rounded-full text-[0.85rem] font-medium no-underline transition-all duration-150"
-        : "btn-ghost px-3 py-2 text-xs sm:text-sm transition-colors",
+        : cn(buttonVariants({ variant: "ghost", size: "sm" }), "transition-colors"),
       active
         ? isTop
           ? "bg-[rgba(10,22,40,0.08)] dark:bg-[rgba(255,255,255,0.1)] text-[var(--navy)] dark:text-white font-semibold"
@@ -95,14 +96,14 @@ export default function PublicSiteNav({
 
         {/* Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <Link href="/login" className="hidden sm:inline-flex btn-secondary text-[0.85rem] px-3 py-2">
+          <Link href="/login" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden sm:inline-flex")}>
             Sign In
           </Link>
           <ThemeModeSwitcher />
           {showBookCta && current !== "guest" && (
             <Link
               href="/guest/book"
-              className="btn-primary inline-flex items-center gap-1 text-[0.8rem] sm:text-[0.85rem] px-3 py-2"
+              className={cn(buttonVariants({ variant: "default", size: "sm" }), "gap-1")}
             >
               <span className="hidden sm:inline">Book Now</span>
               <span className="sm:hidden">Book</span>

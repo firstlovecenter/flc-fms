@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import BookingsListClient from "@/components/bookings/BookingsListClient";
 import CeremonyBookingsTable, { type CeremonyBookingRow } from "@/components/bookings/CeremonyBookingsTable";
 import type { CeremonyDetails } from "@/lib/ceremony-utils";
@@ -94,13 +96,13 @@ export default async function BookingsPage({
           </div>
           {canManage && (
             <div className="flex gap-2 flex-wrap">
-              <Link href="/bookings/new" className="btn-primary text-sm">
+              <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
                 <Plus size={15} /> New Booking
               </Link>
-              <Link href="/bookings/new?type=wedding" className="btn-secondary text-sm">
+              <Link href="/bookings/new?type=wedding" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
                 <Plus size={15} /> New Wedding
               </Link>
-              <Link href="/bookings/new?type=naming" className="btn-secondary text-sm">
+              <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
                 <Plus size={15} /> New Naming
               </Link>
             </div>
@@ -119,8 +121,8 @@ export default async function BookingsPage({
           <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
             <span>Page {page} of {pages}</span>
             <div className="flex gap-2">
-              {page > 1 && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary text-xs px-3 py-1.5">← Prev</Link>}
-              {page < pages && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-secondary text-xs px-3 py-1.5">Next →</Link>}
+            {page > 1 && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>← Prev</Link>}
+            {page < pages && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Next →</Link>}
             </div>
           </div>
         )}
@@ -213,13 +215,13 @@ export default async function BookingsPage({
         </div>
         {canManage && (
           <div className="flex gap-2 flex-wrap">
-            <Link href="/bookings/new" className="btn-primary text-sm">
+            <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
               <Plus size={15} /> New Booking
             </Link>
-            <Link href="/bookings/new?type=wedding" className="btn-secondary text-sm">
+            <Link href="/bookings/new?type=wedding" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <Plus size={15} /> New Wedding
             </Link>
-            <Link href="/bookings/new?type=naming" className="btn-secondary text-sm">
+            <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <Plus size={15} /> New Naming
             </Link>
           </div>
@@ -252,8 +254,8 @@ export default async function BookingsPage({
         <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
           <span>Page {page} of {pages}</span>
           <div className="flex gap-2">
-            {page > 1 && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary text-xs px-3 py-1.5">← Prev</Link>}
-            {page < pages && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-secondary text-xs px-3 py-1.5">Next →</Link>}
+            {page > 1 && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>← Prev</Link>}
+            {page < pages && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Next →</Link>}
           </div>
         </div>
       )}

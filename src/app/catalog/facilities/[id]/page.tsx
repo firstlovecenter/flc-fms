@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils";
 import { ArrowRight, CalendarRange, Clock3, Users, ChevronLeft, MapPin, Sparkles } from "lucide-react";
 import PublicShell from "@/components/public/PublicShell";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -138,8 +139,8 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
 
             <Card className="bg-white/60 backdrop-blur-xl border-white/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
               <CardContent className="p-8">
-                <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Clock3 size={22} className="text-sky-600" />
+                <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Clock3 size={22} className="text-info" />
                 </div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Daily Hours</p>
                 <div className="flex items-baseline gap-2">
@@ -200,7 +201,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
             <div className="lg:col-span-1 border border-white/80 bg-white/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm h-fit">
               <h3 className="font-display text-xl text-[var(--navy)] font-semibold mb-6 flex items-center justify-between">
                 Upcoming Schedule
-                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
               </h3>
               
               {facility.bookings.length === 0 ? (
@@ -220,13 +221,11 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
                           <span className="text-xs font-bold text-[var(--navy)]">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           <span className="text-[10px] text-slate-400 uppercase">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                         </div>
-                        <div className={`absolute left-0 md:left-1/2 -ml-1 md:-ml-[5px] w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 ${isApproved ? "bg-emerald-500" : "bg-sky-400"}`}></div>
+                        <div className={`absolute left-0 md:left-1/2 -ml-1 md:-ml-[5px] w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 ${isApproved ? "bg-success" : "bg-info"}`}></div>
                         <div className="bg-white/80 rounded-xl p-3 shadow-sm border border-slate-100 flex-1 md:ml-4 w-full">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs font-bold text-slate-700 md:hidden">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('en-US', { hour: 'numeric' })}</span>
-                            <Badge variant="outline" className={`text-[9px] uppercase px-1.5 py-0 border-none print:hidden ${isApproved ? "text-emerald-600 bg-emerald-50" : "text-sky-600 bg-sky-50"}`}>
-                              {booking.status}
-                            </Badge>
+                            <StatusBadge status={booking.status} size="xs" className="print:hidden" />
                           </div>
                           <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                             <Clock3 size={11} /> {Math.round((new Date(booking.endTime).getTime() - startDate.getTime()) / (1000 * 60 * 60))} hours

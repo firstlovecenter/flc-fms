@@ -5,6 +5,9 @@ import { formatCurrency } from "@/lib/utils";
 import StatCard from "@/components/ui/StatCard";
 import PageHeader from "@/components/layout/PageHeader";
 import RecentBookings from "@/components/bookings/RecentBookings";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
   Building2,
@@ -75,19 +78,19 @@ export default async function DashboardPage() {
       {/* Quick actions */}
       {canBook && (
         <div className="relative z-10 flex flex-wrap gap-2">
-          <Link href="/bookings/new" className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
+          <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
             <Plus size={15} /> New Booking
           </Link>
           {pendingBookings > 0 && (
-            <Link href="/bookings?status=PENDING" className="btn-gold inline-flex items-center gap-2 px-4 py-2 text-sm">
+            <Link href="/bookings?status=PENDING" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>
               <ClipboardList size={15} /> Review {pendingBookings} Pending
             </Link>
           )}
-          <Link href="/inventory" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+          <Link href="/inventory" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
             <Package size={15} /> Inventory
           </Link>
           {isFM && (
-            <Link href="/reports" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+            <Link href="/reports" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <BarChart3 size={15} /> Reports
             </Link>
           )}
@@ -96,20 +99,20 @@ export default async function DashboardPage() {
 
       {/* Primary stats */}
       <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-        <StatCard label="Active Facilities"  value={totalFacilities} icon={<Building2  size={16} />} href="/facilities" />
-        <StatCard label="Pending Bookings"   value={pendingBookings}  icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
-        <StatCard label="Active Bookings"    value={activeBookings}   icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
-        <StatCard label="Open Maintenance"   value={openMaintenance}  icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
+        <StatCard label="Active Facilities"  value={totalFacilities} color="facilities" icon={<Building2  size={16} />} href="/facilities" />
+        <StatCard label="Pending Bookings"   value={pendingBookings}  color="bookings" icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
+        <StatCard label="Active Bookings"    value={activeBookings}   color="bookings" icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
+        <StatCard label="Open Maintenance"   value={openMaintenance}  color="maintenance" icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
       </div>
 
       {/* Financial stats — FM only */}
       {isFM && (
         <div className="relative z-10 grid grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
-          <StatCard label="Total Income"      value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" color="green" />
-          <StatCard label="Total Expenses"    value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" color="red" />
-          <StatCard label="Net Balance"       value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
-          <StatCard label="Savings Balance"   value={formatCurrency(netSavings)} icon={<PiggyBank size={16} />} href="/transactions?tab=savings" color="blue" />
-          <StatCard label="Available Balance" value={formatCurrency(availableBalance)} icon={<DollarSign size={16} />} sub={availableBalance >= 0 ? "Surplus" : "Deficit"} trend={availableBalance >= 0 ? "up" : "down"} href="/transactions?tab=overview" />
+          <StatCard label="Total Income"      value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" color="finance" />
+          <StatCard label="Total Expenses"    value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" color="danger" />
+          <StatCard label="Net Balance"       value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="finance" />
+          <StatCard label="Savings Balance"   value={formatCurrency(netSavings)} icon={<PiggyBank size={16} />} href="/transactions?tab=savings" color="finance" />
+          <StatCard label="Available Balance" value={formatCurrency(availableBalance)} icon={<DollarSign size={16} />} sub={availableBalance >= 0 ? "Surplus" : "Deficit"} trend={availableBalance >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="gold" />
         </div>
       )}
 
@@ -135,9 +138,9 @@ export default async function DashboardPage() {
             View All →
           </Link>
         </div>
-        <div className="card overflow-hidden">
+        <Card className="overflow-hidden p-0 gap-0">
           <RecentBookings bookings={recentBookingsWithFacility} />
-        </div>
+        </Card>
       </div>
     </div>
   );

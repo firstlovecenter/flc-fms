@@ -1,0 +1,134 @@
+
+> cfms@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.4.2) to .\node_modules\@prisma\client in 3.14s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+  ▲ Next.js 14.2.5
+  - Environments: .env
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+
+warn - The class `duration-[0.35s]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;0.35s&rsqb;` to silence this warning.
+
+warn - The class `ease-[cubic-bezier(0.22,1,0.36,1)]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `ease-&lsqb;cubic-bezier(0.22,1,0.36,1)&rsqb;` to silence this warning.
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js', but to 'c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\handle-externals.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/(auth)/login/page.tsx
+83:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+91:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+104:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/catalog/facilities/[id]/page.tsx
+85:22  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+90:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+95:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/offline/page.tsx
+28:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/facilities/FacilityCard.tsx
+55:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/CeremonyCatalogClient.tsx
+105:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+182:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/CeremonyCodeRequestForm.tsx
+217:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/FacilityCatalogClient.tsx
+321:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+416:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/ItemsCatalogClient.tsx
+186:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+245:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/public/PublicShell.tsx
+112:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/staff-shell/StaffSidebar.tsx
+121:96  Warning: React Hook useEffect has a missing dependency: 'onClose'. Either include it or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./src/components/theme/global-dark-background.tsx
+33:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+PageNotFoundError: Cannot find module for page: /api/cron/reports/quarterly
+    at getPagePath (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:94:15)
+    at requirePage (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:99:22)
+    at c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:84
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async loadComponentsImpl (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:26)
+    at async c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\utils.js:1116:32
+    at async Span.traceAsyncFn (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\trace\trace.js:154:20) {
+  code: 'ENOENT'
+}
+PageNotFoundError: Cannot find module for page: /api/auth/reset-password
+    at getPagePath (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:94:15)
+    at requirePage (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:99:22)
+    at c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:84
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async loadComponentsImpl (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:26)
+    at async c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\utils.js:1116:32
+    at async Span.traceAsyncFn (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\trace\trace.js:154:20) {
+  code: 'ENOENT'
+}
+PageNotFoundError: Cannot find module for page: /api/cron/reports/monthly
+    at getPagePath (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:94:15)
+    at requirePage (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\require.js:99:22)
+    at c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:84
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async loadComponentsImpl (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\server\load-components.js:98:26)
+    at async c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\utils.js:1116:32
+    at async Span.traceAsyncFn (c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\trace\trace.js:154:20) {
+  code: 'ENOENT'
+}
+
+> Build error occurred
+Error: Failed to collect page data for /api/auth/reset-password
+    at c:\Users\samuel cyrus-aduteye\Documents\Codeslaw\flc-fms\node_modules\next\dist\build\utils.js:1268:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  type: 'Error'
+}

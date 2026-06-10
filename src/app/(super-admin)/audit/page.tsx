@@ -1,7 +1,11 @@
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { DataTable } from "@/components/layout/DataTable";
+import PageHeader from "@/components/layout/PageHeader";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 
 export default async function AuditPage({ searchParams }: { searchParams: { page?: string; action?: string } }) {
   await requireRole("SUPER_ADMIN");
@@ -30,40 +34,34 @@ export default async function AuditPage({ searchParams }: { searchParams: { page
       <div className="absolute -top-[100px] -right-[80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0"
         style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
-      {/* Hero header — red for system/danger context */}
-      <div className="card relative z-10 overflow-hidden"
-        style={{ padding: "24px 28px", background: "linear-gradient(135deg, #DC2626 0%, #9C1111 100%)", borderColor: "rgba(200,163,90,0.3)" }}>
-        <p className="text-[0.7rem] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.6)] font-bold mb-2">
-          System Auditing
-        </p>
-        <h1 className="text-[clamp(1.75rem,2.5vw,2.5rem)] font-bold text-white leading-[1.1] mb-1" style={{ fontFamily: "var(--font-display)" }}>
-          Audit Logs
-        </h1>
-        <p className="text-[0.95rem] text-[rgba(255,255,255,0.75)]">
-          {total.toLocaleString()} total entries • Immutable record of all system actions
-        </p>
-      </div>
+      {/* Hero header */}
+      <PageHeader
+        variant="hero"
+        eyebrow="System Auditing"
+        title="Audit Logs"
+        description={`${total.toLocaleString()} total entries • Immutable record of all system actions`}
+        className="relative z-10"
+      />
 
       {/* Count info */}
       {logs.length > 0 && (
-        <div className="card p-5 relative z-10">
+        <Card className="p-5 relative z-10">
           <p className="text-[0.85rem] text-[var(--text-muted)] font-semibold">
             Showing <strong className="text-[var(--navy)]">{(page - 1) * take + 1}</strong> to{" "}
             <strong className="text-[var(--navy)]">{Math.min(page * take, total)}</strong> of{" "}
             <strong className="text-[var(--navy)]">{total.toLocaleString()}</strong> entries
           </p>
-        </div>
+        </Card>
       )}
 
       {/* Table */}
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10">
         {logs.length === 0 ? (
           <div className="empty-state py-16">
             <p>No audit log entries.</p>
           </div>
         ) : (
-          <div className="table-scroll-wrapper">
-            <table className="data-table">
+          <DataTable>
               <thead>
                 <tr>
                   <th>Time</th>
@@ -102,17 +100,16 @@ export default async function AuditPage({ searchParams }: { searchParams: { page
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </DataTable>
         )}
-      </div>
+      </Card>
 
       {/* Pagination */}
       {pages > 1 && (
         <div className="flex justify-end items-center gap-2 text-[0.85rem] relative z-10">
-          {page > 1 && <Link href={`/audit?page=${page - 1}`} className="btn-secondary">← Previous</Link>}
+          {page > 1 && <Link href={`/audit?page=${page - 1}`} className={cn(buttonVariants({ variant: "outline" }))}>← Previous</Link>}
           <span className="text-[var(--text-muted)] px-3">Page {page} of {pages}</span>
-          {page < pages && <Link href={`/audit?page=${page + 1}`} className="btn-secondary">Next →</Link>}
+          {page < pages && <Link href={`/audit?page=${page + 1}`} className={cn(buttonVariants({ variant: "outline" }))}>Next →</Link>}
         </div>
       )}
     </div>

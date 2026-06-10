@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { createBookableBundle, updateBookableBundle } from "@/actions/bookable-items.actions";
 import { Plus, X, Layers } from "lucide-react";
 import MediaUploader from "@/components/ui/MediaUploader";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type AvailableItem = {
   id: string;
@@ -116,52 +121,53 @@ export default function AddBundleForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="label">Package Name *</label>
-          <input name="name" className="input" required defaultValue={defaultValues?.name} placeholder="e.g. Wedding Reception Bundle, Conference Starter Pack" />
+          <Label htmlFor="bundle-name">Package Name *</Label>
+          <Input id="bundle-name" name="name" required defaultValue={defaultValues?.name} placeholder="e.g. Wedding Reception Bundle, Conference Starter Pack" />
         </div>
         <div className="md:col-span-2">
-          <label className="label">Tagline</label>
-          <input name="tagline" className="input" defaultValue={defaultValues?.tagline} placeholder="Short pitch — e.g. Everything for a perfect outdoor wedding" />
+          <Label htmlFor="bundle-tagline">Tagline</Label>
+          <Input id="bundle-tagline" name="tagline" defaultValue={defaultValues?.tagline} placeholder="Short pitch — e.g. Everything for a perfect outdoor wedding" />
         </div>
         <div className="md:col-span-2">
-          <label className="label">Description</label>
-          <textarea name="description" className="input" rows={2} defaultValue={defaultValues?.description} placeholder="Describe what's included and any conditions" />
+          <Label htmlFor="bundle-description">Description</Label>
+          <Textarea id="bundle-description" name="description" rows={2} defaultValue={defaultValues?.description} placeholder="Describe what's included and any conditions" />
         </div>
         <div>
-          <label className="label">
+          <Label htmlFor="bundle-price">
             Flat Price (GH₵) *
             {suggested > 0 && (
               <span className="ml-2 text-xs font-normal text-[var(--muted)]">
                 (items total: GH₵{suggested.toFixed(2)})
               </span>
             )}
-          </label>
-          <input name="price" type="number" step="0.01" min="0" className="input" required defaultValue={suggested > 0 ? suggested.toFixed(2) : ""} />
+          </Label>
+          <Input id="bundle-price" name="price" type="number" step="0.01" min="0" required defaultValue={suggested > 0 ? suggested.toFixed(2) : ""} />
           <p className="text-xs text-[var(--muted)] mt-1">Set below items total for a bundle discount</p>
         </div>
         <div>
-          <label className="label">Sort Order</label>
-          <input name="sortOrder" type="number" className="input" defaultValue={defaultValues?.sortOrder ?? 0} />
+          <Label htmlFor="bundle-sort-order">Sort Order</Label>
+          <Input id="bundle-sort-order" name="sortOrder" type="number" defaultValue={defaultValues?.sortOrder ?? 0} />
         </div>
       </div>
 
       {/* Components */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="label mb-0">Package Contents *</label>
-          <button type="button" onClick={addComponent} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1">
+          <Label className="mb-0">Package Contents *</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addComponent} className="gap-1">
             <Plus size={12} /> Add Item
-          </button>
+          </Button>
         </div>
         <div className="space-y-2">
           {components.map((comp, idx) => (
             <div key={idx} className="flex gap-2 items-end p-3 rounded-xl" style={{ background: "var(--cream)", border: "1px solid var(--border)" }}>
               <div className="flex-1">
-                <label className="label text-xs">Item</label>
+                <Label htmlFor={`bundle-comp-${idx}-item`} className="text-xs">Item</Label>
                 <select
+                  id={`bundle-comp-${idx}-item`}
                   value={comp.itemId}
                   onChange={e => updateComponent(idx, "itemId", e.target.value)}
-                  className="input"
+                  className={cn(inputStyles)}
                 >
                   <option value="">Select an item…</option>
                   {availableItems.map(i => (
@@ -170,17 +176,19 @@ export default function AddBundleForm({
                 </select>
               </div>
               <div style={{ width: 80 }}>
-                <label className="label text-xs">Qty</label>
-                <input
-                  type="number" min="1" className="input"
+                <Label htmlFor={`bundle-comp-${idx}-qty`} className="text-xs">Qty</Label>
+                <Input
+                  id={`bundle-comp-${idx}-qty`}
+                  type="number" min="1"
                   value={comp.quantity}
                   onChange={e => updateComponent(idx, "quantity", Number(e.target.value))}
                 />
               </div>
               <div className="flex-1">
-                <label className="label text-xs">Label (optional)</label>
-                <input
-                  className="input" placeholder="Override display name"
+                <Label htmlFor={`bundle-comp-${idx}-label`} className="text-xs">Label (optional)</Label>
+                <Input
+                  id={`bundle-comp-${idx}-label`}
+                  placeholder="Override display name"
                   value={comp.label}
                   onChange={e => updateComponent(idx, "label", e.target.value)}
                 />
@@ -188,7 +196,7 @@ export default function AddBundleForm({
               <button
                 type="button"
                 onClick={() => removeComponent(idx)}
-                className="mb-0.5 text-[var(--muted)] hover:text-red-500"
+                className="mb-0.5 text-[var(--muted)] hover:text-danger"
                 title="Remove"
               >
                 <X size={16} />
@@ -208,18 +216,19 @@ export default function AddBundleForm({
 
       {/* Tags */}
       <div>
-        <label className="label">Tags</label>
+        <Label htmlFor="bundle-tags">Tags</Label>
         <div className="flex gap-2">
-          <input
-            className="input flex-1"
+          <Input
+            id="bundle-tags"
+            className="flex-1"
             placeholder="wedding, conference, outdoor..."
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
           />
-          <button type="button" onClick={addTag} className="btn-secondary px-3 text-sm flex items-center gap-1">
+          <Button type="button" variant="outline" onClick={addTag} className="gap-1">
             <Plus size={14} /> Add
-          </button>
+          </Button>
         </div>
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -273,12 +282,12 @@ export default function AddBundleForm({
       />
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={loading} className="btn-gold flex-1" style={{ paddingBlock: 10 }}>
+        <Button type="submit" disabled={loading} variant="gold" className="flex-1">
           {loading ? (bundleId ? "Updating…" : "Creating…") : (bundleId ? "Update Package" : "Create Package")}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary px-6">
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -2,6 +2,12 @@ import Link from "next/link";
 import { Package, Tag, ArrowRightLeft, Wrench, AlertTriangle, TrendingUp, CheckCircle, Clock } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { getInventorySummary, getInventoryItems, getActiveCheckouts, getInventoryMaintenanceLogs } from "@/actions/inventory.actions";
+import { cn } from "@/lib/utils";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card } from "@/components/ui/card";
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 0 }).format(n);
@@ -18,53 +24,41 @@ export default async function InventoryPage() {
     getInventoryMaintenanceLogs({ page: 1 }),
   ]);
 
-  const statCards = [
-    { label: "Total Items",          value: summary.totalItems,             icon: Package,      color: "var(--navy)"  },
-    { label: "Available",            value: summary.availableItems,         icon: CheckCircle,  color: "#16a34a"      },
-    { label: "Checked Out",          value: summary.checkedOutItems,        icon: ArrowRightLeft, color: "#d97706"    },
-    { label: "Under Maintenance",    value: summary.underMaintenanceItems,  icon: Wrench,       color: "#9333ea"      },
-    { label: "Overdue Returns",      value: summary.overdueCheckouts,       icon: AlertTriangle, color: "#dc2626"     },
-    { label: "Open Maintenance",     value: summary.openMaintenanceLogs,    icon: Clock,        color: "#ea580c"      },
-  ];
-
   return (
     <div className="space-y-6 animate-fade-in relative">
       {/* Decorative bg */}
       <div className="fixed top-[80px] right-[-80px] w-[320px] h-[320px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.07) 0%, transparent 70%)" }} />
 
       {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Campus Management</p>
-          <h1 className="page-title text-[2rem] mb-2">Inventory</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            {summary.totalItems} item{summary.totalItems !== 1 ? "s" : ""} tracked &bull; Est. value {formatCurrency(summary.totalEstimatedValue)}
-          </p>
-        </div>
-        {canManage && (
-          <div className="flex gap-2 flex-wrap mt-3">
-            <Link href="/inventory/items/new" className="btn-gold flex items-center gap-2">+ Add Item</Link>
-            <Link href="/inventory/categories" className="btn-secondary flex items-center gap-2">Categories</Link>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Campus Management"
+        title="Inventory"
+        description={<>{summary.totalItems} item{summary.totalItems !== 1 ? "s" : ""} tracked &bull; Est. value {formatCurrency(summary.totalEstimatedValue)}</>}
+        className="relative z-10"
+        actions={
+          canManage ? (
+            <>
+              <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>+ Add Item</Link>
+              <Link href="/inventory/categories" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>Categories</Link>
+            </>
+          ) : undefined
+        }
+      />
 
       {/* Summary tiles */}
       <div className="grid gap-4 relative z-10 stagger-children" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
-        {statCards.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Icon size={16} style={{ color }} />
-              <span className="text-[0.75rem] text-[var(--muted)] font-semibold">{label}</span>
-            </div>
-            <span className="text-[1.7rem] font-bold leading-none" style={{ color, fontFamily: "var(--font-display)" }}>{value}</span>
-          </div>
-        ))}
+        <StatCard label="Total Items"       value={summary.totalItems}            color="inventory"   icon={<Package size={16} />} />
+        <StatCard label="Available"         value={summary.availableItems}        color="success"     icon={<CheckCircle size={16} />} />
+        <StatCard label="Checked Out"       value={summary.checkedOutItems}       color="warning"     icon={<ArrowRightLeft size={16} />} />
+        <StatCard label="Under Maintenance" value={summary.underMaintenanceItems} color="inventory"   icon={<Wrench size={16} />} />
+        <StatCard label="Overdue Returns"   value={summary.overdueCheckouts}      color="danger"      icon={<AlertTriangle size={16} />} />
+        <StatCard label="Open Maintenance"  value={summary.openMaintenanceLogs}   color="maintenance" icon={<Clock size={16} />} />
       </div>
 
       <div className="grid gap-5 relative z-10" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
         {/* Quick nav */}
-        <div className="card p-5 px-6">
+        <Card className="p-5 px-6">
           <h2 className="text-base font-bold text-[var(--navy)] mb-4">Quick Access</h2>
           <div className="flex flex-col gap-2.5">
             {[
@@ -82,10 +76,10 @@ export default async function InventoryPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Active checkouts */}
-        <div className="card overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
             <h2 className="text-base font-bold text-[var(--navy)]">Active Checkouts</h2>
             <Link href="/inventory/checkouts" className="text-[0.78rem] text-[var(--gold)] font-semibold hover:underline">View all →</Link>
@@ -114,7 +108,7 @@ export default async function InventoryPage() {
                         <td className="py-2.5 px-4 text-[var(--slate)] whitespace-nowrap">{co.checkedOutBy.name}</td>
                         <td className="py-2.5 px-4 whitespace-nowrap">
                           {co.dueBack ? (
-                            <span className={`text-[0.8rem] font-semibold ${isOverdue ? "text-red-600" : "text-[var(--slate)]"}`}>
+                            <span className={`text-[0.8rem] font-semibold ${isOverdue ? "text-danger" : "text-[var(--slate)]"}`}>
                               {isOverdue ? "⚠ " : ""}{new Date(co.dueBack).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                             </span>
                           ) : (
@@ -128,11 +122,11 @@ export default async function InventoryPage() {
               </table>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Recent items */}
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10">
         <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
           <h2 className="text-base font-bold text-[var(--navy)]">Recent Items</h2>
           <Link href="/inventory/items" className="text-[0.78rem] text-[var(--gold)] font-semibold hover:underline">View all →</Link>
@@ -162,7 +156,7 @@ export default async function InventoryPage() {
                     <ConditionBadge condition={item.condition} />
                   </td>
                   <td className="py-2.5 px-4">
-                    <StatusBadge status={item.status} />
+                    <ItemStatusBadge status={item.status} />
                   </td>
                 </tr>
               ))}
@@ -176,33 +170,26 @@ export default async function InventoryPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
 
 function ConditionBadge({ condition }: { condition: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    EXCELLENT:  { label: "Excellent",  bg: "#dcfce7", color: "#15803d" },
-    GOOD:       { label: "Good",       bg: "#dbeafe", color: "#1d4ed8" },
-    FAIR:       { label: "Fair",       bg: "#fef9c3", color: "#854d0e" },
-    POOR:       { label: "Poor",       bg: "#fee2e2", color: "#dc2626" },
-    DAMAGED:    { label: "Damaged",    bg: "#fce7f3", color: "#9d174d" },
-    DISPOSED:   { label: "Disposed",   bg: "#f1f5f9", color: "#64748b" },
+  const map: Record<string, { label: string; classes: string }> = {
+    EXCELLENT:  { label: "Excellent",  classes: "bg-success/10 text-success border border-success/25" },
+    GOOD:       { label: "Good",       classes: "bg-info/10 text-info border border-info/25" },
+    FAIR:       { label: "Fair",       classes: "bg-warning/10 text-warning border border-warning/25" },
+    POOR:       { label: "Poor",       classes: "bg-danger/10 text-danger border border-danger/25" },
+    DAMAGED:    { label: "Damaged",    classes: "bg-danger/10 text-danger border border-danger/25" },
+    DISPOSED:   { label: "Disposed",   classes: "bg-foreground/5 text-muted-foreground border border-foreground/10" },
   };
-  const s = map[condition] ?? { label: condition, bg: "#f1f5f9", color: "#64748b" };
-  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+  const s = map[condition] ?? { label: condition, classes: "bg-foreground/5 text-muted-foreground border border-foreground/10" };
+  return <span className={`text-[0.72rem] font-bold px-2 py-0.5 rounded-full ${s.classes}`}>{s.label}</span>;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    AVAILABLE:         { label: "Available",      bg: "#dcfce7", color: "#15803d" },
-    IN_USE:            { label: "In Use",         bg: "#dbeafe", color: "#1d4ed8" },
-    CHECKED_OUT:       { label: "Checked Out",    bg: "#fef9c3", color: "#854d0e" },
-    UNDER_MAINTENANCE: { label: "Maintenance",    bg: "#fce7f3", color: "#9d174d" },
-    DISPOSED:          { label: "Disposed",       bg: "#f1f5f9", color: "#64748b" },
-    LOST:              { label: "Lost",           bg: "#fee2e2", color: "#dc2626" },
-  };
-  const s = map[status] ?? { label: status, bg: "#f1f5f9", color: "#64748b" };
-  return <span className="text-[0.72rem] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>;
+function ItemStatusBadge({ status }: { status: string }) {
+  if (status === "IN_USE") return <StatusBadge status="CHECKED_OUT" label="In Use" />;
+  if (status === "LOST")   return <StatusBadge status="FAILED" label="Lost" />;
+  return <StatusBadge status={status} />;
 }

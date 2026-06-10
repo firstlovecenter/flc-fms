@@ -1,5 +1,6 @@
 import { addDays, format, isSameDay } from "date-fns";
 import type { SerializedDutyLog } from "./types";
+import { Card } from "@/components/ui/card";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE:
@@ -60,7 +61,7 @@ export default function DutyWeekView({
                   const done = log.items.filter((i) => i.isDone).length;
                   const total = log.items.length;
                   return (
-                    <div key={log.id} className="card p-2.5 shadow-sm">
+                    <Card key={log.id} className="p-2.5 shadow-sm">
                       <p className="text-xs font-semibold leading-snug line-clamp-2 text-[var(--navy)]">
                         {log.template.name}
                       </p>
@@ -83,7 +84,7 @@ export default function DutyWeekView({
                               : "Active"}
                         </span>
                       </div>
-                    </div>
+                    </Card>
                   );
                 })
               )}

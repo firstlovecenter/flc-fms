@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Users, Expand, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { validateCeremonyCode } from "@/actions/ceremony-code.actions";
@@ -247,11 +248,11 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
               proceed with your booking.
             </p>
             <div className="flex gap-2">
-              <input
+              <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="e.g. ABCD1234"
-                className="input flex-1 font-mono tracking-widest uppercase"
+                className="flex-1 font-mono tracking-widest uppercase"
                 maxLength={8}
                 autoFocus
               />

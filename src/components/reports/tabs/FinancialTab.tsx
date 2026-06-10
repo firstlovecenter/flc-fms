@@ -4,6 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", notation: "compact" }).format(v);
@@ -37,22 +40,22 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Income",   value: money(totalIncome),   cls: "text-green-700",  bg: "bg-green-50 border-green-200" },
-          { label: "Total Expenses", value: money(totalExpenses), cls: "text-red-700",    bg: "bg-red-50 border-red-200" },
-          { label: "Net Balance",    value: money(net),           cls: net >= 0 ? "text-green-700" : "text-red-700", bg: net >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200" },
+          { label: "Total Income",   value: money(totalIncome),   cls: "text-success",  bg: "bg-success/10 border-success/25" },
+          { label: "Total Expenses", value: money(totalExpenses), cls: "text-danger",    bg: "bg-danger/10 border-danger/25" },
+          { label: "Net Balance",    value: money(net),           cls: net >= 0 ? "text-success" : "text-danger", bg: net >= 0 ? "bg-success/10 border-success/25" : "bg-danger/10 border-danger/25" },
         ].map(({ label, value, cls, bg }) => (
-          <div key={label} className={`card p-4 border ${bg}`}>
+          <Card key={label} className={`p-4 border ${bg}`}>
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
             <p className={`text-xl font-bold mt-1 ${cls}`}>{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Monthly Bar Chart */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-[var(--navy)]">Monthly Financial Overview</h3>
-          <a href={downloadUrl} className="btn-secondary text-xs py-1.5 px-3">Download CSV</a>
+          <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Download CSV</a>
         </div>
         {data.monthly.length === 0 ? (
           <p className="text-sm text-[var(--muted)] text-center py-8">No data for selected period.</p>
@@ -70,11 +73,11 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
 
       {/* Pie charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">Income by Category</h3>
           {data.incomeByCategory.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No income recorded.</p>
@@ -89,9 +92,9 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
 
-        <div className="card p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-[var(--navy)] mb-4">Expenses by Category</h3>
           {data.expenseByCategory.length === 0 ? (
             <p className="text-sm text-[var(--muted)] text-center py-8">No approved expenses.</p>
@@ -106,11 +109,11 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
               </PieChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Monthly breakdown table */}
-      <div className="card p-6 overflow-x-auto">
+      <Card className="p-6 overflow-x-auto">
         <h3 className="font-semibold text-[var(--navy)] mb-4">Monthly Breakdown</h3>
         <table className="w-full text-sm">
           <thead>
@@ -135,7 +138,7 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
             })}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

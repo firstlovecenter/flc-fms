@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth/guards";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { getBookableItems, getBookableBundles } from "@/actions/bookable-items.actions";
 import { Package, Layers, Plus, Pencil, Tag } from "lucide-react";
 import DeleteItemButton from "@/components/items/DeleteItemButton";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function ItemsPage() {
   const session = await requireStaff();
@@ -16,53 +21,42 @@ export default async function ItemsPage() {
       <div className="absolute top-[-60px] right-[-80px] w-[360px] h-[360px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Catalog Management</p>
-          <h1 className="page-title mb-2">Bookable Items & Packages</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            Manage single items and package bundles available for external event bookings
-          </p>
-        </div>
-        {canManage && (
-          <div className="flex gap-2 flex-wrap mt-3">
-            <Link
-              href="/items/new"
-              className="btn-gold flex items-center gap-2"
-            >
-              <Plus size={15} /> Add Item
-            </Link>
-            <Link
-              href="/items/bundles/new"
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Layers size={15} /> New Package
-            </Link>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Catalog Management"
+        title="Bookable Items & Packages"
+        description="Manage single items and package bundles available for external event bookings"
+        className="relative z-10"
+        actions={
+          canManage ? (
+            <>
+              <Link
+                href="/items/new"
+                className={cn(buttonVariants({ variant: "gold" }), "gap-2")}
+              >
+                <Plus size={15} /> Add Item
+              </Link>
+              <Link
+                href="/items/bundles/new"
+                className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+              >
+                <Layers size={15} /> New Package
+              </Link>
+            </>
+          ) : undefined
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 stagger-children">
-        {[
-          { label: "Total Items",  value: items.length,                                  icon: Package, accent: "blue"  as const },
-          { label: "Active Items", value: items.filter(i => i.isActive).length,          icon: Package, accent: "green" as const },
-          { label: "Packages",     value: bundles.length,                                icon: Layers,  accent: "gold"  as const },
-          { label: "Total Units",  value: items.reduce((s, i) => s + i.quantity, 0),     icon: Tag,     accent: "gray"  as const },
-        ].map(stat => (
-          <div key={stat.label} className="stat-card" data-accent={stat.accent}>
-            <div className="stat-accent" />
-            <div className="flex items-center gap-2 mb-2">
-              <stat.icon size={15} className="text-[var(--muted)]" />
-              <p className="stat-label">{stat.label}</p>
-            </div>
-            <p className="stat-value">{stat.value}</p>
-          </div>
-        ))}
+        <StatCard label="Total Items"  value={items.length} color="inventory" icon={<Package size={16} />} />
+        <StatCard label="Active Items" value={items.filter(i => i.isActive).length} color="success" icon={<Package size={16} />} />
+        <StatCard label="Packages"     value={bundles.length} color="gold" icon={<Layers size={16} />} />
+        <StatCard label="Total Units"  value={items.reduce((s, i) => s + i.quantity, 0)} color="neutral" icon={<Tag size={16} />} />
       </div>
 
       {/* Items Table */}
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10 p-0 gap-0">
         <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
             <Package size={16} /> Single Items
@@ -78,7 +72,7 @@ export default async function ItemsPage() {
             <Package size={36} className="mx-auto mb-3 text-[var(--gold)]" />
             <p className="font-semibold text-[var(--navy)] mb-1">No items yet</p>
             <p className="text-sm text-[var(--muted)] mb-4">Add chairs, tents, audio equipment — anything guests can rent.</p>
-            <Link href="/items/new" className="btn-gold text-sm px-4 py-2">Add First Item</Link>
+            <Link href="/items/new" className={buttonVariants({ variant: "gold" })}>Add First Item</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -111,14 +105,16 @@ export default async function ItemsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`badge ${item.isActive ? "badge-success" : "badge-muted"}`}>
-                        {item.isActive ? "Active" : "Hidden"}
-                      </span>
+                      <StatusBadge
+                        status={item.isActive ? "APPROVED" : "CANCELLED"}
+                        label={item.isActive ? "Active" : "Hidden"}
+                        size="xs"
+                      />
                     </td>
                     <td className="py-3 px-4">
                         {canManage ? (
                           <div className="flex flex-wrap gap-2">
-                            <Link href={`/items/${item.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
+                            <Link href={`/items/${item.id}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                               <Pencil size={12} /> Edit
                             </Link>
                             <DeleteItemButton id={item.id} type="item" name={item.name} />
@@ -133,10 +129,10 @@ export default async function ItemsPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Bundles Table */}
-      <div className="card overflow-hidden relative z-10">
+      <Card className="overflow-hidden relative z-10 p-0 gap-0">
         <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
             <Layers size={16} /> Packages & Bouquets
@@ -152,7 +148,7 @@ export default async function ItemsPage() {
             <Layers size={36} className="mx-auto mb-3 text-[var(--gold)]" />
             <p className="font-semibold text-[var(--navy)] mb-1">No packages yet</p>
             <p className="text-sm text-[var(--muted)] mb-4">Create a bundle combining multiple items into one convenient package.</p>
-            <Link href="/items/bundles/new" className="btn-gold text-sm px-4 py-2">Create First Package</Link>
+            <Link href="/items/bundles/new" className={buttonVariants({ variant: "gold" })}>Create First Package</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -188,14 +184,16 @@ export default async function ItemsPage() {
                       {formatCurrency(Number(bundle.price))}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`badge ${bundle.isActive ? "badge-success" : "badge-muted"}`}>
-                        {bundle.isActive ? "Active" : "Hidden"}
-                      </span>
+                      <StatusBadge
+                        status={bundle.isActive ? "APPROVED" : "CANCELLED"}
+                        label={bundle.isActive ? "Active" : "Hidden"}
+                        size="xs"
+                      />
                     </td>
                     <td className="py-3 px-4">
                         {canManage ? (
                           <div className="flex flex-wrap gap-2">
-                            <Link href={`/items/bundles/${bundle.id}/edit`} className="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
+                            <Link href={`/items/bundles/${bundle.id}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                               <Pencil size={12} /> Edit
                             </Link>
                             <DeleteItemButton id={bundle.id} type="bundle" name={bundle.name} />
@@ -210,7 +208,7 @@ export default async function ItemsPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

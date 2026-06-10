@@ -3,10 +3,13 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Building2, FileText } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
+import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { type CeremonyDetails } from "@/lib/ceremony-utils";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CheckInRequestButton from "@/components/patron/CheckInRequestButton";
+
+import { Card } from "@/components/ui/card";
 
 export default async function PatronBookingDetailPage({ params }: { params: { id: string } }) {
   const session = await getSession();
@@ -38,12 +41,12 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
           {booking.description && <p className="page-subtitle mt-0.5">{booking.description}</p>}
         </div>
         <div className="flex gap-2">
-          <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
+          <StatusBadge status={booking.status} size="sm" />
         </div>
       </div>
 
       {booking.rejectionReason && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-4 text-danger text-sm">
           <strong>Rejection reason:</strong> {booking.rejectionReason}
         </div>
       )}
@@ -51,29 +54,29 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Facility */}
         {booking.facility && (
-          <div className="card p-5">
+          <Card className="p-5">
             <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
               <Building2 size={13} /> Facility
             </div>
             <p className="font-semibold text-[var(--navy)]">{booking.facility.name}</p>
             <p className="text-sm page-subtitle">Cap. {booking.facility.capacity.toLocaleString()}</p>
-          </div>
+          </Card>
         )}
 
         {/* Time */}
-        <div className="card p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
             <Clock size={13} /> Schedule
           </div>
           <p className="text-sm text-gray-800"><strong>From:</strong> {formatDateTime(booking.startTime)}</p>
           <p className="text-sm text-gray-800 mt-1"><strong>To:</strong> {formatDateTime(booking.endTime)}</p>
           <p className="text-xs text-[var(--muted)] mt-2">{durationHours(booking.startTime, booking.endTime)} hours</p>
-        </div>
+        </Card>
       </div>
 
       {/* Line items */}
       {booking.lineItems.length > 0 && (
-        <div className="card p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
             <FileText size={13} /> Items
           </div>
@@ -87,11 +90,11 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Amount summary */}
-      <div className="card p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
           <FileText size={13} /> Booking Amount
         </div>
@@ -99,24 +102,24 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
           <div>
             <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
             {booking.isBillingWaived && (
-              <p className="text-sm text-green-600 font-medium mt-1">Billing waived</p>
+              <p className="text-sm text-success font-medium mt-1">Billing waived</p>
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       {booking.notes && (
-        <div className="card p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-2">
             <FileText size={13} /> Notes
           </div>
           <p className="text-sm text-[var(--slate)] whitespace-pre-line">{booking.notes}</p>
-        </div>
+        </Card>
       )}
 
       {/* Ceremony Details */}
       {cd && (
-        <div className="card p-5">
+        <Card className="p-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
             <FileText size={13} /> {cd.type === "wedding" ? "Wedding" : "Naming Ceremony"} Details
           </div>
@@ -160,24 +163,24 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Check-in status */}
       {booking.checkIn && (
-        <div className="card p-5 bg-green-50 border-green-200">
-          <p className="text-sm font-semibold text-green-800">✓ Checked in{booking.checkIn.checkedOutAt ? " & Checked out" : ""}</p>
-          <p className="text-xs text-green-700 mt-1">
+        <Card className="p-5 bg-success/10 border-success/25">
+          <p className="text-sm font-semibold text-success">✓ Checked in{booking.checkIn.checkedOutAt ? " & Checked out" : ""}</p>
+          <p className="text-xs text-success mt-1">
             Checked in at {formatDateTime(booking.checkIn.checkedInAt)}
             {booking.checkIn.checkedOutAt && ` · Checked out at ${formatDateTime(booking.checkIn.checkedOutAt)}`}
           </p>
-        </div>
+        </Card>
       )}
       {booking.checkInRequested && !booking.checkIn && (
-        <div className="card p-5 bg-amber-50 border-amber-200">
-          <p className="text-sm font-semibold text-amber-800">Check-in requested</p>
-          <p className="text-xs text-amber-700 mt-1">Waiting for staff to approve your check-in.</p>
-        </div>
+        <Card className="p-5 bg-warning/10 border-warning/25">
+          <p className="text-sm font-semibold text-warning">Check-in requested</p>
+          <p className="text-xs text-warning mt-1">Waiting for staff to approve your check-in.</p>
+        </Card>
       )}
 
       {/* Actions */}

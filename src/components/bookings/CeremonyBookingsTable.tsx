@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import { Search } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export type CeremonyBookingRow = {
   id: string;
@@ -65,7 +68,7 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
 
   function typeLabel(type: CeremonyBookingRow["ceremonyType"]) {
     if (type === "wedding") return <span className="badge bg-pink-50 text-pink-700 border border-pink-200">Wedding</span>;
-    if (type === "naming")  return <span className="badge bg-blue-50 text-blue-700 border border-blue-200">Naming</span>;
+    if (type === "naming")  return <span className="badge bg-info/10 text-info border border-info/25">Naming</span>;
     return <span className="text-[var(--muted)] text-xs">—</span>;
   }
 
@@ -88,10 +91,10 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-          <input
+          <Input
             value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, code…"
-            className="input pl-8 text-sm py-1.5 w-56"
+            className="pl-8 text-sm py-1.5 w-56"
           />
         </div>
 
@@ -125,11 +128,11 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card p-12 text-center text-[var(--muted)]">
+        <Card className="p-12 text-center text-[var(--muted)]">
           <p className="text-sm">No ceremony bookings found.</p>
-        </div>
+        </Card>
       ) : (
-        <div className="card overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gradient-to-br from-[rgba(10,22,40,0.03)] to-[rgba(10,22,40,0.01)] border-b border-[var(--border)]">
@@ -171,14 +174,14 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
                     <td className="py-3 px-4">
                       <StatusBadge status={b.status} />
                       {b.rejectionReason && (
-                        <p className="text-xs text-red-500 mt-0.5 max-w-[140px] truncate" title={b.rejectionReason}>
+                        <p className="text-xs text-danger mt-0.5 max-w-[140px] truncate" title={b.rejectionReason}>
                           {b.rejectionReason}
                         </p>
                       )}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1 flex-wrap">
-                        <Link href={`/bookings/${b.id}`} className="btn-secondary text-xs py-1 px-2">View</Link>
+                        <Link href={`/bookings/${b.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>View</Link>
                         {canManage && b.status === "PENDING" && (
                           <BookingActions bookingId={b.id} />
                         )}
@@ -195,7 +198,7 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

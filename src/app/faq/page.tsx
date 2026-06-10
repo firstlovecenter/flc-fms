@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import PublicSplitShell from "@/components/public/PublicSplitShell";
 import BookingFaq from "@/components/bookings/BookingFaq";
+
+import { Card } from "@/components/ui/card";
 
 export default function FaqPage() {
   return (
@@ -19,19 +23,19 @@ export default function FaqPage() {
       <div className="space-y-6">
         <BookingFaq title="Frequently Asked Questions" />
 
-        <div className="card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-[var(--slate)]">
             Ready to continue with your reservation?
           </p>
           <div className="flex gap-3">
-            <Link href="/" className="btn-secondary">
+            <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
               Back to Home
             </Link>
-            <Link href="/guest/book" className="btn-primary inline-flex items-center gap-2">
+            <Link href="/guest/book" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
               Start Booking <ArrowRight size={16} />
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     </PublicSplitShell>
   );

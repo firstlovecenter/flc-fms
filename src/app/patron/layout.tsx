@@ -10,7 +10,7 @@ export default async function PatronLayout({ children }: { children: React.React
   const initials = session.name.split(" ").map((w: string) => w[0]).slice(0,2).join("").toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-[var(--cream)] dark:bg-transparent overflow-x-hidden">
+    <div className="surface-warm min-h-dvh bg-cream dark:bg-transparent overflow-x-hidden">
       {session.impersonatedBy && (
         <ImpersonationBanner
           adminName={session.impersonatedBy.name}

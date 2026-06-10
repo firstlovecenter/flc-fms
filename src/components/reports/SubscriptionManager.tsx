@@ -10,6 +10,12 @@ import {
   type ReportFrequency,
   type ReportType,
 } from "@/actions/report-subscription.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Card } from "@/components/ui/card";
 
 const REPORT_TYPES: { id: ReportType; label: string }[] = [
   { id: "FINANCIAL",   label: "Financial" },
@@ -90,11 +96,11 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
     <div className="space-y-6">
       {/* Add subscription */}
       {!adding ? (
-        <button onClick={() => setAdding(true)} className="btn-primary flex items-center gap-2">
+        <Button onClick={() => setAdding(true)} className="gap-2">
           <Plus size={15} /> Add Recipient
-        </button>
+        </Button>
       ) : (
-        <div className="card p-6 border-2 border-[var(--gold)] space-y-4">
+        <Card className="p-6 border-2 border-[var(--gold)] space-y-4">
           <h3 className="font-semibold text-[var(--navy)]">New Report Subscription</h3>
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
@@ -102,32 +108,32 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
-                <input
+                <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</Label>
+                <Input
                   required value={name} onChange={(e) => setName(e.target.value)}
-                  className="input" placeholder="e.g. Rev. Samuel Mensah"
+                  placeholder="e.g. Rev. Samuel Mensah"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email Address *</label>
-                <input
+                <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Email Address *</Label>
+                <Input
                   required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="input" placeholder="name@example.com"
+                  placeholder="name@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Frequency</label>
-              <select value={frequency} onChange={(e) => setFrequency(e.target.value as ReportFrequency)} className="input">
+              <Label className="block text-sm font-medium text-[var(--slate)] mb-1">Frequency</Label>
+              <NativeSelect value={frequency} onChange={(e) => setFrequency(e.target.value as ReportFrequency)} className="w-full">
                 {(Object.keys(FREQUENCY_LABELS) as ReportFrequency[]).map((f) => (
                   <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-2">Report Types *</label>
+              <Label className="block text-sm font-medium text-[var(--slate)] mb-2">Report Types *</Label>
               <div className="flex flex-wrap gap-2">
                 {REPORT_TYPES.map((rt) => (
                   <button
@@ -147,33 +153,35 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
             </div>
 
             <div className="flex gap-3">
-              <button type="submit" disabled={saving} className="btn-primary">
+              <Button type="submit" disabled={saving}>
                 {saving ? "Saving…" : "Add Subscription"}
-              </button>
-              <button type="button" onClick={() => { setAdding(false); setError(null); }} className="btn-secondary">
+              </Button>
+              <Button type="button" onClick={() => { setAdding(false); setError(null); }} variant="outline">
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* List */}
       {subs.length === 0 ? (
-        <div className="card p-10 text-center text-[var(--muted)]">
+        <Card className="p-10 text-center text-[var(--muted)]">
           <Mail size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm">No subscriptions yet. Add a recipient to start sending scheduled reports.</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-3">
           {subs.map((sub) => (
-            <div key={sub.id} className={`card p-5 flex flex-col sm:flex-row gap-4 sm:items-center ${!sub.isActive ? "opacity-60" : ""}`}>
+            <Card key={sub.id} className={`p-5 flex flex-col sm:flex-row gap-4 sm:items-center ${!sub.isActive ? "opacity-60" : ""}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-semibold text-[var(--navy)]">{sub.name}</p>
-                  <span className={`badge ${sub.isActive ? "badge-approved" : "badge-cancelled"}`}>
-                    {sub.isActive ? "Active" : "Paused"}
-                  </span>
+                  <StatusBadge
+                    status={sub.isActive ? "APPROVED" : "CANCELLED"}
+                    label={sub.isActive ? "Active" : "Paused"}
+                    size="xs"
+                  />
                 </div>
                 <p className="text-sm text-[var(--muted)] mt-0.5 flex items-center gap-1">
                   <Mail size={12} /> {sub.email}
@@ -203,7 +211,7 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
                   <Trash2 size={16} />
                 </button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

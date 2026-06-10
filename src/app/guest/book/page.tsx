@@ -5,6 +5,7 @@ import GuestItemBookingForm from "@/components/public/GuestItemBookingForm";
 import PublicShell from "@/components/public/PublicShell";
 import GuestPageHero from "@/components/public/GuestPageHero";
 import { getCeremonyFacilityIds, getCeremonyDays } from "@/actions/ceremony-venue.actions";
+import { Card } from "@/components/ui/card";
 
 type SearchParams = {
   facilityId?: string;
@@ -179,9 +180,9 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
 
         <section>
           {isItemBooking ? (
-            <div className="card p-6 md:p-7 bg-gradient-to-b from-[#FFFFFF] to-[#FCFAF6] dark:from-[rgba(15,26,43,0.45)] dark:to-[rgba(15,26,43,0.45)]">
+            <Card className="p-6 md:p-7 bg-gradient-to-b from-[#FFFFFF] to-[#FCFAF6] dark:from-[rgba(15,26,43,0.45)] dark:to-[rgba(15,26,43,0.45)]">
               <GuestItemBookingForm initialLines={initialLines} minStartTime={minStartTime} />
-            </div>
+            </Card>
           ) : (
             <GuestBookingForm
               facilities={facilities}

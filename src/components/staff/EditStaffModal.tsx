@@ -9,6 +9,10 @@ import { z } from "zod";
 import { X } from "lucide-react";
 import { updateStaffMember, updateStaffProfilePicture, updateStaffRole } from "@/actions/staff.actions";
 import MediaUploader from "@/components/ui/MediaUploader";
+import { Button } from "@/components/ui/button";
+import { Input, inputStyles } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   name:  z.string().min(2, "Name is required"),
@@ -111,23 +115,23 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
             label="Profile Picture"
           />
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Full Name *</label>
-            <input {...register("name")} className="input" />
+            <Label htmlFor="edit-staff-name">Full Name *</Label>
+            <Input id="edit-staff-name" {...register("name")} />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
-            <input {...register("email")} type="email" className="input" />
+            <Label htmlFor="edit-staff-email">Email *</Label>
+            <Input id="edit-staff-email" {...register("email")} type="email" />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Phone *</label>
-            <input {...register("phone")} className="input" />
+            <Label htmlFor="edit-staff-phone">Phone *</Label>
+            <Input id="edit-staff-phone" {...register("phone")} />
             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--slate)] mb-1">Role *</label>
-            <select {...register("role")} className="input">
+            <Label htmlFor="edit-staff-role">Role *</Label>
+            <select id="edit-staff-role" {...register("role")} className={cn(inputStyles)}>
               {roleOptions.map((role) => (
                 <option key={role} value={role}>
                   {role.replace("_", " ")}
@@ -139,10 +143,10 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
             </p>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? "Saving…" : "Save Changes"}
-            </button>
-            <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           </div>
         </form>
       </div>

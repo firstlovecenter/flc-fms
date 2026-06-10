@@ -3,13 +3,16 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Building2, User, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { formatCurrency, formatDateTime, statusBadgeClass, durationHours } from "@/lib/utils";
+import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
 import { type CeremonyDetails } from "@/lib/ceremony-utils";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
 import SendAccessCodeButton from "@/components/bookings/SendAccessCodeButton";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 function normalizeTel(phone: string) {
   return phone.replace(/[^\d+]/g, "");
@@ -46,7 +49,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
   return (
     <div className="w-full max-w-3xl space-y-6">
       <div className="flex items-start sm:items-center gap-3 flex-wrap">
-        <Link href="/bookings" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
+        <Link href="/bookings" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-[var(--muted)]")}>
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
@@ -54,19 +57,19 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
           {booking.description && <p className="page-subtitle mt-0.5">{booking.description}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
+          <StatusBadge status={booking.status} size="sm" />
         </div>
       </div>
 
       {booking.rejectionReason && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+        <div className="bg-danger/10 border border-danger/25 rounded-lg p-4 text-danger text-sm">
           <strong>Rejection reason:</strong> {booking.rejectionReason}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Facility */}
-        <div className="card p-5">
+        <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
             <Building2 size={13} /> Facility
           </div>
@@ -77,20 +80,20 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
               View facility →
             </Link>
           )}
-        </div>
+        </Card>
 
         {/* Time */}
-        <div className="card p-5">
+        <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
             <Clock size={13} /> Schedule
           </div>
           <p className="text-sm text-gray-800"><strong>From:</strong> {formatDateTime(booking.startTime)}</p>
           <p className="text-sm text-gray-800 mt-1"><strong>To:</strong> {formatDateTime(booking.endTime)}</p>
           <p className="text-xs text-[var(--muted)] mt-2">{durationHours(booking.startTime, booking.endTime)} hours</p>
-        </div>
+        </Card>
 
         {/* Booker */}
-        <div className="card p-5">
+        <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
             <User size={13} /> {booking.patron ? "Patron" : "Staff"}
           </div>
@@ -110,36 +113,36 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
                   href={`https://wa.me/${normalizeWhatsApp(contact.phone)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-green-700 hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-success hover:underline"
                 >
                   <MessageCircle size={12} /> WhatsApp
                 </a>
               </div>
             </>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Amount */}
-      <div className="card p-6">
+      <Card className="p-6 gap-0 py-6">
         <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
           <FileText size={13} /> Booking Amount
         </div>
         <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
-      </div>
+      </Card>
 
       {booking.notes && (
-        <div className="card p-5">
+        <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-2">
             <FileText size={13} /> Notes
           </div>
           <p className="text-sm text-[var(--slate)]">{booking.notes}</p>
-        </div>
+        </Card>
       )}
 
       {/* Ceremony Details */}
       {cd && (
-        <div className="card p-5">
+        <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
             <FileText size={13} /> {cd.type === "wedding" ? "Wedding" : "Naming Ceremony"} Details
           </div>
@@ -183,18 +186,18 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Check-In / Check-Out Status */}
       {(booking.checkIn || booking.checkInRequested) && (
-        <div className={`card p-5 ${booking.checkIn ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+        <Card className={cn("p-5 gap-0 py-5", booking.checkIn ? "bg-success/10 border-success/25" : "bg-warning/10 border-warning/25")}>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-2 text-[var(--muted)]">
             <LogIn size={13} /> Check-In Status
           </div>
           {booking.checkIn ? (
             <div className="text-sm space-y-1">
-              <p className="text-green-800">
+              <p className="text-success">
                 <strong>Checked in</strong> by {booking.checkIn.checkedInBy.name} at {formatDateTime(booking.checkIn.checkedInAt)}
               </p>
               {booking.checkIn.checkedOutAt && booking.checkIn.checkedOutBy && (
@@ -207,9 +210,9 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
               )}
             </div>
           ) : (
-            <p className="text-sm text-amber-800">Patron has requested check-in. <a href="/checkin" className="underline font-semibold">Go to Check-In page →</a></p>
+            <p className="text-sm text-warning">Patron has requested check-in. <a href="/checkin" className="underline font-semibold">Go to Check-In page →</a></p>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Actions */}

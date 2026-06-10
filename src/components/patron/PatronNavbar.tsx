@@ -117,13 +117,14 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
                   key={href}
                   href={href}
                   className={cn(
-                    "flex items-center px-3.5 py-2.5 rounded-lg text-[0.9rem] no-underline transition-colors",
+                    "flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-[0.9rem] no-underline transition-colors",
                     isActive
-                      ? "font-semibold text-[var(--navy)] bg-[var(--cream-dark)] border-l-2 border-l-[var(--gold)] pl-3"
+                      ? "font-semibold text-[var(--navy)] bg-[var(--cream-dark)]"
                       : "font-normal text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)]"
                   )}
                 >
                   {label}
+                  {isActive && <span className="w-1 h-1 rounded-full bg-[var(--gold)]" aria-hidden />}
                 </Link>
               );
             })}

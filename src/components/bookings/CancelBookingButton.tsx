@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { cancelBooking } from "@/actions/booking.actions";
+import { Button } from "@/components/ui/button";
 
 export default function CancelBookingButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -19,13 +20,14 @@ export default function CancelBookingButton({ bookingId }: { bookingId: string }
   }
 
   return (
-    <button
+    <Button
+      variant="destructive"
       onClick={handleCancel}
       disabled={loading}
-      className="btn-danger flex items-center gap-2 disabled:opacity-50"
+      className="gap-2"
     >
       <XCircle size={16} />
       {loading ? "Cancelling…" : "Cancel Booking"}
-    </button>
+    </Button>
   );
 }

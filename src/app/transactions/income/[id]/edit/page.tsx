@@ -27,7 +27,7 @@ export default async function EditIncomePage({ params }: { params: { id: string 
     return (
       <div className="w-full max-w-2xl space-y-4">
         <h1 className="page-title">Edit Income</h1>
-        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+        <p className="text-sm text-danger bg-danger/10 border border-danger/25 rounded-lg p-3">
           This transaction is locked because it is older than one week.
         </p>
       </div>

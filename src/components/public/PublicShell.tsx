@@ -107,7 +107,7 @@ export default function PublicShell({
 
   if (layout === "split" && eyebrow && title && subtitle !== undefined) {
     return (
-      <div className="flex relative overflow-x-hidden min-h-dvh bg-[var(--navy)] dark:bg-transparent lg:h-screen lg:overflow-hidden">
+      <div className="surface-warm flex relative overflow-x-hidden min-h-dvh bg-[var(--navy)] dark:bg-transparent lg:h-screen lg:overflow-hidden">
         <div className="hidden lg:flex flex-[2] relative overflow-hidden items-center justify-center">
           <img
             src={leftSplitImage}
@@ -144,7 +144,7 @@ export default function PublicShell({
   }
 
   return (
-    <div className={cn("min-h-screen bg-[var(--page-bg,var(--cream))] dark:bg-transparent relative overflow-x-hidden", className)}>
+    <div className={cn("surface-warm min-h-screen bg-[var(--page-bg,var(--cream))] dark:bg-transparent relative overflow-x-hidden", className)}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[radial-gradient(circle,rgba(200,163,90,0.08)_0%,transparent_70%)]" />
         <div className="absolute top-1/3 -left-16 w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(10,22,40,0.04)_0%,transparent_70%)] dark:opacity-40" />

@@ -6,6 +6,8 @@ import ToggleMaintenanceButton from "@/components/facilities/ToggleMaintenanceBu
 import { updateFacilitySortOrder } from "@/actions/facility.actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 interface FacilityCardProps {
   facility: {
@@ -67,12 +69,12 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
         {/* Status overlays */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {f.underMaintenance && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50/95 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-orange-700">
+            <span className="inline-flex items-center gap-1 rounded-md border border-maintenance/25 bg-maintenance/10 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-maintenance">
               <AlertTriangle size={10} /> Maintenance
             </span>
           )}
           {!f.isActive && (
-            <span className="inline-flex rounded-md border border-red-200 bg-red-50/95 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-red-700">
+            <span className="inline-flex rounded-md border border-danger/25 bg-danger/10 backdrop-blur-sm px-2 py-1 text-[10px] font-semibold text-danger">
               Inactive
             </span>
           )}
@@ -111,7 +113,7 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
       <div className="px-5 pb-5 pt-0 border-t border-[var(--border)] mt-auto flex items-center gap-2 pt-4">
         <Link
           href={`/facilities/${f.id}`}
-          className="inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-white dark:bg-transparent px-4 h-9 text-sm font-medium text-[var(--slate)] hover:bg-[var(--cream)] hover:text-[var(--navy)] hover:border-[var(--border-dark)] transition-colors flex-1"
+          className={cn(buttonVariants({ variant: "outline" }), "flex-1")}
         >
           Manage
         </Link>
@@ -128,6 +130,7 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
                 onClick={() => moveOrder("up")}
                 disabled={moving || idx === 0}
                 title="Move up"
+                aria-label="Move up"
                 className="p-1 rounded text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--cream-dark)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronUp size={13} />
@@ -136,6 +139,7 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
                 onClick={() => moveOrder("down")}
                 disabled={moving || idx === totalCount - 1}
                 title="Move down"
+                aria-label="Move down"
                 className="p-1 rounded text-[var(--muted)] hover:text-[var(--navy)] hover:bg-[var(--cream-dark)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronDown size={13} />

@@ -3,8 +3,11 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Users, Clock, Calendar, User } from "lucide-react";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, cn } from "@/lib/utils";
 import DeleteEventButton from "@/components/events/DeleteEventButton";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
   await requireStaff();
@@ -29,16 +32,16 @@ export default async function EventDetailPage({ params }: { params: { id: string
   return (
     <div className="w-full max-w-3xl space-y-6">
       <div className="flex items-start sm:items-center gap-3 flex-wrap">
-        <Link href="/events" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
+        <Link href="/events" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-[var(--muted)]")}>
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="page-title">{event.title}</h1>
             {event.isPublic
-              ? <span className="badge badge-approved">Public</span>
-              : <span className="badge badge-cancelled">Private</span>}
-            {event.isRecurring && <span className="badge badge-pending">Recurring</span>}
+              ? <StatusBadge status="APPROVED" label="Public" size="sm" />
+              : <StatusBadge status="CANCELLED" label="Private" size="sm" />}
+            {event.isRecurring && <StatusBadge status="PENDING" label="Recurring" size="sm" />}
           </div>
           {event.description && (
             <p className="page-subtitle mt-1">{event.description}</p>
@@ -55,30 +58,30 @@ export default async function EventDetailPage({ params }: { params: { id: string
           { icon: MapPin,   label: "Venue",    value: event.facility.name },
           { icon: Users,    label: "Capacity", value: event.maxAttendees ? `Max ${event.maxAttendees.toLocaleString()}` : `${event.facility.capacity.toLocaleString()} (facility cap)` },
         ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="card p-4">
+          <Card key={label} className="p-4 gap-0 py-4">
             <div className="flex items-center gap-2 text-[var(--muted)] mb-1">
               <Icon size={14} />
               <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
             </div>
             <p className="text-sm font-semibold text-gray-800">{value}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Created by */}
-      <div className="card p-4 flex items-center gap-3 flex-wrap">
-        <div className="w-8 h-8 rounded-full bg-brand-100 text-[var(--navy)] flex items-center justify-center text-sm font-semibold">
+      <Card className="p-4 flex items-center gap-3 flex-wrap gap-y-3 py-4">
+        <div className="w-8 h-8 rounded-full bg-gold-bright text-[var(--navy)] flex items-center justify-center text-sm font-semibold">
           {event.createdBy.name.charAt(0)}
         </div>
         <div>
           <p className="text-xs text-[var(--muted)]">Created by</p>
           <p className="text-sm font-medium text-gray-800">{event.createdBy.name}</p>
         </div>
-      </div>
+      </Card>
 
       {/* Linked bookings */}
       {event.bookings.length > 0 && (
-        <div className="card p-6">
+        <Card className="p-6 gap-0 py-6">
           <h2 className="font-semibold text-[var(--navy)] mb-4">Linked Bookings ({event.bookings.length})</h2>
           <div className="space-y-2">
             {event.bookings.map((b) => (
@@ -93,7 +96,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

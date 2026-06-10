@@ -10,6 +10,9 @@ import {
 } from "@/actions/reports.actions";
 import { resolveDateRange, type ReportPeriod } from "@/lib/reports/utils";
 import ReportDashboard from "@/components/reports/ReportDashboard";
+import PageHeader from "@/components/layout/PageHeader";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Users } from "lucide-react";
 
@@ -45,23 +48,21 @@ export default async function ReportsPage({
       <div className="absolute top-[-100px] right-[-80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Analytics & Insights</p>
-          <h1 className="page-title mb-2">Reports</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            Enterprise-grade analytics across all business domains
-          </p>
-        </div>
-        <div className="mt-1">
+      <PageHeader
+        variant="hero"
+        eyebrow="Analytics & Insights"
+        title="Reports"
+        description="Enterprise-grade analytics across all business domains"
+        className="relative z-10"
+        actions={
           <Link
             href="/reports/subscriptions"
-            className="flex items-center gap-2 btn-secondary text-sm"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
           >
             <Users size={15} /> Manage Subscriptions
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       {/* Dashboard */}
       <div className="relative z-10">

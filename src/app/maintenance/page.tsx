@@ -4,6 +4,9 @@ import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceRequestCard from "@/components/maintenance/MaintenanceRequestCard";
 import { cn } from "@/lib/utils";
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/ui/StatCard";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 const STATUS_FILTERS = ["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
@@ -56,36 +59,24 @@ export default async function MaintenancePage({
         style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Hero header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Facility Management</p>
-          <h1 className="page-title text-[2rem] mb-2">Maintenance</h1>
-          <p className="page-hero-muted text-[0.95rem]">
-            {serializedRequests.length} request{serializedRequests.length !== 1 ? "s" : ""} to manage
-          </p>
-        </div>
-        <Link href="/maintenance/new" className="btn-primary inline-flex items-center gap-2 flex-shrink-0 mt-3">
-          <Plus size={16} /> New Request
-        </Link>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Facility Management"
+        title="Maintenance"
+        description={`${serializedRequests.length} request${serializedRequests.length !== 1 ? "s" : ""} to manage`}
+        className="relative z-10"
+        actions={
+          <Link href="/maintenance/new" className={cn(buttonVariants({ variant: "default" }), "gap-2 flex-shrink-0")}>
+            <Plus size={16} /> New Request
+          </Link>
+        }
+      />
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-4 relative z-10 stagger-children">
-        <div className="stat-card" data-accent="yellow">
-          <div className="stat-accent" />
-          <p className="stat-label">Open</p>
-          <p className="stat-value">{open}</p>
-        </div>
-        <div className="stat-card" data-accent="blue">
-          <div className="stat-accent" />
-          <p className="stat-label">In Progress</p>
-          <p className="stat-value">{inProgress}</p>
-        </div>
-        <div className="stat-card" data-accent="green">
-          <div className="stat-accent" />
-          <p className="stat-label">Resolved</p>
-          <p className="stat-value">{resolved}</p>
-        </div>
+        <StatCard label="Open"        value={open}       color="warning" />
+        <StatCard label="In Progress" value={inProgress} color="maintenance" />
+        <StatCard label="Resolved"    value={resolved}   color="success" />
       </div>
 
       {/* Status filters */}

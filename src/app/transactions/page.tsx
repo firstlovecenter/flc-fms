@@ -4,12 +4,20 @@ import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import PageHeader from "@/components/layout/PageHeader";
 import { hasVicarPermission } from "@/lib/staff-permissions";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 import IncomeRowActions from "@/components/expenses/IncomeRowActions";
 import ExpenseRowActions from "@/components/expenses/ExpenseRowActions";
+
+import { Card } from "@/components/ui/card";
 
 export default async function TransactionsPage({
   searchParams,
@@ -138,59 +146,63 @@ export default async function TransactionsPage({
       <div className="absolute top-[-100px] right-[-80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Header */}
-      <div className="page-hero flex items-start justify-between gap-4 flex-wrap relative z-10">
-        <div>
-          <p className="section-eyebrow mb-3">Financial Management</p>
-          <h1 className="page-title text-[2rem] mb-2">Transactions</h1>
-          {isFM && (
-            <p className="page-hero-muted text-[0.95rem]">
-              Available Balance: <strong style={{ color: availableBalance >= 0 ? "#86efac" : "#fca5a5" }}>{formatCurrency(availableBalance)}</strong>
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto flex-shrink-0 mt-2">
-          {isFM && (
-            <Link href="/transactions/new-income" className="btn-gold flex items-center justify-center gap-2 w-full sm:w-auto">
-              <ArrowDownLeft size={16} /> Record Income
-            </Link>
-          )}
-          {canSubmitExpenses && (
-            <Link href="/transactions/new-expense" className="btn-gold flex items-center justify-center gap-2 w-full sm:w-auto">
-              <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
-            </Link>
-          )}
-          {isFM && (
-            <Link href="/transactions/savings/deposit" className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto">
-              <PiggyBank size={16} /> Transfer to Savings
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        variant="hero"
+        eyebrow="Financial Management"
+        title="Transactions"
+        description={
+          isFM ? (
+            <>
+              Available Balance: <strong className={availableBalance >= 0 ? "text-success" : "text-danger"}>{formatCurrency(availableBalance)}</strong>
+            </>
+          ) : undefined
+        }
+        className="relative z-10"
+        actions={
+          <>
+            {isFM && (
+              <Link href="/transactions/new-income" className={cn(buttonVariants({ variant: "gold" }), "gap-2 justify-center w-full sm:w-auto")}>
+                <ArrowDownLeft size={16} /> Record Income
+              </Link>
+            )}
+            {canSubmitExpenses && (
+              <Link href="/transactions/new-expense" className={cn(buttonVariants({ variant: "gold" }), "gap-2 justify-center w-full sm:w-auto")}>
+                <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
+              </Link>
+            )}
+            {isFM && (
+              <Link href="/transactions/savings/deposit" className={cn(buttonVariants({ variant: "outline" }), "gap-2 justify-center w-full sm:w-auto")}>
+                <PiggyBank size={16} /> Transfer to Savings
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {/* FM Balance Cards */}
       {isFM && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="card p-4 border-green-200 bg-green-50">
-            <p className="text-xs font-medium text-green-700">Total Income</p>
-            <p className="text-2xl font-bold text-green-800">{formatCurrency(totalIncome)}</p>
-          </div>
-          <div className="card p-4 border-blue-200 bg-blue-50">
-            <p className="text-xs font-medium text-blue-700">Approved Expenses</p>
-            <p className="text-2xl font-bold text-blue-800">{formatCurrency(totalApprovedExpenses)}</p>
-          </div>
-          <div className="card p-4 border-yellow-200 bg-yellow-50">
-            <p className="text-xs font-medium text-yellow-700">Pending Expenses</p>
-            <p className="text-2xl font-bold text-yellow-800">{pendingExp?._count ?? 0}</p>
-            <p className="text-xs text-yellow-600 mt-0.5">{formatCurrency(Number(pendingExp?._sum.amount ?? 0))}</p>
-          </div>
-          <div className="card p-4 border-purple-200 bg-purple-50">
-            <p className="text-xs font-medium text-purple-700">Savings Balance</p>
-            <p className="text-2xl font-bold text-purple-800">{formatCurrency(netSavings)}</p>
-          </div>
-          <div className={`card p-4 ${availableBalance >= 0 ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
-            <p className={`text-xs font-medium ${availableBalance >= 0 ? "text-emerald-700" : "text-red-700"}`}>Available Balance</p>
-            <p className={`text-2xl font-bold ${availableBalance >= 0 ? "text-emerald-800" : "text-red-800"}`}>{formatCurrency(availableBalance)}</p>
-          </div>
+          <Card className="p-4 border-success/25 bg-success/10">
+            <p className="text-xs font-medium text-success">Total Income</p>
+            <p className="text-2xl font-bold text-success tabular-nums">{formatCurrency(totalIncome)}</p>
+          </Card>
+          <Card className="p-4 border-info/25 bg-info/10">
+            <p className="text-xs font-medium text-info">Approved Expenses</p>
+            <p className="text-2xl font-bold text-info tabular-nums">{formatCurrency(totalApprovedExpenses)}</p>
+          </Card>
+          <Card className="p-4 border-warning/25 bg-warning/10">
+            <p className="text-xs font-medium text-warning">Pending Expenses</p>
+            <p className="text-2xl font-bold text-warning tabular-nums">{pendingExp?._count ?? 0}</p>
+            <p className="text-xs text-warning mt-0.5 tabular-nums">{formatCurrency(Number(pendingExp?._sum.amount ?? 0))}</p>
+          </Card>
+          <Card className="p-4 border-inventory/25 bg-inventory/10">
+            <p className="text-xs font-medium text-inventory">Savings Balance</p>
+            <p className="text-2xl font-bold text-inventory tabular-nums">{formatCurrency(netSavings)}</p>
+          </Card>
+          <Card className={`p-4 ${availableBalance >= 0 ? "border-success/25 bg-success/10" : "border-danger/25 bg-danger/10"}`}>
+            <p className={`text-xs font-medium ${availableBalance >= 0 ? "text-success" : "text-danger"}`}>Available Balance</p>
+            <p className={`text-2xl font-bold tabular-nums ${availableBalance >= 0 ? "text-success" : "text-danger"}`}>{formatCurrency(availableBalance)}</p>
+          </Card>
         </div>
       )}
 
@@ -200,7 +212,7 @@ export default async function TransactionsPage({
           <Link key={t.key} href={tabHref(t.key)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               tab === t.key
-                ? "bg-[var(--navy)] text-white border-brand-500"
+                ? "bg-[var(--navy)] text-white border-gold"
                 : "bg-white text-[var(--slate)] border-[var(--border)] hover:bg-[var(--cream)]"
             }`}
           >
@@ -213,10 +225,10 @@ export default async function TransactionsPage({
       {tab === "overview" && isFM && (
         <>
           {/* Recent Income */}
-          <div className="card overflow-hidden">
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-green-50 flex justify-between items-center">
-              <h3 className="font-semibold text-green-800 text-sm">Recent Income</h3>
-              <Link href={tabHref("income")} className="text-xs text-green-700 hover:underline">View all →</Link>
+          <Card className="overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)] bg-success/10 flex justify-between items-center">
+              <h3 className="font-semibold text-success text-sm">Recent Income</h3>
+              <Link href={tabHref("income")} className="text-xs text-success hover:underline">View all →</Link>
             </div>
             {incomeRecords.length === 0 ? (
               <div className="p-8 text-center text-[var(--muted)]">No income recorded yet.</div>
@@ -231,20 +243,20 @@ export default async function TransactionsPage({
                           <p className="text-xs text-[var(--muted)]">{r.category}{r.source ? ` · ${r.source}` : ""}</p>
                         </td>
                         <td className="py-2.5 px-4 text-[var(--muted)] text-xs">{formatDate(r.receivedAt)}</td>
-                        <td className="py-2.5 px-4 text-right font-semibold text-green-700">{formatCurrency(Number(r.amount))}</td>
+                        <td className="py-2.5 px-4 text-right font-semibold text-success tabular-nums">{formatCurrency(Number(r.amount))}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Recent Expenses */}
-          <div className="card overflow-hidden">
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-orange-50 flex justify-between items-center">
-              <h3 className="font-semibold text-orange-800 text-sm">Recent Expenses</h3>
-              <Link href={tabHref("expenses")} className="text-xs text-orange-700 hover:underline">View all →</Link>
+          <Card className="overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)] bg-maintenance/10 flex justify-between items-center">
+              <h3 className="font-semibold text-maintenance text-sm">Recent Expenses</h3>
+              <Link href={tabHref("expenses")} className="text-xs text-maintenance hover:underline">View all →</Link>
             </div>
             {expenses.length === 0 ? (
               <div className="p-8 text-center text-[var(--muted)]">No expenses yet.</div>
@@ -262,13 +274,11 @@ export default async function TransactionsPage({
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                                Receipt Missing
-                              </span>
+                              <StatusBadge status="UNPAID" label="Receipt Missing" size="xs" />
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
+                        <td className="py-2.5 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-2.5 px-4">
                           {e.status === "PENDING" && <ExpenseActions expenseId={e.id} isLocked={false} />}
                         </td>
@@ -278,7 +288,7 @@ export default async function TransactionsPage({
                 </table>
               </div>
             )}
-          </div>
+          </Card>
         </>
       )}
 
@@ -288,16 +298,16 @@ export default async function TransactionsPage({
           {incomeByCategryList.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {incomeByCategryList.map((c) => (
-                <div key={c.category} className="card p-4 bg-green-50 border-green-200">
-                  <p className="text-xs font-medium text-green-700 truncate">{c.category}</p>
-                  <p className="text-xl font-bold text-green-800">{formatCurrency(Number(c._sum.amount ?? 0))}</p>
-                  <p className="text-xs text-green-600 mt-0.5">{c._count} record{c._count !== 1 ? "s" : ""}</p>
-                </div>
+                <Card key={c.category} className="p-4 bg-success/10 border-success/25">
+                  <p className="text-xs font-medium text-success truncate">{c.category}</p>
+                  <p className="text-xl font-bold text-success tabular-nums">{formatCurrency(Number(c._sum.amount ?? 0))}</p>
+                  <p className="text-xs text-success mt-0.5">{c._count} record{c._count !== 1 ? "s" : ""}</p>
+                </Card>
               ))}
             </div>
           )}
 
-          <div className="card overflow-hidden">
+          <Card className="overflow-hidden">
             {incomeRecords.length === 0 ? (
               <div className="p-12 text-center text-[var(--muted)]">No income records yet.</div>
             ) : (
@@ -325,7 +335,7 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-[var(--muted)]">{r.source ?? "—"}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{r.recordedBy?.name ?? "System"}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(r.receivedAt)}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-green-700">{formatCurrency(Number(r.amount))}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-success tabular-nums">{formatCurrency(Number(r.amount))}</td>
                         <td className="py-3 px-4 text-right">
                           <IncomeRowActions incomeId={r.id} isLocked={isTransactionLocked(r.createdAt)} />
                         </td>
@@ -335,7 +345,7 @@ export default async function TransactionsPage({
                 </table>
               </div>
             )}
-          </div>
+          </Card>
         </>
       )}
 
@@ -357,7 +367,7 @@ export default async function TransactionsPage({
             ))}
           </div>
 
-          <div className="card overflow-hidden">
+          <Card className="overflow-hidden">
             {expenses.length === 0 ? (
               <div className="p-12 text-center text-[var(--muted)]">No expenses found.</div>
             ) : (
@@ -381,17 +391,17 @@ export default async function TransactionsPage({
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-[var(--navy)]">{e.title}</p>
                             {e.maintenanceRequest && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-maintenance/10 text-maintenance border border-maintenance/25">
                                 <Wrench size={9} /> Maintenance
                               </span>
                             )}
                             {e.isTransactionCharge && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-inventory/10 text-inventory border border-inventory/25">
                                 <Zap size={9} /> Charge
                               </span>
                             )}
                             {!e.isTransactionCharge && e.chargeExpense && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.6rem] font-semibold bg-inventory/10 text-inventory border border-inventory/25">
                                 <Zap size={9} /> +{formatCurrency(Number(e.chargeExpense.amount))} charge
                               </span>
                             )}
@@ -410,14 +420,12 @@ export default async function TransactionsPage({
                           <p className="text-xs text-[var(--muted)]">{e.createdBy.role}</p>
                         </td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(e.createdAt)}</td>
-                        <td className="py-3 px-4 text-right font-semibold">{formatCurrency(Number(e.amount))}</td>
+                        <td className="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && !e.isTransactionCharge && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                                Receipt Missing
-                              </span>
+                              <StatusBadge status="UNPAID" label="Receipt Missing" size="xs" />
                             )}
                           </div>
                         </td>
@@ -442,12 +450,12 @@ export default async function TransactionsPage({
                 </table>
               </div>
             )}
-          </div>
+          </Card>
 
           {expensePages > 1 && (
             <div className="flex flex-wrap justify-end gap-2">
-              {page > 1 && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className="btn-secondary">Previous</Link>}
-              {page < expensePages && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className="btn-primary">Next</Link>}
+              {page > 1 && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline" }))}>Previous</Link>}
+              {page < expensePages && <Link href={`/transactions?tab=expenses&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className={cn(buttonVariants({ variant: "default" }))}>Next</Link>}
             </div>
           )}
         </>
@@ -458,31 +466,31 @@ export default async function TransactionsPage({
         <>
           {/* Savings summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="card p-4 border-green-200 bg-green-50">
-              <p className="text-xs font-medium text-green-700">Total Transferred In</p>
-              <p className="text-2xl font-bold text-green-800">{formatCurrency(savingsDeposits)}</p>
-            </div>
-            <div className="card p-4 border-orange-200 bg-orange-50">
-              <p className="text-xs font-medium text-orange-700">Total Transferred Out</p>
-              <p className="text-2xl font-bold text-orange-800">{formatCurrency(savingsWithdrawals)}</p>
-            </div>
-            <div className="card p-4 border-purple-200 bg-purple-50">
-              <p className="text-xs font-medium text-purple-700">Savings Balance</p>
-              <p className="text-2xl font-bold text-purple-800">{formatCurrency(netSavings)}</p>
-            </div>
+            <Card className="p-4 border-success/25 bg-success/10">
+              <p className="text-xs font-medium text-success">Total Transferred In</p>
+              <p className="text-2xl font-bold text-success tabular-nums">{formatCurrency(savingsDeposits)}</p>
+            </Card>
+            <Card className="p-4 border-maintenance/25 bg-maintenance/10">
+              <p className="text-xs font-medium text-maintenance">Total Transferred Out</p>
+              <p className="text-2xl font-bold text-maintenance tabular-nums">{formatCurrency(savingsWithdrawals)}</p>
+            </Card>
+            <Card className="p-4 border-inventory/25 bg-inventory/10">
+              <p className="text-xs font-medium text-inventory">Savings Balance</p>
+              <p className="text-2xl font-bold text-inventory tabular-nums">{formatCurrency(netSavings)}</p>
+            </Card>
           </div>
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2">
-            <Link href="/transactions/savings/deposit" className="btn-gold flex items-center gap-2">
+            <Link href="/transactions/savings/deposit" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>
               <PiggyBank size={16} /> Transfer to Savings
             </Link>
-            <Link href="/transactions/savings/withdrawal" className="btn-secondary flex items-center gap-2">
+            <Link href="/transactions/savings/withdrawal" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <ArrowUpRight size={16} /> Transfer to Operating
             </Link>
             <a
               href={`/api/savings/export${savingsExportQuery ? `?${savingsExportQuery}` : ""}`}
-              className="btn-secondary flex items-center gap-2"
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
               download
             >
               <ArrowDownLeft size={16} /> Export CSV
@@ -490,38 +498,38 @@ export default async function TransactionsPage({
           </div>
 
           {/* Statement filters */}
-          <form action="/transactions" method="get" className="card p-4 flex flex-wrap items-end gap-3">
+          <form action="/transactions" method="get" ><Card className="p-4 flex flex-wrap items-end gap-3">
             <input type="hidden" name="tab" value="savings" />
             <div>
-              <label className="block text-xs font-medium text-[var(--slate)] mb-1">Type</label>
-              <select name="sType" defaultValue={sType ?? ""} className="input text-sm py-1.5">
+              <Label htmlFor="savings-stype" className="text-xs text-[var(--slate)] mb-1">Type</Label>
+              <NativeSelect id="savings-stype" name="sType" defaultValue={sType ?? ""} className="w-full text-sm">
                 <option value="">All</option>
                 <option value="DEPOSIT">Transfers In</option>
                 <option value="WITHDRAWAL">Transfers Out</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--slate)] mb-1">From</label>
-              <input type="date" name="sFrom" defaultValue={searchParams.sFrom ?? ""} className="input text-sm py-1.5" />
+              <Label htmlFor="savings-sfrom" className="text-xs text-[var(--slate)] mb-1">From</Label>
+              <Input id="savings-sfrom" type="date" name="sFrom" defaultValue={searchParams.sFrom ?? ""} className="text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--slate)] mb-1">To</label>
-              <input type="date" name="sTo" defaultValue={searchParams.sTo ?? ""} className="input text-sm py-1.5" />
+              <Label htmlFor="savings-sto" className="text-xs text-[var(--slate)] mb-1">To</Label>
+              <Input id="savings-sto" type="date" name="sTo" defaultValue={searchParams.sTo ?? ""} className="text-sm" />
             </div>
-            <button type="submit" className="btn-primary text-sm py-1.5 px-4">Apply</button>
+            <Button type="submit">Apply</Button>
             {hasSavingsFilters && (
-              <Link href="/transactions?tab=savings" className="btn-secondary text-sm py-1.5 px-4">
+              <Link href="/transactions?tab=savings" className={cn(buttonVariants({ variant: "outline" }))}>
                 Clear
               </Link>
             )}
-          </form>
+          </Card></form>
 
           {/* Savings statement */}
-          <div className="card overflow-hidden">
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-purple-50 flex items-center justify-between">
-              <h3 className="font-semibold text-purple-800 text-sm">Savings Account Statement</h3>
+          <Card className="overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border)] bg-inventory/10 flex items-center justify-between">
+              <h3 className="font-semibold text-inventory text-sm">Savings Account Statement</h3>
               {hasSavingsFilters && (
-                <span className="text-xs text-purple-700">Filtered — balances reflect full history</span>
+                <span className="text-xs text-inventory">Filtered — balances reflect full history</span>
               )}
             </div>
             {!savingsStatement || savingsStatement.rows.length === 0 ? (
@@ -547,8 +555,8 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
                             s.type === "DEPOSIT"
-                              ? "bg-green-100 text-green-700 border border-green-200"
-                              : "bg-orange-100 text-orange-700 border border-orange-200"
+                              ? "bg-success/10 text-success border border-success/25"
+                              : "bg-maintenance/10 text-maintenance border border-maintenance/25"
                           }`}>
                             {s.type === "DEPOSIT" ? "Transfer In" : "Transfer Out"}
                           </span>
@@ -556,10 +564,10 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4 text-[var(--slate)]">{s.narration}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{s.createdByName}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(s.createdAt)}</td>
-                        <td className={`py-3 px-4 text-right font-semibold ${s.type === "DEPOSIT" ? "text-green-700" : "text-orange-700"}`}>
+                        <td className={`py-3 px-4 text-right font-semibold tabular-nums ${s.type === "DEPOSIT" ? "text-success" : "text-maintenance"}`}>
                           {s.type === "DEPOSIT" ? "+" : "−"}{formatCurrency(s.amount)}
                         </td>
-                        <td className="py-3 px-4 text-right font-semibold text-purple-800 tabular-nums">
+                        <td className="py-3 px-4 text-right font-semibold text-inventory tabular-nums">
                           {formatCurrency(s.balanceAfter)}
                         </td>
                       </tr>
@@ -568,7 +576,7 @@ export default async function TransactionsPage({
                 </table>
               </div>
             )}
-          </div>
+          </Card>
         </>
       )}
     </div>
