@@ -72,9 +72,8 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
         <Input
           id="savings-deposit-amount"
           {...register("amount")}
-          type="number"
-          step="0.01"
-          min="0.01"
+          type="text"
+          inputMode="decimal"
           max={availableBalance}
           placeholder="0.00"
           disabled={isLocked}

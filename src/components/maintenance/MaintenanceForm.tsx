@@ -110,7 +110,7 @@ export default function MaintenanceForm({
         </div>
         <div>
           <Label htmlFor="maintenance-cost">Estimated Cost (GH₵)</Label>
-          <Input id="maintenance-cost" {...register("estimatedCost")} type="number" step="0.01" placeholder="Optional" />
+          <Input id="maintenance-cost" {...register("estimatedCost")} type="text" inputMode="decimal" placeholder="Optional" />
         </div>
       </div>
 

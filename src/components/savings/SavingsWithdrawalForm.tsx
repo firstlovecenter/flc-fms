@@ -72,9 +72,8 @@ export default function SavingsWithdrawalForm({ savingsBalance }: Props) {
         <Input
           id="savings-withdrawal-amount"
           {...register("amount")}
-          type="number"
-          step="0.01"
-          min="0.01"
+          type="text"
+          inputMode="decimal"
           max={savingsBalance}
           placeholder="0.00"
           disabled={isLocked}

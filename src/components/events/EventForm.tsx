@@ -97,7 +97,7 @@ export default function EventForm({ facilities }: { facilities: Facility[] }) {
 
       <div>
         <Label htmlFor="event-max-attendees">Max Attendees</Label>
-        <Input id="event-max-attendees" {...register("maxAttendees")} type="number" placeholder="Leave blank for unlimited" />
+        <Input id="event-max-attendees" {...register("maxAttendees")} type="text" inputMode="numeric" placeholder="Leave blank for unlimited" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">

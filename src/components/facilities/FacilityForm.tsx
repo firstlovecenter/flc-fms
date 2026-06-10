@@ -205,12 +205,12 @@ export default function FacilityForm({ facility, categories }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">Capacity *</label>
-          <Input {...register("capacity")} type="number" placeholder="500" />
+          <Input {...register("capacity")} type="text" inputMode="numeric" placeholder="500" />
           {errors.capacity && <p className="text-danger text-xs mt-1">{errors.capacity.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">AC Usage Fee (Optional Add-on)</label>
-          <Input {...register("acUsageFee")} type="number" min="0" step="0.01" placeholder="0" />
+          <Input {...register("acUsageFee")} type="text" inputMode="decimal" placeholder="0" />
           {errors.acUsageFee && <p className="text-danger text-xs mt-1">{errors.acUsageFee.message}</p>}
           <p className="text-xs text-[var(--muted)] mt-1">Applied only when a booker selects air conditioner usage.</p>
         </div>
@@ -251,11 +251,11 @@ export default function FacilityForm({ facility, categories }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Latitude</label>
-            <Input {...register("latitude")} type="number" step="any" placeholder="5.6037" />
+            <Input {...register("latitude")} type="text" inputMode="decimal" placeholder="5.6037" />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--slate)] mb-1">Longitude</label>
-            <Input {...register("longitude")} type="number" step="any" placeholder="-0.1870" />
+            <Input {...register("longitude")} type="text" inputMode="decimal" placeholder="-0.1870" />
           </div>
         </div>
       </div>
