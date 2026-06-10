@@ -155,6 +155,7 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
                 <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Mother</p>
                 <p>{cd.motherName}</p>
                 <p className="text-[var(--muted)] text-xs">{cd.motherPhone}</p>
+                {cd.email && <p className="text-[var(--muted)] text-xs">{cd.email}</p>}
               </div>
               <div>
                 <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Officiating Clergy</p>

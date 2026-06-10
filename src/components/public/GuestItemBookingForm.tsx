@@ -211,8 +211,8 @@ export default function GuestItemBookingForm({
             {errors.guestName && <p className="text-xs text-danger mt-1">{errors.guestName.message}</p>}
           </div>
           <div>
-            <Label htmlFor="gib-guest-email">Email</Label>
-            <Input id="gib-guest-email" {...register("guestEmail")} type="email" />
+            <Label htmlFor="gib-guest-email">Email *</Label>
+            <Input id="gib-guest-email" {...register("guestEmail")} type="email" required />
             {errors.guestEmail && <p className="text-xs text-danger mt-1">{errors.guestEmail.message}</p>}
           </div>
         </div>

@@ -19,6 +19,7 @@ export interface NamingDetails {
   childBirthday: string; // DD/MM/YYYY
   motherName: string;
   motherPhone: string;
+  email: string;
   pastorName: string;
   pastorPhone: string;
   bishopName: string;
@@ -48,6 +49,7 @@ export const NamingDetailsSchema = z.object({
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Date must be DD/MM/YYYY"),
   motherName: z.string().min(2, "Mother's name is required"),
   motherPhone: z.string().min(9, "Mother's contact is required"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
   pastorName: z.string().min(2, "Pastor's name is required"),
   pastorPhone: z.string().min(9, "Pastor's contact is required"),
   bishopName: z.string().min(2, "Bishop's name is required"),

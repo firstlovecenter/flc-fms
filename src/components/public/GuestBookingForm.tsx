@@ -67,6 +67,10 @@ function formatCategoryLabel(slug: string): string {
   return slug.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
   const ampm = h >= 12 ? "pm" : "am";
@@ -86,6 +90,7 @@ export default function GuestBookingForm({
   ceremonyFlatPrice,
   defaultCategory,
   ceremonyDays = [],
+  defaultContactEmail = "",
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -96,6 +101,7 @@ export default function GuestBookingForm({
   ceremonyFlatPrice?: number;
   defaultCategory?: string;
   ceremonyDays?: string[];
+  defaultContactEmail?: string;
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
@@ -124,6 +130,7 @@ export default function GuestBookingForm({
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState(defaultContactEmail);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -145,6 +152,7 @@ export default function GuestBookingForm({
   const [childBirthday, setChildBirthday] = useState("");
   const [motherName, setMotherName] = useState("");
   const [motherPhone, setMotherPhone] = useState("");
+  const [namingEmail, setNamingEmail] = useState("");
   const [pastorName, setPastorName] = useState("");
   const [pastorPhone, setPastorPhone] = useState("");
   const [bishopName, setBishopName] = useState("");
@@ -287,10 +295,22 @@ export default function GuestBookingForm({
       : []),
   ];
 
+  function resolveBookingEmail() {
+    if (mode === "guest") return guestEmail.trim();
+    if (isCeremonyBooking && ceremonyType === "wedding") return coupleEmail.trim();
+    if (isCeremonyBooking && ceremonyType === "naming") return namingEmail.trim();
+    return contactEmail.trim();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
     if (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) return;
+    const bookingEmail = resolveBookingEmail();
+    if (!bookingEmail || !isValidEmail(bookingEmail)) {
+      setError("A valid email address is required to complete your booking.");
+      return;
+    }
     if (termsRequired && !agreedToTerms) {
       setError("Please agree to the required terms before submitting.");
       return;
@@ -315,7 +335,7 @@ export default function GuestBookingForm({
       return {
         type: "naming" as const,
         fatherName, fatherPhone, fatherWhatsApp, childrenNames, childBirthday,
-        motherName, motherPhone, pastorName, pastorPhone, bishopName, bishopPhone,
+        motherName, motherPhone, email: namingEmail, pastorName, pastorPhone, bishopName, bishopPhone,
       };
     })();
 
@@ -328,6 +348,7 @@ export default function GuestBookingForm({
       endTime,
       useAirConditioner,
       acceptedTerms: agreedToTerms ? requiredTerms : [],
+      contactEmail: bookingEmail,
       ...(builtCeremonyDetails ? { ceremonyDetails: builtCeremonyDetails } : {}),
       ...(ceremonyCodeId ? { ceremonyCodeId } : {}),
     };
@@ -709,6 +730,23 @@ export default function GuestBookingForm({
         <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
+      {/* Contact email — staff & patron regular bookings */}
+      {(mode === "staff" || mode === "patron") && !isCeremonyBooking && (
+        <Card className="p-5 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Contact Information</p>
+          <div>
+            <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
+            <Input
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              type="email"
+              placeholder="contact@example.com"
+              required
+            />
+          </div>
+        </Card>
+      )}
+
       {/* Guest information */}
       {mode === "guest" && (
         <Card className="p-5 space-y-4">
@@ -870,7 +908,7 @@ export default function GuestBookingForm({
           {/* Mother */}
           <div>
             <p className="text-xs font-semibold text-[var(--slate)] mb-3">Mother</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Full Name *</label>
                 <Input value={motherName} onChange={(e) => setMotherName(e.target.value)} className="text-sm" placeholder="Mother's name" required />
@@ -878,6 +916,10 @@ export default function GuestBookingForm({
               <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Contact Number *</label>
                 <Input value={motherPhone} onChange={(e) => setMotherPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Email *</label>
+                <Input type="email" value={namingEmail} onChange={(e) => setNamingEmail(e.target.value)} className="text-sm" placeholder="family@email.com" required />
               </div>
             </div>
           </div>
@@ -940,11 +982,12 @@ export default function GuestBookingForm({
           disabled={
             submitting ||
             !title.trim() ||
-            (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) ||
+            (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || !isValidEmail(guestEmail))) ||
+            ((mode === "staff" || mode === "patron") && !isCeremonyBooking && (!contactEmail.trim() || !isValidEmail(contactEmail))) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||
-            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim())) ||
-            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !pastorName.trim() || !pastorPhone.trim() || !bishopName.trim() || !bishopPhone.trim()))
+            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail))) ||
+            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !pastorName.trim() || !pastorPhone.trim() || !bishopName.trim() || !bishopPhone.trim()))
           }
           className="w-full sm:flex-1"
         >

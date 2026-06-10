@@ -18,9 +18,18 @@ type Facility = {
 export default function PatronBookingForm({
   facilities,
   defaultFacilityId,
+  defaultContactEmail,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
+  defaultContactEmail?: string;
 }) {
-  return <GuestBookingForm facilities={facilities} defaultFacilityId={defaultFacilityId} mode="patron" />;
+  return (
+    <GuestBookingForm
+      facilities={facilities}
+      defaultFacilityId={defaultFacilityId}
+      defaultContactEmail={defaultContactEmail}
+      mode="patron"
+    />
+  );
 }

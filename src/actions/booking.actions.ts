@@ -28,6 +28,7 @@ const BookingSchema = z.object({
   description: z.string().optional(),
   startTime:   z.coerce.date(),
   endTime:     z.coerce.date(),
+  contactEmail: z.string().min(1, "Email is required").email("Enter a valid email"),
   useAirConditioner: z.boolean().optional().default(false),
   notes:       z.string().optional(),
   acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
@@ -317,7 +318,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
         startTime:    validated.startTime,
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
-        notes:        validated.notes ?? null,
+        notes:        [validated.notes, `Contact email: ${validated.contactEmail}`].filter(Boolean).join("\n") || null,
         totalAmount,
         resolvedUnitPrice: unitPrice,
         resolvedPricingSource: pricingSource,
@@ -480,7 +481,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
         startTime:    validated.startTime,
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
-        notes:        validated.notes ?? null,
+        notes:        [validated.notes, `Contact email: ${validated.contactEmail}`].filter(Boolean).join("\n") || null,
         totalAmount:  amountResult.totalAmount,
         resolvedUnitPrice: amountResult.unitPrice,
         resolvedPricingSource: amountResult.pricingSource,
@@ -554,7 +555,7 @@ const GuestBookingSchema = z.object({
   useAirConditioner: z.boolean().optional().default(false),
   notes: z.string().optional(),
   guestName: z.string().min(2).max(120),
-  guestEmail: z.string().email(),
+  guestEmail: z.string().min(1, "Email is required").email("Enter a valid email"),
   guestPhone: z.string().min(9, "Phone number is required"),
   acceptedTerms: z.array(z.enum(["BOOKING_TERMS", "ITEM_BOOKING_TERMS"]))
     .optional()

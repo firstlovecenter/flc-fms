@@ -4,7 +4,12 @@ import PatronBookingForm from "@/components/patron/PatronBookingForm";
 import PageHeader from "@/components/layout/PageHeader";
 
 export default async function PatronBookPage({ searchParams }: { searchParams: { facilityId?: string } }) {
-  await requirePatron();
+  const session = await requirePatron();
+
+  const patron = await prisma.patron.findUnique({
+    where: { id: session.sub },
+    select: { email: true },
+  });
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
@@ -48,7 +53,11 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
         title="Book a Facility"
         description="Select a facility and your preferred time slot."
       />
-      <PatronBookingForm facilities={serialized} defaultFacilityId={searchParams.facilityId} />
+      <PatronBookingForm
+        facilities={serialized}
+        defaultFacilityId={searchParams.facilityId}
+        defaultContactEmail={patron?.email ?? ""}
+      />
     </div>
   );
 }

@@ -130,7 +130,7 @@ const BundleSchema = z.object({
 
 const GuestItemBookingSchema = z.object({
   guestName:  z.string().min(2),
-  guestEmail: z.string().email(),
+  guestEmail: z.string().min(1, "Email is required").email("Enter a valid email"),
   guestPhone: z.string().min(9, "Phone number is required"),
   title:      z.string().min(2).max(200),
   description:z.string().optional(),
