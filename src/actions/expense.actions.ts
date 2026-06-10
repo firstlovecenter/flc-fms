@@ -80,10 +80,9 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
   // Quick pre-flight: verify existence + lock window before entering the serialised path
   const preCheck = await prisma.expense.findFirst({
     where: { id: expenseId, status: "PENDING", deletedAt: null },
-    select: { createdAt: true, amount: true, status: true },
+    select: { createdAt: true, amount: true },
   });
   if (!preCheck) return { error: "Expense not found or is no longer pending." };
-  if (isExpenseLocked(preCheck.createdAt, preCheck.status)) return { error: transactionLockMessage() };
 
   // Run the balance check + approval inside a transaction protected by an advisory lock.
   // pg_advisory_xact_lock releases when the transaction commits, so by the time the next
@@ -93,7 +92,12 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
     | { error: string };
 
   const txResult: TxResult = await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
+    const lockRows = await tx.$queryRaw<{ locked: boolean }[]>`
+      SELECT pg_try_advisory_xact_lock(${FINANCE_ADVISORY_LOCK}) AS locked
+    `;
+    if (!lockRows[0]?.locked) {
+      return { error: "Another financial operation is in progress. Please try again in a moment." };
+    }
 
     // Re-verify inside the lock — another request may have approved it while we waited
     const current = await tx.expense.findFirst({
@@ -185,7 +189,7 @@ export async function rejectExpense(expenseId: string, reason: string) {
   const session  = await requireStaff("FACILITY_MANAGER");
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, status: true, isTransactionCharge: true },
+    select: { status: true, isTransactionCharge: true },
   });
 
   if (!existing || existing.status !== "PENDING") {
@@ -193,9 +197,6 @@ export async function rejectExpense(expenseId: string, reason: string) {
   }
   if (existing.isTransactionCharge) {
     return { error: "Transaction charge entries cannot be rejected." };
-  }
-  if (isExpenseLocked(existing.createdAt, existing.status)) {
-    return { error: transactionLockMessage() };
   }
 
   const expense = await prisma.expense.update({
