@@ -6,7 +6,6 @@ import { prisma } from "@/lib/db/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { notifyMaintenanceUpdate, notifyFMMaintenanceRequested } from "@/lib/notifications/sms";
-import { sendMaintenanceOpenedEmail, sendExpenseNotificationEmail } from "@/lib/notifications/email";
 
 const CreateSchema = z.object({
   taskId:         z.string().optional(), // when converting a personal task
@@ -33,22 +32,6 @@ function expenseTitle(facilityName: string | null | undefined) {
   return `Maintenance — ${facilityName ?? "General"}`;
 }
 
-/** Shared helper — notifies all active FMs about a new/updated expense */
-async function notifyFMsNewExpense(
-  expenseTitle: string,
-  amount: number,
-  fms: Array<{ email: string; name: string }>
-) {
-  for (const mgr of fms) {
-    await sendExpenseNotificationEmail({
-      to: mgr.email,
-      name: mgr.name,
-      expenseTitle,
-      amount,
-      type: "SUBMITTED",
-    });
-  }
-}
 
 export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema>) {
   await requireStaff("FACILITY_MANAGER", "VICAR");
@@ -97,7 +80,7 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
   const [fms, facility, reporter] = await Promise.all([
     prisma.user.findMany({
       where:  { role: "FACILITY_MANAGER", isActive: true },
-      select: { email: true, name: true, phone: true },
+      select: { phone: true },
     }),
     validated.facilityId
       ? prisma.facility.findUnique({ where: { id: validated.facilityId }, select: { name: true } })
@@ -105,7 +88,7 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
     prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
   ]);
 
-  // Notify FMs via SMS + email
+  // Notify FMs via SMS
   for (const fm of fms) {
     if (fm.phone) {
       await notifyFMMaintenanceRequested({
@@ -114,16 +97,6 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
         title:        validated.title,
         priority:     validated.priority,
         facilityName: facility?.name,
-      });
-    }
-    if (validated.facilityId && facility) {
-      await sendMaintenanceOpenedEmail({
-        to:           fm.email,
-        fmName:       fm.name,
-        facilityName: facility.name,
-        requestTitle: validated.title,
-        priority:     validated.priority ?? "MEDIUM",
-        reportedBy:   reporter?.name ?? "Staff",
       });
     }
   }
@@ -145,7 +118,6 @@ export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema
       },
     });
 
-    await notifyFMsNewExpense(title, validated.estimatedCost, fms);
     auditLog({
       userId: session.sub,
       action: "AUTO_CREATE_EXPENSE",
@@ -235,16 +207,6 @@ export async function updateMaintenanceRequest(
         category:            "Maintenance & Repairs",
       },
     });
-
-    // Notify FMs if a brand-new expense was just created (no estimatedCost was set before)
-    const wasJustCreated = expense.createdAt.getTime() > Date.now() - 5000;
-    if (wasJustCreated) {
-      const fms = await prisma.user.findMany({
-        where:  { role: "FACILITY_MANAGER", isActive: true },
-        select: { email: true, name: true },
-      });
-      await notifyFMsNewExpense(title, validated.actualCost, fms);
-    }
 
     auditLog({
       userId: session.sub,

@@ -8,7 +8,6 @@ import { requireStaff } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
-import { sendExpenseNotificationEmail } from "@/lib/notifications/email";
 import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { requirePermission } from "@/lib/auth/guards";
@@ -40,18 +39,16 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   const expense = await prisma.expense.create({
     data: { createdById: session.sub, status: "PENDING", ...validated }});
 
-  // Notify all FMs by email + SMS
+  // Notify all FMs via SMS
   const [managers, submitter] = await Promise.all([
     prisma.user.findMany({
       where: { role: "FACILITY_MANAGER", isActive: true },
-      select: { email: true, name: true, phone: true },
+      select: { phone: true },
     }),
     prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
   ]);
 
   for (const mgr of managers) {
-    await sendExpenseNotificationEmail({ to: mgr.email, name: mgr.name,
-      expenseTitle: expense.title, amount: Number(expense.amount), type: "SUBMITTED" });
     if (mgr.phone) {
       await notifyFMExpenseSubmitted({
         phone: mgr.phone,
@@ -165,10 +162,6 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
   if ("error" in txResult) return { error: txResult.error };
   const { updated, appliedCharge } = txResult;
 
-  if (updated.createdBy.email) {
-    await sendExpenseNotificationEmail({ to: updated.createdBy.email, name: updated.createdBy.name,
-      expenseTitle: updated.title, amount: Number(updated.amount), type: "APPROVED"});
-  }
   if (updated.createdBy.phone) {
     await notifyExpenseDecision({ phone: updated.createdBy.phone,
       title: updated.title, approved: true});
@@ -204,10 +197,6 @@ export async function rejectExpense(expenseId: string, reason: string) {
     data: { status: "REJECTED", approvedById: session.sub, rejectionReason: reason },
     include: { createdBy: true }});
 
-  if (expense.createdBy.email) {
-    await sendExpenseNotificationEmail({ to: expense.createdBy.email, name: expense.createdBy.name,
-      expenseTitle: expense.title, amount: Number(expense.amount), type: "REJECTED", reason});
-  }
   if (expense.createdBy.phone) {
     await notifyExpenseDecision({ phone: expense.createdBy.phone,
       title: expense.title, approved: false, reason});

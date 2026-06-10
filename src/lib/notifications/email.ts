@@ -227,45 +227,6 @@ export async function sendBookingConfirmationEmail(params: {
   });
 }
 
-export async function sendExpenseNotificationEmail(params: {
-  to: string;
-  name: string;
-  expenseTitle: string;
-  amount: number;
-  type: "SUBMITTED" | "APPROVED" | "REJECTED";
-  reason?: string;
-}) {
-  const subject =
-    params.type === "SUBMITTED"
-      ? `New Expense Request: ${params.expenseTitle}`
-      : `Expense ${params.type}: ${params.expenseTitle}`;
-
-  const actionCopy: Record<typeof params.type, string> = {
-    SUBMITTED: "submitted for review",
-    APPROVED: "approved",
-    REJECTED: "rejected",
-  };
-
-  await sendEmail({
-    to: params.to,
-    subject,
-    html: renderEmailTemplate({
-      preheader: `Expense ${params.type.toLowerCase()} update: ${params.expenseTitle}.`,
-      badge: "Expense Update",
-      title: `Expense ${params.type.toLowerCase()}`,
-      intro: `Hi ${esc(params.name)}, the expense request <strong>${esc(params.expenseTitle)}</strong> has been ${actionCopy[params.type]}.`,
-      rows: [
-        { label: "Expense title", value: esc(params.expenseTitle) },
-        { label: "Amount", value: esc(money(params.amount)) },
-        { label: "Status", value: esc(params.type) },
-      ],
-      detailsHtml: params.reason
-        ? `<p style="margin-top:14px;color:#334155;font-size:14px"><strong>Reason:</strong> ${esc(params.reason)}</p>`
-        : undefined,
-    }),
-  });
-}
-
 export async function sendBookingApprovedEmail(params: {
   to: string;
   name: string;
@@ -372,62 +333,6 @@ export async function sendBookingCompletedEmail(params: {
         { label: "End", value: esc(dt(params.endTime)) },
       ],
       ctaLabel: "View your bookings",
-      ctaUrl: APP_URL,
-    }),
-  });
-}
-
-export async function sendMaintenanceOpenedEmail(params: {
-  to: string;
-  fmName: string;
-  facilityName: string;
-  requestTitle: string;
-  priority: string;
-  reportedBy: string;
-}) {
-  await sendEmail({
-    to: params.to,
-    subject: `[${params.priority}] Maintenance Request: ${params.requestTitle}`,
-    html: renderEmailTemplate({
-      preheader: `New ${params.priority.toLowerCase()} maintenance request submitted.`,
-      badge: "Maintenance Alert",
-      title: "New maintenance request",
-      intro: `Hi ${esc(params.fmName)}, a new <strong>${esc(params.priority)}</strong> priority maintenance request has been submitted and needs attention.`,
-      rows: [
-        { label: "Facility", value: esc(params.facilityName) },
-        { label: "Request", value: esc(params.requestTitle) },
-        { label: "Priority", value: esc(params.priority) },
-        { label: "Reported by", value: esc(params.reportedBy) },
-      ],
-      ctaLabel: "Open maintenance dashboard",
-      ctaUrl: `${APP_URL}/maintenance`,
-    }),
-  });
-}
-
-export async function sendEventPublishedEmail(params: {
-  to: string;
-  patronName: string;
-  eventTitle: string;
-  facilityName: string;
-  startTime: Date;
-  endTime: Date;
-}) {
-  await sendEmail({
-    to: params.to,
-    subject: `Upcoming Event: ${params.eventTitle}`,
-    html: renderEmailTemplate({
-      preheader: `Upcoming event: ${params.eventTitle}.`,
-      badge: "Campus Event",
-      title: "A new event has been published",
-      intro: `Hi ${esc(params.patronName)}, a new event has been scheduled in your campus community.`,
-      rows: [
-        { label: "Event", value: esc(params.eventTitle) },
-        { label: "Venue", value: esc(params.facilityName) },
-        { label: "Start", value: esc(dt(params.startTime)) },
-        { label: "End", value: esc(dt(params.endTime)) },
-      ],
-      ctaLabel: "View public listings",
       ctaUrl: APP_URL,
     }),
   });

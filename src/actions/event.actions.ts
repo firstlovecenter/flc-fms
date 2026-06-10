@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePermission, requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import { sendEventPublishedEmail } from "@/lib/notifications/email";
 import { notifyEventPublished } from "@/lib/notifications/sms";
 
 const EventSchema = z.object({
@@ -53,13 +52,6 @@ export async function createEvent(data: z.infer<typeof EventSchema>) {
           venue:      facility?.name ?? "TBD",
         });
       }
-      await sendEventPublishedEmail({
-        to:           patron.email,
-        patronName:   patron.name,
-        eventTitle:   validated.title,
-        facilityName: facility?.name ?? "TBD",
-        startTime:    validated.startTime,
-        endTime:      validated.endTime});
     }
   }
 
