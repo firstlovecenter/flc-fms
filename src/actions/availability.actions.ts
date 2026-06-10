@@ -2,6 +2,11 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { bookingOverlapsSlot, toMinutes } from "@/lib/time-utils";
+import {
+  isBeyondMaxBookingAdvance,
+  MAX_BOOKING_ADVANCE_ERROR,
+  MIN_BOOKING_NOTICE_HOURS,
+} from "@/lib/booking-window";
 
 interface TimeSlotAvailability {
   id: string;
@@ -16,7 +21,7 @@ interface TimeSlotAvailability {
   isAvailable: boolean;
 }
 
-const DEFAULT_LEAD_TIME_HOURS = 168; // 7 days for week-ahead booking window
+const DEFAULT_LEAD_TIME_HOURS = MIN_BOOKING_NOTICE_HOURS;
 
 function addHours(date: Date, hours: number) {
   return new Date(date.getTime() + hours * 3_600_000);
@@ -40,6 +45,7 @@ export async function getFacilityAvailability(
   options?: {
     allowMonday?: boolean;
     leadTimeHours?: number;
+    bypassMaxAdvance?: boolean;
   }
 ) {
   try {
@@ -48,6 +54,16 @@ export async function getFacilityAvailability(
         success: false,
         error: "Event category is required.",
         slots: [],
+      };
+    }
+
+    if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date)) {
+      return {
+        success: true,
+        slots: [],
+        maintenanceWindow: null,
+        emergencyMaintenance: false,
+        message: MAX_BOOKING_ADVANCE_ERROR,
       };
     }
 
@@ -371,11 +387,20 @@ export async function getBookableFacilitiesByCategoryDate(
   options?: {
     allowMonday?: boolean;
     leadTimeHours?: number;
+    bypassMaxAdvance?: boolean;
   }
 ) {
   try {
     if (!category) {
       return { success: false, error: "Event category is required.", facilities: [] };
+    }
+
+    if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date)) {
+      return {
+        success: true,
+        facilities: [],
+        message: MAX_BOOKING_ADVANCE_ERROR,
+      };
     }
 
     const dayOfWeek = date.getDay();

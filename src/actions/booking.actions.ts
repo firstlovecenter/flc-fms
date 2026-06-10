@@ -14,6 +14,7 @@ import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/noti
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
 import { CeremonyDetailsSchema } from "@/lib/ceremony-utils";
+import { MAX_BOOKING_ADVANCE_ERROR, MAX_BOOKING_ADVANCE_HOURS } from "@/lib/booking-window";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
@@ -39,9 +40,8 @@ const BookingSchema = z.object({
   path: ["endTime"],
 });
 
-// Lead-time enforcement: bookings limited to 7 days ahead
-// Constants: 1 week = 7 * 24 * 60 * 60 = 604,800 seconds = 7,200 minutes = 168 hours
-const LEAD_TIME_HOURS = 168; // 7 days
+// Lead-time enforcement: bookings limited to 30 days ahead
+const LEAD_TIME_HOURS = MAX_BOOKING_ADVANCE_HOURS;
 const MIN_LEAD_TIME_HOURS = 0; // Start booking immediately (next available slot)
 
 function canBookMondays(role: string) {
@@ -55,7 +55,7 @@ function canBypassLeadTime(role: string) {
 function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
   const now = Date.now();
   const bookingTime = startTime.getTime();
-  // Violates if booking is in the past or more than 7 days ahead
+  // Violates if booking is in the past or more than 30 days ahead
   return bookingTime < now || bookingTime > now + hours * 3_600_000;
 }
 
@@ -221,7 +221,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingSchema>) {
   }
 
   if (violatesLeadTime(validated.startTime) && !canBypassLeadTime(session.role)) {
-    return { error: "Bookings can only be made up to 7 days in advance. Please select a date within this week." };
+    return { error: MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -413,7 +413,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingSchema>) {
   }
 
   if (violatesLeadTime(validated.startTime)) {
-    return { error: "Bookings can only be made up to 7 days in advance. Please select a date within this week." };
+    return { error: MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -579,7 +579,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   }
 
   if (violatesLeadTime(validated.startTime)) {
-    return { error: "Bookings can only be made up to 7 days in advance. Please select a date within this week." };
+    return { error: MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({

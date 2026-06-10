@@ -5,6 +5,7 @@ import { DayPicker } from "react-day-picker";
 import { format, addDays, startOfDay } from "date-fns";
 import { getFacilityAvailability, getFacilityPricing } from "@/actions/availability.actions";
 import { formatCurrency } from "@/lib/utils";
+import { MAX_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import "react-day-picker/dist/style.css";
@@ -119,6 +120,7 @@ export default function FacilityAvailabilityCalendar({
   // Disable days that aren't in availableDays
   const disabledDays = [
     { before: addDays(new Date(), 1) }, // Can't book today or past
+    { after: addDays(new Date(), MAX_BOOKING_ADVANCE_DAYS) },
     { dayOfWeek: [1] }, // Mondays are off-days (Sabbath)
     (date: Date) => !availableDays.includes(date.getDay()),
   ];

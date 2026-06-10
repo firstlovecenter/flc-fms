@@ -21,6 +21,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { getCeremonyType, toDateStr } from "@/lib/ceremony-utils";
+import { MAX_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Card } from "@/components/ui/card";
 
 import "react-day-picker/dist/style.css";
@@ -226,6 +227,7 @@ export default function GuestBookingForm({
     getBookableFacilitiesByCategoryDate(category, selectedDate, {
       allowMonday: canBookMondays,
       leadTimeHours: bypassLeadTime ? 0 : 18,
+      bypassMaxAdvance: bypassLeadTime,
     }).then((res) => {
       if (res.success) {
         setBookableFacilities((res.facilities || []).map((f) => ({
@@ -252,6 +254,7 @@ export default function GuestBookingForm({
       {
         allowMonday: canBookMondays,
         leadTimeHours: bypassLeadTime ? 0 : 18,
+        bypassMaxAdvance: bypassLeadTime,
       }
     )
       .then((res) => setSlots(res.success ? res.slots || [] : []))
@@ -270,6 +273,7 @@ export default function GuestBookingForm({
   const disabledDays = [
     () => !isCeremonyBooking && !category,
     { before: addDays(new Date(), 1) },
+    ...(bypassLeadTime ? [] : [{ after: addDays(new Date(), MAX_BOOKING_ADVANCE_DAYS) }]),
     ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
     (date: Date) =>
       !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),

@@ -113,7 +113,7 @@ export const DEFAULT_BOOKING_CONTENT: BookingContentPayload = {
     },
     {
       question: "Can I book for multiple weeks or a future date?",
-      answer: "No. Bookings are taken weekly for the current available week only.",
+      answer: "Yes. You can book up to one month in advance.",
     },
     {
       question: "Can I change or transfer my booking to another group?",
@@ -160,7 +160,7 @@ export const DEFAULT_BOOKING_CONTENT: BookingContentPayload = {
     {
       question: "Do you accept same-day bookings?",
       answer:
-        "No. All bookings must be made in advance within weekly booking window.",
+        "No. All bookings must be made at least 18 hours in advance, and no more than one month ahead.",
     },
     {
       question: "What if I have enquiries not covered on the platform?",
