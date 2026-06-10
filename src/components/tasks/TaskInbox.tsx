@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -76,12 +76,12 @@ function dueLabel(iso: string) {
 }
 
 function dueTone(iso: string, completed: boolean) {
-  if (completed) return "text-[var(--muted)] bg-black/5 dark:bg-white/5 border-transparent";
+  if (completed) return "text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)] border-transparent";
   const due = startOfDay(new Date(iso)).getTime();
   const today = startOfDay(new Date()).getTime();
   if (due < today)  return "text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/25";
   if (due === today) return "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/25";
-  return "text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-white/5 border-transparent";
+  return "text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)] border-transparent";
 }
 
 export default function TaskInbox({
@@ -215,8 +215,8 @@ export default function TaskInbox({
               className={cn(
                 "px-3 py-1.5 rounded-full text-[0.72rem] font-semibold border transition-colors",
                 filter === key
-                  ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] dark:text-white bg-[rgba(200,163,90,0.12)]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] dark:hover:text-white"
+                  ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] bg-[rgba(200,163,90,0.12)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--navy)]"
               )}
             >
               {label}
@@ -230,7 +230,7 @@ export default function TaskInbox({
         <div className="empty-state card relative z-10">
           <p>
             {view === "OPEN"
-              ? "Nothing here — add a task below to get started."
+              ? "Nothing here â€” add a task below to get started."
               : "No completed tasks yet."}
           </p>
         </div>
@@ -254,7 +254,7 @@ export default function TaskInbox({
         </div>
       )}
 
-      {/* Quick add — fixed to the bottom like the Trello inbox */}
+      {/* Quick add â€” fixed to the bottom like the Trello inbox */}
       <QuickAddBar staff={staff} currentUserId={currentUserId} />
 
       {/* Edit dialog */}
@@ -269,7 +269,7 @@ export default function TaskInbox({
   );
 }
 
-// ─── Task row ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Task row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TaskRow({
   task,
@@ -303,7 +303,7 @@ function TaskRow({
         className={cn(
           "flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all duration-150",
           done
-            ? "bg-emerald-500 border-emerald-500 text-white"
+            ? "bg-emerald-500 border-emerald-500 text-[#fff]"
             : "border-[rgba(200,163,90,0.5)] hover:border-emerald-500 hover:scale-110"
         )}
       >
@@ -314,7 +314,7 @@ function TaskRow({
       <div className="flex-1 min-w-0">
         <p
           className={cn(
-            "text-[0.92rem] font-medium text-[var(--navy)] dark:text-white truncate",
+            "text-[0.92rem] font-medium text-[var(--navy)] truncate",
             done && "line-through text-[var(--muted)] dark:text-[var(--muted)]"
           )}
         >
@@ -343,12 +343,12 @@ function TaskRow({
               </span>
             )}
             {assignedToMe && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-white/5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)]">
                 <UserRound size={11} /> From {task.createdBy}
               </span>
             )}
             {delegated && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-white/5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-semibold text-[var(--slate)] dark:text-[var(--muted)] bg-black/5 dark:bg-[rgba(255,255,255,0.06)]">
                 <UserRound size={11} /> {task.assignedTo}
               </span>
             )}
@@ -368,7 +368,7 @@ function TaskRow({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label="Task actions"
-          className="flex-shrink-0 p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          className="flex-shrink-0 p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--navy)] hover:bg-black/5 dark:hover:bg-[rgba(255,255,255,0.1)] transition-colors"
         >
           <MoreHorizontal size={16} />
         </DropdownMenuTrigger>
@@ -392,7 +392,7 @@ function TaskRow({
   );
 }
 
-// ─── Quick add bar ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Quick add bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function QuickAddBar({
   staff,
@@ -485,7 +485,7 @@ function QuickAddBar({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder="Add a task…"
+            placeholder="Add a taskâ€¦"
             className="input flex-1 !py-2"
             maxLength={300}
           />
@@ -496,8 +496,8 @@ function QuickAddBar({
             className={cn(
               "p-2 rounded-lg border transition-colors",
               showDetails
-                ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] dark:text-white bg-[rgba(200,163,90,0.12)]"
-                : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-white"
+                ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] bg-[rgba(200,163,90,0.12)]"
+                : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--navy)]"
             )}
           >
             <ChevronDown size={16} className={cn("transition-transform", showDetails && "rotate-180")} />
@@ -516,7 +516,7 @@ function QuickAddBar({
   );
 }
 
-// ─── Edit dialog ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Edit dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EditTaskDialog({
   task,
@@ -615,7 +615,7 @@ function EditTaskDialog({
 
           <div className="flex gap-3 pt-1">
             <button onClick={save} disabled={!title.trim() || isPending} className="btn-primary flex-1">
-              {isPending ? "Saving…" : "Save"}
+              {isPending ? "Savingâ€¦" : "Save"}
             </button>
             <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
           </div>
