@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import TaskInbox from "@/components/tasks/TaskInbox";
@@ -6,10 +7,16 @@ export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const session = await requireStaff();
+  const userId = session.sub;
 
-  const visibleTo = {
-    OR: [{ createdById: session.sub }, { assignedToId: session.sub }],
-  };
+  // A staff member only ever sees tasks they created or that are assigned to
+  // them. Guard against a missing id: with `userId` undefined, Prisma would
+  // drop the `OR` conditions entirely and return EVERY task — leaking other
+  // staff's tasks (including ones the FM assigned to someone else). Fail
+  // closed by matching nothing instead.
+  const visibleTo: Prisma.TaskWhereInput = userId
+    ? { OR: [{ createdById: userId }, { assignedToId: userId }] }
+    : { id: { in: [] } };
 
   const [openTasks, completedTasks, staff] = await Promise.all([
     prisma.task.findMany({
@@ -56,7 +63,7 @@ export default async function TasksPage() {
       openTasks={openTasks.map(serialize)}
       completedTasks={completedTasks.map(serialize)}
       staff={staff}
-      currentUserId={session.sub}
+      currentUserId={userId}
     />
   );
 }
