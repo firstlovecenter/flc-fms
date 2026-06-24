@@ -4,6 +4,7 @@ import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils";
 import StatCard from "@/components/ui/StatCard";
 import PageHeader from "@/components/layout/PageHeader";
+import SectionHeader from "@/components/layout/SectionHeader";
 import RecentBookings from "@/components/bookings/RecentBookings";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card } from "@/components/ui/card";
@@ -129,15 +130,15 @@ export default async function DashboardPage() {
 
       {/* Recent bookings */}
       <div className="relative z-10">
-        <div className="page-header mb-4">
-          <div>
-            <p className="section-eyebrow mb-1">Latest Activity</p>
-            <h2 className="page-title">Recent Bookings</h2>
-          </div>
-          <Link href="/bookings" className="link-gold inline-flex items-center gap-1 text-[0.88rem]">
-            View All →
-          </Link>
-        </div>
+        <SectionHeader
+          eyebrow="Latest Activity"
+          title="Recent Bookings"
+          actions={
+            <Link href="/bookings" className="link-gold inline-flex items-center gap-1 text-[0.88rem]">
+              View All →
+            </Link>
+          }
+        />
         <Card className="overflow-hidden p-0 gap-0">
           <RecentBookings bookings={recentBookingsWithFacility} />
         </Card>

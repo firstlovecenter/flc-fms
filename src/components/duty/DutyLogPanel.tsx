@@ -148,7 +148,7 @@ export default function DutyLogPanel({
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
                     item.isDone
-                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      ? "border-emerald-600 bg-emerald-600 text-[#fff]"
                       : "border-[var(--border)] hover:border-[var(--navy)]",
                   )}
                   aria-label={item.isDone ? "Mark incomplete" : "Mark done"}
@@ -160,7 +160,7 @@ export default function DutyLogPanel({
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2",
                     item.isDone
-                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      ? "border-emerald-600 bg-emerald-600 text-[#fff]"
                       : "border-[var(--border)]",
                   )}
                 >
@@ -223,7 +223,7 @@ export default function DutyLogPanel({
                         className={cn(
                           "mx-auto flex h-6 w-6 items-center justify-center rounded border-2",
                           item.isDone
-                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            ? "border-emerald-600 bg-emerald-600 text-[#fff]"
                             : "border-[var(--border)] hover:border-[var(--navy)]",
                         )}
                       >
@@ -234,7 +234,7 @@ export default function DutyLogPanel({
                         className={cn(
                           "mx-auto flex h-6 w-6 items-center justify-center rounded border-2",
                           item.isDone
-                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            ? "border-emerald-600 bg-emerald-600 text-[#fff]"
                             : "border-[var(--border)]",
                         )}
                       >

@@ -99,7 +99,7 @@ export default function MediaUploader({
                     type="button"
                     onClick={() => setMain(i)}
                     title="Set as main"
-                    className="text-white hover:text-yellow-300"
+                    className="text-[#fff] hover:text-yellow-300"
                   >
                     <Star size={13} />
                   </button>
@@ -107,14 +107,14 @@ export default function MediaUploader({
                 <button
                   type="button"
                   onClick={() => remove(i)}
-                  className="ml-auto text-white hover:text-red-300"
+                  className="ml-auto text-[#fff] hover:text-red-300"
                   title="Remove"
                 >
                   <X size={13} />
                 </button>
               </div>
               {showMain && i === 0 && (
-                <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-semibold text-white bg-black/60 py-0.5">
+                <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-semibold text-[#fff] bg-black/60 py-0.5">
                   MAIN
                 </span>
               )}

@@ -6,12 +6,10 @@ import MaintenanceStatusUpdate from "@/components/maintenance/MaintenanceStatusU
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 
 const formatDate = (date: Date) =>
   new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 
 interface MaintenanceRequestCardProps {
   request: {

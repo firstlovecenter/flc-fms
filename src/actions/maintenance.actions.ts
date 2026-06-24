@@ -15,7 +15,7 @@ const CreateSchema = z.object({
   priority:       z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   scheduledStart: z.coerce.date().optional(),
   scheduledEnd:   z.coerce.date().optional(),
-  estimatedCost:  z.coerce.number().positive().optional(),
+  estimatedCost:  z.coerce.number().min(0).optional(),
 }).refine(
   (d) => !d.scheduledStart || !d.scheduledEnd || d.scheduledEnd > d.scheduledStart,
   { message: "Scheduled end must be after scheduled start", path: ["scheduledEnd"] }
@@ -24,7 +24,7 @@ const CreateSchema = z.object({
 const UpdateSchema = z.object({
   status:       z.enum(["IN_PROGRESS", "RESOLVED", "CLOSED"]),
   assignedToId: z.string().min(1).optional(),
-  actualCost:   z.coerce.number().positive().optional(),
+  actualCost:   z.coerce.number().min(0).optional(),
 });
 
 /** Shared helper — builds the expense title from facility name */

@@ -29,7 +29,7 @@ export default async function WeddingCatalogPage() {
       <div className="space-y-8">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-body-sm font-medium text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-white transition-colors group"
+          className="inline-flex items-center gap-2 text-body-sm font-medium text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-[#fff] transition-colors group"
         >
           <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" aria-hidden />
           Back to Home

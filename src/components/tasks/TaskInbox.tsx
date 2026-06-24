@@ -298,7 +298,7 @@ function TaskRow({
         className={cn(
           "flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all duration-150",
           done
-            ? "bg-success border-success text-white"
+            ? "bg-success border-success text-[#fff]"
             : "border-[rgba(200,163,90,0.5)] hover:border-success hover:scale-110"
         )}
       >

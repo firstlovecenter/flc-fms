@@ -135,7 +135,7 @@ export default function PatronProfilePage() {
               disabled={uploading}
               className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
             >
-              {uploading ? <Loader2 size={20} className="text-white animate-spin" /> : <Camera size={20} className="text-white" />}
+              {uploading ? <Loader2 size={20} className="text-[#fff] animate-spin" /> : <Camera size={20} className="text-[#fff]" />}
             </button>
           </div>
           <div>

@@ -32,12 +32,12 @@ export default function PublicTopNav({
           <PageContainer maxWidth={maxWidth} className="py-1.5">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-[var(--text-muted)] min-w-0">
               {officePhone && (
-                <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+                <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-[#fff] transition-colors break-all">
                   <Phone size={11} className="shrink-0" aria-hidden /> {officePhone}
                 </a>
               )}
               {officeEmail && (
-                <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+                <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-[#fff] transition-colors break-all">
                   <Mail size={11} className="shrink-0" aria-hidden /> {officeEmail}
                 </a>
               )}

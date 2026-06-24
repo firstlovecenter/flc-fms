@@ -159,7 +159,7 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
                 <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
                   {initialLines.length} item type{initialLines.length !== 1 ? "s" : ""} selected
                 </span>
-                <Link href="/?tab=items" className="badge bg-white/10 text-white border border-white/25 no-underline">
+                <Link href="/?tab=items" className="badge bg-white/10 text-[#fff] border border-white/25 no-underline">
                   ← Back to Home
                 </Link>
               </>
@@ -168,10 +168,10 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
                 <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
                   {facilities.length} facilities available
                 </span>
-                <span className="badge bg-white/10 text-white border border-white/25">
+                <span className="badge bg-white/10 text-[#fff] border border-white/25">
                   Same-day review by staff
                 </span>
-                <Link href="/?tab=items" className="badge bg-white/10 text-white border border-white/25 no-underline">
+                <Link href="/?tab=items" className="badge bg-white/10 text-[#fff] border border-white/25 no-underline">
                   Browse items →
                 </Link>
               </>

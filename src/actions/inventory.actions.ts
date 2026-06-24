@@ -66,7 +66,7 @@ const ItemSchema = z.object({
   status:       z.enum(["AVAILABLE", "IN_USE", "CHECKED_OUT", "UNDER_MAINTENANCE", "DISPOSED", "LOST"]).default("AVAILABLE"),
   location:     z.string().optional(),
   quantity:     z.coerce.number().int().positive().default(1),
-  unitCost:     z.coerce.number().positive().optional(),
+  unitCost:     z.coerce.number().min(0).optional(),
   purchaseDate: z.coerce.date().optional(),
   supplier:     z.string().optional(),
   warrantyExp:  z.coerce.date().optional(),
@@ -290,13 +290,13 @@ const InvMaintSchema = z.object({
   title:         z.string().min(2).max(200),
   description:   z.string().min(5),
   priority:      z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
-  estimatedCost: z.coerce.number().positive().optional(),
+  estimatedCost: z.coerce.number().min(0).optional(),
 });
 
 const InvMaintUpdateSchema = z.object({
   status:       z.enum(["IN_PROGRESS", "RESOLVED", "CLOSED"]),
   assignedToId: z.string().optional(),
-  actualCost:   z.coerce.number().positive().optional(),
+  actualCost:   z.coerce.number().min(0).optional(),
 });
 
 export async function createInventoryMaintenance(data: z.infer<typeof InvMaintSchema>) {

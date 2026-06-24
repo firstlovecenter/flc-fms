@@ -96,9 +96,9 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
                         <img src={img} alt={`${facility.name} - ${idx + 2}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         {idx === 3 && facility.images.length > 5 && (
                           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center transition-colors hover:bg-black/70 cursor-pointer">
-                            <span className="text-white font-medium text-lg flex flex-col items-center gap-1">
+                            <span className="text-[#fff] font-medium text-lg flex flex-col items-center gap-1">
                               <span className="text-2xl">+{facility.images.length - 5}</span>
-                              <span className="text-xs uppercase tracking-widest text-white/80">More Photos</span>
+                              <span className="text-xs uppercase tracking-widest text-[#fff]/80">More Photos</span>
                             </span>
                           </div>
                         )}
@@ -249,7 +249,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
             <div className="relative p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 z-10">
               <div className="text-center md:text-left">
                 <span className="text-[var(--gold)] text-sm font-bold uppercase tracking-widest block mb-2">Ready to Reserve?</span>
-                <h2 className="text-3xl md:text-4xl font-display text-white font-bold max-w-xl leading-tight">
+                <h2 className="text-3xl md:text-4xl font-display text-[#fff] font-bold max-w-xl leading-tight">
                   Secure your dates before they&apos;re gone.
                 </h2>
               </div>
@@ -263,7 +263,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
                 </Link>
                 <Link
                   href="/patron/login"
-                  className="inline-flex items-center justify-center bg-transparent text-white border border-white/20 hover:bg-white/10 rounded-full px-8 h-14 text-base font-medium"
+                  className="inline-flex items-center justify-center bg-transparent text-[#fff] border border-white/20 hover:bg-white/10 rounded-full px-8 h-14 text-base font-medium"
                 >
                   Patron Sign In
                 </Link>

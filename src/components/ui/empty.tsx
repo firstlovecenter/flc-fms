@@ -91,6 +91,41 @@ function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Convenience empty state: icon + title + description + optional action,
+ * composed from the primitives above. The canonical empty state for lists,
+ * tables, and panels (use instead of bespoke "No X found" markup).
+ */
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  className,
+}: {
+  icon?: React.ReactNode
+  title: React.ReactNode
+  description?: React.ReactNode
+  action?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <Empty
+      className={cn(
+        "border border-dashed border-[var(--border)] bg-[var(--surface)]/40 py-16 dark:bg-[hsl(var(--ui-card))]/40",
+        className
+      )}
+    >
+      <EmptyHeader>
+        {icon && <EmptyMedia variant="icon">{icon}</EmptyMedia>}
+        <EmptyTitle>{title}</EmptyTitle>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
+    </Empty>
+  )
+}
+
 export {
   Empty,
   EmptyHeader,
@@ -98,4 +133,5 @@ export {
   EmptyDescription,
   EmptyContent,
   EmptyMedia,
+  EmptyState,
 }

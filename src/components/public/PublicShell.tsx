@@ -21,12 +21,12 @@ function ContactStrip({ officePhone, officeEmail }: { officePhone?: string; offi
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-2 border-t border-[var(--border)] text-caption text-[var(--text-muted)] min-w-0">
       {officePhone && (
-        <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+        <a href={`tel:${officePhone}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-[#fff] transition-colors break-all">
           <Phone size={11} className="shrink-0" aria-hidden /> {officePhone}
         </a>
       )}
       {officeEmail && (
-        <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-white transition-colors break-all">
+        <a href={`mailto:${officeEmail}`} className="flex items-center gap-1 hover:text-[var(--navy)] dark:hover:text-[#fff] transition-colors break-all">
           <Mail size={11} className="shrink-0" aria-hidden /> {officeEmail}
         </a>
       )}
@@ -45,12 +45,12 @@ function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: s
           </svg>
         </div>
         <div>
-          <div className="text-heading-md font-bold text-white leading-none font-display">First Love Center</div>
+          <div className="text-heading-md font-bold text-[#fff] leading-none font-display">First Love Center</div>
           <div className="text-eyebrow text-[rgba(255,255,255,0.35)] mt-1">Facility Management</div>
         </div>
       </div>
       <p className="section-eyebrow mb-2">{eyebrow}</p>
-      <h1 className="font-display text-display-xl text-white leading-[1.15] mb-4">{title}</h1>
+      <h1 className="font-display text-display-xl text-[#fff] leading-[1.15] mb-4">{title}</h1>
       <p className="text-[rgba(232,240,255,0.72)] leading-relaxed mb-8 text-body">{subtitle}</p>
       <div className="space-y-3.5">
         {FEATURES.map((item) => (

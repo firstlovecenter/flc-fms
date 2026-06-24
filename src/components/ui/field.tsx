@@ -224,6 +224,53 @@ function FieldError({
   )
 }
 
+/**
+ * Convenience field for the common react-hook-form case: label + control +
+ * error + hint. Composes the primitives above so forms stop hand-assembling
+ * `<Label>` + control + `<p className="text-danger">` per field.
+ *
+ * @example
+ * <FormField label="Title" htmlFor="title" required error={errors.title?.message}>
+ *   <Input id="title" {...register("title")} />
+ * </FormField>
+ */
+function FormField({
+  label,
+  htmlFor,
+  error,
+  description,
+  required,
+  className,
+  children,
+}: {
+  label?: React.ReactNode
+  htmlFor?: string
+  error?: React.ReactNode
+  description?: React.ReactNode
+  required?: boolean
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Field className={className} data-invalid={error ? "true" : undefined}>
+      {label && (
+        <FieldLabel htmlFor={htmlFor}>
+          {label}
+          {required && (
+            <span aria-hidden className="text-destructive">
+              {" "}
+              *
+            </span>
+          )}
+        </FieldLabel>
+      )}
+      {children}
+      {description && !error && <FieldDescription>{description}</FieldDescription>}
+      {error && <FieldError>{error}</FieldError>}
+    </Field>
+  )
+}
+
 export {
   Field,
   FieldLabel,
@@ -235,4 +282,5 @@ export {
   FieldSet,
   FieldContent,
   FieldTitle,
+  FormField,
 }

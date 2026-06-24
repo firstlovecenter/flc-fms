@@ -573,7 +573,7 @@ export default function GuestBookingForm({
                           >
                             <div className="flex items-center gap-2 sm:gap-5">
                               <span
-                                className={`text-sm font-semibold tabular-nums min-w-[58px] sm:min-w-[68px] ${isSelected ? "text-white" : "text-[var(--navy)] dark:text-gray-100"}`}
+                                className={`text-sm font-semibold tabular-nums min-w-[58px] sm:min-w-[68px] ${isSelected ? "text-[#fff]" : "text-[var(--navy)] dark:text-gray-100"}`}
                               >
                                 {formatTime(slot.startTime)}
                               </span>
@@ -581,13 +581,13 @@ export default function GuestBookingForm({
                             <div className="flex items-center gap-2">
                               {isCeremonyBooking ? null : slot.isFree ? (
                                 <span
-                                  className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/15 text-white/90" : "bg-green-500/12 text-green-600 dark:bg-[rgba(34,197,94,0.2)] dark:text-green-400"}`}
+                                  className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSelected ? "bg-white/15 text-[#fff]/90" : "bg-green-500/12 text-green-600 dark:bg-[rgba(34,197,94,0.2)] dark:text-green-400"}`}
                                 >
                                   FREE
                                 </span>
                               ) : (
                                 <span
-                                  className={`text-xs ${isSelected ? "text-white/65" : "text-[var(--slate)] dark:text-gray-400"}`}
+                                  className={`text-xs ${isSelected ? "text-[#fff]/65" : "text-[var(--slate)] dark:text-gray-400"}`}
                                 >
                                   {formatCurrency(slot.effectivePricePerHour)}
                                 </span>
@@ -701,23 +701,23 @@ export default function GuestBookingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Summary card */}
-      <div className="rounded-xl p-4 text-white bg-[var(--navy)] dark:bg-[rgba(15,26,43,0.8)] border border-transparent dark:border-[rgba(255,255,255,0.08)]">
+      <div className="rounded-xl p-4 text-[#fff] bg-[var(--navy)] dark:bg-[rgba(15,26,43,0.8)] border border-transparent dark:border-[rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-white/50">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-[#fff]/50">
               {selectedFacility?.name}
             </p>
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-[#fff]">
               {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")}
             </p>
-            <p className="text-sm mt-0.5 text-white/65">
+            <p className="text-sm mt-0.5 text-[#fff]/65">
               {selectedSlot &&
                 `Starts at ${formatTime(selectedSlot.startTime)}`}
             </p>
           </div>
           {estimatedCost !== null && (
             <div className="text-right shrink-0">
-              <p className="text-xs mb-0.5 text-white/50">Estimated</p>
+              <p className="text-xs mb-0.5 text-[#fff]/50">Estimated</p>
               <p className={`text-xl font-bold ${estimatedCost === 0 ? "text-success" : "text-[var(--gold)]"}`}>
                 {estimatedCost === 0 ? "FREE" : formatCurrency(estimatedCost)}
               </p>

@@ -20,7 +20,7 @@ const schema = z.object({
   priority:       z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   scheduledStart: z.string().optional(),
   scheduledEnd:   z.string().optional(),
-  estimatedCost:  z.coerce.number().positive().optional().or(z.literal("")),
+  estimatedCost:  z.coerce.number().min(0).optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;

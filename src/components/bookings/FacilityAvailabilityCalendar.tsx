@@ -159,7 +159,7 @@ export default function FacilityAvailabilityCalendar({
             disabled={[() => !category, ...disabledDays]}
             className="border rounded-lg p-2"
             modifiersClassNames={{
-              selected: "bg-gold text-white",
+              selected: "bg-gold text-[#fff]",
               today: "border-2 border-gold",
             }}
             fromDate={addDays(new Date(), 1)}

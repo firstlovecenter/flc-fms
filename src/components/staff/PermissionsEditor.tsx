@@ -29,8 +29,8 @@ const PERMISSION_GROUPS: { title: string; keys: (keyof VicarPermissions)[] }[] =
     keys: ["canSubmitExpenses", "canViewFinancials"],
   },
   {
-    title: "People & Events",
-    keys: ["canViewPatrons", "canCreateEvents"],
+    title: "People",
+    keys: ["canViewPatrons"],
   },
 ];
 
@@ -55,7 +55,6 @@ export default function PermissionsEditor({ vicarId, vicarName, currentPermissio
       canCreateMaintenance: true,
       canManageFacilities:  false,
       canViewPatrons:       true,
-      canCreateEvents:      false,
     };
     setPerms(defaults);
     setSaved(false);
@@ -174,5 +173,4 @@ const PERMISSION_DESCRIPTIONS: Record<keyof VicarPermissions, string> = {
   canCreateMaintenance: "Allow this vicar to log maintenance requests for facilities.",
   canManageFacilities:  "Allow this vicar to edit facility details and toggle maintenance locks.",
   canViewPatrons:       "Allow this vicar to view patron profiles and booking history.",
-  canCreateEvents:      "Allow this vicar to create and manage campus events.",
 };

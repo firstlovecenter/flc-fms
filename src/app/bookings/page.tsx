@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
+import PageHeader from "@/components/layout/PageHeader";
 import BookingsListClient from "@/components/bookings/BookingsListClient";
 import CeremonyBookingsTable, { type CeremonyBookingRow } from "@/components/bookings/CeremonyBookingsTable";
 import type { CeremonyDetails } from "@/lib/ceremony-utils";
@@ -89,13 +90,11 @@ export default async function BookingsPage({
 
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
-            <p className="text-sm text-[var(--muted)]">{total} ceremony booking{total !== 1 ? "s" : ""}</p>
-          </div>
-          {canManage && (
-            <div className="flex gap-2 flex-wrap">
+        <PageHeader
+          title="Bookings"
+          description={`${total} ceremony booking${total !== 1 ? "s" : ""}`}
+          actions={canManage ? (
+            <>
               <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
                 <Plus size={15} /> New Booking
               </Link>
@@ -105,9 +104,9 @@ export default async function BookingsPage({
               <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
                 <Plus size={15} /> New Naming
               </Link>
-            </div>
-          )}
-        </div>
+            </>
+          ) : undefined}
+        />
 
         <TabBar tab="ceremony" status={searchParams.status} />
 
@@ -144,6 +143,12 @@ export default async function BookingsPage({
         facility: { select: { id: true, name: true } },
         patron:   { select: { name: true, phone: true, email: true } },
         user:     { select: { name: true, phone: true, email: true } },
+        lineItems: {
+          include: {
+            item:   { select: { name: true, unit: true } },
+            bundle: { select: { name: true } },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * take,
@@ -197,6 +202,13 @@ export default async function BookingsPage({
       bookerName:      booker?.name ?? "-",
       bookerPhone:     booker?.phone ?? null,
       bookerEmail:     booker?.email ?? null,
+      lineItems:       b.lineItems.map((li) => ({
+        label:     li.item?.name ?? li.bundle?.name ?? "Item",
+        unit:      li.item?.unit ?? null,
+        quantity:  li.quantity,
+        unitPrice: Number(li.unitPrice),
+        subtotal:  Number(li.subtotal),
+      })),
     };
   });
 
@@ -208,13 +220,11 @@ export default async function BookingsPage({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--navy)]">Bookings</h1>
-          <p className="text-sm text-[var(--muted)]">{total} regular booking{total !== 1 ? "s" : ""}</p>
-        </div>
-        {canManage && (
-          <div className="flex gap-2 flex-wrap">
+      <PageHeader
+        title="Bookings"
+        description={`${total} regular booking${total !== 1 ? "s" : ""}`}
+        actions={canManage ? (
+          <>
             <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
               <Plus size={15} /> New Booking
             </Link>
@@ -224,9 +234,9 @@ export default async function BookingsPage({
             <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <Plus size={15} /> New Naming
             </Link>
-          </div>
-        )}
-      </div>
+          </>
+        ) : undefined}
+      />
 
       <TabBar tab="regular" status={searchParams.status} />
 

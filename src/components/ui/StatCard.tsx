@@ -11,7 +11,6 @@ type Accent =
   | "facilities"
   | "inventory"
   | "maintenance"
-  | "events"
   | "finance"
   | "duty"
   | "success"
@@ -52,7 +51,6 @@ const ACCENT_CHIP: Record<string, string> = {
   facilities:  "bg-facilities/10 text-facilities ring-facilities/20",
   inventory:   "bg-inventory/10 text-inventory ring-inventory/20",
   maintenance: "bg-maintenance/10 text-maintenance ring-maintenance/20",
-  events:      "bg-events/10 text-events ring-events/20",
   finance:     "bg-finance/10 text-finance ring-finance/20",
   duty:        "bg-duty/10 text-duty ring-duty/20",
   success:     "bg-success/10 text-success ring-success/20",

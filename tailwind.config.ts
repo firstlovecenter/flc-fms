@@ -38,7 +38,6 @@ const config: Config = {
         facilities:  "hsl(var(--accent-facilities) / <alpha-value>)",
         inventory:   "hsl(var(--accent-inventory) / <alpha-value>)",
         maintenance: "hsl(var(--accent-maintenance) / <alpha-value>)",
-        events:      "hsl(var(--accent-events) / <alpha-value>)",
         finance:     "hsl(var(--accent-finance) / <alpha-value>)",
         duty:        "hsl(var(--accent-duty) / <alpha-value>)",
         sidebar: {

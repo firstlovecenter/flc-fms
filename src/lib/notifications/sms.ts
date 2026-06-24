@@ -221,24 +221,6 @@ export async function notifyMaintenanceUpdate(params: {
   });
 }
 
-export async function notifyEventPublished(params: {
-  phone: string;
-  eventTitle: string;
-  eventDate: Date;
-  venue: string;
-}) {
-  const date = params.eventDate.toLocaleDateString("en-GH", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  await sendSMS({
-    to: params.phone,
-    message: `New event: "${params.eventTitle}" at ${params.venue} on ${date}. Don't miss it!`,
-  });
-}
-
 export async function notifyPasswordChanged(params: {
   phone: string;
   name: string;

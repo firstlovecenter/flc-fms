@@ -10,7 +10,7 @@ const globalForPrisma = globalThis as unknown as {
 /**
  * Prisma Client extended with a soft-delete query filter.
  *
- * For models with a `deletedAt` field (Booking, Expense, Income, Event),
+ * For models with a `deletedAt` field (Booking, Expense, Income),
  * read operations automatically exclude soft-deleted records unless the caller
  * explicitly passes `where: { deletedAt: { not: null } }` to opt in.
  */
@@ -54,18 +54,6 @@ function buildPrismaClient() {
         },
       },
       income: {
-        async $allOperations({ operation, args, query }) {
-          const readOps = ["findFirst", "findMany", "findUnique", "count", "aggregate", "groupBy"];
-          if (readOps.includes(operation)) {
-            const a = args as { where?: Record<string, unknown> };
-            if (a.where?.deletedAt === undefined) {
-              a.where = { ...a.where, deletedAt: null };
-            }
-          }
-          return query(args);
-        },
-      },
-      event: {
         async $allOperations({ operation, args, query }) {
           const readOps = ["findFirst", "findMany", "findUnique", "count", "aggregate", "groupBy"];
           if (readOps.includes(operation)) {

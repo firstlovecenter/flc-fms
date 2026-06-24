@@ -93,8 +93,8 @@ function LoginContent() {
           <div className="absolute inset-0 bg-gradient-to-br from-[rgba(10,22,40,0.86)] to-[rgba(10,22,40,0.68)]" />
           <div className="relative z-10 flex flex-col items-center gap-2.5 px-6 text-center">
             <img src="/fl-logo-white.webp" alt="FLC FMS" className="w-[86px] h-[86px] object-contain" />
-            <p className="font-display text-heading-lg text-white m-0">FLC FMS</p>
-            <p className="text-eyebrow text-white/85 m-0">Preparing Sign-In</p>
+            <p className="font-display text-heading-lg text-[#fff] m-0">FLC FMS</p>
+            <p className="text-eyebrow text-[#fff]/85 m-0">Preparing Sign-In</p>
             <div className="w-[140px] h-0.5 mt-2 bg-white/20 rounded-full overflow-hidden">
               <div className="w-full h-full bg-[var(--gold)] origin-left animate-[splashBar_2800ms_linear_forwards]" />
             </div>
@@ -127,7 +127,7 @@ function LoginContent() {
               </svg>
             </div>
             <div>
-              <div className="text-[1.2rem] font-bold text-white leading-none" style={{ fontFamily: "var(--font-display)" }}>
+              <div className="text-[1.2rem] font-bold text-[#fff] leading-none" style={{ fontFamily: "var(--font-display)" }}>
                 First Love Center
               </div>
               <div className="text-[0.62rem] text-[rgba(255,255,255,0.3)] uppercase tracking-[0.07em] mt-1">
@@ -136,7 +136,7 @@ function LoginContent() {
             </div>
           </div>
 
-          <h1 className="text-[2.8rem] font-bold text-white leading-[1.15] mb-5" style={{ fontFamily: "var(--font-display)" }}>
+          <h1 className="text-[2.8rem] font-bold text-[#fff] leading-[1.15] mb-5" style={{ fontFamily: "var(--font-display)" }}>
             Welcome back<br /><em className="text-[var(--gold)] italic">to Revival Campus</em>
           </h1>
         </div>

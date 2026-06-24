@@ -6,7 +6,6 @@ export interface VicarPermissions {
   canCreateMaintenance: boolean;
   canManageFacilities:  boolean;
   canViewPatrons:       boolean;
-  canCreateEvents:      boolean;
 }
 
 export const DEFAULT_VICAR_PERMISSIONS: VicarPermissions = {
@@ -17,7 +16,6 @@ export const DEFAULT_VICAR_PERMISSIONS: VicarPermissions = {
   canCreateMaintenance: true,
   canManageFacilities:  false,
   canViewPatrons:       true,
-  canCreateEvents:      false,
 };
 
 export const PERMISSION_LABELS: Record<keyof VicarPermissions, string> = {
@@ -28,7 +26,6 @@ export const PERMISSION_LABELS: Record<keyof VicarPermissions, string> = {
   canCreateMaintenance: "Create Maintenance Requests",
   canManageFacilities:  "Manage Facilities",
   canViewPatrons:       "View Patrons",
-  canCreateEvents:      "Create Events",
 };
 
 export function isVicarPermissionKey(permission: string): permission is keyof VicarPermissions {

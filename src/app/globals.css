@@ -55,7 +55,6 @@
   --accent-facilities:  174 42% 36%;
   --accent-inventory:   262 38% 50%;
   --accent-maintenance: 25 72% 45%;
-  --accent-events:      330 42% 44%;
   --accent-finance:     152 45% 33%;
   --accent-duty:        199 68% 40%;
 
@@ -260,7 +259,6 @@
   --accent-facilities:  174 45% 60%;
   --accent-inventory:   262 55% 74%;
   --accent-maintenance: 25 85% 66%;
-  --accent-events:      330 55% 72%;
   --accent-finance:     152 45% 58%;
   --accent-duty:        199 75% 64%;
 
@@ -331,7 +329,6 @@
   --accent-facilities:  174 45% 62%;
   --accent-inventory:   262 55% 78%;
   --accent-maintenance: 25 85% 68%;
-  --accent-events:      330 55% 74%;
   --accent-finance:     152 45% 60%;
   --accent-duty:        199 75% 66%;
   --gold-hsl:           40 53% 64%;
@@ -1019,6 +1016,11 @@
   .staff-main { padding: 28px 32px; }
 }
 
+/* Clear the mobile bottom tab bar (MobileBottomNav, hidden at lg+) */
+@media (max-width: 1023px) {
+  .staff-main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+}
+
 /* ─── Page subtitle (alias for page-sub) ─────────────────────────────────── */
 .page-subtitle {
   font-size: 0.83rem;
@@ -1117,5 +1119,123 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CODE-CAMP STAFF THEME — staff portal only (scoped to .surface-cool)
+   Mirrors the sibling `code-camp` repo's palette with a more modern touch:
+   warm coral/rose primary (#ff4d6b = 349 100% 63%), warm neutral grays, a
+   warm-charcoal sidebar, and a slightly larger radius. Public/patron/auth
+   (.surface-warm) keep the First Love navy + gold identity untouched.
+   Remove this whole section to revert.
+   ───────────────────────────────────────────────────────────────────────── */
+.surface-cool {
+  /* Brand accent: gold → coral (channels drive every text-gold/bg-gold/--gold) */
+  --gold-hsl:        349 100% 63%;
+  --gold-bright-hsl: 349 100% 71%;
+  --gold-muted-hsl:  349 64% 50%;
+  --gold-pale-hsl:   349 100% 96%;
+
+  /* Headings/body: cool navy → warm near-black (also warms the sidebar canvas) */
+  --navy-hsl:        20 14% 12%;
+  --navy-mid-hsl:    20 13% 20%;
+  --navy-light-hsl:  22 12% 30%;
+
+  /* Warm neutral canvas */
+  --cream-hsl:       24 16% 97%;
+  --cream-dark-hsl:  24 13% 93%;
+  --border-hsl:      24 13% 88%;
+  --text-muted-hsl:  24 8% 44%;
+  --surface:         #ffffff;
+  --white:           #ffffff;
+  --border-dark:     #d8cfc9;
+  --field-border:    #e7ddd6;
+
+  /* shadcn tokens — code-camp light */
+  --ui-background: 24 16% 97%;
+  --ui-foreground: 20 14% 12%;
+  --ui-card: 0 0% 100%;
+  --ui-card-foreground: 20 14% 12%;
+  --ui-popover: 0 0% 100%;
+  --ui-popover-foreground: 20 14% 12%;
+  --ui-primary: 349 100% 63%;
+  --ui-primary-foreground: 0 0% 100%;
+  --ui-secondary: 24 13% 93%;
+  --ui-secondary-foreground: 20 14% 18%;
+  --ui-muted: 24 13% 94%;
+  --ui-muted-foreground: 24 8% 44%;
+  --ui-accent: 24 13% 93%;
+  --ui-accent-foreground: 20 14% 18%;
+  --ui-border: 24 13% 88%;
+  --ui-input: 24 13% 88%;
+  --ui-ring: 349 100% 63%;
+  --radius: 0.625rem;
+
+  /* Theme-aware sidebar (light): warm off-white canvas, dark text, coral active */
+  --sb-bg: 24 22% 98%;
+  --sb-fg: 20 12% 32%;
+  --sb-fg-strong: 20 14% 12%;
+  --sb-muted: 24 7% 52%;
+  --sb-hover-bg: 24 14% 93%;
+  --sb-border: 24 13% 90%;
+
+  /* Warm hero with a coral edge */
+  --page-hero-bg: linear-gradient(135deg, hsl(20 14% 12%) 0%, hsl(22 13% 18%) 100%);
+  --page-hero-fg: #ffffff;
+  --page-hero-muted: rgba(255, 255, 255, 0.74);
+  --page-hero-border: hsl(349 100% 63% / 0.40);
+}
+
+/* Staff sidebar (.on-navy): bright coral accent on the warm-charcoal canvas */
+.surface-cool .on-navy {
+  --gold-hsl:        349 100% 68%;
+  --gold-bright-hsl: 349 100% 74%;
+}
+
+/* Staff portal — dark mode: coral primary + warm darks */
+.dark .surface-cool {
+  --gold-hsl:        349 100% 67%;
+  --gold-bright-hsl: 349 100% 74%;
+  --gold-muted-hsl:  349 70% 62%;
+
+  --navy-hsl:        24 16% 96%;
+  --navy-mid-hsl:    24 14% 86%;
+  --navy-light-hsl:  24 12% 74%;
+  --text-muted-hsl:  24 8% 62%;
+
+  --surface: hsl(20 13% 12% / 0.92);
+  --white:   hsl(20 13% 14% / 0.6);
+  --cream-dark: rgba(40, 34, 30, 0.5);
+
+  --ui-background: 20 14% 8%;
+  --ui-foreground: 24 16% 96%;
+  --ui-card: 20 13% 11%;
+  --ui-card-foreground: 24 16% 96%;
+  --ui-popover: 20 13% 11%;
+  --ui-popover-foreground: 24 16% 96%;
+  --ui-primary: 349 100% 63%;
+  --ui-primary-foreground: 0 0% 100%;
+  --ui-secondary: 22 9% 17%;
+  --ui-secondary-foreground: 24 16% 96%;
+  --ui-muted: 22 9% 17%;
+  --ui-muted-foreground: 24 8% 62%;
+  --ui-accent: 22 9% 19%;
+  --ui-accent-foreground: 24 16% 96%;
+  --ui-border: 24 8% 18%;
+  --ui-input: 24 8% 20%;
+  --ui-ring: 349 100% 63%;
+
+  /* Theme-aware sidebar (dark): warm charcoal canvas, light text, coral active */
+  --sb-bg: 20 13% 10%;
+  --sb-fg: 24 10% 72%;
+  --sb-fg-strong: 24 16% 96%;
+  --sb-muted: 24 8% 55%;
+  --sb-hover-bg: 24 8% 16%;
+  --sb-border: 24 8% 18%;
+
+  --page-hero-bg: linear-gradient(135deg, hsl(20 14% 10%) 0%, hsl(22 13% 16%) 100%);
+  --page-hero-fg: #f7f3f1;
+  --page-hero-muted: rgba(247, 243, 241, 0.72);
+  --page-hero-border: hsl(349 100% 63% / 0.35);
 }
 

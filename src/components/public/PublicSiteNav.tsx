@@ -32,19 +32,19 @@ export default function PublicSiteNav({
         : cn(buttonVariants({ variant: "ghost", size: "sm" }), "transition-colors"),
       active
         ? isTop
-          ? "bg-[rgba(10,22,40,0.08)] dark:bg-[rgba(255,255,255,0.1)] text-[var(--navy)] dark:text-white font-semibold"
-          : "text-[var(--navy)] dark:text-white font-semibold"
+          ? "bg-[rgba(10,22,40,0.08)] dark:bg-[rgba(255,255,255,0.1)] text-[var(--navy)] dark:text-[#fff] font-semibold"
+          : "text-[var(--navy)] dark:text-[#fff] font-semibold"
         : isTop
-          ? "text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-white hover:bg-[rgba(10,22,40,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)]"
-          : "text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-white"
+          ? "text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-[#fff] hover:bg-[rgba(10,22,40,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)]"
+          : "text-[var(--muted)] hover:text-[var(--navy)] dark:hover:text-[#fff]"
     );
 
   const mobileLinkClass = (active: boolean) =>
     cn(
       "flex items-center px-3.5 py-2.5 rounded-lg text-[0.9rem] no-underline transition-colors",
       active
-        ? "font-semibold text-[var(--navy)] dark:text-white bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.08)] border-l-2 border-l-[var(--gold)]"
-        : "font-normal text-[var(--slate)] dark:text-[rgba(232,238,248,0.75)] hover:text-[var(--navy)] dark:hover:text-white hover:bg-[rgba(10,22,40,0.04)] dark:hover:bg-[rgba(255,255,255,0.05)]"
+        ? "font-semibold text-[var(--navy)] dark:text-[#fff] bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.08)] border-l-2 border-l-[var(--gold)]"
+        : "font-normal text-[var(--slate)] dark:text-[rgba(232,238,248,0.75)] hover:text-[var(--navy)] dark:hover:text-[#fff] hover:bg-[rgba(10,22,40,0.04)] dark:hover:bg-[rgba(255,255,255,0.05)]"
     );
 
   return (
@@ -71,7 +71,7 @@ export default function PublicSiteNav({
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <span className="text-[0.9rem] font-semibold text-[var(--navy)] dark:text-white truncate" style={{ fontFamily: "var(--font-display)" }}>
+            <span className="text-[0.9rem] font-semibold text-[var(--navy)] dark:text-[#fff] truncate" style={{ fontFamily: "var(--font-display)" }}>
               FLC
             </span>
           </Link>
@@ -113,7 +113,7 @@ export default function PublicSiteNav({
             type="button"
             className={cn(
               mobileOnlyClass,
-              "w-9 h-9 flex items-center justify-center rounded-lg bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.08)] border border-[var(--border)] text-[var(--navy)] dark:text-white cursor-pointer"
+              "w-9 h-9 flex items-center justify-center rounded-lg bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.08)] border border-[var(--border)] text-[var(--navy)] dark:text-[#fff] cursor-pointer"
             )}
             onClick={() => setMenuOpen((o) => !o)}
             aria-expanded={menuOpen}

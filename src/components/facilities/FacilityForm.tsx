@@ -138,7 +138,7 @@ export default function FacilityForm({ facility, categories }: Props) {
         description: m.description.trim() || null,
         isActive: true,
       }))
-      .filter((m) => Number.isFinite(m.price) && m.price > 0);
+      .filter((m) => Number.isFinite(m.price) && m.price >= 0);
 
     if (activeMappings.length === 0) {
       setError("Select at least one category and provide its price.");

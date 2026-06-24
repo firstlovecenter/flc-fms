@@ -22,7 +22,7 @@ export default async function ReportSubscriptionsPage() {
         title="Scheduled Report Subscriptions"
         description="Manage who receives automated report emails and at what cadence."
         actions={
-          <Link href="/reports" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 flex-shrink-0 text-white/80 hover:text-white border-white/20")}>
+          <Link href="/reports" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 flex-shrink-0 text-[#fff]/80 hover:text-[#fff] border-white/20")}>
             <ArrowLeft size={15} /> Back to Reports
           </Link>
         }

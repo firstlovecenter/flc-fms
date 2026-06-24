@@ -130,7 +130,7 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
                   e.stopPropagation();
                   setSelectedConfig(config);
                 }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-[#fff] opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Expand size={14} />
               </button>

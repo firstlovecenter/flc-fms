@@ -190,7 +190,7 @@ function SlotForm({ facilityId, defaultDay, initial, editingSlotId, onDone, onSa
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[var(--slate)] mb-1">Price Override (₦/hr)</label>
+          <label className="block text-xs font-medium text-[var(--slate)] mb-1">Price Override (GH₵/hr)</label>
           <Input
             type="number" min={0} step={0.01} className="text-sm"
             placeholder="Leave blank to use venue rate"

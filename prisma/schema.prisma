@@ -7,42 +7,41 @@ datasource db {
 }
 
 model User {
-  id                 String                 @id @default(cuid())
-  email              String                 @unique
-  passwordHash       String
-  name               String
-  phone              String?
-  role               Role
-  isActive           Boolean                @default(true)
-  permissions        Json                   @default("{}")
-  mustChangePassword Boolean                @default(false)
-  profilePicture     String?
-  lastLoginAt        DateTime?
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-  auditLogs          AuditLog[]
-  bookings           Booking[]
-  createdEvents      Event[]
-  approvedExpenses   Expense[]              @relation("ApprovedExpenses")
-  createdExpenses    Expense[]              @relation("CreatedExpenses")
-  createdIncome      Income[]
-  inventoryCheckouts InventoryCheckout[]    @relation("CheckedOutBy")
-  inventoryReturns   InventoryCheckout[]    @relation("ReturnedBy")
-  invMaintAssigned     InventoryMaintenance[] @relation("InvMaintAssigned")
-  invMaintRequested    InventoryMaintenance[] @relation("InvMaintRequested")
-  assignedMaint        MaintenanceRequest[]   @relation("AssignedMaint")
-  requestedMaint       MaintenanceRequest[]   @relation("RequestedMaint")
-  facilityCheckIns     FacilityCheckIn[]      @relation("FacilityCheckIns")
-  facilityCheckOuts    FacilityCheckIn[]      @relation("FacilityCheckOuts")
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  passwordHash          String
+  name                  String
+  phone                 String?
+  role                  Role
+  isActive              Boolean                @default(true)
+  permissions           Json                   @default("{}")
+  mustChangePassword    Boolean                @default(false)
+  profilePicture        String?
+  lastLoginAt           DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  auditLogs             AuditLog[]
+  bookings              Booking[]
+  approvedExpenses      Expense[]              @relation("ApprovedExpenses")
+  createdExpenses       Expense[]              @relation("CreatedExpenses")
+  createdIncome         Income[]
+  inventoryCheckouts    InventoryCheckout[]    @relation("CheckedOutBy")
+  inventoryReturns      InventoryCheckout[]    @relation("ReturnedBy")
+  invMaintAssigned      InventoryMaintenance[] @relation("InvMaintAssigned")
+  invMaintRequested     InventoryMaintenance[] @relation("InvMaintRequested")
+  assignedMaint         MaintenanceRequest[]   @relation("AssignedMaint")
+  requestedMaint        MaintenanceRequest[]   @relation("RequestedMaint")
+  facilityCheckIns      FacilityCheckIn[]      @relation("FacilityCheckIns")
+  facilityCheckOuts     FacilityCheckIn[]      @relation("FacilityCheckOuts")
   activatedCodes        CeremonyBookingCode[]
   ceremonyDateOverrides CeremonyDateOverride[]
   savingsTransactions   SavingsTransaction[]
-  dutyLogsAssigned      DutyLog[]           @relation("DutyAssignedTo")
-  dutyLogsCreated       DutyLog[]           @relation("DutyCreatedBy")
-  dutyLogsSupervised     DutyLog[]           @relation("DutySupervisor")
-  dutyItemsSigned       DutyLogItem[]       @relation("DutyItemSignedBy")
-  tasksCreated          Task[]              @relation("TasksCreated")
-  tasksAssigned         Task[]              @relation("TasksAssigned")
+  dutyLogsAssigned      DutyLog[]              @relation("DutyAssignedTo")
+  dutyLogsCreated       DutyLog[]              @relation("DutyCreatedBy")
+  dutyLogsSupervised    DutyLog[]              @relation("DutySupervisor")
+  dutyItemsSigned       DutyLogItem[]          @relation("DutyItemSignedBy")
+  tasksCreated          Task[]                 @relation("TasksCreated")
+  tasksAssigned         Task[]                 @relation("TasksAssigned")
 
   @@index([role])
   @@index([role, isActive])
@@ -65,54 +64,53 @@ model Patron {
 }
 
 model Facility {
-  id                  String               @id @default(cuid())
-  name                String
-  description         String?
-  capacity            Int
-  requiresBookingTerms Boolean             @default(true)
-  requiresItemBookingTerms Boolean         @default(false)
-  amenities           String[]
-  images              String[]
-  isActive            Boolean              @default(true)
-  underMaintenance    Boolean              @default(false)
-  availableFrom       String               @default("08:00")
-  availableTo         String               @default("22:00")
-  acUsageFee          Decimal              @default(0) @db.Decimal(10, 2)
-  availableDays       Int[]
-  latitude            Float?
-  longitude           Float?
-  hasAccessCode       Boolean              @default(false)
-  accessCode          String?
-  deletedAt           DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  maintenanceEndsAt   DateTime?
-  maintenanceStartsAt DateTime?
-  sortOrder           Int                  @default(0)
-  bookings              Booking[]
-  events                Event[]
-  pricing               FacilityPricing[]
-  timeSlots             FacilityTimeSlot[]
-  maintenance           MaintenanceRequest[]
-  inventoryRequirements FacilityInventoryRequirement[]
-  ceremonyConfigs       CeremonyVenueConfig[]
+  id                       String                         @id @default(cuid())
+  name                     String
+  description              String?
+  capacity                 Int
+  requiresBookingTerms     Boolean                        @default(true)
+  requiresItemBookingTerms Boolean                        @default(false)
+  amenities                String[]
+  images                   String[]
+  isActive                 Boolean                        @default(true)
+  underMaintenance         Boolean                        @default(false)
+  availableFrom            String                         @default("08:00")
+  availableTo              String                         @default("22:00")
+  acUsageFee               Decimal                        @default(0) @db.Decimal(10, 2)
+  availableDays            Int[]
+  latitude                 Float?
+  longitude                Float?
+  hasAccessCode            Boolean                        @default(false)
+  accessCode               String?
+  deletedAt                DateTime?
+  createdAt                DateTime                       @default(now())
+  updatedAt                DateTime                       @updatedAt
+  maintenanceEndsAt        DateTime?
+  maintenanceStartsAt      DateTime?
+  sortOrder                Int                            @default(0)
+  bookings                 Booking[]
+  pricing                  FacilityPricing[]
+  timeSlots                FacilityTimeSlot[]
+  maintenance              MaintenanceRequest[]
+  inventoryRequirements    FacilityInventoryRequirement[]
+  ceremonyConfigs          CeremonyVenueConfig[]
 
   @@index([isActive])
   @@map("facilities")
 }
 
 model FacilityPricing {
-  id           String   @id @default(cuid())
-  facilityId   String
-  category     String
-  price        Decimal  @db.Decimal(10, 2)
-  description  String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  freeDays     Int[]    @default([])
-  facility     Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  timeSlots    FacilityTimeSlot[]
+  id          String             @id @default(cuid())
+  facilityId  String
+  category    String
+  price       Decimal            @db.Decimal(10, 2)
+  description String?
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  freeDays    Int[]              @default([])
+  facility    Facility           @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  timeSlots   FacilityTimeSlot[]
 
   @@unique([facilityId, category])
   @@index([facilityId, isActive])
@@ -120,21 +118,21 @@ model FacilityPricing {
 }
 
 model FacilityTimeSlot {
-  id                   String   @id @default(cuid())
+  id                   String          @id @default(cuid())
   facilityId           String
   category             String
   dayOfWeek            Int
   startTime            String
   endTime              String
   label                String
-  isFlexible           Boolean  @default(false)
-  maxBookings          Int      @default(1)
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  isFree               Boolean  @default(false)
-  pricePerHourOverride Decimal? @db.Decimal(10, 2)
-  facility             Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  isFlexible           Boolean         @default(false)
+  maxBookings          Int             @default(1)
+  isActive             Boolean         @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  isFree               Boolean         @default(false)
+  pricePerHourOverride Decimal?        @db.Decimal(10, 2)
+  facility             Facility        @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   pricing              FacilityPricing @relation(fields: [facilityId, category], references: [facilityId, category], onDelete: Cascade)
 
   @@index([facilityId, category, dayOfWeek, isActive])
@@ -142,38 +140,36 @@ model FacilityTimeSlot {
 }
 
 model Booking {
-  id              String            @id @default(cuid())
-  facilityId      String?
-  userId          String?
-  patronId        String?
-  eventId         String?
-  category        String            @default("OTHER")
-  title           String
-  description     String?
-  startTime       DateTime
-  endTime         DateTime
-  status          BookingStatus     @default(PENDING)
-  totalAmount     Decimal           @db.Decimal(10, 2)
-  resolvedUnitPrice Decimal         @default(0) @db.Decimal(10, 2)
-  resolvedPricingSource String      @default("CATEGORY_BASE")
-  notes           String?
-  acRequested     Boolean           @default(false)
-  checkInRequested   Boolean        @default(false)
-  checkInRequestedAt DateTime?
-  rejectionReason String?
-  deletedAt       DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  isBillingWaived Boolean           @default(false)
-  ceremonyDetails Json?
-  lineItems       BookingLineItem[]
-  event           Event?            @relation(fields: [eventId], references: [id])
-  facility        Facility?         @relation(fields: [facilityId], references: [id])
-  patron          Patron?           @relation(fields: [patronId], references: [id])
-  user            User?             @relation(fields: [userId], references: [id])
-  income          Income?
-  checkIn         FacilityCheckIn?
-  ceremonyCode    CeremonyBookingCode?
+  id                    String               @id @default(cuid())
+  facilityId            String?
+  userId                String?
+  patronId              String?
+  category              String               @default("OTHER")
+  title                 String
+  description           String?
+  startTime             DateTime
+  endTime               DateTime
+  status                BookingStatus        @default(PENDING)
+  totalAmount           Decimal              @db.Decimal(10, 2)
+  resolvedUnitPrice     Decimal              @default(0) @db.Decimal(10, 2)
+  resolvedPricingSource String               @default("CATEGORY_BASE")
+  notes                 String?
+  acRequested           Boolean              @default(false)
+  checkInRequested      Boolean              @default(false)
+  checkInRequestedAt    DateTime?
+  rejectionReason       String?
+  deletedAt             DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  isBillingWaived       Boolean              @default(false)
+  ceremonyDetails       Json?
+  lineItems             BookingLineItem[]
+  facility              Facility?            @relation(fields: [facilityId], references: [id])
+  patron                Patron?              @relation(fields: [patronId], references: [id])
+  user                  User?                @relation(fields: [userId], references: [id])
+  income                Income?
+  checkIn               FacilityCheckIn?
+  ceremonyCode          CeremonyBookingCode?
 
   @@index([facilityId, startTime, endTime])
   @@index([facilityId, status, deletedAt])
@@ -183,43 +179,43 @@ model Booking {
 }
 
 model BookableItem {
-  id               String            @id @default(cuid())
-  name             String
-  description      String?
-  unit             String            @default("piece")
-  requiresBookingTerms Boolean       @default(false)
-  requiresItemBookingTerms Boolean   @default(true)
-  pricePerUnit     Decimal           @db.Decimal(10, 2)
-  quantity         Int               @default(1)
-  images           String[]
-  tags             String[]
-  isActive         Boolean           @default(true)
-  sortOrder        Int               @default(0)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  bookingLines     BookingLineItem[]
-  bundleComponents BundleComponent[]
+  id                       String            @id @default(cuid())
+  name                     String
+  description              String?
+  unit                     String            @default("piece")
+  requiresBookingTerms     Boolean           @default(false)
+  requiresItemBookingTerms Boolean           @default(true)
+  pricePerUnit             Decimal           @db.Decimal(10, 2)
+  quantity                 Int               @default(1)
+  images                   String[]
+  tags                     String[]
+  isActive                 Boolean           @default(true)
+  sortOrder                Int               @default(0)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  bookingLines             BookingLineItem[]
+  bundleComponents         BundleComponent[]
 
   @@index([isActive])
   @@map("bookable_items")
 }
 
 model BookableBundle {
-  id           String            @id @default(cuid())
-  name         String
-  description  String?
-  tagline      String?
-  requiresBookingTerms Boolean   @default(false)
-  requiresItemBookingTerms Boolean @default(true)
-  price        Decimal           @db.Decimal(10, 2)
-  images       String[]
-  tags         String[]
-  isActive     Boolean           @default(true)
-  sortOrder    Int               @default(0)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  bookingLines BookingLineItem[]
-  components   BundleComponent[]
+  id                       String            @id @default(cuid())
+  name                     String
+  description              String?
+  tagline                  String?
+  requiresBookingTerms     Boolean           @default(false)
+  requiresItemBookingTerms Boolean           @default(true)
+  price                    Decimal           @db.Decimal(10, 2)
+  images                   String[]
+  tags                     String[]
+  isActive                 Boolean           @default(true)
+  sortOrder                Int               @default(0)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  bookingLines             BookingLineItem[]
+  components               BundleComponent[]
 
   @@index([isActive])
   @@map("bookable_bundles")
@@ -258,47 +254,47 @@ model BookingLineItem {
 }
 
 model Expense {
-  id                   String               @id @default(cuid())
+  id                   String              @id @default(cuid())
   createdById          String
   approvedById         String?
   title                String
   narration            String
-  amount               Decimal              @db.Decimal(10, 2)
+  amount               Decimal             @db.Decimal(10, 2)
   category             String
-  status               ExpenseStatus        @default(PENDING)
+  status               ExpenseStatus       @default(PENDING)
   receiptUrl           String?
   rejectionReason      String?
   deletedAt            DateTime?
-  createdAt            DateTime             @default(now())
+  createdAt            DateTime            @default(now())
   approvedAt           DateTime?
-  updatedAt            DateTime             @updatedAt
-  maintenanceRequestId String?              @unique
-  isTransactionCharge  Boolean              @default(false)
-  chargeExpenseId      String?              @unique
-  approvedBy           User?                @relation("ApprovedExpenses", fields: [approvedById], references: [id])
-  createdBy            User                 @relation("CreatedExpenses", fields: [createdById], references: [id])
-  maintenanceRequest   MaintenanceRequest?  @relation(fields: [maintenanceRequestId], references: [id])
-  chargeExpense        Expense?             @relation("ChargeExpense", fields: [chargeExpenseId], references: [id])
-  linkedExpense        Expense?             @relation("ChargeExpense")
+  updatedAt            DateTime            @updatedAt
+  maintenanceRequestId String?             @unique
+  isTransactionCharge  Boolean             @default(false)
+  chargeExpenseId      String?             @unique
+  approvedBy           User?               @relation("ApprovedExpenses", fields: [approvedById], references: [id])
+  createdBy            User                @relation("CreatedExpenses", fields: [createdById], references: [id])
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  chargeExpense        Expense?            @relation("ChargeExpense", fields: [chargeExpenseId], references: [id])
+  linkedExpense        Expense?            @relation("ChargeExpense")
 
   @@index([status])
   @@map("expenses")
 }
 
 model Income {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   recordedById String?
   title        String
   narration    String
-  amount       Decimal  @db.Decimal(10, 2)
+  amount       Decimal   @db.Decimal(10, 2)
   category     String
   source       String?
   receivedAt   DateTime
-  createdAt    DateTime @default(now())
-  bookingId    String?  @unique
+  createdAt    DateTime  @default(now())
+  bookingId    String?   @unique
   deletedAt    DateTime?
-  booking      Booking? @relation(fields: [bookingId], references: [id])
-  recordedBy   User?    @relation(fields: [recordedById], references: [id])
+  booking      Booking?  @relation(fields: [bookingId], references: [id])
+  recordedBy   User?     @relation(fields: [recordedById], references: [id])
 
   @@index([receivedAt])
   @@index([receivedAt, deletedAt])
@@ -382,29 +378,29 @@ model InventoryCategory {
 }
 
 model InventoryItem {
-  id              String                 @id @default(cuid())
-  categoryId      String?
-  name            String
-  description     String?
-  serialNumber    String?
-  assetTag        String?                @unique
-  condition       InventoryCondition     @default(GOOD)
-  status          InventoryStatus        @default(AVAILABLE)
-  location        String?
-  quantity        Int                    @default(1)
-  unitCost        Decimal?               @db.Decimal(10, 2)
-  purchaseDate    DateTime?
-  supplier        String?
-  warrantyExp     DateTime?
-  notes           String?
-  images          String[]
-  isActive        Boolean                @default(true)
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  checkouts             InventoryCheckout[]
-  category              InventoryCategory?     @relation(fields: [categoryId], references: [id])
-  maintenanceLogs       InventoryMaintenance[]
-  facilityRequirements  FacilityInventoryRequirement[]
+  id                   String                         @id @default(cuid())
+  categoryId           String?
+  name                 String
+  description          String?
+  serialNumber         String?
+  assetTag             String?                        @unique
+  condition            InventoryCondition             @default(GOOD)
+  status               InventoryStatus                @default(AVAILABLE)
+  location             String?
+  quantity             Int                            @default(1)
+  unitCost             Decimal?                       @db.Decimal(10, 2)
+  purchaseDate         DateTime?
+  supplier             String?
+  warrantyExp          DateTime?
+  notes                String?
+  images               String[]
+  isActive             Boolean                        @default(true)
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+  checkouts            InventoryCheckout[]
+  category             InventoryCategory?             @relation(fields: [categoryId], references: [id])
+  maintenanceLogs      InventoryMaintenance[]
+  facilityRequirements FacilityInventoryRequirement[]
 
   @@index([status, isActive])
   @@map("inventory_items")
@@ -454,29 +450,6 @@ model InventoryMaintenance {
 
   @@index([status, priority])
   @@map("inventory_maintenance")
-}
-
-model Event {
-  id             String    @id @default(cuid())
-  facilityId     String
-  createdById    String
-  title          String
-  description    String?
-  startTime      DateTime
-  endTime        DateTime
-  isRecurring    Boolean   @default(false)
-  recurrenceRule String?
-  maxAttendees   Int?
-  isPublic       Boolean   @default(true)
-  deletedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  bookings       Booking[]
-  createdBy      User      @relation(fields: [createdById], references: [id])
-  facility       Facility  @relation(fields: [facilityId], references: [id])
-
-  @@index([startTime])
-  @@map("events")
 }
 
 model NotificationLog {
@@ -580,13 +553,13 @@ enum InventoryStatus {
 // ─── Booking Categories (dynamic, managed by FM / Super Admin) ────────────────
 
 model BookingCategory {
-  id         String   @id @default(cuid())
-  name       String   @unique
-  slug       String   @unique
-  isActive   Boolean  @default(true)
-  sortOrder  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isActive, sortOrder])
   @@map("booking_categories")
@@ -693,7 +666,7 @@ model FacilityInventoryRequirement {
   facilityId String
   itemId     String
   quantity   Int           @default(1)
-  isRequired Boolean       @default(true)  // false = optional / nice-to-have
+  isRequired Boolean       @default(true) // false = optional / nice-to-have
   notes      String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -712,13 +685,13 @@ model FacilityInventoryRequirement {
 model FacilityCheckIn {
   id             String    @id @default(cuid())
   bookingId      String    @unique
-  checkedInById  String    // staff member who performed the check-in
-  checkedOutById String?   // staff member who performed the check-out
+  checkedInById  String // staff member who performed the check-in
+  checkedOutById String? // staff member who performed the check-out
   checkedInAt    DateTime  @default(now())
   checkedOutAt   DateTime?
   notes          String?
   booking        Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  checkedInBy    User      @relation("FacilityCheckIns",  fields: [checkedInById],  references: [id])
+  checkedInBy    User      @relation("FacilityCheckIns", fields: [checkedInById], references: [id])
   checkedOutBy   User?     @relation("FacilityCheckOuts", fields: [checkedOutById], references: [id])
 
   @@index([checkedInAt])
@@ -758,18 +731,18 @@ enum CeremonyCodeStatus {
 }
 
 model CeremonyVenueConfig {
-  id          String        @id @default(cuid())
+  id          String       @id @default(cuid())
   facilityId  String
   type        CeremonyType
   images      String[]
-  price       Decimal       @db.Decimal(10, 2)
+  price       Decimal      @db.Decimal(10, 2)
   description String?
-  isActive    Boolean       @default(true)
-  sortOrder   Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  facility    Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
 
   @@unique([facilityId, type])
   @@index([type, isActive])
@@ -794,8 +767,8 @@ model CeremonyBookingCode {
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
-  activatedBy    User?              @relation(fields: [activatedById], references: [id])
-  booking        Booking?           @relation(fields: [bookingId], references: [id])
+  activatedBy User?    @relation(fields: [activatedById], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
 
   @@index([status])
   @@index([requesterEmail])
@@ -809,7 +782,7 @@ model CeremonyDateOverride {
   createdById String
   createdAt   DateTime @default(now())
 
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdBy User @relation(fields: [createdById], references: [id])
 
   @@unique([date])
   @@map("ceremony_date_overrides")
@@ -831,7 +804,7 @@ model ReportSubscription {
   id        String   @id @default(cuid())
   email     String
   name      String
-  frequency String   // "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY"
+  frequency String // "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY"
   reports   String[] // ["FINANCIAL","BOOKINGS","FACILITIES","MAINTENANCE","CEREMONY","INVENTORY","PATRONS"]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

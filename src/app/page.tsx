@@ -182,7 +182,7 @@ export default async function PublicHomePage({
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="text-center md:text-left max-w-xl">
             <span className="text-[var(--gold)] text-xs font-bold uppercase tracking-widest block mb-3">Ready to Book?</span>
-            <h3 className="font-display text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+            <h3 className="font-display text-3xl md:text-4xl font-bold text-[#fff] mb-4 leading-tight">
               Start your reservation in minutes
             </h3>
             <p className="text-slate-300 dark:text-slate-300/90">
@@ -197,7 +197,7 @@ export default async function PublicHomePage({
               href="/faq"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white px-8 py-4 text-base"
+                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
               )}
             >
               FAQs
@@ -206,7 +206,7 @@ export default async function PublicHomePage({
               href="/patron/register"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white px-8 py-4 text-base"
+                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
               )}
             >
               Create Account

@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
-import { Phone, MessageCircle, Search, Filter, X } from "lucide-react";
+import { Phone, MessageCircle, Search, Filter, X, CalendarDays } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
@@ -32,6 +33,7 @@ type BookingItem = {
   bookerName: string;
   bookerPhone: string | null;
   bookerEmail: string | null;
+  lineItems: { label: string; unit: string | null; quantity: number; unitPrice: number; subtotal: number }[];
 };
 
 type FacilityOption = {
@@ -318,9 +320,22 @@ export default function BookingsListClient({
 
       <div className="space-y-2">
         {filtered.length === 0 ? (
-          <Card className="p-10 text-center text-[var(--muted)] gap-0 py-10">
-            {hasActiveFilters ? "No bookings match your filters." : "No bookings found."}
-          </Card>
+          <EmptyState
+            icon={<CalendarDays />}
+            title={hasActiveFilters ? "No matching bookings" : "No bookings yet"}
+            description={
+              hasActiveFilters
+                ? "No bookings match your current filters."
+                : "Bookings will appear here once they're created."
+            }
+            action={
+              hasActiveFilters ? (
+                <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
+                  <X size={12} /> Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           filtered.map((b) => (
             <Card
@@ -437,7 +452,24 @@ export default function BookingsListClient({
                     {selected.rejectionReason && <p className="mt-2 text-danger"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border)]">
+                  {selected.lineItems.length > 0 && (
+                    <Card className="p-4 gap-0 py-4">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Booked Items</p>
+                      <div className="space-y-2">
+                        {selected.lineItems.map((li, i) => (
+                          <div key={i} className="flex items-center justify-between gap-3 text-sm">
+                            <span className="text-[var(--navy)]">
+                              <span className="font-semibold tabular-nums">{li.quantity}×</span> {li.label}
+                              {li.unit ? <span className="text-[var(--muted)]"> ({li.unit})</span> : null}
+                            </span>
+                            <span className="font-semibold tabular-nums text-[var(--navy)]">{formatCurrency(li.subtotal)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
                     {canManage && (selected.status === "PENDING" || isSuperAdmin) && <Button type="button" variant="outline" onClick={() => setEditing(true)}>Edit</Button>}
                     {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
                     {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}

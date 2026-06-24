@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import StaffSidebar from "@/components/staff-shell/StaffSidebar";
+import MobileBottomNav from "@/components/staff-shell/MobileBottomNav";
 import Topbar from "@/components/ui/Topbar";
 import OfflineQueueBanner from "@/components/layout/OfflineQueueBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
@@ -28,9 +29,21 @@ export default function StaffShell({
   const toggle = useCallback(() => setMenuOpen((o) => !o), []);
   const close  = useCallback(() => setMenuOpen(false), []);
 
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("sidebar-collapsed") === "1");
+  }, []);
+  const toggleCollapse = useCallback(() => {
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem("sidebar-collapsed", next ? "1" : "0");
+      return next;
+    });
+  }, []);
+
   return (
     <div className="surface-cool flex h-[100dvh] bg-cream overflow-hidden">
-      <StaffSidebar role={role} name={name} profilePicture={profilePicture} isOpen={menuOpen} onClose={close} />
+      <StaffSidebar role={role} name={name} profilePicture={profilePicture} isOpen={menuOpen} onClose={close} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {impersonatedBy && (
           <ImpersonationBanner
@@ -45,6 +58,7 @@ export default function StaffShell({
           {children}
         </main>
       </div>
+      <MobileBottomNav onMenuToggle={toggle} />
     </div>
   );
 }

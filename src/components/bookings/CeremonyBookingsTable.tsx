@@ -116,7 +116,7 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
             <button key={t} onClick={() => setTypeFilter(t)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 typeFilter === t
-                  ? "bg-[var(--gold)] text-white border-[var(--gold)]"
+                  ? "bg-[var(--gold)] text-[#fff] border-[var(--gold)]"
                   : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--gold)]"
               }`}>
               {t === "ALL" ? "All Types" : t === "WEDDING" ? "Weddings" : "Namings"}
