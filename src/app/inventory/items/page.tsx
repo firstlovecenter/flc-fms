@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getInventoryItems, getInventoryCategories } from "@/actions/inventory.actions";
 import type { InventoryStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import PageHeader from "@/components/layout/PageHeader";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 function ConditionBadge({ condition }: { condition: string }) {
   const map: Record<string, { label: string; classes: string }> = {
@@ -36,8 +37,8 @@ export default async function InventoryItemsPage({
 }: {
   searchParams: { categoryId?: string; status?: string; search?: string; page?: string };
 }) {
-  const session = await requireStaff();
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const session = await requirePerm("inventory:manage");
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["inventory:manage"] ?? false);
 
   const page = Number(searchParams.page ?? 1);
   const [{ items, total, pages }, categories] = await Promise.all([

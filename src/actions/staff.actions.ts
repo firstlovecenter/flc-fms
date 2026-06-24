@@ -3,46 +3,63 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm, refreshStaffSession } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import type { StaffPermissions } from "@/lib/staff-permissions";
+import {
+  type PermissionSet,
+  defaultPermissionsForRole,
+  permissionsToFullStored,
+  sanitizePermissionInput,
+  ALL_PERMISSIONS,
+} from "@/lib/permissions";
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 import { type Role, Prisma } from "@prisma/client";
-import { DEFAULT_PERMISSIONS_FOR_ROLE, PERMISSION_KEYS } from "@/lib/staff-permissions";
 
 export async function getStaffMembers() {
-  const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
+  await requirePerm("staff:view");
+  return prisma.user.findMany({
     where: { isActive: true, role: { not: "SUPER_ADMIN" } },
     select: {
       id: true, name: true, email: true, phone: true,
-      role: true, permissions: true, lastLoginAt: true, createdAt: true},
-    orderBy: [{ role: "asc" }, { name: "asc" }]});
+      role: true, permissions: true, lastLoginAt: true, createdAt: true,
+    },
+    orderBy: [{ role: "asc" }, { name: "asc" }],
+  });
 }
 
 export async function updateStaffPermissions(
   staffId: string,
-  permissions: StaffPermissions
+  permissions: PermissionSet
 ) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("staff:manage");
   const target = await prisma.user.findFirstOrThrow({ where: { id: staffId } });
   if (target.role === "SUPER_ADMIN") {
     return { error: "Super Admin already has full access; permissions can't be edited." };
   }
 
-  // Sanitize to known permission keys only.
-  const clean: Record<string, boolean> = {};
-  for (const k of PERMISSION_KEYS) clean[k] = Boolean(permissions[k]);
+  const clean = sanitizePermissionInput(
+    Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, Boolean(permissions[k])]))
+  );
+  const full = permissionsToFullStored(
+    Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, clean[k] ?? false])) as PermissionSet
+  );
 
   await prisma.user.update({
     where: { id: staffId },
-    data: { permissions: clean }});
+    data: { permissions: full },
+  });
 
-  auditLog({ userId: session.sub,
+  auditLog({
+    userId: session.sub,
     action: "UPDATE_STAFF_PERMISSIONS",
-    entity: "User", entityId: staffId,
+    entity: "User",
+    entityId: staffId,
     before: target.permissions as object,
-    after:  clean});
+    after: full,
+  });
+
+  await refreshStaffSession(staffId);
 
   revalidatePath("/staff");
   revalidatePath(`/staff/${staffId}/permissions`);
@@ -50,33 +67,34 @@ export async function updateStaffPermissions(
 }
 
 export async function deactivateStaffMember(userId: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  await prisma.user.update({
+  const session = await requirePerm("staff:manage");
+  await prisma.user.update({
     where: { id: userId },
-    data: { isActive: false }});
+    data: { isActive: false },
+  });
 
-  auditLog({ userId: session.sub,
-    action: "DEACTIVATE_STAFF",
-    entity: "User", entityId: userId});
+  auditLog({ userId: session.sub, action: "DEACTIVATE_STAFF", entity: "User", entityId: userId });
 
   revalidatePath("/staff");
   return { success: true };
 }
 
 export async function reactivateStaffMember(userId: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  await prisma.user.update({
+  const session = await requirePerm("staff:manage");
+  await prisma.user.update({
     where: { id: userId },
-    data: { isActive: true }});
+    data: { isActive: true },
+  });
 
-  auditLog({ userId: session.sub,
-    action: "REACTIVATE_STAFF",
-    entity: "User", entityId: userId});
+  auditLog({ userId: session.sub, action: "REACTIVATE_STAFF", entity: "User", entityId: userId });
 
   revalidatePath("/staff");
   return { success: true };
 }
 
 export async function resetStaffPassword(userId: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const bcrypt = await import("bcryptjs");
+  const session = await requirePerm("staff:manage");
+  const bcrypt = await import("bcryptjs");
   const tempPassword = `Reset@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
@@ -104,9 +122,7 @@ export async function resetStaffPassword(userId: string) {
     });
   }
 
-  auditLog({ userId: session.sub,
-    action: "RESET_STAFF_PASSWORD",
-    entity: "User", entityId: userId});
+  auditLog({ userId: session.sub, action: "RESET_STAFF_PASSWORD", entity: "User", entityId: userId });
 
   return { success: true };
 }
@@ -123,7 +139,7 @@ export async function updateStaffMember(
   userId: string,
   data: z.infer<typeof UpdateStaffSchema>
 ) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("staff:manage");
   const validated = UpdateStaffSchema.parse(data);
 
   const before = await prisma.user.findUniqueOrThrow({
@@ -131,7 +147,6 @@ export async function updateStaffMember(
     select: { name: true, email: true, phone: true },
   });
 
-  // Check email uniqueness if changing
   if (validated.email && validated.email !== before.email) {
     const existing = await prisma.user.findUnique({ where: { email: validated.email } });
     if (existing) return { error: "Email already in use" };
@@ -158,7 +173,7 @@ export async function updateStaffMember(
 }
 
 export async function getInactiveStaffMembers() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("staff:view");
   return prisma.user.findMany({
     where: { isActive: false, role: { not: "SUPER_ADMIN" } },
     select: {
@@ -170,7 +185,7 @@ export async function getInactiveStaffMembers() {
 }
 
 export async function updateStaffRole(userId: string, nextRoleInput: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("staff:manage");
   const nextRole = StaffRoleSchema.parse(nextRoleInput) as Role;
 
   const target = await prisma.user.findUnique({
@@ -202,17 +217,16 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
     }
   }
 
+  const preset = nextRole === "SUPER_ADMIN"
+    ? Prisma.JsonNull
+    : permissionsToFullStored(defaultPermissionsForRole(nextRole));
+
   await prisma.user.update({
     where: { id: userId },
-    data: {
-      role: nextRole,
-      // Seed the new role's preset permissions so the DB state is explicit and
-      // auditable. Super Admin needs none (always full access).
-      permissions: nextRole === "SUPER_ADMIN"
-        ? Prisma.JsonNull
-        : { ...DEFAULT_PERMISSIONS_FOR_ROLE(nextRole) },
-    },
+    data: { role: nextRole, permissions: preset },
   });
+
+  await refreshStaffSession(userId);
 
   auditLog({
     userId: session.sub,
@@ -231,12 +245,10 @@ export async function updateStaffProfilePicture(
   userId: string,
   profilePicture: string
 ) {
-  const session = await requireStaff();
-
-  // A staff member can update their own picture; FM can update anyone's
+  const session = await requirePerm("staff:view");
   const isSelf = session.sub === userId;
-  const isFM = session.role === "FACILITY_MANAGER" || session.role === "SUPER_ADMIN";
-  if (!isSelf && !isFM) return { error: "Unauthorized" };
+  const canManage = session.role === "SUPER_ADMIN" || session.authContext?.permissions["staff:manage"];
+  if (!isSelf && !canManage) return { error: "Unauthorized" };
 
   await prisma.user.update({
     where: { id: userId },

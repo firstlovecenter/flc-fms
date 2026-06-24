@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, Building2, User, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
 import { type CeremonyDetails } from "@/lib/ceremony-utils";
@@ -23,7 +23,7 @@ function normalizeWhatsApp(phone: string) {
 }
 
 export default async function BookingDetailPage({ params }: { params: { id: string } }) {
-  const session  = await requireStaff();
+  const session = await requirePerm("bookings:view");
 
   const booking = await prisma.booking.findFirst({
     where: { id: params.id },
@@ -42,7 +42,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
 
   if (!booking) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["bookings:approve"] ?? false);
   const contact   = booking.patron ?? booking.user;
   const cd = booking.ceremonyDetails as CeremonyDetails | null;
 

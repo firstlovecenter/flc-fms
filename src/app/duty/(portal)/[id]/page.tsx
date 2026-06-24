@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getDutyLogById } from "@/lib/duty/queries";
 import { serializeDutyLog } from "@/components/duty/types";
 import DutyLogPanel from "@/components/duty/DutyLogPanel";
@@ -19,12 +19,11 @@ export default async function DutyDetailPage({
 }: {
   params: { id: string };
 }) {
-  const session = await requireStaff();
+  const session = await requirePerm("duty:view");
   const log = await getDutyLogById(params.id);
   if (!log) notFound();
 
-  const canManage =
-    session.role === "FACILITY_MANAGER" || session.role === "SUPER_ADMIN";
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["duty:manage"] ?? false);
 
   if (!canManage && log.assignedToId !== session.sub) {
     notFound();

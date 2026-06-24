@@ -4,7 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { getSession } from "@/lib/auth/session";
-import { requireStaff, requirePermission, requirePatron } from "@/lib/auth/guards";
+import { requirePerm, requirePatron } from "@/lib/auth/guards";
+import { getStaffAuthContext, ctxHasPermission } from "@/lib/permissions/session";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
@@ -59,12 +60,9 @@ const BookingCreateSchema = BookingFieldsSchema.extend({
 const LEAD_TIME_HOURS = MAX_BOOKING_ADVANCE_HOURS;
 const MIN_LEAD_TIME_HOURS = 0; // Start booking immediately (next available slot)
 
-function canBookMondays(role: string) {
-  return ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(role);
-}
-
-function canBypassLeadTime(role: string) {
-  return canBookMondays(role);
+function hasPrivilegedBooking(session: { role: string; authContext?: { permissions: Record<string, boolean> } | null }) {
+  if (session.role === "SUPER_ADMIN") return true;
+  return session.authContext?.permissions["bookings:approve"] ?? false;
 }
 
 function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
@@ -222,7 +220,7 @@ async function countOverlappingBookings(
 // ── Create booking (staff) ────────────────────────────────────────────────────
 
 export async function createStaffBooking(data: z.infer<typeof BookingCreateSchema>) {
-  const session  = await requirePermission("canCreateBookings");
+  const session  = await requirePerm("bookings:create");
   const validated = BookingCreateSchema.parse(data);
 
   // Rate limit: 20 booking creations per staff member per 10 minutes
@@ -231,11 +229,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
   if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 
   // Mondays are restricted for non-manager roles
-  if (validated.startTime.getDay() === 1 && !canBookMondays(session.role)) {
+  if (validated.startTime.getDay() === 1 && !hasPrivilegedBooking(session)) {
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
   }
 
-  if (violatesLeadTime(validated.startTime) && !canBypassLeadTime(session.role)) {
+  if (violatesLeadTime(validated.startTime) && !hasPrivilegedBooking(session)) {
     return { error: MAX_BOOKING_ADVANCE_ERROR };
   }
 
@@ -790,7 +788,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 // ── Approve / Reject ──────────────────────────────────────────────────────────
 
 export async function approveBooking(bookingId: string, waiveBilling = false) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
 
   const booking = await prisma.booking.update({
     where: { id: bookingId },
@@ -841,7 +839,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 }
 
 export async function rejectBooking(bookingId: string, reason: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
 
   const booking = await prisma.booking.update({
     where: { id: bookingId },
@@ -890,10 +888,16 @@ export async function cancelBooking(bookingId: string) {
   const session = await getSession();
   if (!session) return { error: "Unauthorized" };
 
-  const isStaff = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const isPatron = session.role === "PATRON";
+  let isStaff = false;
 
-  if (!isStaff && !isPatron) return { error: "Unauthorized" };
+  if (session.role === "SUPER_ADMIN") {
+    isStaff = true;
+  } else if (!isPatron) {
+    const ctx = await getStaffAuthContext(session.sub);
+    isStaff = ctx ? ctxHasPermission(ctx, "bookings:cancel") : false;
+    if (!isStaff) return { error: "Unauthorized" };
+  }
 
   const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, deletedAt: null },
@@ -967,7 +971,7 @@ export async function cancelBooking(bookingId: string) {
 }
 
 export async function completeBooking(bookingId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
 
   const booking = await prisma.booking.findFirstOrThrow({
     where: { id: bookingId, deletedAt: null },
@@ -1023,7 +1027,7 @@ export async function completeBooking(bookingId: string) {
 const ManagerBookingUpdateSchema = BookingBaseSchema;
 
 export async function updateBookingByManager(bookingId: string, data: z.input<typeof ManagerBookingUpdateSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("bookings:approve");
   const validated = ManagerBookingUpdateSchema.parse(data);
 
   const existing = await prisma.booking.findFirstOrThrow({ where: { id: bookingId, deletedAt: null } });

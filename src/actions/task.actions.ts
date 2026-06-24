@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/notifications/push";
 
@@ -25,7 +25,7 @@ const UpdateSchema = z.object({
 
 /** A task can be managed by its creator, its assignee, or a super admin. */
 async function requireTaskAccess(taskId: string) {
-  const session = await requireStaff();
+  const session = await requirePerm("tasks:view");
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (!task) throw new Error("Task not found");
 
@@ -54,7 +54,7 @@ async function notifyAssignee(assignedToId: string, creatorId: string, title: st
 }
 
 export async function createTask(data: z.infer<typeof CreateSchema>) {
-  const session = await requireStaff();
+  const session = await requirePerm("tasks:view");
   const validated = CreateSchema.parse(data);
 
   const task = await prisma.task.create({

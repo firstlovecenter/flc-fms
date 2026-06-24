@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff, requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { notifyMaintenanceUpdate, notifyFMMaintenanceRequested } from "@/lib/notifications/sms";
 
@@ -34,8 +34,7 @@ function expenseTitle(facilityName: string | null | undefined) {
 
 
 export async function createMaintenanceRequest(data: z.infer<typeof CreateSchema>) {
-  await requireStaff("FACILITY_MANAGER", "VICAR");
-  const session   = await requirePermission("canCreateMaintenance");
+  const session = await requirePerm("maintenance:create");
   const validated = CreateSchema.parse(data);
 
   const isScheduled = !!(validated.scheduledStart && validated.scheduledEnd);
@@ -137,7 +136,7 @@ export async function updateMaintenanceRequest(
   requestId: string,
   data: z.infer<typeof UpdateSchema>
 ) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requirePerm("maintenance:manage");
   const validated = UpdateSchema.parse(data);
 
   const request = await prisma.maintenanceRequest.update({
@@ -235,7 +234,7 @@ export async function getMaintenanceRequests(filters: {
   facilityId?: string;
   page?: number;
 } = {}) {
-  await requireStaff("FACILITY_MANAGER", "VICAR");
+  await requirePerm("maintenance:view");
   const page = filters.page ?? 1;
   const take = 20;
 

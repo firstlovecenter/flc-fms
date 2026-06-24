@@ -10,16 +10,14 @@ import { Card } from "@/components/ui/card";
 
 export default function SiteSettingsClient({
   initialSettings,
-  role,
+  canEdit = true,
 }: {
   initialSettings: SiteSettings;
-  role: string;
+  canEdit?: boolean;
 }) {
   const [settings, setSettings] = useState(initialSettings);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  const canEdit = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(role);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

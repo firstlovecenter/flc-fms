@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { resolveDateRange } from "@/lib/reports/utils";
 import type { DateRange } from "@/lib/reports/utils";
@@ -11,7 +11,7 @@ export type { ReportPeriod, DateRange } from "@/lib/reports/utils";
 // ── Financial ─────────────────────────────────────────────────────────────────
 
 export async function getFinancialReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -90,7 +90,7 @@ export async function getFinancialReport(range?: DateRange) {
 // ── Bookings ──────────────────────────────────────────────────────────────────
 
 export async function getBookingReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -161,7 +161,7 @@ export async function getBookingReport(range?: DateRange) {
 // ── Facilities ────────────────────────────────────────────────────────────────
 
 export async function getFacilitiesReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -217,7 +217,7 @@ export async function getFacilitiesReport(range?: DateRange) {
 // ── Inventory ─────────────────────────────────────────────────────────────────
 
 export async function getInventoryReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -278,7 +278,7 @@ export async function getInventoryReport(range?: DateRange) {
 // ── Ceremony ──────────────────────────────────────────────────────────────────
 
 export async function getCeremonyReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -316,7 +316,7 @@ export async function getCeremonyReport(range?: DateRange) {
 // ── Patrons ───────────────────────────────────────────────────────────────────
 
 export async function getPatronsReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -362,7 +362,7 @@ export async function getPatronsReport(range?: DateRange) {
 // ── Maintenance ───────────────────────────────────────────────────────────────
 
 export async function getMaintenanceReport(range?: DateRange) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
 
   const { from, to } = range ?? resolveDateRange("6m");
 
@@ -420,7 +420,7 @@ export async function getMaintenanceReport(range?: DateRange) {
 // ── Legacy / compatibility exports (reports page still uses these names) ──────
 
 export async function getOperationalReport() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("reports:view");
   const [maintenanceSummary, expenseSummary, topExpenseCategories] = await Promise.all([
     prisma.maintenanceRequest.groupBy({
       by: ["status", "priority"],

@@ -6,6 +6,7 @@ import MobileBottomNav from "@/components/staff-shell/MobileBottomNav";
 import Topbar from "@/components/ui/Topbar";
 import OfflineQueueBanner from "@/components/layout/OfflineQueueBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import type { PermissionSet } from "@/lib/permissions";
 
 interface ImpersonatedBy {
   id: string;
@@ -24,7 +25,7 @@ export default function StaffShell({
   name: string;
   role: string;
   profilePicture?: string;
-  permissions?: Record<string, boolean>;
+  permissions?: PermissionSet;
   impersonatedBy?: ImpersonatedBy;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function StaffShell({
             targetRole={role}
           />
         )}
-        <Topbar name={name} role={role} profilePicture={profilePicture} onMenuToggle={toggle} />
+        <Topbar name={name} role={role} profilePicture={profilePicture} permissions={permissions} onMenuToggle={toggle} />
         <OfflineQueueBanner />
         <main className="staff-main flex-1 overflow-y-auto">
           {children}

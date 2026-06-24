@@ -1,23 +1,20 @@
-import { requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import BookingForm from "@/components/bookings/BookingForm";
 import { getCeremonyDays, getCeremonyFacilityIds } from "@/actions/ceremony-venue.actions";
 import { redirect } from "next/navigation";
-
-const PRIVILEGED_ROLES = ["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER"];
 
 export default async function NewBookingPage({
   searchParams,
 }: {
   searchParams: { facilityId?: string; type?: string };
 }) {
-  const session = await requirePermission("canCreateBookings");
+  const session = await requirePerm("bookings:create");
 
-  const bookingType = searchParams.type ?? "regular"; // "regular" | "wedding" | "naming"
+  const bookingType = searchParams.type ?? "regular";
   const isCeremony  = bookingType === "wedding" || bookingType === "naming";
 
-  // Ceremony bookings are restricted to privileged roles
-  if (isCeremony && !PRIVILEGED_ROLES.includes(session.role)) {
+  if (isCeremony && !session.authContext?.permissions["ceremony:manage"] && session.role !== "SUPER_ADMIN") {
     redirect("/bookings/new");
   }
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Building2, User, Clock, DollarSign, AlertTriangle, Receipt } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -9,7 +9,7 @@ import MaintenanceStatusUpdate from "@/components/maintenance/MaintenanceStatusU
 import { Card } from "@/components/ui/card";
 
 export default async function MaintenanceDetailPage({ params }: { params: { id: string } }) {
-  const session  = await requireStaff("FACILITY_MANAGER", "VICAR");
+  const session = await requirePerm("maintenance:view");
 
   const req = await prisma.maintenanceRequest.findFirst({
     where: { id: params.id },
@@ -23,7 +23,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
 
   if (!req) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["maintenance:manage"] ?? false);
   const isOpen    = ["OPEN", "IN_PROGRESS"].includes(req.status);
 
   return (

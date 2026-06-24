@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-react";
-import { requireStaffPermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import PageHeader from "@/components/layout/PageHeader";
-import { hasVicarPermission } from "@/lib/staff-permissions";
+import { hasPermission } from "@/lib/permissions";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
 import IncomeRowActions from "@/components/expenses/IncomeRowActions";
 import ExpenseRowActions from "@/components/expenses/ExpenseRowActions";
@@ -24,13 +24,15 @@ export default async function TransactionsPage({
 }: {
   searchParams: { tab?: string; status?: string; page?: string; sType?: string; sFrom?: string; sTo?: string };
 }) {
-  const session = await requireStaffPermission("canViewFinancials");
-  const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const session = await requirePerm("finance:view");
+  const perms = session.authContext?.permissions;
+  const canApproveExpenses = session.role === "SUPER_ADMIN" || (perms?.["finance:approve_expense"] ?? false);
+  const canRecordIncome = session.role === "SUPER_ADMIN" || (perms?.["finance:record_income"] ?? false);
+  const canSavings = session.role === "SUPER_ADMIN" || (perms?.["finance:savings"] ?? false);
   const canSubmitExpenses =
-    isFM ||
-    session.role === "BOOKING_MANAGER" ||
-    (session.role === "VICAR" && hasVicarPermission(session.permissions, "canSubmitExpenses"));
-  const tab = isFM ? (searchParams.tab ?? "overview") : "expenses";
+    session.role === "SUPER_ADMIN" ||
+    (perms ? hasPermission(session.role, session.permissions, "finance:submit_expense") : false);
+  const tab = canApproveExpenses ? (searchParams.tab ?? "overview") : "expenses";
   const page = Number(searchParams.page ?? 1);
   const take = 20;
 
@@ -40,7 +42,7 @@ export default async function TransactionsPage({
 
   const expenseWhere = {
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(["VICAR", "BOOKING_MANAGER"].includes(session.role) ? { createdById: session.sub } : {}),
+    ...(!canApproveExpenses ? { createdById: session.sub } : {}),
   };
 
   // Savings statement filters (prefixed to avoid clashing with expense params)
@@ -89,24 +91,24 @@ export default async function TransactionsPage({
       _sum: { amount: true },
       _count: true,
     }),
-    isFM ? prisma.income.findMany({
+    canApproveExpenses ? prisma.income.findMany({
       include: { recordedBy: { select: { name: true } } },
       orderBy: { receivedAt: "desc" },
       take: 50,
     }) : Promise.resolve([]),
-    isFM
+    canApproveExpenses
       ? getTotalIncomeIncludingBookingRevenue()
       : Promise.resolve({ recordedIncome: 0, paidBookingRevenue: 0, totalIncome: 0 }),
-    isFM ? prisma.income.groupBy({
+    canApproveExpenses ? prisma.income.groupBy({
       by: ["category"],
       _sum: { amount: true },
       _count: true,
       orderBy: { _sum: { amount: "desc" } },
     }) : Promise.resolve([]),
-    isFM && tab === "savings"
+    canSavings && tab === "savings"
       ? getSavingsStatement(savingsFilters)
       : Promise.resolve(null),
-    isFM ? prisma.savingsTransaction.groupBy({
+    canApproveExpenses ? prisma.savingsTransaction.groupBy({
       by: ["type"],
       _sum: { amount: true },
     }) : Promise.resolve([]),
@@ -132,7 +134,7 @@ export default async function TransactionsPage({
 
   // Build tab link helper
   const tabHref = (t: string) => `/transactions?tab=${t}`;
-  const tabs = isFM
+  const tabs = canApproveExpenses
     ? [
         { key: "overview",  label: "Overview" },
         { key: "income",    label: "Income" },
@@ -151,7 +153,7 @@ export default async function TransactionsPage({
         eyebrow="Financial Management"
         title="Transactions"
         description={
-          isFM ? (
+          canApproveExpenses ? (
             <>
               Available Balance: <strong className={availableBalance >= 0 ? "text-success" : "text-danger"}>{formatCurrency(availableBalance)}</strong>
             </>
@@ -160,17 +162,17 @@ export default async function TransactionsPage({
         className="relative z-10"
         actions={
           <>
-            {isFM && (
+            {canApproveExpenses && (
               <Link href="/transactions/new-income" className={cn(buttonVariants({ variant: "gold" }), "gap-2 justify-center w-full sm:w-auto")}>
                 <ArrowDownLeft size={16} /> Record Income
               </Link>
             )}
             {canSubmitExpenses && (
               <Link href="/transactions/new-expense" className={cn(buttonVariants({ variant: "gold" }), "gap-2 justify-center w-full sm:w-auto")}>
-                <ArrowUpRight size={16} /> {isFM ? "New Expense" : "Request Expense"}
+                <ArrowUpRight size={16} /> {canApproveExpenses ? "New Expense" : "Request Expense"}
               </Link>
             )}
-            {isFM && (
+            {canApproveExpenses && (
               <Link href="/transactions/savings/deposit" className={cn(buttonVariants({ variant: "outline" }), "gap-2 justify-center w-full sm:w-auto")}>
                 <PiggyBank size={16} /> Transfer to Savings
               </Link>
@@ -180,7 +182,7 @@ export default async function TransactionsPage({
       />
 
       {/* FM Balance Cards */}
-      {isFM && (
+      {canApproveExpenses && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <Card className="p-4 border-success/25 bg-success/10">
             <p className="text-xs font-medium text-success">Total Income</p>
@@ -222,7 +224,7 @@ export default async function TransactionsPage({
       </div>
 
       {/* ── OVERVIEW TAB (FM only) ─────────────────────────────────── */}
-      {tab === "overview" && isFM && (
+      {tab === "overview" && canApproveExpenses && (
         <>
           {/* Recent Income */}
           <Card className="overflow-hidden">
@@ -293,7 +295,7 @@ export default async function TransactionsPage({
       )}
 
       {/* ── INCOME TAB (FM only) ───────────────────────────────────── */}
-      {tab === "income" && isFM && (
+      {tab === "income" && canApproveExpenses && (
         <>
           {incomeByCategryList.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -381,7 +383,7 @@ export default async function TransactionsPage({
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Date</th>
                       <th className="text-right py-3 px-4 font-medium text-[var(--slate)]">Amount</th>
                       <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">Status</th>
-                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">{isFM ? "Actions" : ""}</th>
+                      <th className="text-left py-3 px-4 font-medium text-[var(--slate)]">{canApproveExpenses ? "Actions" : ""}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -432,13 +434,13 @@ export default async function TransactionsPage({
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <Link href={`/transactions/${e.id}`} className="text-xs text-[var(--navy)] hover:underline">View</Link>
-                            {e.status === "APPROVED" && e.createdById === session.sub && !isFM && !e.isTransactionCharge && (
+                            {e.status === "APPROVED" && e.createdById === session.sub && !canApproveExpenses && !e.isTransactionCharge && (
                               <Link href={`/transactions/expenses/${e.id}/edit`} className="text-xs text-[var(--navy)] hover:underline">
                                 Upload Receipt
                               </Link>
                             )}
-                            {isFM && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={isExpenseLocked(e.createdAt, e.status)} />}
-                            {isFM && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={false} />}
+                            {canApproveExpenses && !e.isTransactionCharge && <ExpenseRowActions expenseId={e.id} isLocked={isExpenseLocked(e.createdAt, e.status)} />}
+                            {canApproveExpenses && e.status === "PENDING" && !e.isTransactionCharge && <ExpenseActions expenseId={e.id} isLocked={false} />}
                             {e.approvedBy && (
                               <span className="text-xs text-[var(--muted)]">by {e.approvedBy.name}</span>
                             )}
@@ -462,7 +464,7 @@ export default async function TransactionsPage({
       )}
 
       {/* ── SAVINGS TAB (FM only) ──────────────────────────────────── */}
-      {tab === "savings" && isFM && (
+      {tab === "savings" && canSavings && (
         <>
           {/* Savings summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

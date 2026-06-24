@@ -1,17 +1,18 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileText, User, DollarSign, Clock, Zap } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { isExpenseLocked } from "@/lib/transaction-lock";
 import { cn, formatCurrency, formatDateTime } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { buttonVariants } from "@/components/ui/button-variants";
 import ExpenseActions from "@/components/expenses/ExpenseActions";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default async function ExpenseDetailPage({ params }: { params: { id: string } }) {
-  const session = await requireStaff();
+  const session = await requirePerm("finance:view");
 
   const expense = await prisma.expense.findFirst({
     where: { id: params.id },
@@ -25,7 +26,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   if (!expense) notFound();
   if (["VICAR", "BOOKING_MANAGER"].includes(session.role) && expense.createdById !== session.sub) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["finance:approve_expense"] ?? false);
   const canUploadReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
   const isPending = expense.status === "PENDING";
   const isLocked = isExpenseLocked(expense.createdAt, expense.status);

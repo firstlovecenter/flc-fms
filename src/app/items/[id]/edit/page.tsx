@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import AddItemForm from "@/components/items/AddItemForm";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default async function EditItemPage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
 
   const item = await prisma.bookableItem.findUnique({ where: { id: params.id } });
   if (!item) notFound();

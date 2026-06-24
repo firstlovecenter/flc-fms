@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { sendSMS, checkSMSBalance } from "@/lib/notifications/sms";
@@ -16,7 +16,7 @@ const SendCustomSMSSchema = z.object({
 });
 
 export async function sendCustomSMSToBooker(data: z.input<typeof SendCustomSMSSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
   const validated = SendCustomSMSSchema.parse(data);
 
   // Rate limit: 20 SMS per staff per 10 minutes
@@ -57,7 +57,7 @@ const BulkSMSSchema = z.object({
 });
 
 export async function sendBulkSMSToBookers(data: z.input<typeof BulkSMSSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
   const validated = BulkSMSSchema.parse(data);
 
   const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
@@ -93,12 +93,12 @@ export async function sendBulkSMSToBookers(data: z.input<typeof BulkSMSSchema>) 
 }
 
 export async function getSMSBalanceAction() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("bookings:approve");
   return checkSMSBalance();
 }
 
 export async function sendAccessCodeToBooker(bookingId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("bookings:approve");
 
   const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed } = await rateLimit(`access_code_sms:${session.sub}:${ip}`, 20, 600);

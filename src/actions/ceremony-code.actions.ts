@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { rateLimit } from "@/lib/redis";
 import { generateCeremonyCode } from "@/lib/ceremony-utils";
 import { notifyCeremonyCode, sendSMS } from "@/lib/notifications/sms";
@@ -88,7 +88,7 @@ export async function requestCeremonyCode(
 }
 
 export async function activateCeremonyCode(codeId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("ceremony:manage");
 
   const record = await prisma.ceremonyBookingCode.findUnique({
     where: { id: codeId },
@@ -133,7 +133,7 @@ export async function activateCeremonyCode(codeId: string) {
 }
 
 export async function resendCeremonyCode(codeId: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const record = await prisma.ceremonyBookingCode.findUnique({
     where: { id: codeId },
@@ -163,7 +163,7 @@ export async function resendCeremonyCode(codeId: string) {
 }
 
 export async function revokeCeremonyCode(codeId: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const record = await prisma.ceremonyBookingCode.findUnique({
     where: { id: codeId },
@@ -222,7 +222,7 @@ const StaffCreateSchema = z.object({
 export async function staffCreateCeremonyCode(
   data: z.infer<typeof StaffCreateSchema>
 ) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const validated = StaffCreateSchema.safeParse(data);
   if (!validated.success) {
@@ -271,7 +271,7 @@ export async function updateCeremonyCode(
   codeId: string,
   data: z.infer<typeof UpdateSchema>
 ) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const validated = UpdateSchema.safeParse(data);
   if (!validated.success) {
@@ -300,7 +300,7 @@ export async function updateCeremonyCode(
 // ── Staff: delete code ────────────────────────────────────────────────────────
 
 export async function deleteCeremonyCode(codeId: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const record = await prisma.ceremonyBookingCode.findUnique({ where: { id: codeId } });
   if (!record) return { error: "Code not found." };
@@ -315,7 +315,7 @@ export async function deleteCeremonyCode(codeId: string) {
 // ── Staff: regenerate code (same payment, new code string) ───────────────────
 
 export async function regenerateCeremonyCode(codeId: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const record = await prisma.ceremonyBookingCode.findUnique({ where: { id: codeId } });
   if (!record) return { error: "Code not found." };
@@ -365,7 +365,7 @@ export async function listCeremonyCodes(searchParams: {
   search?: string;
   page?: number;
 }) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const page = searchParams.page ?? 1;
   const pageSize = 20;

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { revalidatePath } from "next/cache";
 
 export type ReportFrequency = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
@@ -22,12 +22,12 @@ export interface CreateSubscriptionInput {
 }
 
 export async function listReportSubscriptions() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
   return prisma.reportSubscription.findMany({ orderBy: { createdAt: "desc" } });
 }
 
 export async function createReportSubscription(input: CreateSubscriptionInput) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
   if (!input.name?.trim() || !input.email?.trim()) {
     return { error: "Name and email are required." };
   }
@@ -55,7 +55,7 @@ export async function updateReportSubscription(
   id: string,
   input: Partial<CreateSubscriptionInput & { isActive: boolean }>
 ) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
   try {
     const sub = await prisma.reportSubscription.update({
       where: { id },
@@ -75,7 +75,7 @@ export async function updateReportSubscription(
 }
 
 export async function deleteReportSubscription(id: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
   try {
     await prisma.reportSubscription.delete({ where: { id } });
     revalidatePath("/reports/subscriptions");
@@ -86,7 +86,7 @@ export async function deleteReportSubscription(id: string) {
 }
 
 export async function toggleReportSubscription(id: string, isActive: boolean) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
   try {
     await prisma.reportSubscription.update({ where: { id }, data: { isActive } });
     revalidatePath("/reports/subscriptions");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -25,6 +25,15 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import {
+  STAFF_NAV_GROUPS,
+  STAFF_ADMIN_NAV,
+  STAFF_BOTTOM_NAV,
+  STAFF_ACTION_ITEMS,
+  navItemVisible,
+  type Permission,
+  type PermissionSet,
+} from "@/lib/permissions";
 
 type SearchItem = {
   label: string;
@@ -32,54 +41,143 @@ type SearchItem = {
   icon: React.ElementType;
   keywords?: string[];
   group: string;
-  superAdminOnly?: boolean;
-  roles?: string[];
 };
 
-const NAV_ITEMS: SearchItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, keywords: ["home", "overview"], group: "Navigate" },
-  { label: "Tasks", href: "/tasks", icon: ListTodo, keywords: ["todo", "to-do", "inbox", "task list"], group: "Navigate" },
-  { label: "Duty Logs", href: "/duty", icon: ClipboardList, keywords: ["duty", "schedule", "checklist", "man on duty"], group: "Navigate" },
-  { label: "Bookings", href: "/bookings", icon: CalendarDays, keywords: ["reservations", "booking list"], group: "Navigate" },
-  { label: "Check-In", href: "/checkin", icon: ClipboardCheck, keywords: ["checkin", "arrival"], group: "Navigate" },
-  { label: "Ceremony Codes", href: "/ceremony-codes", icon: KeyRound, keywords: ["wedding", "naming", "ceremony", "access code"], group: "Navigate", roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-  { label: "Booking Content", href: "/bookings/content", icon: FileText, keywords: ["terms", "content"], group: "Navigate", roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-  { label: "Duty Logs", href: "/duty", icon: ClipboardList, keywords: ["duty", "schedule", "checklist", "man on duty"], group: "Navigate" },
-  { label: "Facilities", href: "/facilities", icon: Building2, keywords: ["venues", "rooms"], group: "Navigate" },
-  { label: "Category / Pricing", href: "/facilities/categories", icon: Tags, keywords: ["categories", "pricing", "rates"], group: "Navigate", superAdminOnly: true },
-  { label: "Items & Packages", href: "/items", icon: Package, keywords: ["bundles", "bookable items"], group: "Navigate" },
-  { label: "Inventory", href: "/inventory", icon: Boxes, keywords: ["stock", "equipment"], group: "Navigate" },
-  { label: "Maintenance", href: "/maintenance", icon: Wrench, keywords: ["repairs", "schedule"], group: "Navigate", roles: ["FACILITY_MANAGER", "VICAR", "SUPER_ADMIN"] },
-  { label: "Transactions", href: "/transactions", icon: ArrowLeftRight, keywords: ["income", "expenses", "finance", "savings"], group: "Navigate" },
-  { label: "Reports", href: "/reports", icon: BarChart3, keywords: ["analytics", "summary"], group: "Navigate", roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-  { label: "Staff", href: "/staff", icon: Users, keywords: ["employees", "team"], group: "Navigate", roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
-  { label: "Site Settings", href: "/settings", icon: Settings, keywords: ["settings", "configuration", "contact"], group: "Navigate", roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-  { label: "My Profile", href: "/profile", icon: UserCircle, keywords: ["profile", "account", "me"], group: "Navigate" },
-  { label: "Manage Users", href: "/users", icon: Users, keywords: ["accounts", "user management"], group: "Navigate", superAdminOnly: true },
-  { label: "Audit Logs", href: "/audit", icon: ShieldAlert, keywords: ["logs", "history"], group: "Navigate", superAdminOnly: true },
-];
+const NAV_ICONS: Record<string, React.ElementType> = {
+  "/dashboard": LayoutDashboard,
+  "/tasks": ListTodo,
+  "/bookings": CalendarDays,
+  "/checkin": ClipboardCheck,
+  "/ceremony-codes": KeyRound,
+  "/bookings/content": FileText,
+  "/duty": ClipboardList,
+  "/facilities": Building2,
+  "/facilities/categories": Tags,
+  "/items": Package,
+  "/inventory": Boxes,
+  "/maintenance": Wrench,
+  "/transactions": ArrowLeftRight,
+  "/reports": BarChart3,
+  "/staff": Users,
+  "/users": Users,
+  "/audit": ShieldAlert,
+  "/settings": Settings,
+  "/profile": UserCircle,
+  "/bookings/new": Plus,
+  "/duty/new": Plus,
+  "/transactions/new-expense": Plus,
+  "/transactions/new-income": Plus,
+};
 
-const ACTION_ITEMS: SearchItem[] = [
-  { label: "New Booking", href: "/bookings/new", icon: Plus, keywords: ["create booking", "add booking"], group: "Actions" },
-  {
-    label: "Create Duty",
-    href: "/duty/new",
-    icon: Plus,
-    keywords: ["duty", "assign", "schedule", "create"],
-    group: "Actions",
-    roles: ["FACILITY_MANAGER", "SUPER_ADMIN"],
-  },
-  { label: "New Expense", href: "/transactions/new-expense", icon: Plus, keywords: ["add expense", "create expense"], group: "Actions" },
-  { label: "New Income", href: "/transactions/new-income", icon: Plus, keywords: ["add income", "create income"], group: "Actions" },
-];
+const NAV_KEYWORDS: Record<string, string[]> = {
+  "/dashboard": ["home", "overview"],
+  "/tasks": ["todo", "to-do", "inbox", "task list"],
+  "/duty": ["duty", "schedule", "checklist", "man on duty"],
+  "/bookings": ["reservations", "booking list"],
+  "/checkin": ["checkin", "arrival"],
+  "/ceremony-codes": ["wedding", "naming", "ceremony", "access code"],
+  "/bookings/content": ["terms", "content"],
+  "/facilities": ["venues", "rooms"],
+  "/facilities/categories": ["categories", "pricing", "rates"],
+  "/items": ["bundles", "bookable items"],
+  "/inventory": ["stock", "equipment"],
+  "/maintenance": ["repairs", "schedule"],
+  "/transactions": ["income", "expenses", "finance", "savings"],
+  "/reports": ["analytics", "summary"],
+  "/staff": ["employees", "team"],
+  "/settings": ["settings", "configuration", "contact"],
+  "/profile": ["profile", "account", "me"],
+  "/users": ["accounts", "user management"],
+  "/audit": ["logs", "history"],
+  "/bookings/new": ["create booking", "add booking"],
+  "/duty/new": ["duty", "assign", "schedule", "create"],
+  "/transactions/new-expense": ["add expense", "create expense"],
+  "/transactions/new-income": ["add income", "create income"],
+};
 
-export default function CommandSearch({ onClose, role }: { onClose: () => void; role?: string }) {
-  const ALL_ITEMS = [...ACTION_ITEMS, ...NAV_ITEMS].filter((item) => {
-    if (item.superAdminOnly && role !== "SUPER_ADMIN") return false;
-    if (item.roles && role && !item.roles.includes(role)) return false;
-    if (item.roles && !role) return false;
-    return true;
-  });
+function buildSearchItems(
+  role: string,
+  permissions: PermissionSet | undefined,
+  hasPerm: (p: Permission) => boolean
+): SearchItem[] {
+  const items: SearchItem[] = [];
+
+  for (const action of STAFF_ACTION_ITEMS) {
+    if (!navItemVisible(action, role, hasPerm)) continue;
+    items.push({
+      label: action.label,
+      href: action.href,
+      icon: NAV_ICONS[action.href] ?? Plus,
+      keywords: NAV_KEYWORDS[action.href],
+      group: "Actions",
+    });
+  }
+
+  for (const group of STAFF_NAV_GROUPS) {
+    for (const item of group.items) {
+      if (!navItemVisible(item, role, hasPerm)) continue;
+      items.push({
+        label: item.label,
+        href: item.href,
+        icon: NAV_ICONS[item.href] ?? LayoutDashboard,
+        keywords: NAV_KEYWORDS[item.href],
+        group: "Navigate",
+      });
+    }
+  }
+
+  if (role === "SUPER_ADMIN") {
+    for (const item of STAFF_ADMIN_NAV) {
+      items.push({
+        label: item.label,
+        href: item.href,
+        icon: NAV_ICONS[item.href] ?? Users,
+        keywords: NAV_KEYWORDS[item.href],
+        group: "Navigate",
+      });
+    }
+    items.push({
+      label: "Category / Pricing",
+      href: "/facilities/categories",
+      icon: Tags,
+      keywords: NAV_KEYWORDS["/facilities/categories"],
+      group: "Navigate",
+    });
+  }
+
+  for (const item of STAFF_BOTTOM_NAV) {
+    if (!navItemVisible(item, role, hasPerm)) continue;
+    items.push({
+      label: item.label,
+      href: item.href,
+      icon: NAV_ICONS[item.href] ?? UserCircle,
+      keywords: NAV_KEYWORDS[item.href],
+      group: "Navigate",
+    });
+  }
+
+  return items;
+}
+
+export default function CommandSearch({
+  onClose,
+  role = "",
+  permissions,
+}: {
+  onClose: () => void;
+  role?: string;
+  permissions?: PermissionSet;
+}) {
+  const hasPerm = (p: Permission): boolean => {
+    if (role === "SUPER_ADMIN") return true;
+    return permissions?.[p] ?? false;
+  };
+
+  const ALL_ITEMS = useMemo(
+    () => buildSearchItems(role, permissions, hasPerm),
+    [role, permissions]
+  );
+
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,7 +195,6 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
       })
     : ALL_ITEMS;
 
-  // ⌘K / Ctrl+K shortcut
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -108,12 +205,10 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  // Focus input on mount
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
-  // Reset active index when results change
   useEffect(() => {
     setActiveIndex(0);
   }, [query]);
@@ -143,9 +238,6 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
     el?.scrollIntoView({ block: "nearest" });
   }
 
-  if (!open) return null;
-
-  // Group items for display
   const groups: Record<string, SearchItem[]> = {};
   for (const item of filtered) {
     if (!groups[item.group]) groups[item.group] = [];
@@ -162,7 +254,6 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
         className="bg-white dark:bg-[#1a2233] rounded-xl shadow-2xl w-full max-w-lg border border-[var(--border)] overflow-hidden animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Search input */}
         <div className="flex items-center gap-3 px-4 border-b border-[var(--border)]">
           <Search size={16} className="text-[var(--muted)] flex-shrink-0" />
           <input
@@ -181,7 +272,6 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
           </button>
         </div>
 
-        {/* Results */}
         <div ref={listRef} className="max-h-[340px] overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-[var(--muted)]">No results for &ldquo;{query}&rdquo;</div>
@@ -197,7 +287,7 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
                   const Icon = item.icon;
                   return (
                     <button
-                      key={item.href}
+                      key={`${item.href}-${item.label}`}
                       type="button"
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
                         idx === activeIndex
@@ -220,7 +310,6 @@ export default function CommandSearch({ onClose, role }: { onClose: () => void; 
           )}
         </div>
 
-        {/* Footer */}
         <div className="border-t border-[var(--border)] px-4 py-2 flex items-center gap-4 text-[0.65rem] text-[var(--muted)]">
           <span><kbd className="px-1 py-0.5 rounded bg-[var(--cream-dark)] border border-[var(--border)] font-mono text-[0.6rem]">↑↓</kbd> Navigate</span>
           <span><kbd className="px-1 py-0.5 rounded bg-[var(--cream-dark)] border border-[var(--border)] font-mono text-[0.6rem]">↵</kbd> Open</span>

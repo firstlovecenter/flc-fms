@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getAllDutyTemplates } from "@/lib/duty/queries";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
 import DutyTemplateRowActions from "@/components/duty/DutyTemplateRowActions";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Duty Forms" };
 
@@ -18,7 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default async function DutyTemplatesPage() {
-  await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  await requirePerm("duty:manage");
 
   const templates = await getAllDutyTemplates();
 

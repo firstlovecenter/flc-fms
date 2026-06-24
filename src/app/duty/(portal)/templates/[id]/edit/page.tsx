@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getDutyTemplateById } from "@/lib/duty/queries";
 import EditDutyTemplateForm from "@/components/duty/EditDutyTemplateForm";
 
@@ -18,7 +18,7 @@ export default async function EditDutyTemplatePage({
 }: {
   params: { id: string };
 }) {
-  await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  await requirePerm("duty:manage");
 
   const template = await getDutyTemplateById(params.id);
   if (!template) notFound();

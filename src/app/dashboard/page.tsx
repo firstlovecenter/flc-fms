@@ -1,5 +1,5 @@
-import { requireStaff } from "@/lib/auth/guards";
-import { hasStaffPermission } from "@/lib/staff-permissions";
+import { requireStaff, requirePerm } from "@/lib/auth/guards";
+import { getStaffAuthContext } from "@/lib/permissions/session";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils";
@@ -27,7 +27,9 @@ import {
 
 export default async function DashboardPage() {
   const session = await requireStaff();
-  const canViewFinances = hasStaffPermission(session.permissions, session.role, "canViewFinancials");
+  const ctx = session.role === "SUPER_ADMIN" ? null : await getStaffAuthContext(session.sub);
+  const canViewFinances = session.role === "SUPER_ADMIN" || (ctx?.permissions["finance:view"] ?? false);
+  const canBook = session.role === "SUPER_ADMIN" || (ctx?.permissions["bookings:create"] ?? false);
 
   const [
     totalFacilities, pendingBookings, activeBookings, openMaintenance,
@@ -59,7 +61,6 @@ export default async function DashboardPage() {
   });
 
   const recentBookingsWithFacility = recentBookings.filter((b) => b.facility !== null) as Parameters<typeof RecentBookings>[0]["bookings"];
-  const canBook = ["FACILITY_MANAGER","BOOKING_MANAGER","SUPER_ADMIN"].includes(session.role);
 
   return (
     <div className="space-y-8 animate-fade-in relative">

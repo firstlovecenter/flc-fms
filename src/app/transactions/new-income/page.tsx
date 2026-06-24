@@ -1,8 +1,8 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import IncomeForm from "@/components/expenses/IncomeForm";
 
 export default async function NewIncomePage() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("finance:record_income");
   return (
     <div className="w-full max-w-2xl space-y-6">
       <div>

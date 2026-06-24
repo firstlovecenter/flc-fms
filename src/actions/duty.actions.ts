@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { dutyDateFromInput } from "@/lib/duty/dates";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/notifications/push";
 import { sendSMS } from "@/lib/notifications/sms";
@@ -79,7 +79,7 @@ const AssignSchema = z.object({
 });
 
 export async function assignDuty(data: z.infer<typeof AssignSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can assign duties." };
   }
@@ -150,7 +150,7 @@ export async function assignDuty(data: z.infer<typeof AssignSchema>) {
 }
 
 export async function completeDutyItem(dutyLogId: string, itemId: string, isDone: boolean) {
-  const session = await requireStaff();
+  const session = await requirePerm("duty:view");
 
   const log = await prisma.dutyLog.findUnique({
     where: { id: dutyLogId },
@@ -191,7 +191,7 @@ export async function completeDutyItem(dutyLogId: string, itemId: string, isDone
 }
 
 export async function signDutyAsAssignee(dutyLogId: string) {
-  const session = await requireStaff();
+  const session = await requirePerm("duty:view");
 
   const log = await prisma.dutyLog.findUnique({
     where: { id: dutyLogId },
@@ -222,7 +222,7 @@ export async function signDutyAsAssignee(dutyLogId: string) {
 }
 
 export async function signDutyAsSupervisor(dutyLogId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only supervisors can sign off duty logs." };
   }
@@ -262,7 +262,7 @@ export async function signDutyAsSupervisor(dutyLogId: string) {
 }
 
 export async function deleteDutyLog(dutyLogId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can delete duty logs." };
   }
@@ -326,7 +326,7 @@ function parseTemplatePayload(data: TemplateFormPayload) {
 }
 
 export async function createDutyTemplate(data: TemplateFormPayload) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can create duty forms." };
   }
@@ -383,7 +383,7 @@ export async function createDutyTemplate(data: TemplateFormPayload) {
 }
 
 export async function updateDutyTemplate(templateId: string, data: TemplateFormPayload) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can edit duty forms." };
   }
@@ -456,7 +456,7 @@ export async function updateDutyTemplate(templateId: string, data: TemplateFormP
 }
 
 export async function setDutyTemplateActive(templateId: string, isActive: boolean) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can update duty forms." };
   }
@@ -479,7 +479,7 @@ export async function setDutyTemplateActive(templateId: string, isActive: boolea
 }
 
 export async function deleteDutyTemplate(templateId: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can delete duty forms." };
   }
@@ -521,7 +521,7 @@ export async function updateDutyAssignment(
   dutyLogId: string,
   data: z.infer<typeof UpdateAssignmentSchema>,
 ) {
-  const session = await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  const session = await requirePerm("duty:manage");
   if (!canManage(session)) {
     return { success: false as const, error: "Only facility managers can edit assignments." };
   }

@@ -9,24 +9,24 @@ import { Card } from "@/components/ui/card";
 import {
   PERMISSION_GROUPS,
   PRESET_OPTIONS,
-  type StaffPermissions,
-  type StaffPermissionKey,
-} from "@/lib/staff-permissions";
+  type PermissionSet,
+  type Permission,
+} from "@/lib/permissions";
 
 interface Props {
   staffId: string;
   staffName: string;
-  currentPermissions: StaffPermissions;
+  currentPermissions: PermissionSet;
 }
 
 export default function PermissionsEditor({ staffId, staffName, currentPermissions }: Props) {
   const router = useRouter();
-  const [perms, setPerms] = useState<StaffPermissions>(currentPermissions);
+  const [perms, setPerms] = useState<PermissionSet>(currentPermissions);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function toggle(key: StaffPermissionKey) {
+  function toggle(key: Permission) {
     setPerms((p) => ({ ...p, [key]: !p[key] }));
     setSaved(false);
   }

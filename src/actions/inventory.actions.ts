@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff, requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import type { InventoryCondition, InventoryStatus, MaintenancePriority, MaintenanceStatus } from "@prisma/client";
 
@@ -16,7 +16,7 @@ const CategorySchema = z.object({
 });
 
 export async function createInventoryCategory(data: z.infer<typeof CategorySchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session   = await requirePerm("inventory:manage");
   const validated = CategorySchema.parse(data);
 
   const category = await prisma.inventoryCategory.create({ data: validated });
@@ -26,7 +26,7 @@ export async function createInventoryCategory(data: z.infer<typeof CategorySchem
 }
 
 export async function updateInventoryCategory(id: string, data: z.infer<typeof CategorySchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session   = await requirePerm("inventory:manage");
   const validated = CategorySchema.parse(data);
 
   await prisma.inventoryCategory.findFirstOrThrow({ where: { id, deletedAt: null } });
@@ -38,7 +38,7 @@ export async function updateInventoryCategory(id: string, data: z.infer<typeof C
 }
 
 export async function deleteInventoryCategory(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("inventory:manage");
   await prisma.inventoryCategory.update({ where: { id }, data: { deletedAt: new Date() } });
   auditLog({ userId: session.sub, action: "DELETE_INVENTORY_CATEGORY", entity: "InventoryCategory", entityId: id });
   revalidatePath("/inventory");
@@ -46,7 +46,7 @@ export async function deleteInventoryCategory(id: string) {
 }
 
 export async function getInventoryCategories() {
-  await requireStaff();
+  await requirePerm("inventory:view");
   return prisma.inventoryCategory.findMany({
     where: { deletedAt: null },
     include: { _count: { select: { items: true } } },
@@ -75,7 +75,7 @@ const ItemSchema = z.object({
 });
 
 export async function createInventoryItem(data: z.infer<typeof ItemSchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session   = await requirePerm("inventory:manage");
   const validated = ItemSchema.parse(data);
 
   const item = await prisma.inventoryItem.create({
@@ -90,7 +90,7 @@ export async function createInventoryItem(data: z.infer<typeof ItemSchema>) {
 }
 
 export async function updateInventoryItem(id: string, data: Partial<z.infer<typeof ItemSchema>>) {
-  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session   = await requirePerm("inventory:manage");
   const validated = ItemSchema.partial().parse(data);
 
   const item = await prisma.inventoryItem.update({ where: { id }, data: validated });
@@ -100,7 +100,7 @@ export async function updateInventoryItem(id: string, data: Partial<z.infer<type
 }
 
 export async function deleteInventoryItem(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("inventory:manage");
   await prisma.inventoryItem.update({ where: { id }, data: { isActive: false } });
   auditLog({ userId: session.sub, action: "DEACTIVATE_INVENTORY_ITEM", entity: "InventoryItem", entityId: id });
   revalidatePath("/inventory");
@@ -114,7 +114,7 @@ export async function getInventoryItems(filters: {
   search?: string;
   page?: number;
 } = {}) {
-  await requireStaff();
+  await requirePerm("inventory:view");
   const page = filters.page ?? 1;
   const take = 25;
 
@@ -149,7 +149,7 @@ export async function getInventoryItems(filters: {
 }
 
 export async function getInventoryItem(id: string) {
-  await requireStaff();
+  await requirePerm("inventory:view");
   return prisma.inventoryItem.findUnique({
     where: { id },
     include: {
@@ -184,7 +184,7 @@ const CheckoutSchema = z.object({
 });
 
 export async function checkoutInventoryItem(data: z.infer<typeof CheckoutSchema>) {
-  const session   = await requireStaff();
+  const session   = await requirePerm("inventory:view");
   const validated = CheckoutSchema.parse(data);
 
   const item = await prisma.inventoryItem.findUniqueOrThrow({ where: { id: validated.itemId } });
@@ -223,7 +223,7 @@ const ReturnSchema = z.object({
 });
 
 export async function returnInventoryItem(data: z.infer<typeof ReturnSchema>) {
-  const session   = await requireStaff();
+  const session   = await requirePerm("inventory:view");
   const validated = ReturnSchema.parse(data);
 
   const existing = await prisma.inventoryCheckout.findUniqueOrThrow({
@@ -261,7 +261,7 @@ export async function returnInventoryItem(data: z.infer<typeof ReturnSchema>) {
 }
 
 export async function getActiveCheckouts(filters: { page?: number } = {}) {
-  await requireStaff();
+  await requirePerm("inventory:view");
   const page = filters.page ?? 1;
   const take = 25;
 
@@ -300,7 +300,7 @@ const InvMaintUpdateSchema = z.object({
 });
 
 export async function createInventoryMaintenance(data: z.infer<typeof InvMaintSchema>) {
-  const session   = await requirePermission("canCreateMaintenance");
+  const session   = await requirePerm("maintenance:create");
   const validated = InvMaintSchema.parse(data);
 
   const [maintenance] = await prisma.$transaction([
@@ -325,7 +325,7 @@ export async function updateInventoryMaintenance(
   id: string,
   data: z.infer<typeof InvMaintUpdateSchema>
 ) {
-  const session   = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session   = await requirePerm("inventory:manage");
   const validated = InvMaintUpdateSchema.parse(data);
 
   const maintenance = await prisma.inventoryMaintenance.update({
@@ -355,7 +355,7 @@ export async function getInventoryMaintenanceLogs(filters: {
   priority?: MaintenancePriority;
   page?: number;
 } = {}) {
-  await requireStaff();
+  await requirePerm("inventory:view");
   const page = filters.page ?? 1;
   const take = 25;
 
@@ -384,7 +384,7 @@ export async function getInventoryMaintenanceLogs(filters: {
 // ─── Dashboard Summary ─────────────────────────────────────────────────────────
 
 export async function getInventorySummary() {
-  await requireStaff();
+  await requirePerm("inventory:view");
 
   const [
     totalItems,

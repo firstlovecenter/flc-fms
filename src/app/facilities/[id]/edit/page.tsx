@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import FacilityForm from "@/components/facilities/FacilityForm";
 import { getBookingCategories } from "@/actions/category.actions";
 
 export default async function EditFacilityPage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("facilities:manage");
   const categories = await getBookingCategories(false);
 
   const facility = await prisma.facility.findFirst({

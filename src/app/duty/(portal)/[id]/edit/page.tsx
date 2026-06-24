@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getActiveStaffForDuty, getDutyLogById } from "@/lib/duty/queries";
 import EditDutyAssignmentForm from "@/components/duty/EditDutyAssignmentForm";
 
@@ -10,7 +10,7 @@ export default async function EditDutyAssignmentPage({
 }: {
   params: { id: string };
 }) {
-  await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  await requirePerm("duty:manage");
 
   const log = await getDutyLogById(params.id);
   if (!log) notFound();

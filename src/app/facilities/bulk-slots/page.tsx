@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import BulkSlotClient from "@/components/facilities/BulkSlotClient";
 
 export default async function BulkSlotsPage() {
-  await requirePermission("canManageFacilities");
+  await requirePerm("facilities:manage");
 
   const [facilities, dbCategories] = await Promise.all([
     prisma.facility.findMany({

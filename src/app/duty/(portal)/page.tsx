@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
 import PageHeader from "@/components/layout/PageHeader";
@@ -26,9 +26,8 @@ export default async function DutyPage({
 }: {
   searchParams: { date?: string };
 }) {
-  const session = await requireStaff();
-  const canManage =
-    session.role === "FACILITY_MANAGER" || session.role === "SUPER_ADMIN";
+  const session = await requirePerm("duty:view");
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["duty:manage"] ?? false);
 
   const dateParam = searchParams.date;
   const selectedDate = dateParam

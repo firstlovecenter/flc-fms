@@ -1,11 +1,11 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import TaskInbox from "@/components/tasks/TaskInbox";
 
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
-  const session = await requireStaff();
+  const session = await requirePerm("tasks:view");
 
   const visibleTo = {
     OR: [{ createdById: session.sub }, { assignedToId: session.sub }],

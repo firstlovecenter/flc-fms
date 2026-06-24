@@ -6,6 +6,7 @@ import Image from "next/image";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 import CommandSearch from "@/components/ui/CommandSearch";
 import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
+import type { PermissionSet } from "@/lib/permissions";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN:      "Super Admin",
@@ -19,11 +20,13 @@ export default function Topbar({
   name,
   role,
   profilePicture,
+  permissions,
   onMenuToggle,
 }: {
   name: string;
   role: string;
   profilePicture?: string;
+  permissions?: PermissionSet;
   onMenuToggle?: () => void;
 }) {
   const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -114,7 +117,7 @@ export default function Topbar({
       </div>
 
       {/* Command search dialog */}
-      {searchOpen && <CommandSearch onClose={() => setSearchOpen(false)} role={role} />}
+      {searchOpen && <CommandSearch onClose={() => setSearchOpen(false)} role={role} permissions={permissions} />}
     </header>
   );
 }

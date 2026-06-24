@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import CreateDutyTemplateForm from "@/components/duty/CreateDutyTemplateForm";
 
 export const metadata = { title: "New Duty Form" };
 
 export default async function NewDutyTemplatePage() {
-  await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  await requirePerm("duty:manage");
 
   return (
     <div className="space-y-6 animate-fade-in">

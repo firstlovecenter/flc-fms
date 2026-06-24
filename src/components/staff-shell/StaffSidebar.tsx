@@ -30,27 +30,47 @@ import {
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
-import { hasStaffPermission, type StaffPermissionKey } from "@/lib/staff-permissions";
+import {
+  STAFF_NAV_GROUPS,
+  STAFF_ADMIN_NAV,
+  STAFF_BOTTOM_NAV,
+  navItemVisible,
+  type Permission,
+  type PermissionSet,
+  type NavAccent,
+} from "@/lib/permissions";
 
 type StaffSidebarProps = {
   role: string;
   name: string;
   profilePicture?: string;
-  permissions?: Record<string, boolean>;
+  permissions?: PermissionSet;
   isOpen?: boolean;
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 };
 
-type NavAccent =
-  | "gold"
-  | "bookings"
-  | "facilities"
-  | "inventory"
-  | "maintenance"
-  | "finance"
-  | "duty";
+const NAV_ICONS: Record<string, React.ElementType> = {
+  "/dashboard": LayoutDashboard,
+  "/tasks": ListTodo,
+  "/bookings": CalendarDays,
+  "/checkin": ClipboardCheck,
+  "/ceremony-codes": KeyRound,
+  "/bookings/content": FileText,
+  "/duty": ClipboardList,
+  "/facilities": Building2,
+  "/items": Package,
+  "/inventory": Boxes,
+  "/maintenance": Wrench,
+  "/transactions": ArrowLeftRight,
+  "/reports": BarChart3,
+  "/staff": Users,
+  "/users": Users,
+  "/audit": ShieldAlert,
+  "/settings": Settings,
+  "/profile": UserCircle,
+};
 
 /** Static class strings so Tailwind sees them at build time. */
 const ACTIVE_ACCENT: Record<NavAccent, string> = {
@@ -62,60 +82,6 @@ const ACTIVE_ACCENT: Record<NavAccent, string> = {
   finance:     "bg-finance/15 border-finance/25 [&_svg]:text-finance",
   duty:        "bg-duty/15 border-duty/25 [&_svg]:text-duty",
 };
-
-/* Grouped by job-to-be-done, not by data type. Every item stays reachable;
-   ordering reflects how a facility manager actually moves through a day. */
-const NAV_GROUPS = [
-  {
-    label: "Overview",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, accent: "gold" as NavAccent },
-      { href: "/tasks",     label: "Tasks",     icon: ListTodo,        accent: "gold" as NavAccent },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { href: "/bookings", label: "Bookings", icon: CalendarDays, accent: "bookings" as NavAccent },
-      { href: "/checkin", label: "Check-In", icon: ClipboardCheck, accent: "bookings" as NavAccent },
-      { href: "/ceremony-codes", label: "Ceremony Codes", icon: KeyRound, accent: "bookings" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-      { href: "/bookings/content", label: "Booking Content", icon: FileText, accent: "bookings" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-      { href: "/duty", label: "Duty Logs", icon: ClipboardList, accent: "duty" as NavAccent },
-    ],
-  },
-  {
-    label: "Spaces & Assets",
-    items: [
-      { href: "/facilities", label: "Facilities", icon: Building2, accent: "facilities" as NavAccent },
-      { href: "/items", label: "Items & Packages", icon: Package, accent: "inventory" as NavAccent },
-      { href: "/inventory", label: "Inventory", icon: Boxes, accent: "inventory" as NavAccent },
-      { href: "/maintenance", label: "Maintenance", icon: Wrench, accent: "maintenance" as NavAccent, roles: ["FACILITY_MANAGER", "VICAR", "SUPER_ADMIN"] },
-    ],
-  },
-  {
-    label: "Finance",
-    items: [
-      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, accent: "finance" as NavAccent, perm: "canViewFinancials" as StaffPermissionKey },
-      { href: "/reports", label: "Reports", icon: BarChart3, accent: "finance" as NavAccent, perm: "canViewFinancials" as StaffPermissionKey },
-    ],
-  },
-  {
-    label: "People",
-    items: [
-      { href: "/staff", label: "Staff", icon: Users, accent: "gold" as NavAccent, roles: ["FACILITY_MANAGER", "SUPER_ADMIN"] },
-    ],
-  },
-];
-
-const ADMIN_NAV = [
-  { href: "/users", label: "Manage Users", icon: Users },
-  { href: "/audit", label: "Audit Logs", icon: ShieldAlert },
-];
-
-const BOTTOM_NAV = [
-  { href: "/settings", label: "Site Settings", icon: Settings, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
-  { href: "/profile", label: "My Profile", icon: UserCircle },
-];
 
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -148,13 +114,16 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
 
   useEffect(() => { onClose?.(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [pathname]);
 
+  function hasPerm(p: Permission): boolean {
+    if (role === "SUPER_ADMIN") return true;
+    return permissions?.[p] ?? false;
+  }
+
   async function handleLogout() {
     await logout();
     router.push("/login");
   }
 
-  /** `compact` collapses to an icon rail (desktop only); `desktop` controls the
-      collapse toggle vs the mobile close (X) button. */
   const renderSidebar = (compact: boolean, desktop: boolean) => (
     <aside
       className={cn(
@@ -162,10 +131,8 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
         compact ? "w-[68px]" : "w-[240px]"
       )}
     >
-      {/* Ambient glow */}
       <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-[radial-gradient(circle,rgba(255,77,107,0.10)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* Logo */}
       <div className={cn("flex items-center gap-2.5 px-5 py-5 border-b border-[hsl(var(--sb-border))]", compact && "px-0 justify-center")}>
         <div className="w-8 h-8 rounded-lg bg-[rgba(255,77,107,0.15)] border border-[rgba(255,77,107,0.25)] flex items-center justify-center flex-shrink-0">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -194,15 +161,9 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin">
-        {NAV_GROUPS.map((group) => {
-          const visible = group.items.filter((item) => {
-            const it = item as { roles?: string[]; perm?: StaffPermissionKey };
-            if (it.roles && !it.roles.includes(role)) return false;
-            if (it.perm && !hasStaffPermission(permissions, role, it.perm)) return false;
-            return true;
-          });
+        {STAFF_NAV_GROUPS.map((group) => {
+          const visible = group.items.filter((item) => navItemVisible(item, role, hasPerm));
           if (visible.length === 0) return null;
           return (
             <div key={group.label ?? "core"}>
@@ -212,7 +173,8 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
                 </p>
               )}
               <div className="space-y-0.5">
-                {visible.map(({ href, label, icon: Icon, accent }) => {
+                {visible.map(({ href, label, accent }) => {
+                  const Icon = NAV_ICONS[href] ?? LayoutDashboard;
                   const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
                   return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} accent={accent} compact={compact} />;
                 })}
@@ -229,7 +191,8 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
               </p>
             )}
             <div className="space-y-0.5">
-              {ADMIN_NAV.map(({ href, label, icon: Icon }) => {
+              {STAFF_ADMIN_NAV.map(({ href, label }) => {
+                const Icon = NAV_ICONS[href] ?? Users;
                 const isActive = pathname === href || pathname.startsWith(`${href}/`);
                 return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} compact={compact} />;
               })}
@@ -238,14 +201,14 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
         )}
 
         <div className="space-y-0.5">
-          {BOTTOM_NAV.filter(item => !item.roles || item.roles.includes(role)).map(({ href, label, icon: Icon }) => {
+          {STAFF_BOTTOM_NAV.filter((item) => navItemVisible(item, role, hasPerm)).map(({ href, label }) => {
+            const Icon = NAV_ICONS[href] ?? UserCircle;
             const isActive = pathname === href;
             return <NavItem key={href} href={href} label={label} Icon={Icon} isActive={isActive} compact={compact} />;
           })}
         </div>
       </nav>
 
-      {/* User footer */}
       <div className="p-3 border-t border-[hsl(var(--sb-border))]">
         {desktop && onToggleCollapse && (
           <button
@@ -302,12 +265,10 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
 
   return (
     <>
-      {/* Desktop: always visible, collapsible to an icon rail */}
       <div className="hidden lg:flex flex-shrink-0 h-full">
         {renderSidebar(collapsed, true)}
       </div>
 
-      {/* Mobile: backdrop + slide-in drawer (always full width) */}
       {isOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div

@@ -1,21 +1,22 @@
 import Link from "next/link";
 import { Package, Tag, ArrowRightLeft, Wrench, AlertTriangle, TrendingUp, CheckCircle, Clock } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getInventorySummary, getInventoryItems, getActiveCheckouts, getInventoryMaintenanceLogs } from "@/actions/inventory.actions";
 import { cn } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 0 }).format(n);
 }
 
 export default async function InventoryPage() {
-  const session = await requireStaff();
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const session = await requirePerm("inventory:view");
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["inventory:manage"] ?? false);
 
   const [summary, { items }, { checkouts }, { logs }] = await Promise.all([
     getInventorySummary(),

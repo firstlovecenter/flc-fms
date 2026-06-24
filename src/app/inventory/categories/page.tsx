@@ -1,12 +1,12 @@
 import { Tag } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getInventoryCategories } from "@/actions/inventory.actions";
 import InventoryCategoryManager from "@/components/inventory/InventoryCategoryManager";
 import PageHeader from "@/components/layout/PageHeader";
 
 export default async function InventoryCategoriesPage() {
-  const session    = await requireStaff();
-  const canManage  = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const session = await requirePerm("inventory:manage");
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["inventory:manage"] ?? false);
   const categories = await getInventoryCategories();
 
   return (

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff, requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { timeRangesOverlap } from "@/lib/time-utils";
 
@@ -35,7 +35,7 @@ const FacilitySchema = z.object({
 const UpdateFacilitySchema = FacilitySchema.partial();
 
 export async function createFacility(data: z.input<typeof FacilitySchema>) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const validated = FacilitySchema.parse(data);
 
   const { categoryMappings, ...facilityData } = validated;
@@ -69,7 +69,7 @@ export async function createFacility(data: z.input<typeof FacilitySchema>) {
 }
 
 export async function updateFacility(id: string, data: Partial<z.input<typeof FacilitySchema>>) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const validated = UpdateFacilitySchema.parse(data);
   const { categoryMappings, ...facilityData } = validated;
   const before = await prisma.facility.findFirstOrThrow({ where: { id } });
@@ -128,7 +128,7 @@ export async function updateFacility(id: string, data: Partial<z.input<typeof Fa
 }
 
 export async function deleteFacility(id: string) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   await prisma.facility.update({
     where: { id },
     data: { isActive: false, deletedAt: new Date() },
@@ -145,7 +145,7 @@ export async function toggleMaintenanceLock(
   maintenanceStartsAt?: Date | null,
   maintenanceEndsAt?: Date | null,
 ) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const facility = await prisma.facility.update({
     where: { id: facilityId },
     data: {
@@ -168,7 +168,7 @@ export async function toggleMaintenanceLock(
 }
 
 export async function updateFacilitySortOrder(facilityId: string, sortOrder: number) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const facility = await prisma.facility.update({
     where: { id: facilityId },
     data: { sortOrder },
@@ -186,7 +186,7 @@ export async function updateAccessCode(
   data: { hasAccessCode: boolean; accessCode?: string | null }
 ) {
   // Only FM and SUPER_ADMIN can edit access codes
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("facilities:manage");
   const before = await prisma.facility.findFirstOrThrow({ where: { id: facilityId } });
 
   const facility = await prisma.facility.update({
@@ -238,7 +238,7 @@ const TimeSlotSchema = z.object({
 });
 
 export async function getTimeSlots(facilityId: string) {
-  await requireStaff();
+  await requirePerm("facilities:view");
   return prisma.facilityTimeSlot.findMany({
     where: { facilityId, isActive: true },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
@@ -246,7 +246,7 @@ export async function getTimeSlots(facilityId: string) {
 }
 
 export async function createTimeSlot(facilityId: string, data: z.infer<typeof TimeSlotSchema>) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const validated = TimeSlotSchema.parse(data);
 
   if (validated.startTime === validated.endTime) {
@@ -309,7 +309,7 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
 }
 
 export async function updateTimeSlot(slotId: string, data: Partial<z.infer<typeof TimeSlotSchema>>) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
 
   const existing = await prisma.facilityTimeSlot.findUnique({
     where: { id: slotId },
@@ -356,7 +356,7 @@ export async function updateTimeSlot(slotId: string, data: Partial<z.infer<typeo
 }
 
 export async function deleteTimeSlot(slotId: string) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
 
   const slot = await prisma.facilityTimeSlot.update({
     where: { id: slotId },
@@ -386,7 +386,7 @@ export async function bulkCreateTimeSlots(
   facilityIds: string[],
   slotData: z.infer<typeof TimeSlotSchema>,
 ) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
   const { facilityIds: validIds, slot: validated } = BulkSlotSchema.parse({
     facilityIds,
     slot: slotData,
@@ -477,7 +477,7 @@ export async function copyTimeSlotsToFacilities(
   sourceFacilityId: string,
   targetFacilityIds: string[],
 ) {
-  const session = await requirePermission("canManageFacilities");
+  const session = await requirePerm("facilities:manage");
 
   if (!sourceFacilityId) return { error: "Source facility is required" };
   if (targetFacilityIds.length === 0) return { error: "Select at least one target facility" };

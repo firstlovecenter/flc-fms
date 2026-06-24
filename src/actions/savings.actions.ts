@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 
@@ -16,7 +16,7 @@ const SavingsSchema = z.object({
 const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
 export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requirePerm("finance:savings");
   const validated = SavingsSchema.parse(data);
 
   const txResult = await prisma.$transaction(async (tx) => {
@@ -69,7 +69,7 @@ export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
 }
 
 export async function withdrawFromSavings(data: z.infer<typeof SavingsSchema>) {
-  const session   = await requireStaff("FACILITY_MANAGER");
+  const session   = await requirePerm("finance:savings");
   const validated = SavingsSchema.parse(data);
 
   const txResult = await prisma.$transaction(async (tx) => {
@@ -115,7 +115,7 @@ export async function withdrawFromSavings(data: z.infer<typeof SavingsSchema>) {
 }
 
 export async function getSavingsTransactions() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("finance:savings");
   return prisma.savingsTransaction.findMany({
     include: { createdBy: { select: { name: true } } },
     orderBy: { createdAt: "desc" },

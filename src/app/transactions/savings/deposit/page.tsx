@@ -1,9 +1,9 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getAvailableBalance } from "@/lib/finance";
 import SavingsDepositForm from "@/components/savings/SavingsDepositForm";
 
 export default async function SavingsDepositPage() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("finance:savings");
   const { availableBalance } = await getAvailableBalance();
   return (
     <div className="w-full max-w-2xl space-y-6">

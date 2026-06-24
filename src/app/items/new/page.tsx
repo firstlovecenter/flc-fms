@@ -1,10 +1,11 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import AddItemForm from "@/components/items/AddItemForm";
 import PageHeader from "@/components/layout/PageHeader";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default async function NewItemPage() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <PageHeader

@@ -1,13 +1,9 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getBookingContent } from "@/lib/sanity/booking-content";
 import BookingContentEditor from "@/components/bookings/BookingContentEditor";
-import { redirect } from "next/navigation";
 
 export default async function BookingContentPage() {
-  const session = await requireStaff();
-  if (!["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role)) {
-    redirect("/unauthorized");
-  }
+  await requirePerm("bookings:manage_content");
   const content = await getBookingContent();
 
   return (

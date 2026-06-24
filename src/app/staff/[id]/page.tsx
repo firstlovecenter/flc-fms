@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Shield, Key } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default async function StaffDetailPage({ params }: Props) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("staff:manage");
 
   const member = await prisma.user.findFirst({
     where: { id: params.id },

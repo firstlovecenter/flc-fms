@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { isExpenseLocked } from "@/lib/transaction-lock";
 import ExpenseEditForm from "@/components/expenses/ExpenseEditForm";
 
 export default async function EditExpensePage({ params }: { params: { id: string } }) {
-  const session = await requireStaff();
+  const session = await requirePerm("finance:view");
 
   const expense = await prisma.expense.findUnique({
     where: { id: params.id },
@@ -24,7 +24,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   if (!expense) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["finance:approve_expense"] ?? false);
   const requesterReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
 
   if (!canManage && !requesterReceiptOnly) {

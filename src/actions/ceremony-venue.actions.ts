@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getFirstSaturdaysForMonths, toDateStr } from "@/lib/ceremony-utils";
 import type { CeremonyType } from "@prisma/client";
 
@@ -20,7 +20,7 @@ export async function upsertCeremonyVenueConfig(
   type: CeremonyType,
   data: z.infer<typeof UpsertSchema>
 ) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const validated = UpsertSchema.parse(data);
 
@@ -74,7 +74,7 @@ export async function getCeremonyDays(): Promise<string[]> {
 
 /** Staff: designate an extra Saturday as a ceremony day. */
 export async function addCeremonyDateOverride(data: { date: string; note?: string }) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("ceremony:manage");
   const d = new Date(data.date + "T12:00:00.000Z");
   if (d.getUTCDay() !== 6) return { error: "Only Saturdays can be designated as ceremony days." };
 
@@ -89,7 +89,7 @@ export async function addCeremonyDateOverride(data: { date: string; note?: strin
 
 /** Staff: remove a staff-added ceremony day (first Saturdays are always ceremony days). */
 export async function removeCeremonyDateOverride(id: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
   await prisma.ceremonyDateOverride.delete({ where: { id } });
   revalidatePath("/ceremony-codes");
   return { success: true };
@@ -97,7 +97,7 @@ export async function removeCeremonyDateOverride(id: string) {
 
 /** Staff: list all stored extra ceremony day overrides. */
 export async function listCeremonyDateOverrides() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
   return prisma.ceremonyDateOverride.findMany({
     include: { createdBy: { select: { name: true } } },
     orderBy: { date: "asc" },

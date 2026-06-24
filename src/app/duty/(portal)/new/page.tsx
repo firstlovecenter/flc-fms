@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getActiveStaffForDuty, getDutyTemplates } from "@/lib/duty/queries";
 import AssignDutyForm from "@/components/duty/AssignDutyForm";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Create Duty" };
 
 export default async function CreateDutyPage() {
-  await requireStaff("FACILITY_MANAGER", "SUPER_ADMIN");
+  await requirePerm("duty:manage");
 
   const [templates, staff] = await Promise.all([
     getDutyTemplates(),

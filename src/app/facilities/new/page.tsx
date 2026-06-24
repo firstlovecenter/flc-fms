@@ -1,9 +1,9 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import FacilityForm from "@/components/facilities/FacilityForm";
 import { getBookingCategories } from "@/actions/category.actions";
 
 export default async function NewFacilityPage() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("facilities:manage");
   const categories = await getBookingCategories(false);
   return (
     <div className="max-w-2xl space-y-6">

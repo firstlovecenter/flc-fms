@@ -2,13 +2,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getBookableItems } from "@/actions/bookable-items.actions";
 import AddBundleForm from "@/components/items/AddBundleForm";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default async function EditBundlePage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
 
   const [bundle, availableItems] = await Promise.all([
     prisma.bookableBundle.findUnique({

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff, requirePatron } from "@/lib/auth/guards";
+import { requirePerm, requirePatron } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
@@ -86,7 +86,7 @@ export async function requestCheckIn(bookingId: string, coords?: { latitude: num
 // ─── Staff: Get Check-In Queue ──────────────────────────────────────────────
 
 export async function getCheckInQueue() {
-  await requireStaff();
+  await requirePerm("checkin:perform");
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -123,7 +123,7 @@ export async function getCheckInQueue() {
 // ─── Staff: Get Inventory Requirements for a Facility ───────────────────────
 
 export async function getInventoryRequirements(facilityId: string) {
-  await requireStaff();
+  await requirePerm("checkin:perform");
 
   const requirements = await prisma.facilityInventoryRequirement.findMany({
     where: { facilityId },
@@ -152,7 +152,7 @@ const CheckInSchema = z.object({
 });
 
 export async function performCheckIn(data: z.infer<typeof CheckInSchema>) {
-  const session = await requireStaff();
+  const session = await requirePerm("checkin:perform");
   const parsed = CheckInSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
 
@@ -226,7 +226,7 @@ const CheckOutSchema = z.object({
 });
 
 export async function performCheckOut(data: z.infer<typeof CheckOutSchema>) {
-  const session = await requireStaff();
+  const session = await requirePerm("checkin:perform");
   const parsed = CheckOutSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
 

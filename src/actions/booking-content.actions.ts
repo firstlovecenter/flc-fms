@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { saveBookingContent } from "@/lib/sanity/booking-content";
 
 const TermSchema = z.object({
@@ -28,10 +28,7 @@ const BookingContentSchema = z.object({
 });
 
 export async function updateBookingContent(input: unknown) {
-  const session = await requireStaff();
-  if (!["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role)) {
-    return { error: "Unauthorized" };
-  }
+  const session = await requirePerm("bookings:manage_content");
 
   const parsed = BookingContentSchema.safeParse(input);
   if (!parsed.success) {

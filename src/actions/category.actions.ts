@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 
 const CategorySchema = z.object({
@@ -24,7 +24,7 @@ export async function getBookingCategories(includeInactive = false) {
 
 /** Create a new booking category (FM / Super Admin) */
 export async function createBookingCategory(data: z.infer<typeof CategorySchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("facilities:manage");
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
 
@@ -64,7 +64,7 @@ export async function createBookingCategory(data: z.infer<typeof CategorySchema>
 
 /** Update a booking category */
 export async function updateBookingCategory(id: string, data: z.infer<typeof CategorySchema>) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("facilities:manage");
   const validated = CategorySchema.parse(data);
   const slug = slugify(validated.name);
 
@@ -89,7 +89,7 @@ export async function updateBookingCategory(id: string, data: z.infer<typeof Cat
 
 /** Toggle a category active/inactive */
 export async function toggleBookingCategory(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("facilities:manage");
   const cat = await prisma.bookingCategory.findUniqueOrThrow({ where: { id } });
   const updated = await prisma.bookingCategory.update({
     where: { id },
@@ -103,7 +103,7 @@ export async function toggleBookingCategory(id: string) {
 
 /** Delete a booking category (only when not in active use) */
 export async function deleteBookingCategory(id: string) {
-  const session = await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  const session = await requirePerm("facilities:manage");
 
   const category = await prisma.bookingCategory.findUnique({ where: { id } });
   if (!category) return { error: "Category not found." };

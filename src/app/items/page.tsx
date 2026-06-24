@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getBookableItems, getBookableBundles } from "@/actions/bookable-items.actions";
 import { Package, Layers, Plus, Pencil, Tag } from "lucide-react";
@@ -11,9 +11,9 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function ItemsPage() {
-  const session = await requireStaff();
+  const session = await requirePerm("items:view");
   const [items, bundles] = await Promise.all([getBookableItems(), getBookableBundles()]);
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["items:manage"] ?? false);
 
   return (
     <div className="space-y-6 animate-fade-in relative">

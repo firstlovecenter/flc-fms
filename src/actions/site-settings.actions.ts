@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { revalidatePath } from "next/cache";
 
 export interface SiteSettings {
@@ -25,7 +25,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function updateSiteSettings(data: Partial<SiteSettings>) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("settings:manage");
 
   for (const [key, value] of Object.entries(data)) {
     if (!KEYS.includes(key as keyof SiteSettings)) continue;

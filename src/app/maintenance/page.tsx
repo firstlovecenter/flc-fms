@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceRequestCard from "@/components/maintenance/MaintenanceRequestCard";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,8 @@ export default async function MaintenancePage({
 }: {
   searchParams: { status?: string; priority?: string };
 }) {
-  const session  = await requireStaff("FACILITY_MANAGER", "VICAR");
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const session = await requirePerm("maintenance:view");
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["maintenance:manage"] ?? false);
 
   const where = {
     ...(searchParams.status && searchParams.status !== "ALL" ? { status: searchParams.status as any } : {}),

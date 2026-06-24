@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { isTransactionLocked } from "@/lib/transaction-lock";
 import IncomeEditForm from "@/components/expenses/IncomeEditForm";
 
 export default async function EditIncomePage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("finance:record_income");
 
   const income = await prisma.income.findUnique({
     where: { id: params.id },

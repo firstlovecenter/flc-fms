@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { cn, formatDate } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default async function StaffPage() {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("staff:view");
 
   const [activeStaff, inactiveStaff] = await Promise.all([
     prisma.user.findMany({

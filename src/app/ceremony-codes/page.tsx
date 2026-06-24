@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { listCeremonyCodes } from "@/actions/ceremony-code.actions";
 import { listCeremonyDateOverrides } from "@/actions/ceremony-venue.actions";
 import CeremonyCodesClient from "@/components/ceremony/CeremonyCodesClient";
@@ -10,7 +10,7 @@ export default async function CeremonyCodesPage({
 }: {
   searchParams: { status?: string; search?: string; page?: string };
 }) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("ceremony:manage");
 
   const [{ codes, total }, dateOverrides] = await Promise.all([
     listCeremonyCodes({

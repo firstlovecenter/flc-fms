@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, Layers } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
 
 export default async function FacilitiesPage() {
-  const session  = await requireStaff();
+  const session = await requirePerm("facilities:view");
 
   const facilities = await prisma.facility.findMany({
     where: {},
@@ -24,7 +24,7 @@ export default async function FacilitiesPage() {
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
-  const canManage = ["FACILITY_MANAGER","BOOKING_MANAGER","SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["facilities:manage"] ?? false);
   const isSuperAdmin = session.role === "SUPER_ADMIN";
 
   return (

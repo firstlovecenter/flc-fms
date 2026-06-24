@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { sendBookingConfirmationEmail } from "@/lib/notifications/email";
 import { notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
@@ -450,7 +450,7 @@ export async function createGuestItemBooking(raw: unknown) {
 // ─── Admin: manage items ──────────────────────────────────────────────────────
 
 export async function createBookableItem(raw: unknown) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   const parsed = ItemSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -462,7 +462,7 @@ export async function createBookableItem(raw: unknown) {
 }
 
 export async function updateBookableItem(id: string, raw: unknown) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   const parsed = ItemSchema.partial().safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -474,7 +474,7 @@ export async function updateBookableItem(id: string, raw: unknown) {
 }
 
 export async function deleteBookableItem(id: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   await prisma.bookableItem.update({ where: { id }, data: { isActive: false } });
   await auditLog({ action: "DEACTIVATE", entity: "BookableItem", entityId: id });
   revalidatePath("/items");
@@ -483,7 +483,7 @@ export async function deleteBookableItem(id: string) {
 }
 
 export async function getBookableItems() {
-  await requireStaff();
+  await requirePerm("items:view");
   const items = await prisma.bookableItem.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
@@ -493,7 +493,7 @@ export async function getBookableItems() {
 // ─── Admin: manage bundles ────────────────────────────────────────────────────
 
 export async function createBookableBundle(raw: unknown) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   const parsed = BundleSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -520,7 +520,7 @@ export async function createBookableBundle(raw: unknown) {
 }
 
 export async function updateBookableBundle(id: string, raw: unknown) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   const parsed = BundleSchema.partial().safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -543,7 +543,7 @@ export async function updateBookableBundle(id: string, raw: unknown) {
 }
 
 export async function deleteBookableBundle(id: string) {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("items:manage");
   await prisma.bookableBundle.update({ where: { id }, data: { isActive: false } });
   await auditLog({ action: "DEACTIVATE", entity: "BookableBundle", entityId: id });
   revalidatePath("/items");
@@ -552,7 +552,7 @@ export async function deleteBookableBundle(id: string) {
 }
 
 export async function getBookableBundles() {
-  await requireStaff();
+  await requirePerm("items:view");
   const bundles = await prisma.bookableBundle.findMany({
     include: {
       components: { include: { item: true } },

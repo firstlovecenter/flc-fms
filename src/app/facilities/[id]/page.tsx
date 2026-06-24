@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Users, Clock, Calendar, Wrench, TimerIcon } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { hasVicarPermission } from "@/lib/staff-permissions";
 import { formatCurrency, formatDateTime, cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -15,7 +14,7 @@ import { Card } from "@/components/ui/card";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function FacilityDetailPage({ params }: { params: { id: string } }) {
-  const session  = await requireStaff();
+  const session = await requirePerm("facilities:view");
 
   const facility = await prisma.facility.findFirst({
     where: { id: params.id },
@@ -48,8 +47,9 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
 
   if (!facility) notFound();
 
-  const canManage = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
-  const canCreateBookings = canManage || (session.role === "VICAR" && hasVicarPermission(session.permissions, "canCreateBookings"));
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["facilities:manage"] ?? false);
+  const canCreateBookings = session.role === "SUPER_ADMIN"
+    || (session.authContext?.permissions["bookings:create"] ?? false);
   return (
     <div className="space-y-6 w-full max-w-4xl">
       <div className="flex items-start sm:items-center gap-4 flex-wrap">

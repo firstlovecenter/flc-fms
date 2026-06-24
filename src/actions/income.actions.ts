@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
 
@@ -26,7 +26,7 @@ const UpdateIncomeSchema = z.object({
 });
 
 export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
-  const session  = await requireStaff("FACILITY_MANAGER");  const validated = IncomeSchema.parse(data);
+  const session  = await requirePerm("finance:record_income");  const validated = IncomeSchema.parse(data);
 
   if (validated.bookingId) {
     const existingLinked = await prisma.income.findUnique({ where: { bookingId: validated.bookingId } });
@@ -65,7 +65,7 @@ export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
 }
 
 export async function getBookingsForIncomeLink() {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("finance:record_income");
   // Return bookings that don't already have a linked income record
   const bookings = await prisma.booking.findMany({
     where: {
@@ -81,7 +81,7 @@ export async function getBookingsForIncomeLink() {
 }
 
 export async function getIncomeSummary() {
-  await requireStaff("FACILITY_MANAGER");  const [records, monthly] = await Promise.all([
+  await requirePerm("finance:record_income");  const [records, monthly] = await Promise.all([
     prisma.income.findMany({
       where: { deletedAt: null },
       include: { recordedBy: { select: { name: true } } },
@@ -98,7 +98,7 @@ export async function getIncomeSummary() {
 }
 
 export async function updateIncome(incomeId: string, data: z.infer<typeof UpdateIncomeSchema>) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("finance:record_income");
   const validated = UpdateIncomeSchema.parse(data);
 
   const existing = await prisma.income.findFirst({
@@ -125,7 +125,7 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
 }
 
 export async function deleteIncome(incomeId: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("finance:record_income");
 
   const existing = await prisma.income.findFirst({
     where: { id: incomeId, deletedAt: null },

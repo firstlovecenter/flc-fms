@@ -1,10 +1,10 @@
 import { ClipboardCheck } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getCheckInQueue } from "@/actions/checkin.actions";
 import CheckInQueue from "@/components/checkin/CheckInQueue";
 
 export default async function CheckInPage() {
-  await requireStaff();
+  await requirePerm("checkin:perform");
   const bookings = await getCheckInQueue();
 
   return (

@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceForm from "@/components/maintenance/MaintenanceForm";
 
@@ -7,7 +7,7 @@ export default async function NewMaintenancePage({
 }: {
   searchParams: { taskId?: string; title?: string };
 }) {
-  await requireStaff("FACILITY_MANAGER", "VICAR");
+  await requirePerm("maintenance:create");
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true },

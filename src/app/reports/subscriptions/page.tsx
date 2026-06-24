@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { listReportSubscriptions } from "@/actions/report-subscription.actions";
 import SubscriptionManager from "@/components/reports/SubscriptionManager";
 import PageHeader from "@/components/layout/PageHeader";
@@ -6,10 +6,11 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default async function ReportSubscriptionsPage() {
-  await requireStaff("FACILITY_MANAGER", "BOOKING_MANAGER");
+  await requirePerm("reports:manage_subscriptions");
 
   const subscriptions = await listReportSubscriptions();
 

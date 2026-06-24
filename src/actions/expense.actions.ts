@@ -4,13 +4,13 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
+import { getStaffAuthContext, ctxHasPermission } from "@/lib/permissions/session";
 import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
-import { notifyExpenseDecision, notifyFMExpenseSubmitted } from "@/lib/notifications/sms";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
-import { requirePermission } from "@/lib/auth/guards";
+import { notifyFMExpenseSubmitted, notifyExpenseDecision } from "@/lib/notifications/sms";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -33,7 +33,7 @@ const ReceiptOnlyUpdateSchema = z.object({
 });
 
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
-  const session  = await requirePermission("canSubmitExpenses");
+  const session  = await requirePerm("finance:submit_expense");
   const validated = ExpenseSchema.parse(data);
 
   const expense = await prisma.expense.create({
@@ -69,7 +69,7 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
 const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
 export async function approveExpense(expenseId: string, chargeAmount: number = 0) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("finance:approve_expense");
 
   // Sanitise charge amount — must be non-negative
   const sanitisedCharge = Math.max(0, Number(chargeAmount) || 0);
@@ -179,7 +179,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
 }
 
 export async function rejectExpense(expenseId: string, reason: string) {
-  const session  = await requireStaff("FACILITY_MANAGER");
+  const session  = await requirePerm("finance:approve_expense");
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
     select: { status: true, isTransactionCharge: true },
@@ -244,7 +244,8 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
   if (!existing) return { error: "Expense record not found." };
   if (existing.isTransactionCharge) return { error: "Transaction charge entries cannot be edited." };
 
-  const canManage = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const ctx = session.role === "SUPER_ADMIN" ? null : await getStaffAuthContext(session.sub);
+  const canManage = session.role === "SUPER_ADMIN" || (ctx ? ctxHasPermission(ctx, "finance:approve_expense") : false);
   const isRequesterReceiptOnly =
     existing.status === "APPROVED" && existing.createdById === session.sub;
 
@@ -286,7 +287,7 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 }
 
 export async function deleteExpense(expenseId: string) {
-  const session = await requireStaff("FACILITY_MANAGER");
+  const session = await requirePerm("finance:approve_expense");
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },

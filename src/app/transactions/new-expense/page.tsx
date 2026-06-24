@@ -1,8 +1,8 @@
-import { requirePermission } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 
 export default async function NewExpensePage() {
-  await requirePermission("canSubmitExpenses");
+  await requirePerm("finance:submit_expense");
   return (
     <div className="w-full max-w-2xl space-y-6">
       <div>

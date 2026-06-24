@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ export default async function BookingsPage({
 }: {
   searchParams: { status?: string; page?: string; tab?: string };
 }) {
-  const session  = await requireStaff();
+  const session = await requirePerm("bookings:view");
 
   const tab    = (searchParams.tab ?? "regular") as Tab;
   const status = searchParams.status && searchParams.status !== "ALL"
@@ -27,7 +27,7 @@ export default async function BookingsPage({
   const page = Number(searchParams.page ?? 1);
   const take = 20;
 
-  const canManage   = ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(session.role);
+  const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["bookings:approve"] ?? false);
   const isSuperAdmin = session.role === "SUPER_ADMIN";
 
   if (tab === "ceremony") {

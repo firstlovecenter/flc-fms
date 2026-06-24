@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/guards";
+import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { resolvePermissions } from "@/lib/staff-permissions";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default async function StaffPermissionsPage({ params }: { params: { id: string } }) {
-  await requireStaff("FACILITY_MANAGER");
+  await requirePerm("staff:manage");
 
   const staff = await prisma.user.findFirst({
     where: { id: params.id, role: { not: "SUPER_ADMIN" } },
@@ -49,7 +49,7 @@ export default async function StaffPermissionsPage({ params }: { params: { id: s
 
       <div className="rounded-xl border border-info/25 bg-info/10 p-4 text-sm text-info">
         <strong>Access control:</strong> the role sets a starting point; toggle any permission to customize
-        this person&apos;s access. Changes take effect on their next sign-in.
+        this person&apos;s access. Changes take effect immediately.
       </div>
 
       <PermissionsEditor
