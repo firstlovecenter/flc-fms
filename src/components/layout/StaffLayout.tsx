@@ -17,6 +17,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       name={session.name}
       role={session.role}
       profilePicture={user?.profilePicture ?? undefined}
+      permissions={session.permissions}
       impersonatedBy={session.impersonatedBy}
     >
       {children}

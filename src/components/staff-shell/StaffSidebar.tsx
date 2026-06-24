@@ -30,11 +30,13 @@ import {
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth.actions";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
+import { hasStaffPermission, type StaffPermissionKey } from "@/lib/staff-permissions";
 
 type StaffSidebarProps = {
   role: string;
   name: string;
   profilePicture?: string;
+  permissions?: Record<string, boolean>;
   isOpen?: boolean;
   onClose?: () => void;
   collapsed?: boolean;
@@ -93,8 +95,8 @@ const NAV_GROUPS = [
   {
     label: "Finance",
     items: [
-      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, accent: "finance" as NavAccent },
-      { href: "/reports", label: "Reports", icon: BarChart3, accent: "finance" as NavAccent, roles: ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"] },
+      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, accent: "finance" as NavAccent, perm: "canViewFinancials" as StaffPermissionKey },
+      { href: "/reports", label: "Reports", icon: BarChart3, accent: "finance" as NavAccent, perm: "canViewFinancials" as StaffPermissionKey },
     ],
   },
   {
@@ -139,7 +141,7 @@ function NavItem({ href, label, Icon, isActive, accent = "gold", compact = false
   );
 }
 
-export default function StaffSidebar({ role, name, profilePicture, isOpen = false, onClose, collapsed = false, onToggleCollapse }: StaffSidebarProps) {
+export default function StaffSidebar({ role, name, profilePicture, permissions, isOpen = false, onClose, collapsed = false, onToggleCollapse }: StaffSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const initials = getInitials(name);
@@ -195,7 +197,12 @@ export default function StaffSidebar({ role, name, profilePicture, isOpen = fals
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin">
         {NAV_GROUPS.map((group) => {
-          const visible = group.items.filter((item) => !("roles" in item) || ((item as { roles?: string[] }).roles?.includes(role) ?? true));
+          const visible = group.items.filter((item) => {
+            const it = item as { roles?: string[]; perm?: StaffPermissionKey };
+            if (it.roles && !it.roles.includes(role)) return false;
+            if (it.perm && !hasStaffPermission(permissions, role, it.perm)) return false;
+            return true;
+          });
           if (visible.length === 0) return null;
           return (
             <div key={group.label ?? "core"}>

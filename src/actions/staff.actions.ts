@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requireStaff } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import type { VicarPermissions } from "@/lib/staff-permissions";
+import type { StaffPermissions } from "@/lib/staff-permissions";
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 import { type Role, Prisma } from "@prisma/client";
-import { DEFAULT_VICAR_PERMISSIONS } from "@/lib/staff-permissions";
+import { DEFAULT_PERMISSIONS_FOR_ROLE, PERMISSION_KEYS } from "@/lib/staff-permissions";
 
 export async function getStaffMembers() {
   const session  = await requireStaff("FACILITY_MANAGER");  return prisma.user.findMany({
@@ -20,26 +20,32 @@ export async function getStaffMembers() {
     orderBy: [{ role: "asc" }, { name: "asc" }]});
 }
 
-export async function updateVicarPermissions(
-  vicarId: string,
-  permissions: VicarPermissions
+export async function updateStaffPermissions(
+  staffId: string,
+  permissions: StaffPermissions
 ) {
-  const session  = await requireStaff("FACILITY_MANAGER");  // Guard: vicar must belong to this campus
-  const vicar = await prisma.user.findFirstOrThrow({
-    where: { id: vicarId, role: "VICAR" }});
+  const session = await requireStaff("FACILITY_MANAGER");
+  const target = await prisma.user.findFirstOrThrow({ where: { id: staffId } });
+  if (target.role === "SUPER_ADMIN") {
+    return { error: "Super Admin already has full access; permissions can't be edited." };
+  }
+
+  // Sanitize to known permission keys only.
+  const clean: Record<string, boolean> = {};
+  for (const k of PERMISSION_KEYS) clean[k] = Boolean(permissions[k]);
 
   await prisma.user.update({
-    where: { id: vicarId },
-    data: { permissions: { ...permissions } }});
+    where: { id: staffId },
+    data: { permissions: clean }});
 
   auditLog({ userId: session.sub,
-    action: "UPDATE_VICAR_PERMISSIONS",
-    entity: "User", entityId: vicarId,
-    before: vicar.permissions as object,
-    after:  permissions});
+    action: "UPDATE_STAFF_PERMISSIONS",
+    entity: "User", entityId: staffId,
+    before: target.permissions as object,
+    after:  clean});
 
   revalidatePath("/staff");
-  revalidatePath(`/staff/${vicarId}/permissions`);
+  revalidatePath(`/staff/${staffId}/permissions`);
   return { success: true };
 }
 
@@ -200,11 +206,11 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
     where: { id: userId },
     data: {
       role: nextRole,
-      // When promoting to Vicar, always seed explicit default permissions so
-      // the DB state is auditable and queryable without runtime defaulting.
-      ...(nextRole === "VICAR" ? { permissions: { ...DEFAULT_VICAR_PERMISSIONS } } : {}),
-      // When demoting from Vicar, clear the permissions JSON.
-      ...(target.role === "VICAR" && nextRole !== "VICAR" ? { permissions: Prisma.JsonNull } : {}),
+      // Seed the new role's preset permissions so the DB state is explicit and
+      // auditable. Super Admin needs none (always full access).
+      permissions: nextRole === "SUPER_ADMIN"
+        ? Prisma.JsonNull
+        : { ...DEFAULT_PERMISSIONS_FOR_ROLE(nextRole) },
     },
   });
 

@@ -6,7 +6,8 @@ import { Package, Layers, ShoppingCart, ChevronDown, ChevronUp, ArrowRight, X, P
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 type BookableItem = {
   id: string;

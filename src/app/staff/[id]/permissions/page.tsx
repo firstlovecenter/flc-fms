@@ -3,25 +3,31 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { DEFAULT_VICAR_PERMISSIONS, PERMISSION_LABELS, type VicarPermissions } from "@/lib/staff-permissions";
+import { resolvePermissions } from "@/lib/staff-permissions";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
 import PermissionsEditor from "@/components/staff/PermissionsEditor";
 
-export default async function VicarPermissionsPage({ params }: { params: { id: string } }) {
+const ROLE_LABELS: Record<string, string> = {
+  FACILITY_MANAGER: "Facility Manager",
+  BOOKING_MANAGER: "Booking Manager",
+  VICAR: "Vicar",
+};
+
+export default async function StaffPermissionsPage({ params }: { params: { id: string } }) {
   await requireStaff("FACILITY_MANAGER");
 
-  const vicar = await prisma.user.findFirst({
-    where: { id: params.id, role: "VICAR" },
-    select: { id: true, name: true, email: true, permissions: true, lastLoginAt: true },
+  const staff = await prisma.user.findFirst({
+    where: { id: params.id, role: { not: "SUPER_ADMIN" } },
+    select: { id: true, name: true, email: true, role: true, permissions: true },
   });
 
-  if (!vicar) notFound();
+  if (!staff) notFound();
 
-  const currentPermissions: VicarPermissions = {
-    ...DEFAULT_VICAR_PERMISSIONS,
-    ...(vicar.permissions as Partial<VicarPermissions>),
-  };
+  const currentPermissions = resolvePermissions(
+    staff.role,
+    staff.permissions as Record<string, boolean> | null
+  );
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -34,21 +40,22 @@ export default async function VicarPermissionsPage({ params }: { params: { id: s
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="page-title">Vicar Permissions</h1>
-          <p className="text-sm page-subtitle">{vicar.name} · {vicar.email}</p>
+          <h1 className="page-title">Staff Permissions</h1>
+          <p className="text-sm page-subtitle">
+            {staff.name} · {staff.email} · {ROLE_LABELS[staff.role] ?? staff.role}
+          </p>
         </div>
       </div>
 
-      <div className="bg-info/10 border border-info/25 rounded-xl p-4 text-sm text-info">
-        <strong>About Vicar Permissions:</strong> Vicars operate within the campus but have limited access.
-        Toggle each permission individually. Changes take effect immediately on the vicar&apos;s next action.
+      <div className="rounded-xl border border-info/25 bg-info/10 p-4 text-sm text-info">
+        <strong>Access control:</strong> the role sets a starting point; toggle any permission to customize
+        this person&apos;s access. Changes take effect on their next sign-in.
       </div>
 
       <PermissionsEditor
-        vicarId={vicar.id}
-        vicarName={vicar.name}
+        staffId={staff.id}
+        staffName={staff.name}
         currentPermissions={currentPermissions}
-        labels={PERMISSION_LABELS}
       />
     </div>
   );

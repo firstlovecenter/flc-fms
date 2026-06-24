@@ -87,7 +87,7 @@ export default async function StaffDetailPage({ params }: Props) {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">Actions</h2>
         <div className="flex flex-wrap gap-3">
-          {member.role === "VICAR" && (
+          {member.role !== "SUPER_ADMIN" && (
             <Link
               href={`/staff/${member.id}/permissions`}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors"

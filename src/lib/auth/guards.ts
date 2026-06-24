@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { getSession, SessionPayload } from "./session";
-import { hasVicarPermission } from "@/lib/staff-permissions";
+import { hasVicarPermission, hasStaffPermission, type StaffPermissionKey } from "@/lib/staff-permissions";
 
 type AllowedRole = Role | "PATRON";
 
@@ -40,6 +40,21 @@ export async function requirePatron(): Promise<SessionPayload> {
   if (!session || session.role !== "PATRON") redirect("/patron/login");
 
   return session;
+}
+
+/**
+ * Permission-based guard that applies to ALL staff roles (including FM/BM),
+ * resolving against the role preset when not explicitly stored. Use this for
+ * areas gated by a specific permission (e.g. finances). Super admin always passes.
+ */
+export async function requireStaffPermission(
+  key: StaffPermissionKey
+): Promise<SessionPayload> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.role === "PATRON") redirect("/unauthorized");
+  if (hasStaffPermission(session.permissions, session.role, key)) return session;
+  redirect("/unauthorized");
 }
 
 /** Check a vicar's custom permission. */

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-react";
-import { requireStaff } from "@/lib/auth/guards";
+import { requireStaffPermission } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
@@ -24,7 +24,7 @@ export default async function TransactionsPage({
 }: {
   searchParams: { tab?: string; status?: string; page?: string; sType?: string; sFrom?: string; sTo?: string };
 }) {
-  const session = await requireStaff();
+  const session = await requireStaffPermission("canViewFinancials");
   const isFM = ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(session.role);
   const canSubmitExpenses =
     isFM ||

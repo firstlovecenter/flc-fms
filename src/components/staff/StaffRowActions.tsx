@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, KeyRound, UserX, UserCheck, Pencil, UserCog } from "lucide-react";
+import { MoreHorizontal, KeyRound, UserX, UserCheck, Pencil, UserCog, Shield } from "lucide-react";
 import { deactivateStaffMember, reactivateStaffMember, resetStaffPassword } from "@/actions/staff.actions";
 import { impersonateUser } from "@/actions/impersonation.actions";
 import EditStaffModal from "./EditStaffModal";
@@ -124,6 +125,15 @@ export default function StaffRowActions({ userId, role, name, email, phone, inac
                 >
                   <Pencil size={14} /> Edit Details
                 </button>
+                {role !== "SUPER_ADMIN" && (
+                  <Link
+                    href={`/staff/${userId}/permissions`}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)]"
+                  >
+                    <Shield size={14} /> Edit Permissions
+                  </Link>
+                )}
                 <button
                   onClick={handleResetPassword}
                   disabled={!!loading}

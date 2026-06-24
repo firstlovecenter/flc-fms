@@ -60,7 +60,7 @@ const ACCENT_CHIP: Record<string, string> = {
 };
 
 const cardBase = cn(
-  "relative overflow-hidden rounded-[var(--r-lg)] bg-[var(--surface)] ring-1 ring-[var(--border)]",
+  "relative overflow-hidden rounded-[var(--r-lg)] bg-[var(--surface)] ring-1 ring-[var(--border)] [container-type:inline-size]",
   "shadow-[var(--shadow-sm)] transition-all duration-200",
   "dark:bg-[hsl(var(--ui-card))] dark:ring-[hsl(var(--ui-border))]",
   "hover:shadow-[var(--shadow-md)] hover:-translate-y-px"
@@ -101,8 +101,10 @@ export default function StatCard({
         ) : (
           <div
             className={cn(
-              "font-display font-bold tabular-nums text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]",
-              compact ? "text-xl mt-1" : "text-[2.4rem] leading-none mt-2"
+              "font-display font-bold tabular-nums break-words leading-tight text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]",
+              // Scale the value to the card's own width (cqi) so long amounts
+              // never overflow/clip; break-words is a last-resort safety net.
+              compact ? "text-[clamp(0.9rem,9cqi,1.3rem)] mt-1" : "text-[clamp(1rem,10cqi,2.1rem)] mt-2"
             )}
           >
             {value}

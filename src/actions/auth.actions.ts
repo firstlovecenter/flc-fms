@@ -10,7 +10,7 @@ import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
 import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
-import { DEFAULT_VICAR_PERMISSIONS } from "@/lib/staff-permissions";
+import { DEFAULT_PERMISSIONS_FOR_ROLE } from "@/lib/staff-permissions";
 
 function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR") {
   if (role === "PATRON") return "/patron/dashboard";
@@ -176,8 +176,9 @@ export async function createStaffUser(formData: FormData) {
       ...parsed.data,
       passwordHash,
       mustChangePassword: true,
-      // Always store explicit permissions for Vicars so they're auditable in the DB.
-      ...(parsed.data.role === "VICAR" ? { permissions: { ...DEFAULT_VICAR_PERMISSIONS } } : {}),
+      // Seed each new staff member with their role's preset permissions so the
+      // DB state is explicit and editable. Super Admin needs none (full access).
+      ...(parsed.data.role !== "SUPER_ADMIN" ? { permissions: { ...DEFAULT_PERMISSIONS_FOR_ROLE(parsed.data.role) } } : {}),
     },
   });
 

@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth/guards";
+import { requireStaffPermission } from "@/lib/auth/guards";
 import {
   getFinancialReport,
   getBookingReport,
@@ -23,7 +23,7 @@ export default async function ReportsPage({
 }: {
   searchParams: { tab?: string; period?: string; from?: string; to?: string };
 }) {
-  await requireStaff("FACILITY_MANAGER");
+  await requireStaffPermission("canViewFinancials");
 
   const tab    = (searchParams.tab    ?? "financial") as Tab;
   const period = (searchParams.period ?? "6m") as ReportPeriod;

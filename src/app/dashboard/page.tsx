@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/auth/guards";
+import { hasStaffPermission } from "@/lib/staff-permissions";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils";
@@ -26,7 +27,7 @@ import {
 
 export default async function DashboardPage() {
   const session = await requireStaff();
-  const isFM = ["FACILITY_MANAGER","SUPER_ADMIN"].includes(session.role);
+  const canViewFinances = hasStaffPermission(session.permissions, session.role, "canViewFinancials");
 
   const [
     totalFacilities, pendingBookings, activeBookings, openMaintenance,
@@ -39,7 +40,7 @@ export default async function DashboardPage() {
     prisma.expense.count({ where: { status: "PENDING" } }),
     getTotalIncomeIncludingBookingRevenue(),
     prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
-    isFM
+    canViewFinances
       ? prisma.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } })
       : Promise.resolve([] as { type: string; _sum: { amount: unknown } }[]),
   ]);
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
           <Link href="/inventory" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
             <Package size={15} /> Inventory
           </Link>
-          {isFM && (
+          {canViewFinances && (
             <Link href="/reports" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
               <BarChart3 size={15} /> Reports
             </Link>
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Financial stats — FM only */}
-      {isFM && (
+      {canViewFinances && (
         <div className="relative z-10 grid grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
           <StatCard label="Total Income"      value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" color="finance" />
           <StatCard label="Total Expenses"    value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" color="danger" />
