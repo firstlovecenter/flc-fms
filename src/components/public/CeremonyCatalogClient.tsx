@@ -17,10 +17,8 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Users, Expand, X } from "lucide-react";
+import { Users, Expand, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { validateCeremonyCode } from "@/actions/ceremony-code.actions";
 
 type Config = {
   id: string;
@@ -45,127 +43,110 @@ type Props = {
 export default function CeremonyCatalogClient({ type, configs }: Props) {
   const router = useRouter();
   const [selectedConfig, setSelectedConfig] = useState<Config | null>(null);
-  const [codeModalConfig, setCodeModalConfig] = useState<Config | null>(null);
-  const [code, setCode] = useState("");
-  const [codeError, setCodeError] = useState<string | null>(null);
-  const [codeLoading, setCodeLoading] = useState(false);
 
   const ceremonyLabel = type === "WEDDING" ? "Wedding" : "Naming Ceremony";
 
-  async function handleProceedWithCode(config: Config) {
-    if (!code.trim()) {
-      setCodeError("Please enter your booking code.");
-      return;
-    }
-    setCodeLoading(true);
-    setCodeError(null);
-    try {
-      const result = await validateCeremonyCode(code.trim().toUpperCase());
-      if (!result.valid) {
-        setCodeError(result.error ?? "Invalid code.");
-        return;
-      }
-      router.push(
-        `/guest/book?ceremonyType=${type}&facilityId=${config.facility.id}&codeId=${result.codeId}`
-      );
-    } catch {
-      setCodeError("Something went wrong. Please try again.");
-    } finally {
-      setCodeLoading(false);
-    }
-  }
-
-  function openCodeModal(config: Config) {
-    setCodeModalConfig(config);
-    setCode("");
-    setCodeError(null);
-  }
-
-  if (configs.length === 0) {
-    return (
-      <div className="text-center py-16 text-[var(--muted)]">
-        No {ceremonyLabel} venues are currently available. Please check back soon.
-      </div>
-    );
+  function book(config: Config) {
+    router.push(`/guest/book?ceremonyType=${type}&facilityId=${config.facility.id}`);
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {configs.map((config) => (
-          <Card
-            key={config.id}
-            className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
-          >
-            {/* Image */}
-            <div
-              className="relative h-48 bg-slate-100 overflow-hidden"
-              onClick={() => setSelectedConfig(config)}
-            >
-              {config.images[0] ? (
-                <img
-                  src={config.images[0]}
-                  alt={config.facility.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-300">
-                  <svg
-                    className="w-16 h-16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedConfig(config);
-                }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-[#fff] opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Expand size={14} />
-              </button>
-            </div>
-
-            <CardContent className="p-4 space-y-1">
-              <h3 className="font-bold text-[var(--navy)] text-base leading-snug">
-                {config.facility.name}
-              </h3>
-              {config.description && (
-                <p className="text-sm text-[var(--slate)] line-clamp-2">
-                  {config.description}
-                </p>
-              )}
-              <div className="flex items-center gap-1 text-xs text-[var(--muted)] pt-1">
-                <Users size={12} />
-                <span>Capacity: {config.facility.capacity.toLocaleString()}</span>
-              </div>
-            </CardContent>
-
-            <CardFooter className="px-4 pb-4 pt-0 flex items-center justify-between">
-              <span className="text-xl font-bold text-[var(--navy)]">
-                {formatCurrency(Number(config.price))}
-              </span>
-              <Button
-                size="sm"
-                onClick={() => openCodeModal(config)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                Book Now
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+      {/* Payment explainer — surfaced up front */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 px-4 py-3">
+        <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
+        <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
+          {ceremonyLabel} bookings are held on ceremony Saturdays and require a{" "}
+          <strong>payment code</strong>. Pay, upload your receipt, and we&apos;ll issue your code.
+        </p>
+        <a
+          href="/ceremony-code-request"
+          className="text-xs font-semibold text-[var(--gold)] hover:underline whitespace-nowrap shrink-0"
+        >
+          Request a code →
+        </a>
       </div>
+
+      {configs.length === 0 ? (
+        <div className="text-center py-16 text-[var(--muted)]">
+          No {ceremonyLabel} venues are currently available. Please check back soon.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {configs.map((config) => (
+            <Card
+              key={config.id}
+              className="overflow-hidden group hover:shadow-lg transition-shadow"
+            >
+              {/* Image */}
+              <div
+                className="relative h-48 bg-slate-100 dark:bg-[rgba(255,255,255,0.04)] overflow-hidden cursor-pointer"
+                onClick={() => setSelectedConfig(config)}
+              >
+                {config.images[0] ? (
+                  <img
+                    src={config.images[0]}
+                    alt={config.facility.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                    <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedConfig(config);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-[#fff] opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="View venue details"
+                >
+                  <Expand size={14} />
+                </button>
+              </div>
+
+              <CardContent className="p-4 space-y-1">
+                <h3 className="font-bold text-[var(--navy)] dark:text-gray-100 text-base leading-snug">
+                  {config.facility.name}
+                </h3>
+                {config.description && (
+                  <p className="text-sm text-[var(--slate)] dark:text-gray-300 line-clamp-2">
+                    {config.description}
+                  </p>
+                )}
+                <div className="flex items-center gap-1 text-xs text-[var(--muted)] pt-1">
+                  <Users size={12} />
+                  <span>Capacity: {config.facility.capacity.toLocaleString()}</span>
+                </div>
+              </CardContent>
+
+              <CardFooter className="px-4 pb-4 pt-0 flex items-center justify-between">
+                <div>
+                  <span className="text-xl font-bold text-[var(--navy)] dark:text-gray-100">
+                    {formatCurrency(Number(config.price))}
+                  </span>
+                  <p className="text-[11px] text-[var(--muted)]">Payment code required</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => book(config)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  Book
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Venue detail modal */}
       <Dialog
@@ -198,12 +179,12 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
               )}
               <div className="p-6 space-y-4">
                 <DialogHeader>
-                  <DialogTitle className="text-xl text-[var(--navy)]">
+                  <DialogTitle className="text-xl text-[var(--navy)] dark:text-gray-100">
                     {selectedConfig.facility.name}
                   </DialogTitle>
                 </DialogHeader>
                 {selectedConfig.description && (
-                  <p className="text-sm text-[var(--slate)]">
+                  <p className="text-sm text-[var(--slate)] dark:text-gray-300">
                     {selectedConfig.description}
                   </p>
                 )}
@@ -214,69 +195,26 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-2xl font-bold text-[var(--navy)]">
-                    {formatCurrency(Number(selectedConfig.price))}
-                  </span>
+                  <div>
+                    <span className="text-2xl font-bold text-[var(--navy)] dark:text-gray-100">
+                      {formatCurrency(Number(selectedConfig.price))}
+                    </span>
+                    <p className="text-xs text-[var(--muted)]">Payment code required to book</p>
+                  </div>
                   <Button
                     onClick={() => {
+                      const c = selectedConfig;
                       setSelectedConfig(null);
-                      openCodeModal(selectedConfig);
+                      book(c);
                     }}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
-                    Book Now
+                    Book
                   </Button>
                 </div>
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Code entry modal */}
-      <Dialog
-        open={!!codeModalConfig}
-        onOpenChange={(open) => !open && setCodeModalConfig(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enter Your Booking Code</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-[var(--slate)]">
-              Enter the unique code you received after confirming payment to
-              proceed with your booking.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g. ABCD1234"
-                className="flex-1 font-mono tracking-widest uppercase"
-                maxLength={8}
-                autoFocus
-              />
-              <Button
-                onClick={() => codeModalConfig && handleProceedWithCode(codeModalConfig)}
-                disabled={codeLoading}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-              >
-                {codeLoading ? "…" : "Proceed →"}
-              </Button>
-            </div>
-            {codeError && (
-              <p className="text-sm text-red-600">{codeError}</p>
-            )}
-            <div className="pt-2 border-t border-slate-100 text-sm text-[var(--muted)]">
-              Don&apos;t have a code yet?{" "}
-              <a
-                href="/ceremony-code-request"
-                className="text-[var(--gold)] hover:underline font-semibold"
-              >
-                Request a Payment Code →
-              </a>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </>

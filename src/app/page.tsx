@@ -2,11 +2,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { cn, formatCurrency } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { ArrowRight, CheckCircle2, MapPin, Package, Layers, Heart, Bird } from "lucide-react";
+import { ArrowRight, CheckCircle2, Package, Layers } from "lucide-react";
 import PublicSplitShell from "@/components/public/PublicSplitShell";
-import FacilityCatalogClient from "@/components/public/FacilityCatalogClient";
+import VenueCatalog from "@/components/public/VenueCatalog";
 import ItemsCatalogClient from "@/components/public/ItemsCatalogClient";
 import CatalogTabs from "@/components/public/CatalogTabs";
+import { getCeremonyVenueConfigs } from "@/actions/ceremony-venue.actions";
 import { getSiteSettings } from "@/actions/site-settings.actions";
 
 type Tab = "venues" | "items" | "packages";
@@ -14,12 +15,16 @@ type Tab = "venues" | "items" | "packages";
 export default async function PublicHomePage({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { tab?: string; vtype?: string };
 }) {
   const tab: Tab =
     searchParams.tab === "items" ? "items"
     : searchParams.tab === "packages" ? "packages"
     : "venues";
+  const vtype: "regular" | "naming" | "wedding" =
+    searchParams.vtype === "wedding" ? "wedding"
+    : searchParams.vtype === "naming" ? "naming"
+    : "regular";
 
   // ── Facilities ──────────────────────────────────────────────────────────────
   const rawFacilities = await prisma.facility.findMany({
@@ -75,6 +80,12 @@ export default async function PublicHomePage({
   // ── Site settings ────────────────────────────────────────────────────────────
   const siteSettings = await getSiteSettings();
 
+  // ── Ceremony venues (for the Naming / Wedding catalog filters) ───────────────
+  const [weddingConfigs, namingConfigs] = await Promise.all([
+    getCeremonyVenueConfigs("WEDDING"),
+    getCeremonyVenueConfigs("NAMING"),
+  ]);
+
   // ── Hero subtitle ─────────────────────────────────────────────────────────────
   const minRate = facilities.length > 0
     ? formatCurrency(Math.min(...facilities.map(f => Number(f.pricePerHour))))
@@ -106,38 +117,23 @@ export default async function PublicHomePage({
         counts={{ venues: facilities.length, items: items.length, packages: bundles.length }}
       />
 
-      {/* General-booking notice + ceremony catalog links */}
-      <div className="mt-4 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-warning/10 border border-warning/25 min-w-0">
-        <p className="text-sm text-warning min-w-0 break-words">
-          <span className="font-semibold">General bookings only.</span>{" "}
-          For wedding or naming ceremony bookings, visit the dedicated ceremony catalogs.
-        </p>
-        <div className="flex gap-2 shrink-0">
-          <Link href="/catalog/weddings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-warning/15 text-warning hover:bg-warning/25 whitespace-nowrap transition-colors min-h-[36px]">
-            <Heart size={12} /> Weddings
-          </Link>
-          <Link href="/catalog/namings" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-warning/15 text-warning hover:bg-warning/25 whitespace-nowrap transition-colors min-h-[36px]">
-            <Bird size={12} /> Namings
-          </Link>
-        </div>
-      </div>
-
-      {/* Tab: Venues */}
+      {/* Tab: Venues — Regular / Naming / Wedding filter */}
       {tab === "venues" && (
         <>
           <div className="mb-6 flex items-end justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold text-[var(--navy)] mb-1">Venues & Halls</h2>
+              <h2 className="font-display text-2xl font-bold text-[var(--navy)] dark:text-gray-100 mb-1">Venues & Halls</h2>
               <p className="text-sm text-slate-500 flex items-center gap-2">
                 <CheckCircle2 size={15} className="text-success" /> Verified venues • Capacity up to {maxCapacity} guests
               </p>
             </div>
           </div>
-          {facilities.length === 0 ? (
-            <EmptyState icon={<MapPin size={32} className="text-[var(--gold)]" />} title="No venues available yet" />
-          ) : (
-            <FacilityCatalogClient facilities={facilities} />
-          )}
+          <VenueCatalog
+            facilities={facilities}
+            weddingConfigs={weddingConfigs}
+            namingConfigs={namingConfigs}
+            defaultType={vtype}
+          />
         </>
       )}
 

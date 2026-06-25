@@ -45,7 +45,7 @@ export async function upsertCeremonyVenueConfig(
   });
 
   revalidatePath(`/facilities/${facilityId}`);
-  revalidatePath(type === "WEDDING" ? "/catalog/weddings" : "/catalog/namings");
+  revalidatePath("/");
 
   return { success: true };
 }

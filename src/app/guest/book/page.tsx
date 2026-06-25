@@ -30,7 +30,9 @@ function parseLines(raw: string | undefined) {
 
 export default async function GuestBookPage({ searchParams }: { searchParams: SearchParams }) {
   const isItemBooking = searchParams.type === "items";
-  const isCeremonyBooking = !!searchParams.ceremonyType && !!searchParams.codeId;
+  // A ceremony deep-link only needs the type (+ venue); the payment code is
+  // collected in-form. Codeless links from the unified catalog still count.
+  const isCeremonyBooking = !!searchParams.ceremonyType;
 
   // For ceremony bookings, look up the flat price
   let ceremonyFlatPrice: number | undefined;
