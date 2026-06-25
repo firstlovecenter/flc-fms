@@ -13,8 +13,10 @@ export default async function NewBookingPage({
 
   const bookingType = searchParams.type ?? "regular";
   const isCeremony  = bookingType === "wedding" || bookingType === "naming";
+  const canBookCeremonies =
+    Boolean(session.authContext?.permissions["ceremony:manage"]) || session.role === "SUPER_ADMIN";
 
-  if (isCeremony && !session.authContext?.permissions["ceremony:manage"] && session.role !== "SUPER_ADMIN") {
+  if (isCeremony && !canBookCeremonies) {
     redirect("/bookings/new");
   }
 
@@ -84,6 +86,7 @@ export default async function NewBookingPage({
         ceremonyDays={ceremonyDays}
         isCeremonyBooking={isCeremony}
         defaultCategory={ceremonyType ?? undefined}
+        allowCeremony={canBookCeremonies}
       />
     </div>
   );

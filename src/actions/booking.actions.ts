@@ -339,6 +339,21 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
       },
       include: { facility: true, user: true },
     });
+
+    // Staff may optionally attach a ceremony code; consume it if provided.
+    if (validated.ceremonyCodeId) {
+      const codeRecord = await tx.ceremonyBookingCode.findFirst({
+        where: { id: validated.ceremonyCodeId, status: "ACTIVE" },
+      });
+      if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
+        return { error: "Invalid or expired ceremony code." };
+      }
+      await tx.ceremonyBookingCode.update({
+        where: { id: validated.ceremonyCodeId },
+        data: { status: "USED", usedAt: new Date(), bookingId: booking.id },
+      });
+    }
+
     return { booking };
   });
 
@@ -466,6 +481,25 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
   const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
     await acquireFacilityLock(tx, validated.facilityId);
 
+    // Ceremony code validation + flat pricing (mirrors guest flow)
+    let ceremonyPrice: number | null = null;
+    if (validated.ceremonyCodeId) {
+      const codeRecord = await tx.ceremonyBookingCode.findFirst({
+        where: { id: validated.ceremonyCodeId, status: "ACTIVE" },
+      });
+      if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
+        return { error: "Invalid or expired ceremony code." };
+      }
+      if (codeRecord.ceremonyType !== validated.category.toUpperCase()) {
+        return { error: "This payment code is for a different ceremony type." };
+      }
+      const config = await tx.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
+      });
+      if (!config) return { error: "No ceremony configuration found for this venue." };
+      ceremonyPrice = Number(config.price);
+    }
+
     const amountResult = await computeConfiguredBookingAmount(
       tx,
       validated.facilityId,
@@ -474,7 +508,13 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
       validated.endTime,
       validated.useAirConditioner,
     );
-    if ("error" in amountResult) return { error: amountResult.error! };
+    if (!ceremonyPrice && "error" in amountResult) return { error: amountResult.error! };
+
+    const amountData = {
+      totalAmount: ("totalAmount" in amountResult ? amountResult.totalAmount : 0) as number,
+      unitPrice: ("unitPrice" in amountResult ? amountResult.unitPrice : 0) as number,
+      pricingSource: ("pricingSource" in amountResult ? amountResult.pricingSource : "CEREMONY_CONFIG") as string,
+    };
 
     const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
     const maxAllowed = slot?.maxBookings ?? 1;
@@ -494,13 +534,23 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
         notes:        [validated.notes, `Contact email: ${validated.contactEmail}`].filter(Boolean).join("\n") || null,
-        totalAmount:  amountResult.totalAmount,
-        resolvedUnitPrice: amountResult.unitPrice,
-        resolvedPricingSource: amountResult.pricingSource,
+        totalAmount:  ceremonyPrice ?? amountData.totalAmount,
+        resolvedUnitPrice: ceremonyPrice ?? amountData.unitPrice,
+        resolvedPricingSource: ceremonyPrice != null ? "CEREMONY_CONFIG" : amountData.pricingSource,
+        ceremonyDetails: validated.ceremonyDetails ?? undefined,
         status:       "PENDING",
       },
       include: { facility: true, patron: true },
     });
+
+    // Atomically consume the ceremony code
+    if (validated.ceremonyCodeId) {
+      await tx.ceremonyBookingCode.update({
+        where: { id: validated.ceremonyCodeId },
+        data: { status: "USED", usedAt: new Date(), bookingId: booking.id },
+      });
+    }
+
     return { booking };
   });
 

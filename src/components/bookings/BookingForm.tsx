@@ -23,6 +23,7 @@ export default function BookingForm({
   isCeremonyBooking,
   defaultCategory,
   ceremonyFlatPrice,
+  allowCeremony,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -31,6 +32,7 @@ export default function BookingForm({
   isCeremonyBooking?: boolean;
   defaultCategory?: string;
   ceremonyFlatPrice?: number;
+  allowCeremony?: boolean;
 }) {
   return (
     <GuestBookingForm
@@ -42,6 +44,7 @@ export default function BookingForm({
       isCeremonyBooking={isCeremonyBooking}
       defaultCategory={defaultCategory}
       ceremonyFlatPrice={ceremonyFlatPrice}
+      allowCeremony={allowCeremony}
     />
   );
 }

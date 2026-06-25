@@ -9,10 +9,12 @@ import {
   getFacilityAvailability,
   getPublicBookingCategories,
 } from "@/actions/availability.actions";
+import { getCeremonyBookableFacilities, getCeremonyDays } from "@/actions/ceremony-venue.actions";
+import { validateCeremonyCode } from "@/actions/ceremony-code.actions";
 import { formatCurrency } from "@/lib/utils";
 import { DayPicker } from "react-day-picker";
 import { format, addDays } from "date-fns";
-import { ChevronLeft, ArrowRight, Check, Clock, Users } from "lucide-react";
+import { ChevronLeft, ArrowRight, Check, Clock, Users, CalendarDays, Heart, Baby } from "lucide-react";
 import BookingTermsAndFaq from "@/components/bookings/BookingTermsAndFaq";
 import ItemBookingTerms from "@/components/items/ItemBookingTerms";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { getCeremonyType, toDateStr } from "@/lib/ceremony-utils";
+import { toDateStr } from "@/lib/ceremony-utils";
 import { MAX_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Card } from "@/components/ui/card";
 
@@ -37,6 +39,7 @@ interface Facility {
   pricePerHour: unknown;
   amenities: string[];
   availableDays: number[];
+  flatPrice?: number;
 }
 
 interface CategoryOption {
@@ -79,18 +82,20 @@ function formatTime(time: string): string {
 }
 
 type BookingMode = "guest" | "patron" | "staff";
+type BookingType = "regular" | "wedding" | "naming";
 
 export default function GuestBookingForm({
   facilities,
   defaultFacilityId,
   mode = "guest",
   currentUserRole,
-  ceremonyCodeId,
-  isCeremonyBooking = false,
+  ceremonyCodeId: initialCeremonyCodeId,
+  isCeremonyBooking: initialIsCeremony = false,
   ceremonyFlatPrice,
   defaultCategory,
   ceremonyDays = [],
   defaultContactEmail = "",
+  allowCeremony = true,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -102,10 +107,22 @@ export default function GuestBookingForm({
   defaultCategory?: string;
   ceremonyDays?: string[];
   defaultContactEmail?: string;
+  /** Staff only: whether the Wedding/Naming options may be chosen in-form. */
+  allowCeremony?: boolean;
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
   const [step, setStep] = useState<1 | 2>(1);
+  // Deep-linked ceremony bookings (from the catalog) arrive with a fixed venue +
+  // validated code; in that case the type selector is locked.
+  const lockType = initialIsCeremony && !!defaultFacilityId;
+  // Staff need ceremony permission to choose Wedding/Naming; guests/patrons always can.
+  const showTypeSelector = !lockType && (mode !== "staff" || allowCeremony);
+  const [bookingType, setBookingType] = useState<BookingType>(
+    initialIsCeremony
+      ? ((defaultCategory ?? "").toUpperCase() === "NAMING" ? "naming" : "wedding")
+      : "regular",
+  );
 
   // Step 1 state — Calendly picker
   const [facilityId, setFacilityId] = useState(defaultFacilityId ?? "");
@@ -158,14 +175,73 @@ export default function GuestBookingForm({
   const [bishopName, setBishopName] = useState("");
   const [bishopPhone, setBishopPhone] = useState("");
 
-  // Pre-set category for ceremony bookings (no hourly pricing applies)
-  useEffect(() => {
-    if (isCeremonyBooking && defaultCategory) {
-      setCategory(defaultCategory);
-    }
-  }, [isCeremonyBooking, defaultCategory]);
+  // ── Unified booking-type state ───────────────────────────────────────────────
+  const [ceremonyVenues, setCeremonyVenues] = useState<Facility[]>([]);
+  const [fetchedCeremonyDays, setFetchedCeremonyDays] = useState<string[]>([]);
+  const [codeInput, setCodeInput] = useState("");
+  const [validatedCodeId, setValidatedCodeId] = useState<string>(initialCeremonyCodeId ?? "");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeChecking, setCodeChecking] = useState(false);
 
-  const ceremonyType = isCeremonyBooking ? getCeremonyType(category || defaultCategory || "WEDDING") : null;
+  const isCeremonyBooking = bookingType !== "regular";
+  const ceremonyType: "wedding" | "naming" | null =
+    bookingType === "wedding" ? "wedding" : bookingType === "naming" ? "naming" : null;
+  const venueList = isCeremonyBooking ? ceremonyVenues : facilities;
+  const effectiveCeremonyDays = ceremonyDays.length > 0 ? ceremonyDays : fetchedCeremonyDays;
+  const resolvedCeremonyCodeId = initialCeremonyCodeId || validatedCodeId;
+
+  // Keep `category` synced to the chosen ceremony type (WEDDING / NAMING).
+  // Regular bookings resolve their category via the facility-categories effect.
+  useEffect(() => {
+    if (bookingType === "wedding") setCategory("WEDDING");
+    else if (bookingType === "naming") setCategory("NAMING");
+  }, [bookingType]);
+
+  // Load ceremony venues + days on demand when a ceremony type is chosen.
+  useEffect(() => {
+    if (!isCeremonyBooking) {
+      setCeremonyVenues([]);
+      return;
+    }
+    const type = bookingType === "wedding" ? "WEDDING" : "NAMING";
+    getCeremonyBookableFacilities(type)
+      .then((v) => setCeremonyVenues(v as Facility[]))
+      .catch(() => setCeremonyVenues([]));
+    if (ceremonyDays.length === 0) {
+      getCeremonyDays().then(setFetchedCeremonyDays).catch(() => setFetchedCeremonyDays([]));
+    }
+  }, [bookingType, isCeremonyBooking, ceremonyDays.length]);
+
+  function handleBookingTypeChange(next: BookingType) {
+    if (next === bookingType) return;
+    setBookingType(next);
+    setFacilityId("");
+    setSelectedFacility(null);
+    setSelectedDate(undefined);
+    setSelectedSlot(null);
+    setSlots([]);
+    setCategory("");
+    setValidatedCodeId(initialCeremonyCodeId ?? "");
+    setCodeInput("");
+    setCodeError(null);
+  }
+
+  async function handleValidateCode() {
+    setCodeChecking(true);
+    setCodeError(null);
+    const res = await validateCeremonyCode(codeInput.trim());
+    setCodeChecking(false);
+    if (!res.valid || !res.codeId) {
+      setCodeError(res.error ?? "Invalid code.");
+      return;
+    }
+    const expected = bookingType === "wedding" ? "WEDDING" : "NAMING";
+    if (res.ceremonyType !== expected) {
+      setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
+      return;
+    }
+    setValidatedCodeId(res.codeId);
+  }
 
   const requiresBookingTerms = Boolean(selectedFacility?.requiresBookingTerms);
   const requiresItemTerms = Boolean(selectedFacility?.requiresItemBookingTerms);
@@ -193,19 +269,19 @@ export default function GuestBookingForm({
 
   useEffect(() => {
     setFacilityId((prev) => {
-      if (defaultFacilityId && facilities.some((f) => f.id === defaultFacilityId)) {
+      if (defaultFacilityId && venueList.some((f) => f.id === defaultFacilityId)) {
         return defaultFacilityId;
       }
-      if (prev && facilities.some((f) => f.id === prev)) {
+      if (prev && venueList.some((f) => f.id === prev)) {
         return prev;
       }
       return "";
     });
-  }, [defaultFacilityId, facilities]);
+  }, [defaultFacilityId, venueList]);
 
   // When facility changes, reset and fetch categories
   useEffect(() => {
-    const f = facilities.find((x) => x.id === facilityId) ?? null;
+    const f = venueList.find((x) => x.id === facilityId) ?? null;
     setSelectedFacility(f);
 
     if (f) {
@@ -218,7 +294,8 @@ export default function GuestBookingForm({
     setSlots([]);
     setSelectedSlot(null);
 
-    if (f) {
+    // Ceremony bookings use a fixed category (WEDDING/NAMING) — skip category fetch.
+    if (f && !isCeremonyBooking) {
       getFacilityCategories(f.id).then((res) => {
         if (res.success) {
           setCategories(res.categories);
@@ -230,11 +307,11 @@ export default function GuestBookingForm({
           });
         }
       });
-    } else {
+    } else if (!isCeremonyBooking) {
       setCategories([]);
       setCategory("");
     }
-  }, [facilityId, facilities]);
+  }, [facilityId, venueList, isCeremonyBooking]);
 
   useEffect(() => {
     if (bookingMode !== "category-first" || !category || !selectedDate) {
@@ -281,7 +358,10 @@ export default function GuestBookingForm({
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
-    if (isCeremonyBooking && ceremonyFlatPrice != null) return ceremonyFlatPrice;
+    if (isCeremonyBooking) {
+      const flat = selectedFacility?.flatPrice ?? ceremonyFlatPrice;
+      return flat != null ? Number(flat) : null;
+    }
     if (!selectedSlot) return null;
     const base = selectedSlot.isFree ? 0 : selectedSlot.effectivePricePerHour;
     const ac = useAirConditioner ? Number(selectedFacility?.acUsageFee ?? 0) : 0;
@@ -296,12 +376,12 @@ export default function GuestBookingForm({
     (date: Date) =>
       !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
     // Ceremony booking: only ceremony days are selectable
-    ...(isCeremonyBooking && ceremonyDays.length > 0
-      ? [(date: Date) => !ceremonyDays.includes(toDateStr(date))]
+    ...(isCeremonyBooking && effectiveCeremonyDays.length > 0
+      ? [(date: Date) => !effectiveCeremonyDays.includes(toDateStr(date))]
       : []),
     // General booking: ceremony days are blocked
-    ...(!isCeremonyBooking && ceremonyDays.length > 0
-      ? [(date: Date) => ceremonyDays.includes(toDateStr(date))]
+    ...(!isCeremonyBooking && effectiveCeremonyDays.length > 0
+      ? [(date: Date) => effectiveCeremonyDays.includes(toDateStr(date))]
       : []),
   ];
 
@@ -323,6 +403,10 @@ export default function GuestBookingForm({
     }
     if (termsRequired && !agreedToTerms) {
       setError("Please agree to the required terms before submitting.");
+      return;
+    }
+    if (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) {
+      setError("Please enter a valid payment code to continue.");
       return;
     }
 
@@ -360,7 +444,7 @@ export default function GuestBookingForm({
       acceptedTerms: agreedToTerms ? requiredTerms : [],
       contactEmail: bookingEmail,
       ...(builtCeremonyDetails ? { ceremonyDetails: builtCeremonyDetails } : {}),
-      ...(ceremonyCodeId ? { ceremonyCodeId } : {}),
+      ...(resolvedCeremonyCodeId ? { ceremonyCodeId: resolvedCeremonyCodeId } : {}),
     };
 
     const result =
@@ -406,6 +490,41 @@ export default function GuestBookingForm({
   if (step === 1) {
     return (
       <Card className="overflow-hidden">
+        {/* Booking type selector */}
+        {showTypeSelector && (
+          <div className="px-5 pt-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
+              What are you booking?
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { key: "regular", label: "Regular", icon: CalendarDays, hint: "Events & meetings" },
+                { key: "wedding", label: "Wedding", icon: Heart, hint: "Saturdays only" },
+                { key: "naming", label: "Naming", icon: Baby, hint: "Saturdays only" },
+              ] as const).map(({ key, label, icon: Icon, hint }) => {
+                const active = bookingType === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleBookingTypeChange(key)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-3 text-center transition-colors",
+                      active
+                        ? "border-[var(--gold)] bg-[var(--gold)]/10"
+                        : "border-[var(--border)] bg-white dark:bg-[rgba(15,26,43,0.4)] hover:border-[var(--gold)]/40",
+                    )}
+                  >
+                    <Icon size={18} className={active ? "text-[var(--gold)]" : "text-[var(--muted)] dark:text-gray-400"} />
+                    <span className="text-sm font-semibold text-[var(--navy)] dark:text-gray-100">{label}</span>
+                    <span className="hidden sm:block text-[10px] text-[var(--muted)] dark:text-gray-400">{hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Booking mode + selectors */}
         <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]">
           {showModeToggle && (
@@ -486,7 +605,12 @@ export default function GuestBookingForm({
                   disabled={bookingMode === "category-first" && (!category || !selectedDate)}
                 >
                   <option value="">Choose a venue...</option>
-                  {(bookingMode === "category-first" ? bookableFacilities : facilities).map((f) => (
+                  {(isCeremonyBooking
+                    ? ceremonyVenues
+                    : bookingMode === "category-first"
+                    ? bookableFacilities
+                    : facilities
+                  ).map((f) => (
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </NativeSelect>
@@ -852,6 +976,40 @@ export default function GuestBookingForm({
         />
       </div>
 
+      {/* Payment code (ceremony) */}
+      {isCeremonyBooking && !initialCeremonyCodeId && (
+        <Card className="p-5 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">
+            Payment Code{mode !== "staff" ? " *" : " (optional)"}
+          </p>
+          <p className="text-sm text-[var(--slate)] dark:text-gray-300">
+            {ceremonyType === "wedding" ? "Wedding" : "Naming"} bookings require a payment code issued after your payment is confirmed.
+          </p>
+          {validatedCodeId ? (
+            <p className="flex items-center gap-1 text-sm font-semibold text-green-600">
+              <Check size={15} /> Code verified
+            </p>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={codeInput}
+                onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(null); }}
+                placeholder="e.g. ABCD1234"
+                className="flex-1 font-mono tracking-widest uppercase"
+                maxLength={8}
+              />
+              <Button type="button" variant="outline" disabled={codeChecking || !codeInput.trim()} onClick={handleValidateCode}>
+                {codeChecking ? "…" : "Verify"}
+              </Button>
+            </div>
+          )}
+          {codeError && <p className="text-sm text-danger">{codeError}</p>}
+          <a href="/ceremony-code-request" className="inline-block text-xs text-[var(--gold)] underline">
+            Don&apos;t have a code? Request one →
+          </a>
+        </Card>
+      )}
+
       {/* ── Ceremony details ─────────────────────────────────────────── */}
       {isCeremonyBooking && ceremonyType === "wedding" && (
         <Card className="p-5 space-y-4">
@@ -994,6 +1152,7 @@ export default function GuestBookingForm({
             !title.trim() ||
             (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || !isValidEmail(guestEmail))) ||
             ((mode === "staff" || mode === "patron") && !isCeremonyBooking && (!contactEmail.trim() || !isValidEmail(contactEmail))) ||
+            (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||
             (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail))) ||

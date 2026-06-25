@@ -121,3 +121,49 @@ export async function getCeremonyVenueConfigs(type: CeremonyType) {
     orderBy: [{ sortOrder: "asc" }, { facility: { name: "asc" } }],
   });
 }
+
+/**
+ * Returns ceremony-eligible venues for a given type in the same shape the
+ * unified booking form (GuestBookingForm) expects for regular facilities,
+ * with `flatPrice` (the per-venue ceremony price) attached. Public — used by
+ * the in-form Regular/Naming/Wedding selector to load venues on demand.
+ */
+export async function getCeremonyBookableFacilities(type: CeremonyType) {
+  const configs = await prisma.ceremonyVenueConfig.findMany({
+    where: { type, isActive: true },
+    include: {
+      facility: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          capacity: true,
+          requiresBookingTerms: true,
+          requiresItemBookingTerms: true,
+          acUsageFee: true,
+          amenities: true,
+          availableDays: true,
+          isActive: true,
+          underMaintenance: true,
+        },
+      },
+    },
+    orderBy: [{ sortOrder: "asc" }, { facility: { name: "asc" } }],
+  });
+
+  return configs
+    .filter((c) => c.facility.isActive && !c.facility.underMaintenance)
+    .map((c) => ({
+      id: c.facility.id,
+      name: c.facility.name,
+      description: c.facility.description,
+      capacity: c.facility.capacity,
+      requiresBookingTerms: c.facility.requiresBookingTerms,
+      requiresItemBookingTerms: c.facility.requiresItemBookingTerms,
+      acUsageFee: Number(c.facility.acUsageFee),
+      amenities: c.facility.amenities,
+      availableDays: c.facility.availableDays,
+      pricePerHour: Number(c.price).toString(),
+      flatPrice: Number(c.price),
+    }));
+}
