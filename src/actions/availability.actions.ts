@@ -259,6 +259,105 @@ export async function getFacilityAvailability(
 }
 
 /**
+ * Get available CEREMONY time slots (WEDDING / NAMING) for a venue on a date.
+ * Ceremony slots are validated against the venue's CeremonyVenueConfig (not the
+ * per-hour FacilityPricing/BookingCategory machinery) and priced at the flat rate.
+ */
+export async function getCeremonyAvailability(
+  facilityId: string,
+  date: Date,
+  type: "WEDDING" | "NAMING",
+  options?: {
+    allowMonday?: boolean;
+    leadTimeHours?: number;
+    bypassMaxAdvance?: boolean;
+  }
+) {
+  try {
+    if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date)) {
+      return { success: true, slots: [], message: MAX_BOOKING_ADVANCE_ERROR };
+    }
+
+    const dayOfWeek = date.getDay();
+    const allowMonday = options?.allowMonday ?? false;
+    const leadTimeHours = options?.leadTimeHours ?? DEFAULT_LEAD_TIME_HOURS;
+
+    if (dayOfWeek === 1 && !allowMonday) {
+      return { success: true, slots: [], message: "The office is closed on Mondays (Sabbath day)." };
+    }
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [config, facility, timeSlots, existingBookings] = await Promise.all([
+      prisma.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId, type } },
+      }),
+      prisma.facility.findUnique({ where: { id: facilityId }, select: { underMaintenance: true } }),
+      prisma.facilityTimeSlot.findMany({
+        where: { facilityId, dayOfWeek, isActive: true, category: type },
+        orderBy: { startTime: "asc" },
+      }),
+      prisma.booking.findMany({
+        where: {
+          facilityId,
+          deletedAt: null,
+          status: { in: ["PENDING", "APPROVED"] },
+          OR: [
+            { startTime: { gte: startOfDay, lte: endOfDay } },
+            { endTime: { gte: startOfDay, lte: endOfDay } },
+            { AND: [{ startTime: { lte: startOfDay } }, { endTime: { gte: endOfDay } }] },
+          ],
+        },
+        select: { startTime: true, endTime: true },
+      }),
+    ]);
+
+    if (!config || !config.isActive) {
+      return { success: false, error: "This venue is not configured for this ceremony type.", slots: [] };
+    }
+    if (facility?.underMaintenance) {
+      return { success: true, slots: [], emergencyMaintenance: true, message: "Facility is under emergency maintenance." };
+    }
+    if (timeSlots.length === 0) {
+      return { success: true, slots: [], message: "No ceremony time slots configured for this day." };
+    }
+
+    const flatPrice = Number(config.price);
+
+    const slots: TimeSlotAvailability[] = timeSlots.map((slot) => {
+      const slotStartMin = toMinutes(slot.startTime);
+      const slotEndMin = toMinutes(slot.endTime);
+      const currentBookings = existingBookings.filter((b) => {
+        const bStartMin = b.startTime.getHours() * 60 + b.startTime.getMinutes();
+        const bEndMin = b.endTime.getHours() * 60 + b.endTime.getMinutes();
+        return bookingOverlapsSlot(bStartMin, bEndMin, slotStartMin, slotEndMin);
+      }).length;
+      const blockedByLeadTime = slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours);
+      return {
+        id: slot.id,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        label: slot.label,
+        isFlexible: slot.isFlexible,
+        isFree: false,
+        effectivePricePerHour: flatPrice,
+        maxBookings: slot.maxBookings,
+        currentBookings,
+        isAvailable: currentBookings < slot.maxBookings && !blockedByLeadTime,
+      };
+    });
+
+    return { success: true, slots };
+  } catch (error) {
+    console.error("Error fetching ceremony availability:", error);
+    return { success: false, error: "Failed to fetch ceremony availability", slots: [] };
+  }
+}
+
+/**
  * Get pricing for a facility and category
  */
 export async function getFacilityPricing(

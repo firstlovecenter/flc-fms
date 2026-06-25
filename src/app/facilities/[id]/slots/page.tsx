@@ -25,18 +25,29 @@ export default async function FacilitySlotsPage({ params }: { params: { id: stri
   if (!facility) notFound();
 
   const mappedCategories = new Set(facility.pricing.map((p) => p.category));
-  const dbCategories = await prisma.bookingCategory.findMany({
-    where: { isActive: true },
-    select: { slug: true, name: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const [dbCategories, ceremonyConfigs] = await Promise.all([
+    prisma.bookingCategory.findMany({
+      where: { isActive: true },
+      select: { slug: true, name: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    // Ceremony venues can also have WEDDING / NAMING time slots.
+    prisma.ceremonyVenueConfig.findMany({
+      where: { facilityId: params.id, isActive: true },
+      select: { type: true },
+      orderBy: { type: "asc" },
+    }),
+  ]);
 
-  const bookingCategories = dbCategories
-    .filter((c) => mappedCategories.has(c.slug))
-    .map((c) => ({
-    value: c.slug,
-    label: c.name,
-  }));
+  const bookingCategories = [
+    ...dbCategories
+      .filter((c) => mappedCategories.has(c.slug))
+      .map((c) => ({ value: c.slug, label: c.name })),
+    ...ceremonyConfigs.map((c) => ({
+      value: c.type as string,
+      label: c.type === "WEDDING" ? "Wedding" : "Naming Ceremony",
+    })),
+  ];
 
   // Serialize Decimal fields so they cross the server→client boundary safely
   const slots = facility.timeSlots.map((s) => ({

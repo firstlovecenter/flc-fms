@@ -7,7 +7,7 @@ import BulkSlotClient from "@/components/facilities/BulkSlotClient";
 export default async function BulkSlotsPage() {
   await requirePerm("facilities:manage");
 
-  const [facilities, dbCategories] = await Promise.all([
+  const [facilities, dbCategories, ceremonyConfigs] = await Promise.all([
     prisma.facility.findMany({
       where: { isActive: true },
       include: {
@@ -21,19 +21,29 @@ export default async function BulkSlotsPage() {
       select: { slug: true, name: true },
       orderBy: { sortOrder: "asc" },
     }),
+    prisma.ceremonyVenueConfig.findMany({
+      where: { isActive: true },
+      select: { facilityId: true, type: true },
+    }),
   ]);
+
+  const ceremonyByFacility = new Map<string, string[]>();
+  for (const c of ceremonyConfigs) {
+    ceremonyByFacility.set(c.facilityId, [...(ceremonyByFacility.get(c.facilityId) ?? []), c.type]);
+  }
 
   const facilityOptions = facilities.map((f) => ({
     id: f.id,
     name: f.name,
     slotCount: f._count.timeSlots,
-    categories: f.pricing.map((p) => p.category),
+    categories: [...f.pricing.map((p) => p.category), ...(ceremonyByFacility.get(f.id) ?? [])],
   }));
 
-  const bookingCategories = dbCategories.map((c) => ({
-    value: c.slug,
-    label: c.name,
-  }));
+  const bookingCategories = [
+    ...dbCategories.map((c) => ({ value: c.slug, label: c.name })),
+    ...(ceremonyConfigs.some((c) => c.type === "WEDDING") ? [{ value: "WEDDING", label: "Wedding" }] : []),
+    ...(ceremonyConfigs.some((c) => c.type === "NAMING") ? [{ value: "NAMING", label: "Naming Ceremony" }] : []),
+  ];
 
   return (
     <div className="space-y-6 max-w-3xl">

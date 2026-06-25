@@ -143,6 +143,8 @@ export async function getCeremonyBookableFacilities(type: CeremonyType) {
           acUsageFee: true,
           amenities: true,
           availableDays: true,
+          availableFrom: true,
+          availableTo: true,
           isActive: true,
           underMaintenance: true,
         },
@@ -163,6 +165,8 @@ export async function getCeremonyBookableFacilities(type: CeremonyType) {
       acUsageFee: Number(c.facility.acUsageFee),
       amenities: c.facility.amenities,
       availableDays: c.facility.availableDays,
+      availableFrom: c.facility.availableFrom,
+      availableTo: c.facility.availableTo,
       pricePerHour: Number(c.price).toString(),
       flatPrice: Number(c.price),
     }));

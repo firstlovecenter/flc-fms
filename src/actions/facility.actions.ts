@@ -273,20 +273,34 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
     };
   }
 
-  const mappedCategory = await prisma.facilityPricing.findFirst({
-    where: {
-      facilityId,
-      category: validated.category,
-      isActive: true,
-    },
-    select: { id: true },
-  });
+  const isCeremonyCategory = validated.category === "WEDDING" || validated.category === "NAMING";
+  if (isCeremonyCategory) {
+    // Ceremony slots are validated against the venue's ceremony config, not FacilityPricing.
+    const cfg = await prisma.ceremonyVenueConfig.findUnique({
+      where: { facilityId_type: { facilityId, type: validated.category as "WEDDING" | "NAMING" } },
+      select: { isActive: true },
+    });
+    if (!cfg || !cfg.isActive) {
+      return {
+        error: "This venue is not configured for that ceremony type. Set up its ceremony venue settings first.",
+      };
+    }
+  } else {
+    const mappedCategory = await prisma.facilityPricing.findFirst({
+      where: {
+        facilityId,
+        category: validated.category,
+        isActive: true,
+      },
+      select: { id: true },
+    });
 
-  if (!mappedCategory) {
-    return {
-      error:
-        "This category is not mapped to the facility. Add category pairing in Facility Edit before creating slots.",
-    };
+    if (!mappedCategory) {
+      return {
+        error:
+          "This category is not mapped to the facility. Add category pairing in Facility Edit before creating slots.",
+      };
+    }
   }
 
   let slot;
@@ -414,14 +428,26 @@ export async function bulkCreateTimeSlots(
       continue;
     }
 
-    // Check category mapping
-    const mapping = await prisma.facilityPricing.findFirst({
-      where: { facilityId, category: validated.category, isActive: true },
-      select: { id: true },
-    });
-    if (!mapping) {
-      skipped.push({ facilityId, facilityName: name, reason: `Category "${validated.category}" not mapped to this facility` });
-      continue;
+    // Check category mapping (ceremony categories validate against the venue's ceremony config)
+    const isCeremonyCategory = validated.category === "WEDDING" || validated.category === "NAMING";
+    if (isCeremonyCategory) {
+      const cfg = await prisma.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId, type: validated.category as "WEDDING" | "NAMING" } },
+        select: { isActive: true },
+      });
+      if (!cfg || !cfg.isActive) {
+        skipped.push({ facilityId, facilityName: name, reason: `Not configured for "${validated.category}" ceremonies` });
+        continue;
+      }
+    } else {
+      const mapping = await prisma.facilityPricing.findFirst({
+        where: { facilityId, category: validated.category, isActive: true },
+        select: { id: true },
+      });
+      if (!mapping) {
+        skipped.push({ facilityId, facilityName: name, reason: `Category "${validated.category}" not mapped to this facility` });
+        continue;
+      }
     }
 
     // Check overlapping slot (fetch candidates, check in JS for overnight support)

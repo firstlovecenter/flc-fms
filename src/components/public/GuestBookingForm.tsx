@@ -7,6 +7,7 @@ import {
   getBookableFacilitiesByCategoryDate,
   getFacilityCategories,
   getFacilityAvailability,
+  getCeremonyAvailability,
   getPublicBookingCategories,
 } from "@/actions/availability.actions";
 import { getCeremonyBookableFacilities, getCeremonyDays } from "@/actions/ceremony-venue.actions";
@@ -39,6 +40,8 @@ interface Facility {
   pricePerHour: unknown;
   amenities: string[];
   availableDays: number[];
+  availableFrom?: string;
+  availableTo?: string;
   flatPrice?: number;
 }
 
@@ -339,22 +342,38 @@ export default function GuestBookingForm({
   // When date or category changes, fetch available slots
   useEffect(() => {
     if (!selectedDate || !facilityId || !category) return;
+
     setSlotsLoading(true);
     setSelectedSlot(null);
 
-    getFacilityAvailability(
-      facilityId,
-      selectedDate,
-      category,
-      {
-        allowMonday: canBookMondays,
-        leadTimeHours: bypassLeadTime ? 0 : 18,
-        bypassMaxAdvance: bypassLeadTime,
-      }
-    )
+    // Ceremonies use dedicated WEDDING/NAMING time slots (configured by staff),
+    // booked at the venue's flat ceremony rate.
+    const fetchSlots = isCeremonyBooking
+      ? getCeremonyAvailability(
+          facilityId,
+          selectedDate,
+          category as "WEDDING" | "NAMING",
+          {
+            allowMonday: canBookMondays,
+            leadTimeHours: bypassLeadTime ? 0 : 18,
+            bypassMaxAdvance: bypassLeadTime,
+          },
+        )
+      : getFacilityAvailability(
+          facilityId,
+          selectedDate,
+          category,
+          {
+            allowMonday: canBookMondays,
+            leadTimeHours: bypassLeadTime ? 0 : 18,
+            bypassMaxAdvance: bypassLeadTime,
+          },
+        );
+
+    fetchSlots
       .then((res) => setSlots(res.success ? res.slots || [] : []))
       .finally(() => setSlotsLoading(false));
-  }, [selectedDate, facilityId, category, canBookMondays, bypassLeadTime]);
+  }, [selectedDate, facilityId, category, isCeremonyBooking, canBookMondays, bypassLeadTime]);
 
   // Compute estimated cost from selected slot
   const estimatedCost = (() => {
