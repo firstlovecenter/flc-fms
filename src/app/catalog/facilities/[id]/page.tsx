@@ -49,7 +49,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="max-w-3xl">
                 <div className="flex items-center gap-3 mb-4">
-                  <Badge variant="outline" className="bg-white/50 backdrop-blur-md border-[var(--gold)]/30 text-[var(--navy)] px-3 py-1 uppercase tracking-widest text-[10px]">
+                  <Badge variant="outline" className="bg-white/50 dark:bg-[rgba(255,255,255,0.05)] backdrop-blur-md border-[var(--gold)]/30 text-[var(--navy)] px-3 py-1 uppercase tracking-widest text-[10px]">
                     <MapPin size={12} className="mr-1 inline-block text-[var(--gold)]" /> Facility Details
                   </Badge>
                   {facility.capacity > 100 && (
@@ -69,7 +69,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
               <div className="flex-shrink-0 animate-fade-in">
                 <Link
                   href={`/guest/book?facilityId=${facility.id}`}
-                  className="inline-flex items-center justify-center bg-gradient-to-br from-[var(--navy)] to-[var(--navy-light)] hover:opacity-90 shadow-xl shadow-[var(--navy)]/10 rounded-full px-8 py-6 text-[15px] font-semibold border border-white/10 transition-transform hover:-translate-y-1 text-white"
+                  className="inline-flex items-center justify-center bg-gradient-to-br from-[var(--navy)] to-[var(--navy-light)] dark:from-[#13233d] dark:to-[#1d3358] hover:opacity-90 shadow-xl shadow-[var(--navy)]/10 rounded-full px-8 py-6 text-[15px] font-semibold border border-white/10 transition-transform hover:-translate-y-1 text-white"
                 >
                   Book Now <ArrowRight size={18} className="ml-2" />
                 </Link>
@@ -80,7 +80,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
           {/* Facility Images Gallery */}
           {facility.images && facility.images.length > 0 && (
             <section className="animate-slide-in-up">
-              <div className="rounded-3xl p-2 bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+              <div className="rounded-3xl p-2 bg-white/40 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-2xl border border-white/60 dark:border-[rgba(255,255,255,0.1)] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
                 {facility.images.length === 1 ? (
                   <div className="aspect-[21/9] w-full rounded-2xl overflow-hidden relative">
                      <img src={facility.images[0]} alt={facility.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
@@ -112,7 +112,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
 
           {/* Core Info Cards */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <Card className="bg-white/60 backdrop-blur-xl border-white/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
+            <Card className="bg-white/60 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-white/80 dark:border-[rgba(255,255,255,0.1)] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
               <CardContent className="p-8">
                 <div className="w-12 h-12 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <span className="text-xl">💰</span>
@@ -124,7 +124,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
               </CardContent>
             </Card>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
+            <Card className="bg-white/60 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-white/80 dark:border-[rgba(255,255,255,0.1)] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
               <CardContent className="p-8">
                 <div className="w-12 h-12 rounded-2xl bg-[var(--navy)]/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Users size={22} className="text-[var(--navy-light)]" />
@@ -137,7 +137,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
               </CardContent>
             </Card>
 
-            <Card className="bg-white/60 backdrop-blur-xl border-white/80 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
+            <Card className="bg-white/60 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-white/80 dark:border-[rgba(255,255,255,0.1)] shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-300 rounded-3xl overflow-hidden group">
               <CardContent className="p-8">
                 <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Clock3 size={22} className="text-info" />
@@ -155,7 +155,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
           {/* Details & Schedule */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Card className="bg-white/60 backdrop-blur-xl border-white/80 shadow-sm rounded-3xl overflow-hidden">
+              <Card className="bg-white/60 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-white/80 dark:border-[rgba(255,255,255,0.1)] shadow-sm rounded-3xl overflow-hidden">
                 <CardContent className="p-8 md:p-10">
                   <h2 className="font-display text-2xl text-[var(--navy)] font-semibold border-b border-slate-100 pb-4 mb-6">Facility Details</h2>
                   
@@ -198,14 +198,14 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
             </div>
 
             {/* Upcoming Activity Sidebar */}
-            <div className="lg:col-span-1 border border-white/80 bg-white/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm h-fit">
+            <div className="lg:col-span-1 border border-white/80 dark:border-[rgba(255,255,255,0.1)] bg-white/40 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm h-fit">
               <h3 className="font-display text-xl text-[var(--navy)] font-semibold mb-6 flex items-center justify-between">
                 Upcoming Schedule
                 <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
               </h3>
               
               {facility.bookings.length === 0 ? (
-                <div className="text-center py-10 bg-white/40 rounded-2xl border border-dashed border-slate-200">
+                <div className="text-center py-10 bg-white/40 dark:bg-[rgba(255,255,255,0.03)] rounded-2xl border border-dashed border-slate-200">
                   <CalendarRange size={32} className="mx-auto text-slate-300 mb-3" />
                   <p className="text-sm text-slate-500 font-medium">Fully available this week.</p>
                   <p className="text-xs text-slate-400 mt-1">Be the first to book!</p>
@@ -221,8 +221,8 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
                           <span className="text-xs font-bold text-[var(--navy)]">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           <span className="text-[10px] text-slate-400 uppercase">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                         </div>
-                        <div className={`absolute left-0 md:left-1/2 -ml-1 md:-ml-[5px] w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 ${isApproved ? "bg-success" : "bg-info"}`}></div>
-                        <div className="bg-white/80 rounded-xl p-3 shadow-sm border border-slate-100 flex-1 md:ml-4 w-full">
+                        <div className={`absolute left-0 md:left-1/2 -ml-1 md:-ml-[5px] w-3 h-3 rounded-full border-2 border-white dark:border-[#0f1a2b] shadow-sm z-10 ${isApproved ? "bg-success" : "bg-info"}`}></div>
+                        <div className="bg-white/80 dark:bg-[rgba(255,255,255,0.05)] rounded-xl p-3 shadow-sm border border-slate-100 flex-1 md:ml-4 w-full">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs font-bold text-slate-700 md:hidden">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('en-US', { hour: 'numeric' })}</span>
                             <StatusBadge status={booking.status} size="xs" className="print:hidden" />
@@ -241,9 +241,9 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
 
           {/* Super-CTA Section */}
           <section className="relative mt-12 rounded-[2rem] overflow-hidden group">
-            <div className="absolute inset-0 bg-[var(--navy)]">
+            <div className="absolute inset-0 bg-[var(--navy)] dark:bg-[#0f1b30]">
               <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] bg-[length:4px_4px]" aria-hidden />
-              <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out"></div>
+              <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent dark:from-[#1d3358] skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out"></div>
             </div>
             
             <div className="relative p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 z-10">
@@ -257,7 +257,7 @@ export default async function PublicFacilityDetailPage({ params }: { params: { i
               <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                 <Link
                   href={`/guest/book?facilityId=${facility.id}`}
-                  className="inline-flex items-center justify-center bg-white text-[var(--navy)] hover:bg-[var(--cream)] rounded-full px-8 h-14 text-base font-semibold shadow-xl border-0"
+                  className="inline-flex items-center justify-center bg-[#fff] text-[#0a1628] hover:bg-[#f1ede4] dark:bg-[var(--gold)] dark:text-[#080F1A] dark:hover:bg-[var(--gold-bright)] rounded-full px-8 h-14 text-base font-semibold shadow-xl border-0"
                 >
                   Reserve as Guest
                 </Link>

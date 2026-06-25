@@ -414,7 +414,7 @@ export default function GuestBookingForm({
               type="button"
               onClick={() => setBookingMode("facility-first")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                bookingMode === "facility-first" ? "bg-[var(--navy)] text-white" : "text-[var(--slate)]"
+                bookingMode === "facility-first" ? "bg-primary text-primary-foreground" : "text-[var(--slate)]"
               }`}
             >
               Venue -&gt; Category
@@ -423,7 +423,7 @@ export default function GuestBookingForm({
               type="button"
               onClick={() => setBookingMode("category-first")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                bookingMode === "category-first" ? "bg-[var(--navy)] text-white" : "text-[var(--slate)]"
+                bookingMode === "category-first" ? "bg-primary text-primary-foreground" : "text-[var(--slate)]"
               }`}
             >
               Category -&gt; Venue

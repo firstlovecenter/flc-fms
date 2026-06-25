@@ -116,7 +116,7 @@ export default function ItemsCatalogClient({
           {showCart ? (
             <Card className="rounded-2xl overflow-hidden w-full sm:w-80 p-0">
               {/* Cart header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-[var(--navy)] text-white">
+              <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
                 <span className="font-semibold flex items-center gap-2">
                   <ShoppingCart size={16} /> Your Selection
                 </span>
@@ -170,7 +170,7 @@ export default function ItemsCatalogClient({
           ) : (
             <button
               onClick={() => setShowCart(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm shadow-lg bg-[var(--navy)] text-white hover:bg-[var(--navy-mid)] transition-colors"
+              className="flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               <ShoppingCart size={16} />
               {cart.reduce((s, l) => s + l.qty, 0)} item{cart.reduce((s, l) => s + l.qty, 0) !== 1 ? "s" : ""}

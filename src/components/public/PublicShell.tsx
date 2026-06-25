@@ -68,7 +68,7 @@ function BrandingPanel({ eyebrow, title, subtitle }: { eyebrow: string; title: s
 
 function MobileHeroStrip({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle: ReactNode }) {
   return (
-    <div className="lg:hidden px-4 pt-4 pb-2 sm:px-8 border-b border-[var(--border)] bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] text-white">
+    <div className="lg:hidden px-4 pt-4 pb-2 sm:px-8 border-b border-[var(--border)] bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)] dark:from-[rgba(15,26,43,0.92)] dark:to-[rgba(15,26,43,0.72)] text-white">
       <p className="text-eyebrow text-[var(--gold-bright)] mb-1.5">{eyebrow}</p>
       <h1 className="font-display text-heading-lg leading-snug mb-2">{title}</h1>
       <p className="text-body-sm text-[rgba(232,240,255,0.8)] line-clamp-2">{subtitle}</p>

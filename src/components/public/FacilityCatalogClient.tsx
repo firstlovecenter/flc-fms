@@ -185,7 +185,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                       className={cn(
                         "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
                         selectedCategories.includes(cat)
-                          ? "bg-[var(--navy)] text-white border-[var(--navy)]"
+                          ? "bg-primary text-primary-foreground border-primary"
                           : "bg-slate-50 text-slate-600 border-slate-200 hover:border-[var(--navy)]/40 hover:bg-slate-100"
                       )}
                     >
@@ -207,7 +207,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                     className={cn(
                       "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
                       capacityBucket === b.value
-                        ? "bg-[var(--navy)] text-white border-[var(--navy)]"
+                        ? "bg-primary text-primary-foreground border-primary"
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:border-[var(--navy)]/40 hover:bg-slate-100"
                     )}
                   >
@@ -252,11 +252,11 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                 onClick={() => setShowAvailableOnly(v => !v)}
                 className={cn(
                   "relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0",
-                  showAvailableOnly ? "bg-[var(--navy)]" : "bg-slate-200"
+                  showAvailableOnly ? "bg-primary" : "bg-slate-200"
                 )}
               >
                 <span className={cn(
-                  "absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200",
+                  "absolute top-1 w-4 h-4 rounded-full bg-[#fff] shadow transition-all duration-200",
                   showAvailableOnly ? "left-6" : "left-1"
                 )} />
               </button>
@@ -518,7 +518,7 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                         Unavailable
                       </span>
                     ) : (
-                      <Link href={`/guest/book?facilityId=${selectedFacility.id}`} className={cn(buttonVariants({ size: "lg", variant: "default" }), "w-full bg-[var(--navy)] hover:bg-[var(--navy-light)] text-white shadow-xl shadow-[var(--navy)]/20")}>
+                      <Link href={`/guest/book?facilityId=${selectedFacility.id}`} className={cn(buttonVariants({ size: "lg", variant: "default" }), "w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl")}>
                         Reserve Venue <ArrowRight size={16} className="ml-2" />
                       </Link>
                     )}

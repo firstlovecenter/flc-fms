@@ -158,7 +158,7 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
               <Button
                 size="sm"
                 onClick={() => openCodeModal(config)}
-                className="bg-[var(--navy)] hover:bg-[var(--navy)]/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Book Now
               </Button>
@@ -222,7 +222,7 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
                       setSelectedConfig(null);
                       openCodeModal(selectedConfig);
                     }}
-                    className="bg-[var(--navy)] hover:bg-[var(--navy)]/90 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     Book Now
                   </Button>
@@ -259,7 +259,7 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
               <Button
                 onClick={() => codeModalConfig && handleProceedWithCode(codeModalConfig)}
                 disabled={codeLoading}
-                className="bg-[var(--navy)] hover:bg-[var(--navy)]/90 text-white shrink-0"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
               >
                 {codeLoading ? "…" : "Proceed →"}
               </Button>
