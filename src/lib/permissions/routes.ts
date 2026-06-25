@@ -55,7 +55,7 @@ export const STAFF_NAV_GROUPS: NavGroupDef[] = [
   {
     label: "Finance",
     items: [
-      { href: "/transactions", label: "Transactions", accent: "finance", permission: "finance:view" },
+      { href: "/transactions", label: "Transactions", accent: "finance", permission: ["finance:view", "finance:submit_expense"] },
       { href: "/reports", label: "Reports", accent: "finance", permission: "reports:view" },
     ],
   },
@@ -87,7 +87,7 @@ export const STAFF_ACTION_ITEMS: NavItemDef[] = [
 
 /** Page-level permission requirements (exact path or prefix). */
 export const ROUTE_PERMISSIONS: { pattern: string; permission: Permission | Permission[]; exact?: boolean }[] = [
-  { pattern: "/transactions", permission: "finance:view", exact: true },
+  { pattern: "/transactions", permission: ["finance:view", "finance:submit_expense"], exact: true },
   { pattern: "/transactions/new-expense", permission: "finance:submit_expense" },
   { pattern: "/transactions/new-income", permission: "finance:record_income" },
   { pattern: "/transactions/savings", permission: "finance:savings" },

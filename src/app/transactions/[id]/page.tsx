@@ -12,7 +12,7 @@ import ExpenseActions from "@/components/expenses/ExpenseActions";
 import { Card } from "@/components/ui/card";
 
 export default async function ExpenseDetailPage({ params }: { params: { id: string } }) {
-  const session = await requirePerm("finance:view");
+  const session = await requirePerm(["finance:view", "finance:submit_expense"]);
 
   const expense = await prisma.expense.findFirst({
     where: { id: params.id },
@@ -24,9 +24,10 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
   });
 
   if (!expense) notFound();
-  if (["VICAR", "BOOKING_MANAGER"].includes(session.role) && expense.createdById !== session.sub) notFound();
 
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["finance:approve_expense"] ?? false);
+  // Non-approvers (incl. submit-only requesters) may only view their own expenses.
+  if (!canManage && expense.createdById !== session.sub) notFound();
   const canUploadReceiptOnly = expense.status === "APPROVED" && expense.createdById === session.sub;
   const isPending = expense.status === "PENDING";
   const isLocked = isExpenseLocked(expense.createdAt, expense.status);

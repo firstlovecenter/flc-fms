@@ -24,7 +24,7 @@ export default async function TransactionsPage({
 }: {
   searchParams: { tab?: string; status?: string; page?: string; sType?: string; sFrom?: string; sTo?: string };
 }) {
-  const session = await requirePerm("finance:view");
+  const session = await requirePerm(["finance:view", "finance:submit_expense"]);
   const perms = session.authContext?.permissions;
   const canApproveExpenses = session.role === "SUPER_ADMIN" || (perms?.["finance:approve_expense"] ?? false);
   const canRecordIncome = session.role === "SUPER_ADMIN" || (perms?.["finance:record_income"] ?? false);
