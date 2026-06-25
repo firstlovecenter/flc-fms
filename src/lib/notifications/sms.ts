@@ -238,7 +238,7 @@ export async function notifyStaffAppointment(params: {
   tempPassword: string;
   loginUrl: string;
 }) {
-  const roleLabelMap: Record<string, string> = { FACILITY_MANAGER: "Facility Manager", BOOKING_MANAGER: "Booking Manager", VICAR: "Vicar" };
+  const roleLabelMap: Record<string, string> = { FACILITY_MANAGER: "Facility Manager", BOOKING_MANAGER: "Booking Manager", VICAR: "Vicar", STAFF: "Staff" };
   const roleLabel = roleLabelMap[params.role] ?? params.role;
   await sendSMS({
     to: params.phone,

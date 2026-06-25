@@ -11,6 +11,7 @@ import { auditLog } from "@/lib/audit";
 import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { notifyFMExpenseSubmitted, notifyExpenseDecision } from "@/lib/notifications/sms";
+import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -39,12 +40,9 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   const expense = await prisma.expense.create({
     data: { createdById: session.sub, status: "PENDING", ...validated }});
 
-  // Notify all FMs via SMS
+  // Notify expense approvers via SMS
   const [managers, submitter] = await Promise.all([
-    prisma.user.findMany({
-      where: { role: "FACILITY_MANAGER", isActive: true },
-      select: { phone: true },
-    }),
+    staffPhonesWithPermission("finance:approve_expense"),
     prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
   ]);
 
@@ -214,8 +212,10 @@ export async function getExpenses(filters: { status?: string; page?: number } = 
 
   const where: Record<string, unknown> = { deletedAt: null };
   if (filters.status) where.status = filters.status;
-  // Vicars and Booking Managers see only their own
-  if (["VICAR", "BOOKING_MANAGER"].includes(session.role)) where.createdById = session.sub;
+  // Non-approvers see only their own expense requests.
+  const ctx = session.role === "SUPER_ADMIN" ? null : await getStaffAuthContext(session.sub);
+  const canApproveExpenses = session.role === "SUPER_ADMIN" || (ctx ? ctxHasPermission(ctx, "finance:approve_expense") : false);
+  if (!canApproveExpenses) where.createdById = session.sub;
 
   const [expenses, total] = await prisma.$transaction([
     prisma.expense.findMany({

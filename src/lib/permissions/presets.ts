@@ -90,6 +90,25 @@ export function defaultPermissionsForRole(role: string): PermissionSet {
   return ROLE_PRESETS[role] ? { ...ROLE_PRESETS[role] } : fill(false);
 }
 
+/**
+ * Resolves an Add/Edit-staff selection — a preset value (e.g. OPERATIONS_NO_FINANCE)
+ * or a real role (SUPER_ADMIN / FACILITY_MANAGER / STAFF) — to the DB role that
+ * should be stored plus the permission set to seed.
+ *
+ * Only FACILITY_MANAGER and SUPER_ADMIN are "real" privileged roles; every other
+ * preset maps to the neutral STAFF role with the preset's permissions.
+ * `permissions: null` means Super Admin (no stored permissions — full access is implicit).
+ */
+export function resolveStaffPreset(value: string): { role: string; permissions: PermissionSet | null } {
+  if (value === "SUPER_ADMIN") return { role: "SUPER_ADMIN", permissions: null };
+  if (value === "FACILITY_MANAGER") return { role: "FACILITY_MANAGER", permissions: FACILITY_MANAGER };
+  if (value === "STAFF") return { role: "STAFF", permissions: fill(false) };
+  const opt = PRESET_OPTIONS.find((p) => p.value === value);
+  if (opt) return { role: "STAFF", permissions: opt.permissions };
+  // Legacy fallback: treat an unknown value as a direct role name.
+  return { role: value, permissions: defaultPermissionsForRole(value) };
+}
+
 /** Full explicit stored JSON (all keys) for DB seeding / editor saves. */
 export function permissionsToFullStored(perms: PermissionSet): Record<string, boolean> {
   return Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, perms[k]])) as Record<string, boolean>;

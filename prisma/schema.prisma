@@ -491,6 +491,7 @@ enum Role {
   FACILITY_MANAGER
   BOOKING_MANAGER
   VICAR
+  STAFF
 }
 
 enum BookingStatus {

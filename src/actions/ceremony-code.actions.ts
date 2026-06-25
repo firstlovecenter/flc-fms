@@ -8,6 +8,7 @@ import { requirePerm } from "@/lib/auth/guards";
 import { rateLimit } from "@/lib/redis";
 import { generateCeremonyCode } from "@/lib/ceremony-utils";
 import { notifyCeremonyCode, sendSMS } from "@/lib/notifications/sms";
+import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { sendCeremonyCodeEmail } from "@/lib/notifications/email";
 import type { CeremonyType } from "@prisma/client";
 
@@ -63,14 +64,7 @@ export async function requestCeremonyCode(
 
   // Notify staff (BM + FM)
   try {
-    const staff = await prisma.user.findMany({
-      where: {
-        role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] },
-        isActive: true,
-        phone: { not: null },
-      },
-      select: { phone: true },
-    });
+    const staff = await staffPhonesWithPermission("ceremony:manage");
     const ceremonyLabel = ceremonyType === "WEDDING" ? "Wedding" : "Naming";
     for (const s of staff) {
       if (s.phone) {

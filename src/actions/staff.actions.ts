@@ -7,8 +7,8 @@ import { requirePerm, refreshStaffSession } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import {
   type PermissionSet,
-  defaultPermissionsForRole,
   permissionsToFullStored,
+  resolveStaffPreset,
   sanitizePermissionInput,
   ALL_PERMISSIONS,
 } from "@/lib/permissions";
@@ -133,7 +133,7 @@ const UpdateStaffSchema = z.object({
   phone: z.string().min(9).optional(),
 });
 
-const StaffRoleSchema = z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]);
+const StaffRoleSchema = z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "STAFF"]);
 
 export async function updateStaffMember(
   userId: string,
@@ -186,7 +186,7 @@ export async function getInactiveStaffMembers() {
 
 export async function updateStaffRole(userId: string, nextRoleInput: string) {
   const session = await requirePerm("staff:manage");
-  const nextRole = StaffRoleSchema.parse(nextRoleInput) as Role;
+  const { role: nextRole, permissions: permSet } = resolveStaffPreset(StaffRoleSchema.parse(nextRoleInput));
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
@@ -217,13 +217,13 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
     }
   }
 
-  const preset = nextRole === "SUPER_ADMIN"
+  const preset = permSet === null
     ? Prisma.JsonNull
-    : permissionsToFullStored(defaultPermissionsForRole(nextRole));
+    : permissionsToFullStored(permSet);
 
   await prisma.user.update({
     where: { id: userId },
-    data: { role: nextRole, permissions: preset },
+    data: { role: nextRole as Role, permissions: preset },
   });
 
   await refreshStaffSession(userId);

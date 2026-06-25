@@ -12,6 +12,7 @@ import { headers } from "next/headers";
 import { sendBookingConfirmationEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingCancelledEmail, sendBookingCompletedEmail } from "@/lib/notifications/email";
 import { notifyBookingApproved, notifyBookingRejected, notifyBookingConfirmation, notifyBookingCancelled, notifyBookingCompleted, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/notifications/push";
+import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
 import { CeremonyDetailsSchema } from "@/lib/ceremony-utils";
@@ -387,10 +388,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     }),
     ...(booking.status === "PENDING" ? [
       (async () => {
-        const fms = await prisma.user.findMany({
-          where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-          select: { phone: true },
-        });
+        const fms = await staffPhonesWithPermission("bookings:approve");
         await Promise.allSettled(
           fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
             phone:        fm.phone!,
@@ -580,10 +578,7 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
       tag:   `booking-created-${booking.id}`,
     }),
     (async () => {
-      const fms = await prisma.user.findMany({
-        where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-        select: { phone: true },
-      });
+      const fms = await staffPhonesWithPermission("bookings:approve");
       await Promise.allSettled(
         fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
           phone:        fm.phone!,
@@ -803,10 +798,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       tag:   `booking-created-${booking.id}`,
     }),
     (async () => {
-      const fms = await prisma.user.findMany({
-        where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-        select: { phone: true },
-      });
+      const fms = await staffPhonesWithPermission("bookings:approve");
       await Promise.allSettled(
         fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
           phone:        fm.phone!,

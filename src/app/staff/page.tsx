@@ -24,7 +24,7 @@ export default async function StaffPage() {
   ]);
 
   const activeFms = activeStaff.filter((u) => u.role === "FACILITY_MANAGER").length;
-  const activeVicars = activeStaff.filter((u) => u.role === "VICAR").length;
+  const activeMembers = activeStaff.filter((u) => u.role === "STAFF").length;
 
   return (
     <div className="space-y-6 animate-fade-in relative">
@@ -34,7 +34,7 @@ export default async function StaffPage() {
         variant="hero"
         eyebrow="Administration"
         title="Staff Management"
-        description={`${activeStaff.length} active staff • ${activeFms} Facility Manager${activeFms !== 1 ? "s" : ""} • ${activeVicars} Vicar${activeVicars !== 1 ? "s" : ""}`}
+        description={`${activeStaff.length} active staff • ${activeFms} Facility Manager${activeFms !== 1 ? "s" : ""} • ${activeMembers} Staff member${activeMembers !== 1 ? "s" : ""}`}
         className="relative z-10"
         actions={<AddStaffModal canAssignSuperAdmin={session.role === "SUPER_ADMIN"} />}
       />

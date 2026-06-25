@@ -8,6 +8,7 @@ import { auditLog } from "@/lib/audit";
 import { sendBookingConfirmationEmail } from "@/lib/notifications/email";
 import { notifyBookingConfirmation, notifyFMBookingPending } from "@/lib/notifications/sms";
 import { sendPushToPatron, sendPushToAllStaff } from "@/lib/notifications/push";
+import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
@@ -422,10 +423,7 @@ export async function createGuestItemBooking(raw: unknown) {
   });
 
   // Notify staff (SMS + push)
-  const staffUsers = await prisma.user.findMany({
-    where: { role: { in: ["BOOKING_MANAGER", "FACILITY_MANAGER"] }, isActive: true },
-    select: { phone: true },
-  });
+  const staffUsers = await staffPhonesWithPermission("bookings:approve");
   for (const staff of staffUsers) {
     if (staff.phone) {
       await notifyFMBookingPending({

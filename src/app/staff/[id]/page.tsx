@@ -15,6 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
   FACILITY_MANAGER: "Facility Manager",
   VICAR:            "Vicar",
   BOOKING_MANAGER:  "Booking Manager",
+  STAFF:            "Staff",
 };
 
 export default async function StaffDetailPage({ params }: Props) {

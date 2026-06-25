@@ -18,7 +18,7 @@ const schema = z.object({
   name:  z.string().min(2, "Name is required"),
   email: z.string().email("Valid email required"),
   phone: z.string().min(9, "Phone number is required"),
-  role: z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
+  role: z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "STAFF"]),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -36,15 +36,28 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
     staff.profilePicture ? [staff.profilePicture] : []
   );
 
+  // Only Facility Manager + Super Admin are real roles; everyone else is "Staff".
+  // Legacy Booking Manager / Vicar accounts (pre-conversion) map to Staff here.
+  const normalizedRole: FormData["role"] =
+    staff.role === "SUPER_ADMIN" || staff.role === "FACILITY_MANAGER"
+      ? (staff.role as FormData["role"])
+      : "STAFF";
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: staff.name, email: staff.email, phone: staff.phone ?? "", role: staff.role as FormData["role"] },
+    defaultValues: { name: staff.name, email: staff.email, phone: staff.phone ?? "", role: normalizedRole },
   });
 
   const roleOptions: FormData["role"][] =
     currentUserRole === "SUPER_ADMIN"
-      ? ["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]
-      : ["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"];
+      ? ["SUPER_ADMIN", "FACILITY_MANAGER", "STAFF"]
+      : ["FACILITY_MANAGER", "STAFF"];
+
+  const ROLE_LABELS: Record<FormData["role"], string> = {
+    SUPER_ADMIN: "Super Admin",
+    FACILITY_MANAGER: "Facility Manager",
+    STAFF: "Staff",
+  };
 
   useEffect(() => {
     if (open) {
@@ -52,7 +65,7 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
         name: staff.name,
         email: staff.email,
         phone: staff.phone ?? "",
-        role: staff.role as FormData["role"],
+        role: normalizedRole,
       });
       setProfileImages(staff.profilePicture ? [staff.profilePicture] : []);
     }
@@ -134,12 +147,12 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
             <select id="edit-staff-role" {...register("role")} className={cn(inputStyles)}>
               {roleOptions.map((role) => (
                 <option key={role} value={role}>
-                  {role.replace("_", " ")}
+                  {ROLE_LABELS[role]}
                 </option>
               ))}
             </select>
             <p className="text-xs text-[var(--muted)] mt-1">
-              Facility Manager and Super Admin can update staff roles from this form.
+              Facility Manager and Super Admin are full roles. Switching to Staff resets to a blank permission set — fine-tune access on the member&apos;s permissions page.
             </p>
           </div>
           <div className="flex gap-3 pt-2">

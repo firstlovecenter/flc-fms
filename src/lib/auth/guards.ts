@@ -39,7 +39,7 @@ export async function requireStaff(
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const allowedRoles: AllowedRole[] = roles.length > 0 ? roles : ["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"];
+  const allowedRoles: AllowedRole[] = roles.length > 0 ? roles : ["FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR", "STAFF"];
 
   if (session.role === "SUPER_ADMIN") return session;
   if (!allowedRoles.includes(session.role as AllowedRole)) redirect("/unauthorized");

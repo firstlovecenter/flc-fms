@@ -10,9 +10,10 @@ import { rateLimit } from "@/lib/redis";
 import { headers } from "next/headers";
 import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
-import { defaultPermissionsForRole, permissionsToFullStored } from "@/lib/permissions";
+import { permissionsToFullStored, resolveStaffPreset } from "@/lib/permissions";
+import { Role } from "@prisma/client";
 
-function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR") {
+function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR" | "STAFF") {
   if (role === "PATRON") return "/patron/dashboard";
   return "/dashboard";
 }
@@ -141,17 +142,18 @@ const CreateStaffSchema = z.object({
   name:    z.string().min(2),
   email:   z.string().email(),
   phone:   z.string().min(9, "Phone number is required"),
-  role:    z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "BOOKING_MANAGER", "VICAR"]),
+  role:    z.enum(["SUPER_ADMIN", "FACILITY_MANAGER", "OPERATIONS_NO_FINANCE", "BOOKING_MANAGER", "VICAR"]),
 });
 
 export async function createStaffUser(formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Unauthorized" };
 
-  // Super admin can create all staff roles; FM can only create vicars/booking managers
+  // Super admin can create all roles; FM can create any staff preset but not
+  // another Facility Manager or Super Admin.
   const requestedRole = formData.get("role");
   if (session.role === "FACILITY_MANAGER" && ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(String(requestedRole))) {
-    return { error: "Facility Managers can only create Booking Managers or Vicars." };
+    return { error: "Facility Managers cannot create another Facility Manager or Super Admin." };
   }
   if (session.role !== "SUPER_ADMIN" && requestedRole === "SUPER_ADMIN") {
     return { error: "Only Super Admin can create another Super Admin." };
@@ -171,16 +173,21 @@ export async function createStaffUser(formData: FormData) {
   const tempPassword = `Welcome@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
+  // Map the chosen preset to the DB role + the permission set to seed. Only
+  // Facility Manager and Super Admin are real roles; every other preset is a
+  // neutral STAFF member with the preset's permissions (editable anytime).
+  const { role: dbRole, permissions: permSet } = resolveStaffPreset(parsed.data.role);
+
   const user = await prisma.user.create({
     data: {
-      ...parsed.data,
+      name:  parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      role:  dbRole as Role,
       passwordHash,
       mustChangePassword: true,
-      // Seed each new staff member with their role's preset permissions so the
-      // DB state is explicit and editable. Super Admin needs none (full access).
-      ...(parsed.data.role !== "SUPER_ADMIN"
-        ? { permissions: permissionsToFullStored(defaultPermissionsForRole(parsed.data.role)) }
-        : {}),
+      // Super Admin needs none (full access is implicit).
+      ...(permSet ? { permissions: permissionsToFullStored(permSet) } : {}),
     },
   });
 
