@@ -175,6 +175,16 @@ export default function GuestBookingForm({
   ];
   const termsRequired = requiredTerms.length > 0;
 
+  // With a single booking category (e.g. only "General"), auto-selection
+  // handles it — so the mode toggle and the category dropdown are hidden and
+  // users just pick venue → date → time. They reappear if more categories exist.
+  const showModeToggle = !isCeremonyBooking && publicCategories.length > 1;
+  const showCategorySelector =
+    !isCeremonyBooking &&
+    (bookingMode === "category-first"
+      ? publicCategories.length > 1
+      : categories.length > 1);
+
   useEffect(() => {
     getPublicBookingCategories().then((res) => {
       if (res.success) setPublicCategories(res.categories);
@@ -398,6 +408,7 @@ export default function GuestBookingForm({
       <Card className="overflow-hidden">
         {/* Booking mode + selectors */}
         <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(15,26,43,0.4)]">
+          {showModeToggle && (
           <div className="mb-3 inline-flex rounded-lg border border-[var(--border)] bg-white p-1">
             <button
               type="button"
@@ -418,9 +429,10 @@ export default function GuestBookingForm({
               Category -&gt; Venue
             </button>
           </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {!isCeremonyBooking && (
+            {showCategorySelector && (
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
                 Event Category
@@ -518,15 +530,15 @@ export default function GuestBookingForm({
 
             {/* CENTER — Time Slots */}
             <div className="p-5">
-              {!category ? (
-                <div className="h-full flex flex-col items-center justify-center text-center py-16">
-                  <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
-                  <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select an event category first</p>
-                </div>
-              ) : !selectedFacility ? (
+              {!selectedFacility ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-16">
                   <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
                   <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select a venue to load available slots</p>
+                </div>
+              ) : showCategorySelector && !category ? (
+                <div className="h-full flex flex-col items-center justify-center text-center py-16">
+                  <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
+                  <p className="text-sm text-[var(--muted)] dark:text-gray-400">Select an event category first</p>
                 </div>
               ) : !selectedDate ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-16">
@@ -672,10 +684,8 @@ export default function GuestBookingForm({
         {selectedFacility && (
           <div className="px-5 py-3.5 border-t border-[var(--border)] dark:border-[rgba(255,255,255,0.1)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-transparent">
             <p className="text-sm text-[var(--muted)] dark:text-gray-400">
-              {!category
+              {showCategorySelector && !category
                 ? "Pick an event category"
-                : !selectedFacility
-                ? "Pick a venue"
                 : !selectedDate
                 ? "Pick a date to continue"
                 : !selectedSlot
@@ -785,7 +795,7 @@ export default function GuestBookingForm({
       )}
 
       {/* Event type */}
-      {categories.length > 0 && (
+      {categories.length > 1 && (
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Event Type *</label>
           <NativeSelect
