@@ -1,11 +1,26 @@
 "use server";
 
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { timeRangesOverlap } from "@/lib/time-utils";
+
+/**
+ * FacilityTimeSlot has a DB foreign key to FacilityPricing on (facilityId, category).
+ * Ceremonies (WEDDING/NAMING) are flat-priced via CeremonyVenueConfig and have no
+ * regular pricing row, so keep an INACTIVE FacilityPricing row purely to satisfy that
+ * constraint. Inactive ⇒ it never appears in catalogs, availability, or category pairing.
+ */
+async function ensureCeremonyPricingRow(facilityId: string, category: string, price: Prisma.Decimal) {
+  await prisma.facilityPricing.upsert({
+    where: { facilityId_category: { facilityId, category } },
+    create: { facilityId, category, price, isActive: false },
+    update: {},
+  });
+}
 
 const FacilitySchema = z.object({
   name:           z.string().min(2).max(100),
@@ -278,13 +293,14 @@ export async function createTimeSlot(facilityId: string, data: z.infer<typeof Ti
     // Ceremony slots are validated against the venue's ceremony config, not FacilityPricing.
     const cfg = await prisma.ceremonyVenueConfig.findUnique({
       where: { facilityId_type: { facilityId, type: validated.category as "WEDDING" | "NAMING" } },
-      select: { isActive: true },
+      select: { isActive: true, price: true },
     });
     if (!cfg || !cfg.isActive) {
       return {
         error: "This venue is not configured for that ceremony type. Set up its ceremony venue settings first.",
       };
     }
+    await ensureCeremonyPricingRow(facilityId, validated.category, cfg.price);
   } else {
     const mappedCategory = await prisma.facilityPricing.findFirst({
       where: {
@@ -433,12 +449,13 @@ export async function bulkCreateTimeSlots(
     if (isCeremonyCategory) {
       const cfg = await prisma.ceremonyVenueConfig.findUnique({
         where: { facilityId_type: { facilityId, type: validated.category as "WEDDING" | "NAMING" } },
-        select: { isActive: true },
+        select: { isActive: true, price: true },
       });
       if (!cfg || !cfg.isActive) {
         skipped.push({ facilityId, facilityName: name, reason: `Not configured for "${validated.category}" ceremonies` });
         continue;
       }
+      await ensureCeremonyPricingRow(facilityId, validated.category, cfg.price);
     } else {
       const mapping = await prisma.facilityPricing.findFirst({
         where: { facilityId, category: validated.category, isActive: true },
