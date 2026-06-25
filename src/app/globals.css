@@ -1016,9 +1016,9 @@
   .staff-main { padding: 28px 32px; }
 }
 
-/* Clear the mobile bottom tab bar (MobileBottomNav, hidden at lg+) */
+/* Clear the floating mobile bottom tab bar (MobileBottomNav, hidden at lg+) */
 @media (max-width: 1023px) {
-  .staff-main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .staff-main { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
 }
 
 /* ─── Page subtitle (alias for page-sub) ─────────────────────────────────── */
