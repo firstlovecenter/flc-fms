@@ -19,19 +19,22 @@ function pick(entries: Partial<PermissionSet>): PermissionSet {
 const FACILITY_MANAGER = fill(true);
 FACILITY_MANAGER["patrons:manage"] = false;
 
-/** Booking Manager — bookings + finance view/submit + patrons view + browse facilities/items. */
+/** Booking Manager — bookings + manage facilities/items/patrons/ceremony + reports. No finance. */
 const BOOKING_MANAGER = pick({
   "bookings:view": true,
   "bookings:create": true,
   "bookings:approve": true,
   "bookings:cancel": true,
   "bookings:manage_content": true,
-  "finance:view": true,
   "finance:submit_expense": true,
   "facilities:view": true,
+  "facilities:manage": true,
   "items:view": true,
+  "items:manage": true,
   "inventory:view": true,
   "patrons:view": true,
+  "patrons:manage": true,
+  "ceremony:manage": true,
   "checkin:perform": true,
   "reports:view": true,
   "reports:manage_subscriptions": true,
@@ -82,7 +85,7 @@ export const PRESET_OPTIONS: {
 }[] = [
   { value: "FACILITY_MANAGER", label: "Facility Manager", description: "Full access to everything except patron account management.", permissions: FACILITY_MANAGER },
   { value: "OPERATIONS_NO_FINANCE", label: "Operations (no finance)", description: "Full operations access without finance or reports.", permissions: OPERATIONS_NO_FINANCE },
-  { value: "BOOKING_MANAGER", label: "Booking Manager", description: "Bookings, finances (view/submit), and patron views.", permissions: BOOKING_MANAGER },
+  { value: "BOOKING_MANAGER", label: "Booking Manager", description: "Bookings, manage facilities/items/patrons/ceremony, and reports. No finance.", permissions: BOOKING_MANAGER },
   { value: "VICAR", label: "Vicar (limited)", description: "Bookings, maintenance, expenses, and patron views.", permissions: VICAR },
 ];
 
