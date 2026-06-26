@@ -370,9 +370,8 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                       )}
                     </div>
                   )}
-                  <div className="hidden sm:grid mt-auto grid-cols-2 gap-y-2 gap-x-4 text-xs font-medium text-slate-500">
+                  <div className="hidden sm:flex mt-auto text-xs font-medium text-slate-500">
                     <div className="flex items-center gap-1.5"><Users size={14} className="text-slate-400" /><span>Up to {facility.capacity}</span></div>
-                    <div className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400" /><span>{facility.availableFrom} – {facility.availableTo}</span></div>
                   </div>
                   <div className="sm:hidden mt-auto flex items-center gap-1 text-[10px] text-slate-400 font-medium">
                     <Users size={11} /><span>{facility.capacity}</span>
