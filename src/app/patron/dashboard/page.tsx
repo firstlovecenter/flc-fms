@@ -30,7 +30,7 @@ export default async function PatronDashboardPage() {
 	const approved = bookings.filter((b) => b.status === "APPROVED").length;
 
 	return (
-		<div className="space-y-8 animate-fade-in relative overflow-x-clip">
+		<div className="space-y-5 sm:space-y-7 animate-fade-in relative overflow-x-clip">
 			{/* Ambient glow */}
 			<div className="absolute -top-20 right-0 w-96 h-96 rounded-full pointer-events-none z-0"
 				style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
@@ -49,14 +49,14 @@ export default async function PatronDashboardPage() {
 				className="relative z-10"
 			/>
 
-			<div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
+			<div className="relative z-10 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 stagger-children">
 				<StatCard
-					label="My Bookings"
+					label="Bookings"
 					value={bookings.length}
 					color="gold"
 					href="/patron/bookings"
 					compact
-					icon={<CalendarDays size={18} />}
+					icon={<CalendarDays size={16} />}
 				/>
 				<StatCard
 					label="Approved"
@@ -64,7 +64,7 @@ export default async function PatronDashboardPage() {
 					color="finance"
 					href="/patron/bookings?status=APPROVED"
 					compact
-					icon={<CheckCircle2 size={18} />}
+					icon={<CheckCircle2 size={16} />}
 				/>
 				<StatCard
 					label="Pending"
@@ -72,7 +72,7 @@ export default async function PatronDashboardPage() {
 					color="warning"
 					href="/patron/bookings?status=PENDING"
 					compact
-					icon={<Clock size={18} />}
+					icon={<Clock size={16} />}
 				/>
 			</div>
 

@@ -89,18 +89,18 @@ export function CardGridSkeleton({ count = 6, className }: { count?: number; cla
 /** Stat card row skeleton */
 export function StatCardsSkeleton({ count = 4, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
+    <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4", className)}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-[var(--border)] bg-white dark:bg-[rgba(15,26,43,0.6)] p-5 space-y-3"
+          className="rounded-[var(--r-md)] border border-[var(--border)] bg-white dark:bg-[rgba(22,24,28,0.6)] p-2.5 sm:p-4 lg:p-5 space-y-2 sm:space-y-3"
         >
           <div className="flex items-center justify-between">
-            <Skeleton className="h-3 w-24 rounded" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-2.5 w-16 rounded sm:h-3 sm:w-24" />
+            <Skeleton className="h-7 w-7 rounded-lg sm:h-8 sm:w-8" />
           </div>
-          <Skeleton className="h-8 w-16 rounded" />
-          <Skeleton className="h-3 w-20 rounded" />
+          <Skeleton className="h-6 w-14 rounded sm:h-8 sm:w-16" />
+          <Skeleton className="hidden h-3 w-20 rounded sm:block" />
         </div>
       ))}
     </div>

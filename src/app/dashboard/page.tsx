@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   const recentBookingsWithFacility = recentBookings.filter((b) => b.facility !== null) as Parameters<typeof RecentBookings>[0]["bookings"];
 
   return (
-    <div className="space-y-8 animate-fade-in relative">
+    <div className="space-y-5 sm:space-y-7 animate-fade-in relative">
       {/* Ambient glow */}
       <div
         className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none -z-0"
@@ -101,21 +101,21 @@ export default async function DashboardPage() {
       )}
 
       {/* Primary stats */}
-      <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-        <StatCard label="Active Facilities"  value={totalFacilities} color="facilities" icon={<Building2  size={16} />} href="/facilities" />
-        <StatCard label="Pending Bookings"   value={pendingBookings}  color="bookings" icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
-        <StatCard label="Active Bookings"    value={activeBookings}   color="bookings" icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
-        <StatCard label="Open Maintenance"   value={openMaintenance}  color="maintenance" icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
+      <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 stagger-children">
+        <StatCard label="Facilities"       value={totalFacilities} color="facilities" icon={<Building2  size={16} />} href="/facilities" />
+        <StatCard label="Pending"          value={pendingBookings}  color="bookings" icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
+        <StatCard label="Active"           value={activeBookings}   color="bookings" icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
+        <StatCard label="Maintenance"      value={openMaintenance}  color="maintenance" icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
       </div>
 
       {/* Financial stats — FM only */}
       {canViewFinances && (
-        <div className="relative z-10 grid grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
-          <StatCard label="Total Income"      value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" color="finance" />
-          <StatCard label="Total Expenses"    value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" color="danger" />
-          <StatCard label="Net Balance"       value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="finance" />
-          <StatCard label="Savings Balance"   value={formatCurrency(netSavings)} icon={<PiggyBank size={16} />} href="/transactions?tab=savings" color="finance" />
-          <StatCard label="Available Balance" value={formatCurrency(availableBalance)} icon={<DollarSign size={16} />} sub={availableBalance >= 0 ? "Surplus" : "Deficit"} trend={availableBalance >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="gold" />
+        <div className="relative z-10 grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4 stagger-children">
+          <StatCard label="Income"    value={formatCurrency(incomeTotals.totalIncome)} icon={<TrendingUp size={16} />} trend="up" href="/transactions?tab=income" color="finance" />
+          <StatCard label="Expenses"  value={formatCurrency(totalApprovedExpenses)} icon={<TrendingDown size={16} />} href="/transactions?tab=expenses" color="danger" />
+          <StatCard label="Net"       value={formatCurrency(net)} icon={<DollarSign size={16} />} sub={net >= 0 ? "Surplus" : "Deficit"} trend={net >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="finance" />
+          <StatCard label="Savings"   value={formatCurrency(netSavings)} icon={<PiggyBank size={16} />} href="/transactions?tab=savings" color="finance" />
+          <StatCard label="Available" value={formatCurrency(availableBalance)} icon={<DollarSign size={16} />} sub={availableBalance >= 0 ? "Surplus" : "Deficit"} trend={availableBalance >= 0 ? "up" : "down"} href="/transactions?tab=overview" color="gold" />
         </div>
       )}
 

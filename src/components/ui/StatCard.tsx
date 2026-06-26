@@ -60,10 +60,10 @@ const ACCENT_CHIP: Record<string, string> = {
 };
 
 const cardBase = cn(
-  "relative overflow-hidden rounded-[var(--r-lg)] bg-[var(--surface)] ring-1 ring-[var(--border)] [container-type:inline-size]",
+  "relative overflow-hidden rounded-[var(--r-md)] bg-[var(--surface)] ring-1 ring-[var(--card-ring,var(--border))] [container-type:inline-size]",
   "shadow-[var(--shadow-sm)] transition-all duration-200",
-  "dark:bg-[hsl(var(--ui-card))] dark:ring-[hsl(var(--ui-border))]",
-  "hover:shadow-[var(--shadow-md)] hover:-translate-y-px"
+  "dark:bg-[hsl(var(--ui-card))]",
+  "sm:hover:shadow-[var(--shadow-md)] sm:hover:-translate-y-px"
 );
 
 export default function StatCard({
@@ -84,39 +84,39 @@ export default function StatCard({
     <div
       className={cn(
         "relative z-10 flex items-start justify-between",
-        compact ? "p-3 gap-2" : "p-5"
+        compact ? "gap-1.5 p-2.5 sm:gap-2 sm:p-3" : "gap-2 p-2.5 sm:p-4 lg:p-5"
       )}
     >
       <div className="flex-1 min-w-0">
         <div
           className={cn(
-            "font-bold uppercase tracking-widest text-muted-foreground",
-            compact ? "text-[0.65rem]" : "text-[0.72rem]"
+            "truncate font-bold uppercase text-muted-foreground",
+            compact ? "text-[0.55rem] tracking-[0.04em] sm:text-[0.65rem] sm:tracking-[0.08em]" : "text-[0.58rem] tracking-[0.04em] sm:text-[0.7rem] sm:tracking-[0.08em]"
           )}
         >
           {label}
         </div>
         {loading ? (
-          <Skeleton className={cn("mt-2 mb-1.5", compact ? "h-7 w-16" : "h-9 w-24")} />
+          <Skeleton className={cn("mb-1", compact ? "mt-1 h-5 w-12 sm:h-7 sm:w-16" : "mt-1 h-6 w-14 sm:mt-2 sm:h-8 sm:w-20 lg:h-9 lg:w-24")} />
         ) : (
           <div
             className={cn(
               "font-display font-bold tabular-nums break-words leading-tight text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]",
               // Scale the value to the card's own width (cqi) so long amounts
               // never overflow/clip; break-words is a last-resort safety net.
-              compact ? "text-[clamp(0.9rem,9cqi,1.3rem)] mt-1" : "text-[clamp(1rem,10cqi,2.1rem)] mt-2"
+              compact ? "mt-0.5 text-[clamp(0.95rem,12cqi,1.2rem)] sm:mt-1 sm:text-[clamp(1rem,9cqi,1.3rem)]" : "mt-0.5 text-[clamp(1rem,12cqi,1.35rem)] sm:mt-1.5 sm:text-[clamp(1.15rem,9cqi,1.85rem)] lg:text-[clamp(1.2rem,10cqi,2.1rem)]"
             )}
           >
             {value}
           </div>
         )}
         {sub && !loading && (
-          <div className="mt-1 text-body-sm text-muted-foreground">{sub}</div>
+          <div className="mt-1 hidden truncate text-[0.72rem] leading-snug text-muted-foreground sm:block lg:text-body-sm">{sub}</div>
         )}
         {trend && trend !== "neutral" && !loading && (
           <span
             className={cn(
-              "inline-flex items-center gap-1 mt-2 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold leading-none",
+              "mt-2 hidden items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold leading-none sm:inline-flex",
               trend === "up"
                 ? "bg-success/15 text-success"
                 : "bg-danger/15 text-danger"
@@ -131,8 +131,8 @@ export default function StatCard({
         <div
           aria-hidden
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-[12px] ring-1 ring-inset ml-3",
-            compact ? "h-9 w-9" : "h-11 w-11",
+            "ml-1.5 flex shrink-0 items-center justify-center rounded-[8px] ring-1 ring-inset [&_svg]:size-3.5 sm:ml-2 sm:rounded-[10px] sm:[&_svg]:size-4",
+            compact ? "h-7 w-7 sm:h-9 sm:w-9" : "h-7 w-7 sm:h-9 sm:w-9 lg:h-10 lg:w-10",
             chip
           )}
         >
