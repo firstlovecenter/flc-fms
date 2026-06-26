@@ -84,6 +84,10 @@ function formatTime(time: string): string {
   return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
 }
 
+function formatTimeRange(startTime: string, endTime: string): string {
+  return `${formatTime(startTime)} to ${formatTime(endTime)}`;
+}
+
 type BookingMode = "guest" | "patron" | "staff";
 type BookingType = "regular" | "wedding" | "naming";
 
@@ -747,9 +751,9 @@ export default function GuestBookingForm({
                           >
                             <div className="flex items-center gap-2 sm:gap-5">
                               <span
-                                className={`text-sm font-semibold tabular-nums min-w-[58px] sm:min-w-[68px] ${isSelected ? "text-[#fff]" : "text-[var(--navy)] dark:text-gray-100"}`}
+                                className={`text-sm font-semibold tabular-nums min-w-[150px] sm:min-w-[170px] text-left ${isSelected ? "text-[#fff]" : "text-[var(--navy)] dark:text-gray-100"}`}
                               >
-                                {formatTime(slot.startTime)}
+                                {formatTimeRange(slot.startTime, slot.endTime)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -827,7 +831,7 @@ export default function GuestBookingForm({
                       {format(selectedDate, "MMMM d, yyyy")}
                     </p>
                     <p className="text-xs text-[var(--slate)] dark:text-gray-300 mt-0.5">
-                      Starts at {formatTime(selectedSlot.startTime)}
+                      {formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
                     </p>
                     {estimatedCost !== null && (
                       <p className={`text-sm font-bold mt-1.5 ${estimatedCost === 0 ? "text-green-600" : "text-[var(--navy)] dark:text-gray-100"}`}>
@@ -852,7 +856,7 @@ export default function GuestBookingForm({
                 ? "Pick a date to continue"
                 : !selectedSlot
                 ? "Pick a time slot"
-                : `${format(selectedDate, "MMM d")} · ${formatTime(selectedSlot.startTime)}`}
+                : `${format(selectedDate, "MMM d")} - ${formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}`}
             </p>
             <Button
               type="button"
@@ -884,7 +888,7 @@ export default function GuestBookingForm({
             </p>
             <p className="text-sm mt-0.5 text-[#fff]/65">
               {selectedSlot &&
-                `Starts at ${formatTime(selectedSlot.startTime)}`}
+                formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
             </p>
           </div>
           {estimatedCost !== null && (
