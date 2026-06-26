@@ -15,7 +15,7 @@ export const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
-        gold: "bg-gradient-to-br from-[var(--gold)] to-[var(--gold-bright)] text-[#080F1A] font-semibold shadow-[0_4px_16px_rgba(200,163,90,0.35)] hover:shadow-[0_8px_24px_rgba(200,163,90,0.5)] hover:-translate-y-px active:translate-y-0 transition-all duration-200 dark:text-[#080F1A]",
+        gold: "bg-gradient-to-br from-[var(--gold)] to-[var(--gold-bright)] text-white font-semibold shadow-[0_4px_16px_rgba(255,66,102,0.28)] hover:shadow-[0_8px_24px_rgba(255,66,102,0.38)] hover:-translate-y-px active:translate-y-0 transition-all duration-200 dark:text-white",
         /** CTA on navy page-hero headers — fixed colors so dark-mode token inversion doesn't wash out */
         hero: "!bg-white !text-[#080F1A] shadow-sm hover:!bg-white/90 dark:!bg-gold dark:!text-[#080F1A] dark:hover:!bg-gold-bright font-semibold",
         heroOutline:

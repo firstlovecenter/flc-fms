@@ -179,7 +179,7 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
         disabled={loading}
         className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200 ${
           subscribed
-            ? "bg-[rgba(200,163,90,0.15)] border-[rgba(200,163,90,0.3)] text-[var(--gold)] hover:-translate-y-0.5"
+            ? "bg-[rgba(255,66,102,0.12)] border-[rgba(255,66,102,0.28)] text-[var(--gold)] hover:-translate-y-0.5"
             : "bg-[var(--cream-dark)] border-[var(--border)] text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)] hover:border-[var(--border-dark)] hover:-translate-y-0.5"
         }`}
         title={subscribed ? "Disable push notifications" : "Enable push notifications"}
@@ -201,7 +201,7 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
       disabled={loading}
       className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
         subscribed
-          ? "bg-[rgba(200,163,90,0.15)] text-[var(--gold)]"
+          ? "bg-[rgba(255,66,102,0.12)] text-[var(--gold)]"
           : "bg-muted/50 text-muted-foreground hover:bg-muted"
       }`}
       title={subscribed ? "Disable push notifications" : "Enable push notifications"}

@@ -52,7 +52,7 @@ export default function VenueCatalog({
               <span
                 className={cn(
                   "ml-0.5 text-xs px-1.5 rounded-full tabular-nums",
-                  active ? "bg-white/15" : "bg-[rgba(10,22,40,0.06)] dark:bg-[rgba(255,255,255,0.08)]",
+                  active ? "bg-white/15" : "bg-[rgba(22,26,31,0.05)] dark:bg-[rgba(255,255,255,0.08)]",
                 )}
               >
                 {count}

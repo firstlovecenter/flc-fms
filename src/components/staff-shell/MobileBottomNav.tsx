@@ -23,7 +23,7 @@ export default function MobileBottomNav({ onMenuToggle }: { onMenuToggle?: () =>
   return (
     <nav
       aria-label="Primary"
-      className="lg:hidden fixed z-40 left-3 right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch overflow-hidden rounded-2xl border border-[var(--border)] bg-white/95 backdrop-blur-md shadow-[0_8px_30px_rgba(10,22,40,0.16)] dark:bg-[rgba(10,17,29,0.94)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.55)]"
+      className="lg:hidden fixed z-40 left-3 right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch overflow-hidden rounded-xl border border-[var(--border)] bg-white/95 backdrop-blur-md shadow-[0_8px_30px_rgba(22,26,31,0.14)] dark:bg-[rgba(22,24,28,0.94)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.55)]"
     >
       {ITEMS.map(({ href, label, icon: Icon }) => {
         const active =

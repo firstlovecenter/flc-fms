@@ -147,7 +147,7 @@ export default function InventoryCategoryManager({
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(10,22,40,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(22,26,31,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Package size={18} style={{ color: "var(--navy)" }} />
                     </div>
                     <div>

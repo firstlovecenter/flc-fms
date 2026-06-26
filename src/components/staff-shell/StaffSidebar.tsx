@@ -273,7 +273,7 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
             onClick={onClose}
-            className="absolute inset-0 bg-[rgba(10,22,40,0.6)] backdrop-blur-sm"
+            className="absolute inset-0 bg-[rgba(15,17,20,0.62)] backdrop-blur-sm"
           />
           <div className="relative h-full z-[51] flex flex-col animate-[slideInSidebar_0.22s_ease-out]">
             {renderSidebar(false, false)}

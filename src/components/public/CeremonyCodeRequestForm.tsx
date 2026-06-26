@@ -199,7 +199,7 @@ export default function CeremonyCodeRequestForm() {
         {!receiptFile ? (
           <label
             htmlFor="receipt-upload"
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[rgba(10,22,40,0.2)] rounded-xl cursor-pointer hover:border-[var(--navy)] hover:bg-[rgba(10,22,40,0.02)] transition-colors"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[rgba(22,26,31,0.18)] rounded-xl cursor-pointer hover:border-[var(--gold)] hover:bg-[rgba(255,66,102,0.04)] transition-colors"
           >
             <Upload size={22} className="text-[var(--muted)] mb-2" />
             <span className="text-sm font-medium text-[var(--navy)]">Click to upload receipt</span>
@@ -215,7 +215,7 @@ export default function CeremonyCodeRequestForm() {
             />
           </label>
         ) : (
-          <div className="relative border border-[rgba(10,22,40,0.1)] rounded-xl overflow-hidden bg-gray-50">
+          <div className="relative border border-[rgba(22,26,31,0.10)] rounded-xl overflow-hidden bg-gray-50">
             {receiptPreview ? (
               <img
                 src={receiptPreview}

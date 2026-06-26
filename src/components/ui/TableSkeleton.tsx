@@ -26,7 +26,7 @@ export function TableSkeleton({
       <table className="w-full text-sm">
         {showHeader && (
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(10,22,40,0.3)]">
+            <tr className="border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(22,24,28,0.45)]">
               {Array.from({ length: columns }).map((_, i) => (
                 <th key={i} className="px-4 py-3 text-left">
                   <Skeleton className="h-3 w-20 rounded" />

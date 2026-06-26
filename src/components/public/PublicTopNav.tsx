@@ -28,7 +28,7 @@ export default function PublicTopNav({
         </PageContainer>
       </nav>
       {(officePhone || officeEmail) && (
-        <div className="border-t border-[var(--border)] bg-[rgba(10,22,40,0.02)] dark:bg-[rgba(255,255,255,0.02)]">
+        <div className="border-t border-[var(--border)] bg-[rgba(22,26,31,0.02)] dark:bg-[rgba(255,255,255,0.02)]">
           <PageContainer maxWidth={maxWidth} className="py-1.5">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-[var(--text-muted)] min-w-0">
               {officePhone && (

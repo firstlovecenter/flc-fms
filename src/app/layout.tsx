@@ -1,26 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-jakarta",
-  display: "swap",
-});
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
 import PullToRefresh from "@/components/layout/PullToRefresh";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "FLC FMS — Facility Management", template: "%s | FLC FMS" },
@@ -39,8 +30,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f4ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1628" },
+    { media: "(prefers-color-scheme: light)", color: "#EEF1F5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1114" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -50,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${jakarta.variable}`}>
+    <html lang="en" suppressHydrationWarning className={outfit.variable}>
       <body className="surface-warm font-sans antialiased">
         <ThemeProvider>
           <GlobalDarkBackground />

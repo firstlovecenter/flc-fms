@@ -19,7 +19,7 @@ export default function GuestPageHero({
         "rounded-[var(--r-lg)] border relative overflow-hidden p-6 md:p-7",
         "bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)]",
         "dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl",
-        "border-[rgba(200,163,90,0.34)] dark:border-[var(--border)] shadow-lg text-[#fff]",
+        "border-[rgba(255,66,102,0.34)] dark:border-[var(--border)] shadow-lg text-[#fff]",
         className
       )}
     >

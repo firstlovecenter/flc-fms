@@ -378,17 +378,17 @@ export default function FacilityCatalogClient({ facilities }: { facilities: Faci
                   </div>
                 </CardContent>
 
-                <CardFooter className="p-2 sm:p-5 pt-0 border-t border-slate-50 mt-1 sm:mt-4 flex flex-col sm:flex-row gap-1.5 sm:gap-2">
+                <CardFooter className="p-2 sm:p-5 pt-0 border-t border-slate-100 dark:border-white/5 bg-transparent dark:bg-transparent mt-1 sm:mt-4 flex flex-col sm:flex-row gap-1.5 sm:gap-2">
                   {facility.underMaintenance ? (
                     <span className={cn(buttonVariants({ variant: "default" }), "w-full bg-slate-200 text-slate-400 cursor-not-allowed shadow-none rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium pointer-events-none")}>
                       Unavailable
                     </span>
                   ) : (
-                    <Link href={`/guest/book?facilityId=${facility.id}`} className={cn(buttonVariants({ variant: "default" }), "w-full bg-[var(--navy)] text-white hover:bg-[var(--navy-light)] shadow-none rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50")}>
+                    <Link href={`/guest/book?facilityId=${facility.id}`} className={cn(buttonVariants({ variant: "default" }), "w-full bg-[var(--submit-bg)] text-[var(--submit-fg)] hover:bg-[var(--submit-bg-hover)] shadow-none rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50")}>
                       Book
                     </Link>
                   )}
-                  <Link href={`/catalog/facilities/${facility.id}`} className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto text-slate-600 border-slate-200 rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border bg-background hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50")}>
+                  <Link href={`/catalog/facilities/${facility.id}`} className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/5 rounded-[calc(var(--radius)-2px)] h-9 sm:h-9 px-2 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border bg-background dark:bg-white/[0.03] hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50")}>
                     Details
                   </Link>
                 </CardFooter>

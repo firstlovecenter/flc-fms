@@ -159,7 +159,7 @@ export default function TaskInbox({
       {/* Ambient glow */}
       <div
         className="fixed top-[100px] -right-[80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0"
-        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, rgba(255,66,102,0.08) 0%, transparent 70%)" }}
       />
 
       {/* Hero header */}
@@ -188,8 +188,8 @@ export default function TaskInbox({
               className={cn(
                 "px-4 py-2 rounded-full text-[0.8rem] font-semibold transition-all duration-150 border",
                 view === v
-                  ? "bg-[var(--navy)] dark:bg-[var(--navy-light)] text-white border-[rgba(200,163,90,0.3)] shadow-[0_4px_12px_rgba(10,22,40,0.15)] -translate-y-0.5"
-                  : "bg-white/80 dark:bg-[rgba(255,255,255,0.06)] text-[var(--slate)] dark:text-[var(--muted)] border-[rgba(200,163,90,0.15)] hover:-translate-y-px hover:border-[rgba(200,163,90,0.3)]"
+                  ? "bg-primary text-primary-foreground border-[rgba(255,66,102,0.28)] shadow-[0_4px_12px_rgba(255,66,102,0.18)] -translate-y-0.5"
+                  : "bg-white/80 dark:bg-[rgba(255,255,255,0.06)] text-[var(--slate)] dark:text-[var(--muted)] border-[rgba(255,66,102,0.14)] hover:-translate-y-px hover:border-[rgba(255,66,102,0.28)]"
               )}
             >
               {v === "OPEN" ? "Open" : "Completed"}
@@ -210,7 +210,7 @@ export default function TaskInbox({
               className={cn(
                 "px-3 py-1.5 rounded-full text-[0.72rem] font-semibold border transition-colors",
                 filter === key
-                  ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] bg-[rgba(200,163,90,0.12)]"
+                  ? "border-[rgba(255,66,102,0.42)] text-[var(--navy)] bg-[rgba(255,66,102,0.10)]"
                   : "border-transparent text-[var(--muted)] hover:text-[var(--navy)]"
               )}
             >
@@ -299,7 +299,7 @@ function TaskRow({
           "flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all duration-150",
           done
             ? "bg-success border-success text-[#fff]"
-            : "border-[rgba(200,163,90,0.5)] hover:border-success hover:scale-110"
+            : "border-[rgba(255,66,102,0.42)] hover:border-success hover:scale-110"
         )}
       >
         {done && <Check size={13} strokeWidth={3} />}
@@ -431,7 +431,7 @@ function QuickAddBar({
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[560px] z-30">
-      <Card className="shadow-[0_12px_32px_rgba(10,22,40,0.25)] border-[rgba(200,163,90,0.3)] p-3 space-y-2 backdrop-blur-md">
+      <Card className="shadow-[0_12px_32px_rgba(22,26,31,0.18)] border-[rgba(255,66,102,0.26)] p-3 space-y-2 backdrop-blur-md">
         {showDetails && (
           <div className="grid grid-cols-3 gap-2 animate-fade-in">
             <div>
@@ -491,7 +491,7 @@ function QuickAddBar({
             className={cn(
               "p-2 rounded-lg border transition-colors",
               showDetails
-                ? "border-[rgba(200,163,90,0.5)] text-[var(--navy)] bg-[rgba(200,163,90,0.12)]"
+                ? "border-[rgba(255,66,102,0.42)] text-[var(--navy)] bg-[rgba(255,66,102,0.10)]"
                 : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--navy)]"
             )}
           >

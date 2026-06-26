@@ -37,10 +37,10 @@ export function GlobalDarkBackground() {
         onError={() => setBgImage(LEFT_SPLIT_IMAGE_FALLBACK)}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* Tints and Gradients to match PublicSplitShell exactly */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(6,15,30,0.84) 0%, rgba(8,20,40,0.68) 48%, rgba(17,33,59,0.6) 100%)" }} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(224, 186, 112, 0.14) 0%, rgba(224, 186, 112, 0) 70%)" }} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(75% 55% at 88% 14%, rgba(150, 174, 215, 0.2) 0%, rgba(150, 174, 215, 0) 75%)" }} />
+      {/* Tints and gradients keep the image visible while aligning with FLC tokens. */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(15,17,20,0.88) 0%, rgba(22,24,28,0.72) 48%, rgba(15,23,42,0.44) 100%)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 60% at 14% 86%, rgba(148,163,184,0.12) 0%, rgba(148,163,184,0) 70%)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(75% 55% at 88% 14%, rgba(14,165,233,0.12) 0%, rgba(14,165,233,0) 75%)" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(3,8,16,0.38) 0%, rgba(3,8,16,0) 55%)" }} />
     </div>
   );
