@@ -243,6 +243,10 @@ export default function GuestBookingForm({
       setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
       return;
     }
+    if (!res.facilityId || res.facilityId !== selectedFacility?.id) {
+      setCodeError("This code is for a different venue. Please select the venue it was issued for.");
+      return;
+    }
     setValidatedCodeId(res.codeId);
   }
 

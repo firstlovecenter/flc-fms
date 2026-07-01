@@ -514,6 +514,9 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
       if (codeRecord.ceremonyType !== validated.category.toUpperCase()) {
         return { error: "This payment code is for a different ceremony type." };
       }
+      if (!codeRecord.facilityId || codeRecord.facilityId !== validated.facilityId) {
+        return { error: "This payment code is for a different venue." };
+      }
       const config = await tx.ceremonyVenueConfig.findUnique({
         where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
       });
@@ -741,6 +744,12 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       });
       if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
         return { error: "Invalid or expired ceremony code." };
+      }
+      if (codeRecord.ceremonyType !== validated.category.toUpperCase()) {
+        return { error: "This payment code is for a different ceremony type." };
+      }
+      if (!codeRecord.facilityId || codeRecord.facilityId !== validated.facilityId) {
+        return { error: "This payment code is for a different venue." };
       }
       const config = await tx.ceremonyVenueConfig.findUnique({
         where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },

@@ -12,11 +12,27 @@ import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { sendCeremonyCodeEmail } from "@/lib/notifications/email";
 import type { CeremonyType } from "@prisma/client";
 
+/**
+ * Codes are bound to one specific venue so the amount the requester paid
+ * (that facility's flat CeremonyVenueConfig price) matches what the code can
+ * redeem — otherwise a code paid for a cheaper venue could book a pricier one.
+ */
+async function assertVenueOffersCeremony(facilityId: string, ceremonyType: CeremonyType) {
+  const config = await prisma.ceremonyVenueConfig.findUnique({
+    where: { facilityId_type: { facilityId, type: ceremonyType } },
+  });
+  if (!config || !config.isActive) {
+    return "The selected venue does not offer this ceremony type.";
+  }
+  return null;
+}
+
 const RequestSchema = z.object({
   name: z.string().min(2, "Full name is required"),
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
   notes: z.string().optional(),
   receiptUrl: z.string().url().optional(),
 });
@@ -37,7 +53,10 @@ export async function requestCeremonyCode(
     return { error: validated.error.errors[0].message };
   }
 
-  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
+  const { name, phone, email, ceremonyType, facilityId, notes, receiptUrl } = validated.data;
+
+  const venueError = await assertVenueOffersCeremony(facilityId, ceremonyType as CeremonyType);
+  if (venueError) return { error: venueError };
 
   // Generate a unique code
   let code: string;
@@ -54,6 +73,7 @@ export async function requestCeremonyCode(
       code,
       status: "PENDING",
       ceremonyType: ceremonyType as CeremonyType,
+      facilityId,
       requesterName: name,
       requesterPhone: phone,
       requesterEmail: email,
@@ -183,6 +203,7 @@ export async function validateCeremonyCode(
   valid: boolean;
   codeId?: string;
   ceremonyType?: string;
+  facilityId?: string | null;
   error?: string;
 }> {
   const record = await prisma.ceremonyBookingCode.findUnique({
@@ -199,6 +220,7 @@ export async function validateCeremonyCode(
     valid: true,
     codeId: record.id,
     ceremonyType: record.ceremonyType,
+    facilityId: record.facilityId,
   };
 }
 
@@ -209,6 +231,7 @@ const StaffCreateSchema = z.object({
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
   notes: z.string().optional(),
   receiptUrl: z.string().url().optional(),
 });
@@ -223,7 +246,10 @@ export async function staffCreateCeremonyCode(
     return { error: validated.error.errors[0].message };
   }
 
-  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
+  const { name, phone, email, ceremonyType, facilityId, notes, receiptUrl } = validated.data;
+
+  const venueError = await assertVenueOffersCeremony(facilityId, ceremonyType as CeremonyType);
+  if (venueError) return { error: venueError };
 
   let code: string;
   let attempts = 0;
@@ -239,6 +265,7 @@ export async function staffCreateCeremonyCode(
       code,
       status: "PENDING",
       ceremonyType: ceremonyType as CeremonyType,
+      facilityId,
       requesterName: name,
       requesterPhone: phone,
       requesterEmail: email,
@@ -258,6 +285,7 @@ const UpdateSchema = z.object({
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
   notes: z.string().optional(),
 });
 
@@ -276,12 +304,16 @@ export async function updateCeremonyCode(
   if (!record) return { error: "Code not found." };
   if (record.status === "USED") return { error: "Cannot edit a USED code." };
 
+  const venueError = await assertVenueOffersCeremony(validated.data.facilityId, validated.data.ceremonyType as CeremonyType);
+  if (venueError) return { error: venueError };
+
   await prisma.ceremonyBookingCode.update({
     where: { id: codeId },
     data: {
       requesterName:  validated.data.name,
       requesterPhone: validated.data.phone,
       requesterEmail: validated.data.email,
+      facilityId:     validated.data.facilityId,
       ceremonyType:   validated.data.ceremonyType as CeremonyType,
       notes:          validated.data.notes ?? null,
     },
@@ -388,6 +420,7 @@ export async function listCeremonyCodes(searchParams: {
       take: pageSize,
       include: {
         activatedBy: { select: { name: true } },
+        facility: { select: { name: true } },
       },
     }),
     prisma.ceremonyBookingCode.count({ where }),

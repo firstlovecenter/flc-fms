@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, FileImage } from "lucide-react";
 import { requestCeremonyCode } from "@/actions/ceremony-code.actions";
+import { getCeremonyBookableFacilities } from "@/actions/ceremony-venue.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
+
+type Venue = { id: string; name: string; flatPrice: number };
 
 export default function CeremonyCodeRequestForm() {
   const [form, setForm] = useState({
@@ -16,8 +20,25 @@ export default function CeremonyCodeRequestForm() {
     phone: "",
     email: "",
     ceremonyType: "WEDDING" as "WEDDING" | "NAMING",
+    facilityId: "",
     notes: "",
   });
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(false);
+
+  useEffect(() => {
+    setVenuesLoading(true);
+    getCeremonyBookableFacilities(form.ceremonyType)
+      .then((v) => {
+        setVenues(v as Venue[]);
+        setForm((prev) => (v.some((f) => f.id === prev.facilityId) ? prev : { ...prev, facilityId: "" }));
+      })
+      .catch(() => setVenues([]))
+      .finally(() => setVenuesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.ceremonyType]);
+
+  const selectedVenue = venues.find((v) => v.id === form.facilityId) ?? null;
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -147,6 +168,33 @@ export default function CeremonyCodeRequestForm() {
           <option value="WEDDING">Wedding</option>
           <option value="NAMING">Naming Ceremony</option>
         </NativeSelect>
+      </div>
+
+      <div className="form-group">
+        <Label htmlFor="ceremony-venue">Venue *</Label>
+        <NativeSelect
+          id="ceremony-venue"
+          name="facilityId"
+          value={form.facilityId}
+          onChange={handleChange}
+          className="w-full"
+          required
+          disabled={venuesLoading}
+        >
+          <option value="" disabled>
+            {venuesLoading ? "Loading venues…" : "Select a venue"}
+          </option>
+          {venues.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name} — {formatCurrency(v.flatPrice)}
+            </option>
+          ))}
+        </NativeSelect>
+        {selectedVenue && (
+          <p className="text-xs text-[var(--muted)] mt-1">
+            Pay <strong>{formatCurrency(selectedVenue.flatPrice)}</strong> for {selectedVenue.name}. Your code will only work for this venue.
+          </p>
+        )}
       </div>
 
       <div className="form-group">
