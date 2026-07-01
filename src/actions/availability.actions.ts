@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { bookingOverlapsSlot, toMinutes } from "@/lib/time-utils";
+import { isCeremonyDay } from "@/lib/ceremony-utils";
 import {
   isBeyondMaxBookingAdvance,
   MAX_BOOKING_ADVANCE_ERROR,
@@ -54,6 +55,16 @@ export async function getFacilityAvailability(
         success: false,
         error: "Event category is required.",
         slots: [],
+      };
+    }
+
+    if (await isCeremonyDay(prisma, date)) {
+      return {
+        success: true,
+        slots: [],
+        maintenanceWindow: null,
+        emergencyMaintenance: false,
+        message: "This date is reserved for ceremony bookings. Regular bookings are not available.",
       };
     }
 
@@ -286,6 +297,10 @@ export async function getCeremonyAvailability(
       return { success: true, slots: [], message: "The office is closed on Mondays (Sabbath day)." };
     }
 
+    if (!(await isCeremonyDay(prisma, date))) {
+      return { success: true, slots: [], message: "Ceremony bookings are only available on designated ceremony days." };
+    }
+
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -492,6 +507,14 @@ export async function getBookableFacilitiesByCategoryDate(
   try {
     if (!category) {
       return { success: false, error: "Event category is required.", facilities: [] };
+    }
+
+    if (await isCeremonyDay(prisma, date)) {
+      return {
+        success: true,
+        facilities: [],
+        message: "This date is reserved for ceremony bookings. Regular bookings are not available.",
+      };
     }
 
     if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date)) {

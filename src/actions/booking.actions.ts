@@ -15,7 +15,7 @@ import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/noti
 import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
-import { CeremonyDetailsSchema } from "@/lib/ceremony-utils";
+import { CeremonyDetailsSchema, isCeremonyCategory, isCeremonyDay } from "@/lib/ceremony-utils";
 import { MAX_BOOKING_ADVANCE_ERROR, MAX_BOOKING_ADVANCE_HOURS } from "@/lib/booking-window";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
@@ -268,6 +268,17 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     };
   }
 
+  // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
+  // days; every other category is never allowed on a ceremony day.
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
+  if (wantsCeremony && !dayIsCeremonyDay) {
+    return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
+  }
+  if (!wantsCeremony && dayIsCeremonyDay) {
+    return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
+  }
+
   // Wrap conflict check + pricing computation + booking creation in a single transaction
   // with an advisory lock to prevent race conditions on concurrent bookings.
   type TxResult =
@@ -311,14 +322,15 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
       totalAmount   = amountResult.totalAmount;
       unitPrice     = amountResult.unitPrice;
       pricingSource = amountResult.pricingSource;
+    }
 
-      // Check capacity: count overlapping bookings and compare to slot's maxBookings
-      const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
-      const maxAllowed = slot?.maxBookings ?? 1;
-      const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
-      if (overlapCount >= maxAllowed) {
-        return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
-      }
+    // Check capacity: count overlapping bookings and compare to slot's maxBookings.
+    // Runs for BOTH ceremony and regular staff bookings (previously skipped for ceremonies).
+    const slot = await findApplicableTimeSlot(tx, validated.facilityId, validated.category, validated.startTime, validated.endTime);
+    const maxAllowed = slot?.maxBookings ?? 1;
+    const overlapCount = await countOverlappingBookings(tx, validated.facilityId, validated.startTime, validated.endTime);
+    if (overlapCount >= maxAllowed) {
+      return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
     }
 
     const booking = await tx.booking.create({
@@ -470,6 +482,17 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
     return {
       error: `This facility is scheduled for maintenance from ${fmt(maintConflict.scheduledStart!)} to ${fmt(maintConflict.scheduledEnd!)}. Please choose dates outside this window.`,
     };
+  }
+
+  // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
+  // days; every other category is never allowed on a ceremony day.
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
+  if (wantsCeremony && !dayIsCeremonyDay) {
+    return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
+  }
+  if (!wantsCeremony && dayIsCeremonyDay) {
+    return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
   }
 
   type TxResult =
@@ -665,6 +688,17 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     return {
       error: `This facility is scheduled for maintenance from ${fmt(maintConflict.scheduledStart!)} to ${fmt(maintConflict.scheduledEnd!)}. Please choose dates outside this window.`,
     };
+  }
+
+  // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
+  // days; every other category is never allowed on a ceremony day.
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
+  if (wantsCeremony && !dayIsCeremonyDay) {
+    return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
+  }
+  if (!wantsCeremony && dayIsCeremonyDay) {
+    return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
   }
 
   // Find or create a Patron for the guest so booking is payable
@@ -1112,6 +1146,17 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
     };
   }
 
+  // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
+  // days; every other category is never allowed on a ceremony day.
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
+  if (wantsCeremony && !dayIsCeremonyDay) {
+    return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
+  }
+  if (!wantsCeremony && dayIsCeremonyDay) {
+    return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
+  }
+
   // Wrap conflict check + price computation + update in a transaction with advisory lock
   type TxResult =
     | { booking: Awaited<ReturnType<typeof prisma.booking.update>> & { facility: { name: string } | null } }
@@ -1128,16 +1173,34 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
       return { error: "Facility already has a booking for that time slot." };
     }
 
-    // Recompute price inside the lock
-    const amountResult = await computeConfiguredBookingAmount(
-      tx,
-      validated.facilityId,
-      validated.category,
-      validated.startTime,
-      validated.endTime,
-      validated.useAirConditioner,
-    );
-    if ("error" in amountResult) return { error: amountResult.error! };
+    let totalAmount: number;
+    let unitPrice: number;
+    let pricingSource: string;
+
+    if (wantsCeremony) {
+      // Ceremony booking: flat-rate pricing from CeremonyVenueConfig, mirrors the creation paths.
+      const ctype = validated.category.toUpperCase() as "WEDDING" | "NAMING";
+      const cfg = await tx.ceremonyVenueConfig.findUnique({
+        where: { facilityId_type: { facilityId: validated.facilityId, type: ctype } },
+      });
+      totalAmount   = cfg ? Number(cfg.price) : 0;
+      unitPrice     = totalAmount;
+      pricingSource = "CEREMONY_CONFIG";
+    } else {
+      // Recompute price inside the lock
+      const amountResult = await computeConfiguredBookingAmount(
+        tx,
+        validated.facilityId,
+        validated.category,
+        validated.startTime,
+        validated.endTime,
+        validated.useAirConditioner,
+      );
+      if ("error" in amountResult) return { error: amountResult.error! };
+      totalAmount   = amountResult.totalAmount;
+      unitPrice     = amountResult.unitPrice;
+      pricingSource = amountResult.pricingSource;
+    }
 
     const booking = await tx.booking.update({
       where: { id: bookingId },
@@ -1150,9 +1213,9 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
         endTime:      validated.endTime,
         acRequested:  validated.useAirConditioner,
         notes:        validated.notes ?? null,
-        totalAmount:  amountResult.totalAmount,
-        resolvedUnitPrice: amountResult.unitPrice,
-        resolvedPricingSource: amountResult.pricingSource,
+        totalAmount,
+        resolvedUnitPrice: unitPrice,
+        resolvedPricingSource: pricingSource,
         updatedAt:    new Date(),
       },
       include: {

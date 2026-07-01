@@ -92,6 +92,33 @@ export function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ── Ceremony Category / Day Gating ────────────────────────────────────────────
+
+/** The two ceremony booking categories, as stored on Booking.category (uppercase). */
+export const CEREMONY_CATEGORIES = ["WEDDING", "NAMING"] as const;
+
+/** True if `category` (case-insensitive) is a ceremony category (WEDDING/NAMING). */
+export function isCeremonyCategory(category: string | null | undefined): boolean {
+  if (!category) return false;
+  return (CEREMONY_CATEGORIES as readonly string[]).includes(category.toUpperCase());
+}
+
+/**
+ * True if `date` is a designated ceremony day: the first Saturday of its month,
+ * or a staff-added CeremonyDateOverride. Accepts either the global prisma client
+ * or a transaction client so it can be called both inside and outside a transaction.
+ */
+export async function isCeremonyDay(
+  db: { ceremonyDateOverride: { findMany: (args: { select: { date: true } }) => Promise<{ date: Date }[]> } },
+  date: Date,
+): Promise<boolean> {
+  const dateStr = toDateStr(date);
+  const firstSats = getFirstSaturdaysForMonths(13).map(toDateStr);
+  if (firstSats.includes(dateStr)) return true;
+  const overrides = await db.ceremonyDateOverride.findMany({ select: { date: true } });
+  return overrides.some((o) => toDateStr(o.date) === dateStr);
+}
+
 export function generateCeremonyCode(): string {
   // 8-char alphanumeric, uppercase — no ambiguous chars (0, O, I, 1)
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
