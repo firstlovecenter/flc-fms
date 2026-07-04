@@ -157,7 +157,7 @@ export async function notifyBookingRejected(params: {
   const suffix = params.reason ? ` Reason: ${params.reason}` : "";
   await sendSMS({
     to: params.phone,
-    message: `Your booking "${params.bookingTitle}" has been REJECTED.${suffix}`,
+    message: `Your booking "${params.bookingTitle}" has been DECLINED.${suffix}`,
   });
 }
 
@@ -191,7 +191,7 @@ export async function notifyBookingConfirmation(params: {
     : "";
   await sendSMS({
     to: params.phone,
-    message: `Booking confirmed: "${params.bookingTitle}" at ${params.facilityName} on ${date}.${claimSuffix}`,
+    message: `Your booking "${params.bookingTitle}" at ${params.facilityName} on ${date}.${claimSuffix} is being reviewed.`,
   });
 }
 
