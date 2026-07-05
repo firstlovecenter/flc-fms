@@ -11,6 +11,7 @@ import {
   getPublicBookingCategories,
 } from "@/actions/availability.actions";
 import { getCeremonyBookableFacilities, getCeremonyDays } from "@/actions/ceremony-venue.actions";
+import { getActiveBishops } from "@/actions/bishop.actions";
 import { validateCeremonyCode } from "@/actions/ceremony-code.actions";
 import { formatCurrency } from "@/lib/utils";
 import { DayPicker } from "react-day-picker";
@@ -24,7 +25,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toDateStr } from "@/lib/ceremony-utils";
-import { MAX_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
+import { MAX_BOOKING_ADVANCE_DAYS, MAX_CEREMONY_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Card } from "@/components/ui/card";
 
 import "react-day-picker/dist/style.css";
@@ -175,8 +176,10 @@ export default function GuestBookingForm({
   const [namingEmail, setNamingEmail] = useState("");
   const [pastorName, setPastorName] = useState("");
   const [pastorPhone, setPastorPhone] = useState("");
-  const [bishopName, setBishopName] = useState("");
-  const [bishopPhone, setBishopPhone] = useState("");
+  // Officiating Bishop — selected from the admin-managed list (shared by wedding + naming)
+  const [bishopId, setBishopId] = useState("");
+  const [bishops, setBishops] = useState<{ id: string; name: string; phone: string }[]>([]);
+  const selectedBishop = bishops.find((b) => b.id === bishopId) ?? null;
 
   // ── Unified booking-type state ───────────────────────────────────────────────
   const [ceremonyVenues, setCeremonyVenues] = useState<Facility[]>([]);
@@ -213,7 +216,10 @@ export default function GuestBookingForm({
     if (ceremonyDays.length === 0) {
       getCeremonyDays().then(setFetchedCeremonyDays).catch(() => setFetchedCeremonyDays([]));
     }
-  }, [bookingType, isCeremonyBooking, ceremonyDays.length]);
+    if (bishops.length === 0) {
+      getActiveBishops().then(setBishops).catch(() => setBishops([]));
+    }
+  }, [bookingType, isCeremonyBooking, ceremonyDays.length, bishops.length]);
 
   function handleBookingTypeChange(next: BookingType) {
     if (next === bookingType) return;
@@ -227,6 +233,7 @@ export default function GuestBookingForm({
     setValidatedCodeId(initialCeremonyCodeId ?? "");
     setCodeInput("");
     setCodeError(null);
+    setBishopId("");
   }
 
   async function handleValidateCode() {
@@ -390,7 +397,9 @@ export default function GuestBookingForm({
   const disabledDays = [
     () => !isCeremonyBooking && !category,
     { before: addDays(new Date(), 1) },
-    ...(bypassLeadTime ? [] : [{ after: addDays(new Date(), MAX_BOOKING_ADVANCE_DAYS) }]),
+    ...(bypassLeadTime
+      ? []
+      : [{ after: addDays(new Date(), isCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_DAYS : MAX_BOOKING_ADVANCE_DAYS) }]),
     ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
     (date: Date) =>
       !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
@@ -443,12 +452,17 @@ export default function GuestBookingForm({
     const builtCeremonyDetails = (() => {
       if (!isCeremonyBooking || !ceremonyType) return undefined;
       if (ceremonyType === "wedding") {
-        return { type: "wedding" as const, brideName, groomName, contactWhatsApp: coupleContact, email: coupleEmail };
+        return {
+          type: "wedding" as const,
+          brideName, groomName, contactWhatsApp: coupleContact, email: coupleEmail,
+          bishopName: selectedBishop?.name ?? "", bishopPhone: selectedBishop?.phone ?? "",
+        };
       }
       return {
         type: "naming" as const,
         fatherName, fatherPhone, fatherWhatsApp, childrenNames, childBirthday,
-        motherName, motherPhone, email: namingEmail, pastorName, pastorPhone, bishopName, bishopPhone,
+        motherName, motherPhone, email: namingEmail, pastorName, pastorPhone,
+        bishopName: selectedBishop?.name ?? "", bishopPhone: selectedBishop?.phone ?? "",
       };
     })();
 
@@ -682,7 +696,7 @@ export default function GuestBookingForm({
                 onSelect={(date) => { setSelectedDate(date); setSelectedSlot(null); }}
                 disabled={disabledDays}
                 fromDate={addDays(new Date(), 1)}
-                toDate={addDays(new Date(), 90)}
+                toDate={addDays(new Date(), isCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_DAYS : 90)}
                 modifiersStyles={{
                   selected: { background: "var(--navy)", color: "#ffffff", borderRadius: "50%" },
                   today: { color: "var(--gold)", fontWeight: "bold" },
@@ -1069,6 +1083,18 @@ export default function GuestBookingForm({
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
               <Input type="email" value={coupleEmail} onChange={(e) => setCoupleEmail(e.target.value)} placeholder="couple@email.com" required />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Officiating Bishop *</label>
+              <NativeSelect value={bishopId} onChange={(e) => setBishopId(e.target.value)} className="w-full" required>
+                <option value="">Select your Bishop…</option>
+                {bishops.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </NativeSelect>
+              {selectedBishop && (
+                <p className="text-xs text-[var(--muted)] mt-1">{selectedBishop.phone}</p>
+              )}
+            </div>
           </div>
         </Card>
       )}
@@ -1143,12 +1169,16 @@ export default function GuestBookingForm({
                 <Input value={pastorPhone} onChange={(e) => setPastorPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Name *</label>
-                <Input value={bishopName} onChange={(e) => setBishopName(e.target.value)} className="text-sm" placeholder="Bishop's name" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Bishop&apos;s Contact *</label>
-                <Input value={bishopPhone} onChange={(e) => setBishopPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
+                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Officiating Bishop *</label>
+                <NativeSelect value={bishopId} onChange={(e) => setBishopId(e.target.value)} className="w-full" required>
+                  <option value="">Select your Bishop…</option>
+                  {bishops.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </NativeSelect>
+                {selectedBishop && (
+                  <p className="text-xs text-[var(--muted)] mt-1">{selectedBishop.phone}</p>
+                )}
               </div>
             </div>
           </div>
@@ -1193,8 +1223,8 @@ export default function GuestBookingForm({
             (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||
-            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail))) ||
-            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !pastorName.trim() || !pastorPhone.trim() || !bishopName.trim() || !bishopPhone.trim()))
+            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail) || !bishopId)) ||
+            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !pastorName.trim() || !pastorPhone.trim() || !bishopId))
           }
           className="w-full sm:flex-1"
         >

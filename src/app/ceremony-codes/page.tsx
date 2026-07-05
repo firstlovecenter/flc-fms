@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { requirePerm } from "@/lib/auth/guards";
 import { listCeremonyCodes } from "@/actions/ceremony-code.actions";
 import { listCeremonyDateOverrides } from "@/actions/ceremony-venue.actions";
 import CeremonyCodesClient from "@/components/ceremony/CeremonyCodesClient";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Ceremony Codes" };
 
@@ -23,11 +26,16 @@ export default async function CeremonyCodesPage({
 
   return (
     <div className="w-full space-y-5">
-      <div>
-        <h1 className="page-title">Ceremony Codes</h1>
-        <p className="page-subtitle mt-1">
-          Manage payment codes for wedding and naming ceremony bookings.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="page-title">Ceremony Codes</h1>
+          <p className="page-subtitle mt-1">
+            Manage payment codes for wedding and naming ceremony bookings.
+          </p>
+        </div>
+        <Link href="/ceremony-codes/bishops" className={cn(buttonVariants({ variant: "outline" }))}>
+          Bishops
+        </Link>
       </div>
       <CeremonyCodesClient initialCodes={codes} total={total} initialDateOverrides={dateOverrides} />
     </div>

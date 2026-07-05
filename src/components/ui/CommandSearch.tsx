@@ -49,6 +49,7 @@ const NAV_ICONS: Record<string, React.ElementType> = {
   "/bookings": CalendarDays,
   "/checkin": ClipboardCheck,
   "/ceremony-codes": KeyRound,
+  "/ceremony-codes/bishops": Users,
   "/bookings/content": FileText,
   "/duty": ClipboardList,
   "/facilities": Building2,
@@ -76,6 +77,7 @@ const NAV_KEYWORDS: Record<string, string[]> = {
   "/bookings": ["reservations", "booking list"],
   "/checkin": ["checkin", "arrival"],
   "/ceremony-codes": ["wedding", "naming", "ceremony", "access code"],
+  "/ceremony-codes/bishops": ["bishop", "clergy", "officiant"],
   "/bookings/content": ["terms", "content"],
   "/facilities": ["venues", "rooms"],
   "/facilities/categories": ["categories", "pricing", "rates"],
@@ -124,6 +126,16 @@ function buildSearchItems(
         group: "Navigate",
       });
     }
+  }
+
+  if (hasPerm("ceremony:manage")) {
+    items.push({
+      label: "Bishops",
+      href: "/ceremony-codes/bishops",
+      icon: NAV_ICONS["/ceremony-codes/bishops"],
+      keywords: NAV_KEYWORDS["/ceremony-codes/bishops"],
+      group: "Navigate",
+    });
   }
 
   if (role === "SUPER_ADMIN") {

@@ -154,6 +154,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
                   ["Groom's Name", cd.groomName],
                   ["Contact (WhatsApp)", cd.contactWhatsApp],
                   ["Email", cd.email],
+                  ["Bishop", `${cd.bishopName} (${cd.bishopPhone})`],
                 ].map(([label, value]) => (
                   <tr key={label}>
                     <td className="py-2 pr-4 text-[var(--muted)] w-40">{label}</td>
