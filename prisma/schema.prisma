@@ -789,6 +789,22 @@ model CeremonyDateOverride {
   @@map("ceremony_date_overrides")
 }
 
+/**
+ * Officiating bishops selectable on the wedding / naming ceremony booking forms.
+ */
+model Bishop {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("bishops")
+}
+
 // ─── Site Settings (key-value store for FM-editable config) ──────────────────
 
 model SiteSetting {

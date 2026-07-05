@@ -6,6 +6,8 @@ import { isCeremonyDay } from "@/lib/ceremony-utils";
 import {
   isBeyondMaxBookingAdvance,
   MAX_BOOKING_ADVANCE_ERROR,
+  MAX_CEREMONY_BOOKING_ADVANCE_DAYS,
+  MAX_CEREMONY_BOOKING_ADVANCE_ERROR,
   MIN_BOOKING_NOTICE_HOURS,
 } from "@/lib/booking-window";
 
@@ -285,8 +287,8 @@ export async function getCeremonyAvailability(
   }
 ) {
   try {
-    if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date)) {
-      return { success: true, slots: [], message: MAX_BOOKING_ADVANCE_ERROR };
+    if (!options?.bypassMaxAdvance && isBeyondMaxBookingAdvance(date, undefined, MAX_CEREMONY_BOOKING_ADVANCE_DAYS)) {
+      return { success: true, slots: [], message: MAX_CEREMONY_BOOKING_ADVANCE_ERROR };
     }
 
     const dayOfWeek = date.getDay();

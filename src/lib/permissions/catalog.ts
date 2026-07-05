@@ -30,7 +30,7 @@ export const PERMISSION_META = {
   "duty:view":              { label: "View Duty Logs",         description: "View duty log assignments." },
   "duty:manage":            { label: "Manage Duty Logs",       description: "Create templates, assign duty, and sign off logs." },
   "checkin:perform":        { label: "Perform Check-In",       description: "Check patrons in and out of facilities." },
-  "ceremony:manage":        { label: "Manage Ceremony",        description: "Manage ceremony codes and venue configurations." },
+  "ceremony:manage":        { label: "Manage Ceremony",        description: "Manage ceremony codes, venue configurations, and bishops." },
   "settings:manage":        { label: "Manage Site Settings",   description: "Edit office contact info and site configuration." },
   "reports:view":           { label: "View Reports",           description: "Access the reports dashboard and download CSVs." },
   "reports:manage_subscriptions": { label: "Manage Report Subscriptions", description: "Manage scheduled report email subscribers." },

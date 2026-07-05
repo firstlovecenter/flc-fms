@@ -8,6 +8,8 @@ export interface WeddingDetails {
   groomName: string;
   contactWhatsApp: string;
   email: string;
+  bishopName: string;
+  bishopPhone: string;
 }
 
 export interface NamingDetails {
@@ -36,6 +38,8 @@ export const WeddingDetailsSchema = z.object({
   groomName: z.string().min(2, "Groom's name is required"),
   contactWhatsApp: z.string().min(9, "Contact number is required"),
   email: z.string().email("A valid email is required"),
+  bishopName: z.string().min(2, "Bishop's name is required"),
+  bishopPhone: z.string().min(9, "Bishop's contact is required"),
 });
 
 export const NamingDetailsSchema = z.object({

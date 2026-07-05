@@ -16,7 +16,12 @@ import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
 import { CeremonyDetailsSchema, isCeremonyCategory, isCeremonyDay } from "@/lib/ceremony-utils";
-import { MAX_BOOKING_ADVANCE_ERROR, MAX_BOOKING_ADVANCE_HOURS } from "@/lib/booking-window";
+import {
+  MAX_BOOKING_ADVANCE_ERROR,
+  MAX_BOOKING_ADVANCE_HOURS,
+  MAX_CEREMONY_BOOKING_ADVANCE_ERROR,
+  MAX_CEREMONY_BOOKING_ADVANCE_HOURS,
+} from "@/lib/booking-window";
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
@@ -234,8 +239,12 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
   }
 
-  if (violatesLeadTime(validated.startTime) && !hasPrivilegedBooking(session)) {
-    return { error: MAX_BOOKING_ADVANCE_ERROR };
+  const wantsCeremonyBooking = isCeremonyCategory(validated.category);
+  if (
+    violatesLeadTime(validated.startTime, wantsCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_HOURS : LEAD_TIME_HOURS) &&
+    !hasPrivilegedBooking(session)
+  ) {
+    return { error: wantsCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -270,12 +279,11 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
 
   // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
   // days; every other category is never allowed on a ceremony day.
-  const wantsCeremony = isCeremonyCategory(validated.category);
   const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
-  if (wantsCeremony && !dayIsCeremonyDay) {
+  if (wantsCeremonyBooking && !dayIsCeremonyDay) {
     return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
   }
-  if (!wantsCeremony && dayIsCeremonyDay) {
+  if (!wantsCeremonyBooking && dayIsCeremonyDay) {
     return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
   }
 
@@ -450,8 +458,9 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
   }
 
-  if (violatesLeadTime(validated.startTime)) {
-    return { error: MAX_BOOKING_ADVANCE_ERROR };
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  if (violatesLeadTime(validated.startTime, wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_HOURS : LEAD_TIME_HOURS)) {
+    return { error: wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -486,7 +495,6 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
 
   // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
   // days; every other category is never allowed on a ceremony day.
-  const wantsCeremony = isCeremonyCategory(validated.category);
   const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
   if (wantsCeremony && !dayIsCeremonyDay) {
     return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
@@ -659,8 +667,9 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     return { error: "Bookings cannot be made on Mondays. The office is closed on Mondays (Sabbath day)." };
   }
 
-  if (violatesLeadTime(validated.startTime)) {
-    return { error: MAX_BOOKING_ADVANCE_ERROR };
+  const wantsCeremony = isCeremonyCategory(validated.category);
+  if (violatesLeadTime(validated.startTime, wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_HOURS : LEAD_TIME_HOURS)) {
+    return { error: wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
   const facility = await prisma.facility.findFirstOrThrow({
@@ -692,7 +701,6 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 
   // Ceremony-day exclusivity: WEDDING/NAMING categories only on designated ceremony
   // days; every other category is never allowed on a ceremony day.
-  const wantsCeremony = isCeremonyCategory(validated.category);
   const dayIsCeremonyDay = await isCeremonyDay(prisma, validated.startTime);
   if (wantsCeremony && !dayIsCeremonyDay) {
     return { error: "Wedding and naming ceremony bookings can only be made on designated ceremony days." };
