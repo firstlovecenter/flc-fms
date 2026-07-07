@@ -25,6 +25,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toDateStr } from "@/lib/ceremony-utils";
+import { isOvernight } from "@/lib/time-utils";
 import { MAX_BOOKING_ADVANCE_DAYS, MAX_CEREMONY_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Card } from "@/components/ui/card";
 
@@ -447,6 +448,10 @@ export default function GuestBookingForm({
     startTime.setHours(sh, sm, 0, 0);
     const endTime = new Date(selectedDate);
     endTime.setHours(eh, em, 0, 0);
+    // Overnight slots (e.g. 22:00 -> 04:00) end on the following calendar day.
+    if (isOvernight(selectedSlot.startTime, selectedSlot.endTime)) {
+      endTime.setDate(endTime.getDate() + 1);
+    }
 
     // Build ceremony details if applicable
     const builtCeremonyDetails = (() => {
