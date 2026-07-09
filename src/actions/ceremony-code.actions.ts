@@ -12,6 +12,17 @@ import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { sendCeremonyCodeEmail } from "@/lib/notifications/email";
 import type { CeremonyType } from "@prisma/client";
 
+/** Builds a staff-facing warning when the code was activated but delivery to the requester failed. */
+function deliveryWarning(smsSent: boolean, emailSent: boolean): string | undefined {
+  if (smsSent && emailSent) return undefined;
+  if (!smsSent && !emailSent) {
+    return "The code was saved, but both the SMS and email to the requester failed to send. Please share the code with them another way, or try Resend.";
+  }
+  return smsSent
+    ? "The code was saved and texted to the requester, but the email failed to send."
+    : "The code was saved and emailed to the requester, but the SMS failed to send.";
+}
+
 const RequestSchema = z.object({
   name: z.string().min(2, "Full name is required"),
   phone: z.string().min(9, "Phone number is required"),
@@ -117,23 +128,24 @@ export async function activateCeremonyCode(codeId: string) {
   const ceremonyLabel =
     record.ceremonyType === "WEDDING" ? "Wedding" : "Naming";
 
-  // Send SMS + email
-  await notifyCeremonyCode({
+  // Send SMS + email — surface delivery failures instead of swallowing them,
+  // so staff know to share the code with the requester another way.
+  const smsSent = await notifyCeremonyCode({
     phone: record.requesterPhone,
     code: record.code,
     ceremonyType: ceremonyLabel,
     requesterName: record.requesterName,
-  }).catch(() => null);
+  }).catch(() => false);
 
-  await sendCeremonyCodeEmail({
+  const emailSent = await sendCeremonyCodeEmail({
     to: record.requesterEmail,
     name: record.requesterName,
     code: record.code,
     ceremonyType: ceremonyLabel,
-  }).catch(() => null);
+  }).catch(() => false);
 
   revalidatePath("/ceremony-codes");
-  return { success: true };
+  return { success: true, warning: deliveryWarning(smsSent, emailSent) };
 }
 
 export async function resendCeremonyCode(codeId: string) {
@@ -149,21 +161,21 @@ export async function resendCeremonyCode(codeId: string) {
   const ceremonyLabel =
     record.ceremonyType === "WEDDING" ? "Wedding" : "Naming";
 
-  await notifyCeremonyCode({
+  const smsSent = await notifyCeremonyCode({
     phone: record.requesterPhone,
     code: record.code,
     ceremonyType: ceremonyLabel,
     requesterName: record.requesterName,
-  }).catch(() => null);
+  }).catch(() => false);
 
-  await sendCeremonyCodeEmail({
+  const emailSent = await sendCeremonyCodeEmail({
     to: record.requesterEmail,
     name: record.requesterName,
     code: record.code,
     ceremonyType: ceremonyLabel,
-  }).catch(() => null);
+  }).catch(() => false);
 
-  return { success: true };
+  return { success: true, warning: deliveryWarning(smsSent, emailSent) };
 }
 
 export async function revokeCeremonyCode(codeId: string) {
@@ -353,25 +365,28 @@ export async function regenerateCeremonyCode(codeId: string) {
   });
 
   // If ACTIVE, re-send the new code to the requester
+  let warning: string | undefined;
   if (record.status === "ACTIVE") {
     const ceremonyLabel = record.ceremonyType === "WEDDING" ? "Wedding" : "Naming";
-    await notifyCeremonyCode({
+    const smsSent = await notifyCeremonyCode({
       phone: record.requesterPhone,
       code: newCode,
       ceremonyType: ceremonyLabel,
       requesterName: record.requesterName,
-    }).catch(() => null);
+    }).catch(() => false);
 
-    await sendCeremonyCodeEmail({
+    const emailSent = await sendCeremonyCodeEmail({
       to: record.requesterEmail,
       name: record.requesterName,
       code: newCode,
       ceremonyType: ceremonyLabel,
-    }).catch(() => null);
+    }).catch(() => false);
+
+    warning = deliveryWarning(smsSent, emailSent);
   }
 
   revalidatePath("/ceremony-codes");
-  return { success: true };
+  return { success: true, warning };
 }
 
 // ── List ──────────────────────────────────────────────────────────────────────

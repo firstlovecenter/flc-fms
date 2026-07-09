@@ -26,9 +26,10 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY must start with re_"),
     EMAIL_FROM: z.string().email("EMAIL_FROM must be a valid email address"),
 
-    // SMS (BMS Gateway)
-    BMS_API_URL: z.string().url().optional(),
-    BMS_API_KEY: z.string().optional(),
+    // SMS (FlashSMS v2 API)
+    FLASHSMS_API_URL: z.string().url().optional(),
+    FLASHSMS_API_KEY: z.string().optional(),
+    FLASHSMS_SENDER_ID: z.string().optional(),
 
     // Push Notifications (VAPID)
     VAPID_PUBLIC_KEY: z.string().optional(),
@@ -56,8 +57,9 @@ export const env = createEnv({
     REDIS_URL:             process.env.REDIS_URL,
     RESEND_API_KEY:        process.env.RESEND_API_KEY,
     EMAIL_FROM:            process.env.EMAIL_FROM,
-    BMS_API_URL:           process.env.BMS_API_URL,
-    BMS_API_KEY:           process.env.BMS_API_KEY,
+    FLASHSMS_API_URL:      process.env.FLASHSMS_API_URL,
+    FLASHSMS_API_KEY:      process.env.FLASHSMS_API_KEY,
+    FLASHSMS_SENDER_ID:    process.env.FLASHSMS_SENDER_ID,
     VAPID_PUBLIC_KEY:      process.env.VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY:     process.env.VAPID_PRIVATE_KEY,
     VAPID_SUBJECT:         process.env.VAPID_SUBJECT,
