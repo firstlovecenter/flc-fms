@@ -8,6 +8,7 @@ import VenueCatalog from "@/components/public/VenueCatalog";
 import ItemsCatalogClient from "@/components/public/ItemsCatalogClient";
 import CatalogTabs from "@/components/public/CatalogTabs";
 import { getCeremonyVenueConfigs } from "@/actions/ceremony-venue.actions";
+import { getCeremonyVenueAvailabilitySummaries } from "@/actions/availability.actions";
 import { getSiteSettings } from "@/actions/site-settings.actions";
 
 type Tab = "venues" | "items" | "packages";
@@ -81,9 +82,11 @@ export default async function PublicHomePage({
   const siteSettings = await getSiteSettings();
 
   // ── Ceremony venues (for the Naming / Wedding catalog filters) ───────────────
-  const [weddingConfigs, namingConfigs] = await Promise.all([
+  const [weddingConfigs, namingConfigs, weddingAvailability, namingAvailability] = await Promise.all([
     getCeremonyVenueConfigs("WEDDING"),
     getCeremonyVenueConfigs("NAMING"),
+    getCeremonyVenueAvailabilitySummaries("WEDDING"),
+    getCeremonyVenueAvailabilitySummaries("NAMING"),
   ]);
 
   // ── Hero subtitle ─────────────────────────────────────────────────────────────
@@ -132,6 +135,8 @@ export default async function PublicHomePage({
             facilities={facilities}
             weddingConfigs={weddingConfigs}
             namingConfigs={namingConfigs}
+            weddingAvailability={weddingAvailability}
+            namingAvailability={namingAvailability}
             defaultType={vtype}
           />
         </>

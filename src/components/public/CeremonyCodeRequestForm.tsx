@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { requestCeremonyCode } from "@/actions/ceremony-code.actions";
 import { getCeremonyBookableFacilities } from "@/actions/ceremony-venue.actions";
+import { getCeremonyVenueAvailabilitySummaries, type CeremonyVenueAvailabilitySummary } from "@/actions/availability.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { CalendarCheck, CalendarX } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -17,6 +19,16 @@ type CeremonyVenue = {
   name: string;
   flatPrice: number;
 };
+
+/** Formats a YYYY-MM-DD ceremony date string as "Sat, Aug 2" without timezone shift. */
+function formatCeremonyDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GH", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function CeremonyCodeRequestForm() {
   const [form, setForm] = useState({
@@ -28,6 +40,7 @@ export default function CeremonyCodeRequestForm() {
     notes: "",
   });
   const [venues, setVenues] = useState<CeremonyVenue[]>([]);
+  const [availability, setAvailability] = useState<Record<string, CeremonyVenueAvailabilitySummary>>({});
 
   useEffect(() => {
     getCeremonyBookableFacilities(form.ceremonyType)
@@ -37,10 +50,14 @@ export default function CeremonyCodeRequestForm() {
         setForm((prev) => ({ ...prev, facilityId: list[0]?.id ?? "" }));
       })
       .catch(() => setVenues([]));
+    getCeremonyVenueAvailabilitySummaries(form.ceremonyType)
+      .then(setAvailability)
+      .catch(() => setAvailability({}));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.ceremonyType]);
 
   const selectedVenue = venues.find((v) => v.id === form.facilityId);
+  const selectedAvailability = availability[form.facilityId];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -130,16 +147,39 @@ export default function CeremonyCodeRequestForm() {
           disabled={venues.length === 0}
         >
           {venues.length === 0 && <option value="">No venues available</option>}
-          {venues.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
+          {venues.map((v) => {
+            const a = availability[v.id];
+            const suffix = a?.nextAvailableDate
+              ? ` — next available ${formatCeremonyDate(a.nextAvailableDate)}`
+              : a && a.datesChecked > 0
+              ? " — no open dates soon"
+              : "";
+            return (
+              <option key={v.id} value={v.id}>
+                {v.name}{suffix}
+              </option>
+            );
+          })}
         </NativeSelect>
         {selectedVenue && (
           <p className="text-xs text-[var(--muted)] mt-1">
             Amount to pay: <strong>{formatCurrency(selectedVenue.flatPrice)}</strong>
           </p>
+        )}
+        {selectedAvailability && selectedAvailability.datesChecked > 0 && (
+          selectedAvailability.nextAvailableDate ? (
+            <p className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1">
+              <CalendarCheck size={12} />
+              Next available {formatCeremonyDate(selectedAvailability.nextAvailableDate)}
+              <span className="text-[var(--muted)] font-normal">
+                ({selectedAvailability.availableDatesCount} of {selectedAvailability.datesChecked} open)
+              </span>
+            </p>
+          ) : (
+            <p className="flex items-center gap-1 text-xs font-medium text-[var(--muted)] mt-1">
+              <CalendarX size={12} /> No open ceremony dates in the next few months
+            </p>
+          )
         )}
       </div>
 
