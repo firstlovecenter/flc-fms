@@ -354,7 +354,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
         notes: f.notes || undefined,
       });
       if ("error" in result) { setCreateError(result.error as string); }
-      else { setShowCreate(false); refresh(); }
+      else {
+        setShowCreate(false);
+        if ("warning" in result && result.warning) setGlobalWarning(result.warning);
+        refresh();
+      }
     } catch { setCreateError("Failed to create code."); }
     finally { setCreateLoading(false); }
   }

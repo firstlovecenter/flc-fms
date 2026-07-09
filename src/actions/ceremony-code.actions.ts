@@ -162,7 +162,7 @@ const StaffCreateSchema = z.object({
 export async function staffCreateCeremonyCode(
   data: z.infer<typeof StaffCreateSchema>
 ) {
-  await requirePerm("ceremony:manage");
+  const session = await requirePerm("ceremony:manage");
 
   const validated = StaffCreateSchema.safeParse(data);
   if (!validated.success) {
@@ -180,10 +180,18 @@ export async function staffCreateCeremonyCode(
     attempts++;
   } while (attempts < 10);
 
+  // Staff has already confirmed payment before entering this form, so the code
+  // is live immediately — no separate "Activate" step needed.
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+
   await prisma.ceremonyBookingCode.create({
     data: {
       code,
-      status: "PENDING",
+      status: "ACTIVE",
+      activatedAt: new Date(),
+      activatedById: session.sub,
+      expiresAt,
       ceremonyType: ceremonyType as CeremonyType,
       facilityId,
       amountPaid,
@@ -195,8 +203,24 @@ export async function staffCreateCeremonyCode(
     },
   });
 
+  const ceremonyLabel = ceremonyType === "WEDDING" ? "Wedding" : "Naming";
+
+  const smsSent = await notifyCeremonyCode({
+    phone,
+    code,
+    ceremonyType: ceremonyLabel,
+    requesterName: name,
+  }).catch(() => false);
+
+  const emailSent = await sendCeremonyCodeEmail({
+    to: email,
+    name,
+    code,
+    ceremonyType: ceremonyLabel,
+  }).catch(() => false);
+
   revalidatePath("/ceremony-codes");
-  return { success: true };
+  return { success: true, warning: deliveryWarning(smsSent, emailSent) };
 }
 
 // ── Staff: update code details ────────────────────────────────────────────────
