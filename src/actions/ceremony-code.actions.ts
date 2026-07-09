@@ -2,13 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
-import { rateLimit } from "@/lib/redis";
 import { generateCeremonyCode } from "@/lib/ceremony-utils";
-import { notifyCeremonyCode, sendSMS } from "@/lib/notifications/sms";
-import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
+import { notifyCeremonyCode } from "@/lib/notifications/sms";
 import { sendCeremonyCodeEmail } from "@/lib/notifications/email";
 import type { CeremonyType } from "@prisma/client";
 
@@ -21,85 +18,6 @@ function deliveryWarning(smsSent: boolean, emailSent: boolean): string | undefin
   return smsSent
     ? "The code was saved and texted to the requester, but the email failed to send."
     : "The code was saved and emailed to the requester, but the SMS failed to send.";
-}
-
-const RequestSchema = z.object({
-  name: z.string().min(2, "Full name is required"),
-  phone: z.string().min(9, "Phone number is required"),
-  email: z.string().email("A valid email is required"),
-  ceremonyType: z.enum(["WEDDING", "NAMING"]),
-  facilityId: z.string().min(1, "Please select a venue"),
-  notes: z.string().optional(),
-  receiptUrl: z.string().url().optional(),
-});
-
-export async function requestCeremonyCode(
-  data: z.infer<typeof RequestSchema>
-) {
-  const h = await headers();
-  const ip = h.get("x-forwarded-for") ?? "unknown";
-
-  const { allowed } = await rateLimit(`ceremony_code_request:${ip}`, 3, 600);
-  if (!allowed) {
-    return { error: "Too many requests. Please try again later." };
-  }
-
-  const validated = RequestSchema.safeParse(data);
-  if (!validated.success) {
-    return { error: validated.error.errors[0].message };
-  }
-
-  const { name, phone, email, ceremonyType, facilityId, notes, receiptUrl } = validated.data;
-
-  const venueConfig = await prisma.ceremonyVenueConfig.findUnique({
-    where: { facilityId_type: { facilityId, type: ceremonyType as CeremonyType } },
-  });
-  if (!venueConfig || !venueConfig.isActive) {
-    return { error: "This venue is not available for the selected ceremony type." };
-  }
-
-  // Generate a unique code
-  let code: string;
-  let attempts = 0;
-  do {
-    code = generateCeremonyCode();
-    const existing = await prisma.ceremonyBookingCode.findUnique({ where: { code } });
-    if (!existing) break;
-    attempts++;
-  } while (attempts < 10);
-
-  await prisma.ceremonyBookingCode.create({
-    data: {
-      code,
-      status: "PENDING",
-      ceremonyType: ceremonyType as CeremonyType,
-      facilityId,
-      amountPaid: venueConfig.price,
-      requesterName: name,
-      requesterPhone: phone,
-      requesterEmail: email,
-      notes,
-      receiptUrl,
-    },
-  });
-
-  // Notify staff (BM + FM)
-  try {
-    const staff = await staffPhonesWithPermission("ceremony:manage");
-    const ceremonyLabel = ceremonyType === "WEDDING" ? "Wedding" : "Naming";
-    for (const s of staff) {
-      if (s.phone) {
-        await sendSMS({
-          to: s.phone,
-          message: `[New ${ceremonyLabel} Code Request] ${name} has requested a ${ceremonyLabel} booking code. Review it in /ceremony-codes.`,
-        }).catch(() => null);
-      }
-    }
-  } catch {
-    // Non-fatal
-  }
-
-  return { success: true };
 }
 
 export async function activateCeremonyCode(codeId: string) {

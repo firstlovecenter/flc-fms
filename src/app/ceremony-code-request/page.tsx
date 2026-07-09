@@ -1,8 +1,10 @@
 import PublicShell from "@/components/public/PublicShell";
-import CeremonyCodeRequestForm from "@/components/public/CeremonyCodeRequestForm";
 import PageHeader from "@/components/layout/PageHeader";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Phone, Mail } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { getSiteSettings } from "@/actions/site-settings.actions";
 
 export const metadata = {
@@ -11,13 +13,16 @@ export const metadata = {
 
 export default async function CeremonyCodeRequestPage() {
   const siteSettings = await getSiteSettings();
+  const officePhone = siteSettings.officePhone || undefined;
+  const officeEmail = siteSettings.officeEmail || undefined;
+
   return (
     <PublicShell
       layout="top"
       current="ceremony-request"
       maxWidth="md"
-      officePhone={siteSettings.officePhone || undefined}
-      officeEmail={siteSettings.officeEmail || undefined}
+      officePhone={officePhone}
+      officeEmail={officeEmail}
     >
       <div className="space-y-6">
         <Link
@@ -29,9 +34,33 @@ export default async function CeremonyCodeRequestPage() {
         </Link>
         <PageHeader
           title="Request a Booking Code"
-          description="To book a wedding or naming ceremony, payment must be made first. Submit your details below and we'll send your unique booking code once payment is confirmed."
+          description="Wedding and naming ceremony booking codes are issued in person. Please contact our office to arrange payment and receive your code."
         />
-        <CeremonyCodeRequestForm />
+        <Card className="p-8 space-y-5 max-w-lg mx-auto text-center">
+          {officePhone ? (
+            <a
+              href={`tel:${officePhone}`}
+              className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full gap-2")}
+            >
+              <Phone size={18} /> Call {officePhone}
+            </a>
+          ) : (
+            <p className="text-sm text-[var(--slate)]">
+              Please visit our office to request your booking code.
+            </p>
+          )}
+          {officeEmail && (
+            <a
+              href={`mailto:${officeEmail}`}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full gap-2")}
+            >
+              <Mail size={18} /> Email {officeEmail}
+            </a>
+          )}
+          <p className="text-xs text-[var(--muted)]">
+            Once your payment is confirmed, we&apos;ll send your booking code via SMS and email.
+          </p>
+        </Card>
       </div>
     </PublicShell>
   );

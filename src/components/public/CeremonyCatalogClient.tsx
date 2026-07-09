@@ -96,13 +96,13 @@ export default function CeremonyCatalogClient({ type, configs, availability }: P
         <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
         <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
           {ceremonyLabel} bookings are held on ceremony Saturdays and require a{" "}
-          <strong>payment code</strong>. Pay, upload your receipt, and we&apos;ll issue your code.
+          <strong>payment code</strong>. Contact our office to arrange payment and receive your code.
         </p>
         <a
           href="/ceremony-code-request"
           className="text-xs font-semibold text-[var(--gold)] hover:underline whitespace-nowrap shrink-0"
         >
-          Request a code →
+          How to get a code →
         </a>
       </div>
 

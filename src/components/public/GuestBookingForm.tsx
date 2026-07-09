@@ -567,19 +567,19 @@ export default function GuestBookingForm({
         )}
 
         {/* Ceremony payment explainer — surfaced up front */}
-        {isCeremonyBooking && (
+        {isCeremonyBooking && mode !== "staff" && (
           <div className="px-5 pt-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 px-4 py-3">
               <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
               <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
                 {ceremonyType === "wedding" ? "Wedding" : "Naming"} bookings are held on ceremony Saturdays and require a <strong>payment code</strong>
-                {estimatedCost != null ? <> — this venue is <strong>{formatCurrency(estimatedCost)}</strong></> : null}. Pay, upload your receipt, and we&apos;ll issue your code.
+                {estimatedCost != null ? <> — this venue is <strong>{formatCurrency(estimatedCost)}</strong></> : null}. Contact our office to arrange payment and receive your code.
               </p>
               <a
                 href="/ceremony-code-request"
                 className="text-xs font-semibold text-[var(--gold)] hover:underline whitespace-nowrap shrink-0"
               >
-                Request a code →
+                How to get a code →
               </a>
             </div>
           </div>
@@ -1065,7 +1065,7 @@ export default function GuestBookingForm({
           )}
           {codeError && <p className="text-sm text-danger">{codeError}</p>}
           <a href="/ceremony-code-request" className="inline-block text-xs text-[var(--gold)] underline">
-            Don&apos;t have a code? Request one →
+            Don&apos;t have a code? Contact our office →
           </a>
         </Card>
       )}
