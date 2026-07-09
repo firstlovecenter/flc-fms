@@ -251,6 +251,9 @@ export default function GuestBookingForm({
       setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
       return;
     }
+    if (res.facilityId && res.facilityId !== facilityId) {
+      setFacilityId(res.facilityId);
+    }
     setValidatedCodeId(res.codeId);
   }
 
@@ -641,9 +644,9 @@ export default function GuestBookingForm({
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-2">
-                {isCeremonyBooking && defaultFacilityId ? "Venue" : "Select Venue"}
+                {isCeremonyBooking && (defaultFacilityId || validatedCodeId) ? "Venue" : "Select Venue"}
               </label>
-              {isCeremonyBooking && defaultFacilityId ? (
+              {isCeremonyBooking && (defaultFacilityId || validatedCodeId) ? (
                 <div className={cn("flex min-h-11 w-full items-center justify-between rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--field-bg,var(--surface))] px-3 py-2 cursor-default select-none opacity-80")}>
                   <span className="font-medium text-[var(--navy)] dark:text-gray-100">
                     {selectedFacility?.name ?? "Loading…"}

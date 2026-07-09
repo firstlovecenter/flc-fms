@@ -37,7 +37,11 @@ export default async function CeremonyCodesPage({
           Bishops
         </Link>
       </div>
-      <CeremonyCodesClient initialCodes={codes} total={total} initialDateOverrides={dateOverrides} />
+      <CeremonyCodesClient
+        initialCodes={codes.map((c) => ({ ...c, amountPaid: c.amountPaid != null ? Number(c.amountPaid) : null }))}
+        total={total}
+        initialDateOverrides={dateOverrides}
+      />
     </div>
   );
 }

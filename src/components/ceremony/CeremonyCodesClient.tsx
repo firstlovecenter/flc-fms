@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,8 +20,10 @@ import {
 import {
   addCeremonyDateOverride,
   removeCeremonyDateOverride,
+  getCeremonyBookableFacilities,
 } from "@/actions/ceremony-venue.actions";
 import { getFirstSaturdaysForMonths, toDateStr } from "@/lib/ceremony-utils";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +37,8 @@ type Code = {
   code: string;
   status: string;
   ceremonyType: string;
+  facilityId: string | null;
+  amountPaid: number | null;
   requesterName: string;
   requesterPhone: string;
   requesterEmail: string;
@@ -44,6 +48,7 @@ type Code = {
   expiresAt: Date | null;
   bookingId: string | null;
   activatedBy: { name: string } | null;
+  facility: { id: string; name: string } | null;
 };
 
 type DateOverride = {
@@ -65,10 +70,16 @@ type FormState = {
   phone: string;
   email: string;
   ceremonyType: "WEDDING" | "NAMING";
+  facilityId: string;
+  amountPaid: string;
   notes: string;
 };
 
-const EMPTY_FORM: FormState = { name: "", phone: "", email: "", ceremonyType: "WEDDING", notes: "" };
+const EMPTY_FORM: FormState = {
+  name: "", phone: "", email: "", ceremonyType: "WEDDING", facilityId: "", amountPaid: "", notes: "",
+};
+
+type CeremonyVenue = { id: string; name: string; flatPrice: number };
 
 const STATUS_TABS = ["ALL", "PENDING", "ACTIVE", "USED", "EXPIRED"] as const;
 
@@ -118,7 +129,24 @@ function CodeForm({
   submitLabel: string;
 }) {
   const [f, setF] = useState(initial);
+  const [venues, setVenues] = useState<CeremonyVenue[]>([]);
   function set(k: keyof FormState, v: string) { setF((p) => ({ ...p, [k]: v })); }
+
+  useEffect(() => {
+    getCeremonyBookableFacilities(f.ceremonyType)
+      .then((v) => setVenues(v as CeremonyVenue[]))
+      .catch(() => setVenues([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.ceremonyType]);
+
+  function handleVenueChange(facilityId: string) {
+    const venue = venues.find((v) => v.id === facilityId);
+    setF((p) => ({
+      ...p,
+      facilityId,
+      amountPaid: venue ? String(venue.flatPrice) : p.amountPaid,
+    }));
+  }
 
   return (
     <div className="space-y-3">
@@ -128,6 +156,29 @@ function CodeForm({
           <option value="WEDDING">Wedding</option>
           <option value="NAMING">Naming Ceremony</option>
         </NativeSelect>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Venue *</Label>
+          <NativeSelect value={f.facilityId} onChange={(e) => handleVenueChange(e.target.value)} className="w-full text-sm">
+            <option value="">Select venue…</option>
+            {venues.map((v) => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div>
+          <Label className="text-xs">Amount Paid (GH₵) *</Label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={f.amountPaid}
+            onChange={(e) => set("amountPaid", e.target.value)}
+            className="text-sm"
+            placeholder="0.00"
+          />
+        </div>
       </div>
       <div>
         <Label className="text-xs">Full Name *</Label>
@@ -150,7 +201,7 @@ function CodeForm({
       {error && <p className="text-xs text-danger">{error}</p>}
       <Button
         onClick={() => onSubmit(f)}
-        disabled={loading || !f.name.trim() || !f.phone.trim() || !f.email.trim()}
+        disabled={loading || !f.name.trim() || !f.phone.trim() || !f.email.trim() || !f.facilityId || !f.amountPaid.trim()}
         className="w-full text-sm"
       >
         {loading ? "Saving…" : submitLabel}
@@ -287,7 +338,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
     setCreateLoading(true);
     setCreateError(null);
     try {
-      const result = await staffCreateCeremonyCode({ ...f, notes: f.notes || undefined });
+      const result = await staffCreateCeremonyCode({
+        ...f,
+        amountPaid: Number(f.amountPaid),
+        notes: f.notes || undefined,
+      });
       if ("error" in result) { setCreateError(result.error as string); }
       else { setShowCreate(false); refresh(); }
     } catch { setCreateError("Failed to create code."); }
@@ -299,7 +354,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
     setEditLoading(true);
     setEditError(null);
     try {
-      const result = await updateCeremonyCode(editTarget.id, { ...f, notes: f.notes || undefined });
+      const result = await updateCeremonyCode(editTarget.id, {
+        ...f,
+        amountPaid: Number(f.amountPaid),
+        notes: f.notes || undefined,
+      });
       if ("error" in result) { setEditError(result.error as string); }
       else { setEditTarget(null); refresh(); }
     } catch { setEditError("Failed to update code."); }
@@ -538,6 +597,8 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Contact</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Venue</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden lg:table-cell">Requested</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden lg:table-cell">Expires</th>
@@ -547,7 +608,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-[var(--muted)] text-sm">
+                  <td colSpan={10} className="px-4 py-8 text-center text-[var(--muted)] text-sm">
                     No codes found.
                   </td>
                 </tr>
@@ -577,6 +638,12 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                       <span className="text-xs font-medium">
                         {c.ceremonyType === "WEDDING" ? "Wedding" : "Naming"}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell text-xs">
+                      {c.facility?.name ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-medium">
+                      {c.amountPaid != null ? formatCurrency(c.amountPaid) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <CeremonyCodeStatus status={c.status} />
@@ -656,7 +723,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                   {/* Expanded detail row */}
                   {expanded.has(c.id) && (
                     <tr key={c.id + "-detail"} className="bg-gray-50/60">
-                      <td colSpan={8} className="px-6 py-3">
+                      <td colSpan={10} className="px-6 py-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-xs">
                           <div>
                             <span className="text-[var(--muted)] font-medium uppercase tracking-wide">Code</span>
@@ -729,6 +796,8 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               phone: editTarget.requesterPhone,
               email: editTarget.requesterEmail,
               ceremonyType: editTarget.ceremonyType as "WEDDING" | "NAMING",
+              facilityId: editTarget.facilityId ?? "",
+              amountPaid: editTarget.amountPaid != null ? String(editTarget.amountPaid) : "",
               notes: editTarget.notes ?? "",
             }}
             onSubmit={handleEdit}

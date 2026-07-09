@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -24,6 +24,8 @@ interface Props {
     conversionRate: number;
     statusBreakdown: { status: string; count: number }[];
     typeBreakdown:   { type: string; count: number }[];
+    revenueByVenue:  { facilityId: string; facilityName: string; totalPaid: number; count: number }[];
+    totalRevenue: number;
   };
   downloadUrl: string;
 }
@@ -44,6 +46,7 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
           { label: "Active",           value: data.activated,      cls: "text-info" },
           { label: "Used / Booked",    value: data.used,           cls: "text-success" },
           { label: "Conversion Rate",  value: `${data.conversionRate}%`, cls: "text-[var(--navy)]" },
+          { label: "Revenue Collected", value: formatCurrency(data.totalRevenue), cls: "text-success" },
         ].map(({ label, value, cls }) => (
           <Card key={label} className="p-4 border border-[var(--border)]">
             <p className="text-xs font-medium text-[var(--muted)]">{label}</p>
@@ -116,6 +119,35 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* Revenue by venue */}
+      <Card className="p-6">
+        <h3 className="font-semibold text-[var(--navy)] mb-4">Revenue by Venue</h3>
+        {data.revenueByVenue.length === 0 ? (
+          <p className="text-sm text-[var(--muted)] text-center py-8">No data.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Venue</th>
+                  <th className="px-2 py-2 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Codes</th>
+                  <th className="px-2 py-2 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Amount Paid</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.revenueByVenue.map((v) => (
+                  <tr key={v.facilityId}>
+                    <td className="px-2 py-2 text-[var(--navy)] font-medium">{v.facilityName}</td>
+                    <td className="px-2 py-2 text-right text-[var(--slate)]">{v.count}</td>
+                    <td className="px-2 py-2 text-right font-semibold text-success">{formatCurrency(v.totalPaid)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );

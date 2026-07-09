@@ -17,6 +17,7 @@ const RequestSchema = z.object({
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
   notes: z.string().optional(),
   receiptUrl: z.string().url().optional(),
 });
@@ -37,7 +38,14 @@ export async function requestCeremonyCode(
     return { error: validated.error.errors[0].message };
   }
 
-  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
+  const { name, phone, email, ceremonyType, facilityId, notes, receiptUrl } = validated.data;
+
+  const venueConfig = await prisma.ceremonyVenueConfig.findUnique({
+    where: { facilityId_type: { facilityId, type: ceremonyType as CeremonyType } },
+  });
+  if (!venueConfig || !venueConfig.isActive) {
+    return { error: "This venue is not available for the selected ceremony type." };
+  }
 
   // Generate a unique code
   let code: string;
@@ -54,6 +62,8 @@ export async function requestCeremonyCode(
       code,
       status: "PENDING",
       ceremonyType: ceremonyType as CeremonyType,
+      facilityId,
+      amountPaid: venueConfig.price,
       requesterName: name,
       requesterPhone: phone,
       requesterEmail: email,
@@ -183,6 +193,8 @@ export async function validateCeremonyCode(
   valid: boolean;
   codeId?: string;
   ceremonyType?: string;
+  facilityId?: string;
+  amountPaid?: number;
   error?: string;
 }> {
   const record = await prisma.ceremonyBookingCode.findUnique({
@@ -199,6 +211,8 @@ export async function validateCeremonyCode(
     valid: true,
     codeId: record.id,
     ceremonyType: record.ceremonyType,
+    facilityId: record.facilityId ?? undefined,
+    amountPaid: record.amountPaid ? Number(record.amountPaid) : undefined,
   };
 }
 
@@ -209,6 +223,8 @@ const StaffCreateSchema = z.object({
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
+  amountPaid: z.coerce.number().positive("Amount paid must be greater than zero"),
   notes: z.string().optional(),
   receiptUrl: z.string().url().optional(),
 });
@@ -223,7 +239,7 @@ export async function staffCreateCeremonyCode(
     return { error: validated.error.errors[0].message };
   }
 
-  const { name, phone, email, ceremonyType, notes, receiptUrl } = validated.data;
+  const { name, phone, email, ceremonyType, facilityId, amountPaid, notes, receiptUrl } = validated.data;
 
   let code: string;
   let attempts = 0;
@@ -239,6 +255,8 @@ export async function staffCreateCeremonyCode(
       code,
       status: "PENDING",
       ceremonyType: ceremonyType as CeremonyType,
+      facilityId,
+      amountPaid,
       requesterName: name,
       requesterPhone: phone,
       requesterEmail: email,
@@ -258,6 +276,8 @@ const UpdateSchema = z.object({
   phone: z.string().min(9, "Phone number is required"),
   email: z.string().email("A valid email is required"),
   ceremonyType: z.enum(["WEDDING", "NAMING"]),
+  facilityId: z.string().min(1, "Please select a venue"),
+  amountPaid: z.coerce.number().positive("Amount paid must be greater than zero"),
   notes: z.string().optional(),
 });
 
@@ -283,6 +303,8 @@ export async function updateCeremonyCode(
       requesterPhone: validated.data.phone,
       requesterEmail: validated.data.email,
       ceremonyType:   validated.data.ceremonyType as CeremonyType,
+      facilityId:     validated.data.facilityId,
+      amountPaid:     validated.data.amountPaid,
       notes:          validated.data.notes ?? null,
     },
   });
@@ -388,6 +410,7 @@ export async function listCeremonyCodes(searchParams: {
       take: pageSize,
       include: {
         activatedBy: { select: { name: true } },
+        facility: { select: { id: true, name: true } },
       },
     }),
     prisma.ceremonyBookingCode.count({ where }),

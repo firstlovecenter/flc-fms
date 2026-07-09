@@ -147,6 +147,8 @@ export function ceremonyToCSV(data: {
   conversionRate: number;
   statusBreakdown: { status: string; count: number }[];
   typeBreakdown:   { type: string; count: number }[];
+  revenueByVenue:  { facilityId: string; facilityName: string; totalPaid: number; count: number }[];
+  totalRevenue: number;
 }): string {
   const summary = toCSV(
     ["Metric", "Value"],
@@ -157,6 +159,7 @@ export function ceremonyToCSV(data: {
       ["Used (Booked)", data.used],
       ["Expired", data.expired],
       ["Conversion Rate %", data.conversionRate],
+      ["Total Revenue Collected", data.totalRevenue],
     ]
   );
 
@@ -165,7 +168,12 @@ export function ceremonyToCSV(data: {
     data.typeBreakdown.map((t) => [t.type, t.count])
   );
 
-  return `SUMMARY\n${summary}\n\nBY CEREMONY TYPE\n${type}`;
+  const venue = toCSV(
+    ["Venue", "Codes", "Amount Paid"],
+    data.revenueByVenue.map((v) => [v.facilityName, v.count, v.totalPaid])
+  );
+
+  return `SUMMARY\n${summary}\n\nBY CEREMONY TYPE\n${type}\n\nBY VENUE\n${venue}`;
 }
 
 // ── Patrons ───────────────────────────────────────────────────────────────────
