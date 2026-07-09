@@ -2,6 +2,7 @@ import { requirePatron } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import PatronBookingForm from "@/components/patron/PatronBookingForm";
 import PageHeader from "@/components/layout/PageHeader";
+import { getSiteSettings } from "@/actions/site-settings.actions";
 
 export default async function PatronBookPage({ searchParams }: { searchParams: { facilityId?: string } }) {
   const session = await requirePatron();
@@ -10,6 +11,8 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
     where: { id: session.sub },
     select: { email: true },
   });
+
+  const siteSettings = await getSiteSettings();
 
   const facilities = await prisma.facility.findMany({
     where: { isActive: true, underMaintenance: false },
@@ -57,6 +60,8 @@ export default async function PatronBookPage({ searchParams }: { searchParams: {
         facilities={serialized}
         defaultFacilityId={searchParams.facilityId}
         defaultContactEmail={patron?.email ?? ""}
+        officePhone={siteSettings.officePhone || undefined}
+        officeEmail={siteSettings.officeEmail || undefined}
       />
     </div>
   );

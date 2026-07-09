@@ -238,6 +238,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [globalWarning, setGlobalWarning] = useState<string | null>(null);
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
@@ -314,10 +315,14 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
     if (!confirm("Generate a new code string for this record? The old code will stop working immediately.")) return;
     setActionLoading(codeId + "regen");
     setGlobalError(null);
+    setGlobalWarning(null);
     try {
       const result = await regenerateCeremonyCode(codeId);
       if ("error" in result) setGlobalError(result.error as string);
-      else refresh();
+      else {
+        if ("warning" in result && result.warning) setGlobalWarning(result.warning);
+        refresh();
+      }
     } catch { setGlobalError("Regenerate failed. Please try again."); }
     finally { setActionLoading(null); }
   }
@@ -325,11 +330,16 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
   async function doAction(codeId: string, action: "activate" | "resend" | "revoke") {
     setActionLoading(codeId + action);
     setGlobalError(null);
+    setGlobalWarning(null);
     try {
       const fn = action === "activate" ? activateCeremonyCode : action === "resend" ? resendCeremonyCode : revokeCeremonyCode;
       const result = await fn(codeId);
       if ("error" in result) setGlobalError(result.error as string);
-      else refresh();
+      else {
+        const warning = (result as { warning?: string }).warning;
+        if (warning) setGlobalWarning(warning);
+        refresh();
+      }
     } catch { setGlobalError("Action failed. Please try again."); }
     finally { setActionLoading(null); }
   }
@@ -584,6 +594,12 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       {globalError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
           {globalError}
+        </div>
+      )}
+
+      {globalWarning && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+          {globalWarning}
         </div>
       )}
 

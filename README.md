@@ -103,23 +103,23 @@ NEXT_PUBLIC_SANITY_DATASET=<dataset>
 
 ---
 
-## SMS Integration (BMS)
+## SMS Integration (FlashSMS)
 
-The system calls your BMS gateway at `https://bms.codeslaw.dev`:
+The system calls the FlashSMS v2 API:
 
 ```
-POST /api/sms/send
-Authorization: Bearer <BMS_API_KEY>
+POST <FLASHSMS_API_URL>/sms/send
+Authorization: Bearer <FLASHSMS_API_KEY>
 {
-  "to": "+233...",
+  "phones": ["+233..."],
   "message": "...",
   "senderId": "CFMS"
 }
 ```
 
-Expected response: `{ "messageId": "..." }`
+`FLASHSMS_API_URL` must be the v2 base URL (e.g. `https://app.flashsms.africa/api/v2`) — v1 API keys are not accepted by v2 endpoints. Expected response: `202 Accepted` with `{ "data": { "id": "..." } }`.
 
-Update `src/lib/notifications/sms.ts` if your BMS endpoint differs.
+Update `src/lib/notifications/sms.ts` if your FlashSMS endpoint differs.
 
 ---
 

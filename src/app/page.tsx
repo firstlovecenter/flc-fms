@@ -138,6 +138,8 @@ export default async function PublicHomePage({
             weddingAvailability={weddingAvailability}
             namingAvailability={namingAvailability}
             defaultType={vtype}
+            officePhone={siteSettings.officePhone || undefined}
+            officeEmail={siteSettings.officeEmail || undefined}
           />
         </>
       )}

@@ -39,7 +39,7 @@ export async function updateSiteSettings(data: Partial<SiteSettings>) {
   revalidatePath("/");
   revalidatePath("/catalog/weddings");
   revalidatePath("/catalog/namings");
-  revalidatePath("/ceremony-code-request");
   revalidatePath("/guest/book");
+  revalidatePath("/patron/book");
   return { success: true };
 }

@@ -5,6 +5,7 @@ import GuestItemBookingForm from "@/components/public/GuestItemBookingForm";
 import PublicShell from "@/components/public/PublicShell";
 import GuestPageHero from "@/components/public/GuestPageHero";
 import { getCeremonyFacilityIds, getCeremonyDays } from "@/actions/ceremony-venue.actions";
+import { getSiteSettings } from "@/actions/site-settings.actions";
 import { Card } from "@/components/ui/card";
 
 type SearchParams = {
@@ -144,8 +145,16 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
   const pad = (n: number) => String(n).padStart(2, "0");
   const minStartTime = `${minStartDate.getFullYear()}-${pad(minStartDate.getMonth() + 1)}-${pad(minStartDate.getDate())}T${pad(minStartDate.getHours())}:${pad(minStartDate.getMinutes())}`;
 
+  const siteSettings = await getSiteSettings();
+
   return (
-    <PublicShell layout="top" current="guest" maxWidth="md">
+    <PublicShell
+      layout="top"
+      current="guest"
+      maxWidth="md"
+      officePhone={siteSettings.officePhone || undefined}
+      officeEmail={siteSettings.officeEmail || undefined}
+    >
       <div className="space-y-6">
         <GuestPageHero
           eyebrow={isItemBooking ? "Items & Packages Booking" : "Public Booking"}
@@ -194,6 +203,8 @@ export default async function GuestBookPage({ searchParams }: { searchParams: Se
               ceremonyFlatPrice={ceremonyFlatPrice}
               defaultCategory={searchParams.ceremonyType}
               ceremonyDays={ceremonyDays}
+              officePhone={siteSettings.officePhone || undefined}
+              officeEmail={siteSettings.officeEmail || undefined}
             />
           )}
         </section>

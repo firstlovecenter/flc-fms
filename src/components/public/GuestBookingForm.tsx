@@ -28,6 +28,7 @@ import { toDateStr } from "@/lib/ceremony-utils";
 import { isOvernight } from "@/lib/time-utils";
 import { MAX_BOOKING_ADVANCE_DAYS, MAX_CEREMONY_BOOKING_ADVANCE_DAYS } from "@/lib/booking-window";
 import { Card } from "@/components/ui/card";
+import ContactOfficeLink from "@/components/public/ContactOfficeLink";
 
 import "react-day-picker/dist/style.css";
 
@@ -101,6 +102,8 @@ export default function GuestBookingForm({
   ceremonyDays = [],
   defaultContactEmail = "",
   allowCeremony = true,
+  officePhone,
+  officeEmail,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -114,6 +117,9 @@ export default function GuestBookingForm({
   defaultContactEmail?: string;
   /** Staff only: whether the Wedding/Naming options may be chosen in-form. */
   allowCeremony?: boolean;
+  /** Shown as a call/email CTA in place of the old code-request page. */
+  officePhone?: string;
+  officeEmail?: string;
 }) {
   const router = useRouter();
   const [bookingMode, setBookingMode] = useState<"facility-first" | "category-first">("facility-first");
@@ -567,20 +573,20 @@ export default function GuestBookingForm({
         )}
 
         {/* Ceremony payment explainer — surfaced up front */}
-        {isCeremonyBooking && (
+        {isCeremonyBooking && mode !== "staff" && (
           <div className="px-5 pt-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 px-4 py-3">
               <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
               <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
                 {ceremonyType === "wedding" ? "Wedding" : "Naming"} bookings are held on ceremony Saturdays and require a <strong>payment code</strong>
-                {estimatedCost != null ? <> — this venue is <strong>{formatCurrency(estimatedCost)}</strong></> : null}. Pay, upload your receipt, and we&apos;ll issue your code.
+                {estimatedCost != null ? <> — this venue is <strong>{formatCurrency(estimatedCost)}</strong></> : null}. Contact our office to arrange payment and receive your code.
               </p>
-              <a
-                href="/ceremony-code-request"
+              <ContactOfficeLink
+                officePhone={officePhone}
+                officeEmail={officeEmail}
+                label="Call our office"
                 className="text-xs font-semibold text-[var(--gold)] hover:underline whitespace-nowrap shrink-0"
-              >
-                Request a code →
-              </a>
+              />
             </div>
           </div>
         )}
@@ -1064,9 +1070,14 @@ export default function GuestBookingForm({
             </div>
           )}
           {codeError && <p className="text-sm text-danger">{codeError}</p>}
-          <a href="/ceremony-code-request" className="inline-block text-xs text-[var(--gold)] underline">
-            Don&apos;t have a code? Request one →
-          </a>
+          {mode !== "staff" && (
+            <ContactOfficeLink
+              officePhone={officePhone}
+              officeEmail={officeEmail}
+              label="Don't have a code? Call our office"
+              className="inline-block text-xs text-[var(--gold)] underline"
+            />
+          )}
         </Card>
       )}
 

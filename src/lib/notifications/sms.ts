@@ -22,10 +22,11 @@ interface SendSMSParams {
   message: string;
 }
 
-export async function sendSMS({ to, message }: SendSMSParams) {
+/** Returns true only if every recipient's message was accepted by the provider. */
+export async function sendSMS({ to, message }: SendSMSParams): Promise<boolean> {
   const phones = Array.isArray(to) ? to : [to];
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     phones.map(async (phone) => {
       let status = "FAILED";
       let providerRef: string | undefined;
@@ -55,6 +56,10 @@ export async function sendSMS({ to, message }: SendSMSParams) {
         error = err.message;
       }
 
+      if (status !== "SENT") {
+        console.error(`[SMS] Failed to send to ${phone}:`, error);
+      }
+
       try {
         await prisma.notificationLog.create({
           data: {
@@ -70,8 +75,12 @@ export async function sendSMS({ to, message }: SendSMSParams) {
       } catch (logErr) {
         console.error("[SMS] Failed to write notification log:", logErr);
       }
+
+      return status === "SENT";
     }),
   );
+
+  return results.every((r) => r.status === "fulfilled" && r.value === true);
 }
 
 // ── Balance & status helpers ──────────────────────────────────────────────────
@@ -289,8 +298,8 @@ export async function notifyCeremonyCode(params: {
   code: string;
   ceremonyType: string; // "Wedding" or "Naming"
   requesterName: string;
-}) {
-  await sendSMS({
+}): Promise<boolean> {
+  return sendSMS({
     to: params.phone,
     message: `Hi ${params.requesterName}, your ${params.ceremonyType} booking code is: ${params.code}. Valid for 30 days. Use it on our website to complete your booking.`,
   });

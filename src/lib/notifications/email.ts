@@ -151,7 +151,7 @@ function renderEmailTemplate(input: {
 `;
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailParams) {
+export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<boolean> {
   let status = "FAILED";
   let providerRef: string | undefined;
   let error: string | undefined;
@@ -174,6 +174,10 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     error = err.message;
   }
 
+  if (status !== "SENT") {
+    console.error(`[Email] Failed to send to ${to}:`, error);
+  }
+
   try {
     await prisma.notificationLog.create({
       data: { type: "EMAIL", recipient: to, subject, body: html, status, provider: "RESEND", providerRef, error },
@@ -181,6 +185,8 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
   } catch (logErr) {
     console.error("[Email] Failed to write notification log:", logErr);
   }
+
+  return status === "SENT";
 }
 
 // ── Templated senders ─────────────────────────────────────────────────────────
@@ -465,8 +471,8 @@ export async function sendCeremonyCodeEmail(params: {
   name: string;
   code: string;
   ceremonyType: string; // "Wedding" or "Naming"
-}) {
-  await sendEmail({
+}): Promise<boolean> {
+  return sendEmail({
     to: params.to,
     subject: `Your ${params.ceremonyType} Booking Code`,
     html: renderEmailTemplate({
