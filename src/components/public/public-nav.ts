@@ -6,7 +6,6 @@ export type PublicNavPage =
   | "weddings"
   | "namings"
   | "catalog"
-  | "ceremony-request"
   | "faq";
 
 export const PUBLIC_NAV_ITEMS: { href: string; id: PublicNavPage; label: string }[] = [

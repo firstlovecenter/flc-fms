@@ -19,10 +19,14 @@ export default function PatronBookingForm({
   facilities,
   defaultFacilityId,
   defaultContactEmail,
+  officePhone,
+  officeEmail,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
   defaultContactEmail?: string;
+  officePhone?: string;
+  officeEmail?: string;
 }) {
   return (
     <GuestBookingForm
@@ -30,6 +34,8 @@ export default function PatronBookingForm({
       defaultFacilityId={defaultFacilityId}
       defaultContactEmail={defaultContactEmail}
       mode="patron"
+      officePhone={officePhone}
+      officeEmail={officeEmail}
     />
   );
 }

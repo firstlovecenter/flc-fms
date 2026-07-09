@@ -19,6 +19,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Expand, Info, CalendarCheck, CalendarX } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import ContactOfficeLink from "@/components/public/ContactOfficeLink";
 
 type Config = {
   id: string;
@@ -45,6 +46,8 @@ type Props = {
   type: "WEDDING" | "NAMING";
   configs: Config[];
   availability?: Record<string, AvailabilitySummary>;
+  officePhone?: string;
+  officeEmail?: string;
 };
 
 /** Formats a YYYY-MM-DD ceremony date string as "Sat, Aug 2" without timezone shift. */
@@ -79,7 +82,7 @@ function AvailabilityBadge({ summary }: { summary?: AvailabilitySummary }) {
   );
 }
 
-export default function CeremonyCatalogClient({ type, configs, availability }: Props) {
+export default function CeremonyCatalogClient({ type, configs, availability, officePhone, officeEmail }: Props) {
   const router = useRouter();
   const [selectedConfig, setSelectedConfig] = useState<Config | null>(null);
 
@@ -98,12 +101,12 @@ export default function CeremonyCatalogClient({ type, configs, availability }: P
           {ceremonyLabel} bookings are held on ceremony Saturdays and require a{" "}
           <strong>payment code</strong>. Contact our office to arrange payment and receive your code.
         </p>
-        <a
-          href="/ceremony-code-request"
+        <ContactOfficeLink
+          officePhone={officePhone}
+          officeEmail={officeEmail}
+          label="Call our office"
           className="text-xs font-semibold text-[var(--gold)] hover:underline whitespace-nowrap shrink-0"
-        >
-          How to get a code →
-        </a>
+        />
       </div>
 
       {configs.length === 0 ? (

@@ -15,6 +15,8 @@ type Props = {
   weddingAvailability?: React.ComponentProps<typeof CeremonyCatalogClient>["availability"];
   namingAvailability?: React.ComponentProps<typeof CeremonyCatalogClient>["availability"];
   defaultType?: VType;
+  officePhone?: string;
+  officeEmail?: string;
 };
 
 export default function VenueCatalog({
@@ -24,6 +26,8 @@ export default function VenueCatalog({
   weddingAvailability,
   namingAvailability,
   defaultType = "regular",
+  officePhone,
+  officeEmail,
 }: Props) {
   const [vtype, setVtype] = useState<VType>(defaultType);
 
@@ -73,10 +77,22 @@ export default function VenueCatalog({
           <FacilityCatalogClient facilities={facilities} />
         ))}
       {vtype === "wedding" && (
-        <CeremonyCatalogClient type="WEDDING" configs={weddingConfigs} availability={weddingAvailability} />
+        <CeremonyCatalogClient
+          type="WEDDING"
+          configs={weddingConfigs}
+          availability={weddingAvailability}
+          officePhone={officePhone}
+          officeEmail={officeEmail}
+        />
       )}
       {vtype === "naming" && (
-        <CeremonyCatalogClient type="NAMING" configs={namingConfigs} availability={namingAvailability} />
+        <CeremonyCatalogClient
+          type="NAMING"
+          configs={namingConfigs}
+          availability={namingAvailability}
+          officePhone={officePhone}
+          officeEmail={officeEmail}
+        />
       )}
     </div>
   );
