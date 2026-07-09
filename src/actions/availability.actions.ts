@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { bookingOverlapsSlot, toMinutes } from "@/lib/time-utils";
-import { isCeremonyDay } from "@/lib/ceremony-utils";
+import { isCeremonyDay, toDateStr } from "@/lib/ceremony-utils";
+import { getCeremonyDays } from "@/actions/ceremony-venue.actions";
 import {
   isBeyondMaxBookingAdvance,
   MAX_BOOKING_ADVANCE_ERROR,
@@ -371,6 +372,143 @@ export async function getCeremonyAvailability(
   } catch (error) {
     console.error("Error fetching ceremony availability:", error);
     return { success: false, error: "Failed to fetch ceremony availability", slots: [] };
+  }
+}
+
+export interface CeremonyVenueAvailabilitySummary {
+  /** Earliest upcoming ceremony day (YYYY-MM-DD) with an open slot, or null if none within the horizon. */
+  nextAvailableDate: string | null;
+  /** How many of the checked ceremony days still have an open slot. */
+  availableDatesCount: number;
+  /** How many upcoming ceremony days were checked. */
+  datesChecked: number;
+}
+
+/**
+ * Bulk-computes availability for every active ceremony venue of `type`, so bookers
+ * can compare venues by open ceremony dates before deciding which one to pay for.
+ * Ceremony days are always Saturdays, so time slots are fetched once per facility
+ * (dayOfWeek 6) and checked against each upcoming ceremony day within the horizon.
+ */
+export async function getCeremonyVenueAvailabilitySummaries(
+  type: "WEDDING" | "NAMING",
+  options?: { horizonDays?: number; leadTimeHours?: number }
+): Promise<Record<string, CeremonyVenueAvailabilitySummary>> {
+  try {
+    const horizonDays = options?.horizonDays ?? 180;
+    const leadTimeHours = options?.leadTimeHours ?? DEFAULT_LEAD_TIME_HOURS;
+
+    const configs = await prisma.ceremonyVenueConfig.findMany({
+      where: { type, isActive: true },
+      select: { facilityId: true },
+    });
+    const facilityIds = [...new Set(configs.map((c) => c.facilityId))];
+    if (facilityIds.length === 0) return {};
+
+    const today = toDateStr(new Date());
+    const horizonEnd = new Date();
+    horizonEnd.setDate(horizonEnd.getDate() + horizonDays);
+    const horizonEndStr = toDateStr(horizonEnd);
+
+    const allCeremonyDays = await getCeremonyDays();
+    const candidateDateStrs = allCeremonyDays.filter((d) => d >= today && d <= horizonEndStr);
+
+    if (candidateDateStrs.length === 0) {
+      return Object.fromEntries(
+        facilityIds.map((id) => [id, { nextAvailableDate: null, availableDatesCount: 0, datesChecked: 0 }])
+      );
+    }
+
+    const candidateDates = candidateDateStrs.map((s) => {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    });
+
+    const rangeStart = new Date(candidateDates[0]);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = new Date(candidateDates[candidateDates.length - 1]);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    const [timeSlots, bookings] = await Promise.all([
+      prisma.facilityTimeSlot.findMany({
+        where: { facilityId: { in: facilityIds }, dayOfWeek: 6, isActive: true, category: type },
+      }),
+      prisma.booking.findMany({
+        where: {
+          facilityId: { in: facilityIds },
+          deletedAt: null,
+          status: { in: ["PENDING", "APPROVED"] },
+          startTime: { lte: rangeEnd },
+          endTime: { gte: rangeStart },
+        },
+        select: { facilityId: true, startTime: true, endTime: true },
+      }),
+    ]);
+
+    const slotsByFacility = new Map<string, typeof timeSlots>();
+    for (const slot of timeSlots) {
+      if (!slotsByFacility.has(slot.facilityId)) slotsByFacility.set(slot.facilityId, []);
+      slotsByFacility.get(slot.facilityId)!.push(slot);
+    }
+
+    const bookingsByFacility = new Map<string, typeof bookings>();
+    for (const b of bookings) {
+      const fid = b.facilityId!;
+      if (!bookingsByFacility.has(fid)) bookingsByFacility.set(fid, []);
+      bookingsByFacility.get(fid)!.push(b);
+    }
+
+    const result: Record<string, CeremonyVenueAvailabilitySummary> = {};
+
+    for (const facilityId of facilityIds) {
+      const slots = slotsByFacility.get(facilityId) ?? [];
+      const facilityBookings = bookingsByFacility.get(facilityId) ?? [];
+      let nextAvailableDate: string | null = null;
+      let availableDatesCount = 0;
+
+      if (slots.length > 0) {
+        for (let i = 0; i < candidateDates.length; i++) {
+          const date = candidateDates[i];
+          const dateStr = candidateDateStrs[i];
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(date);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const dayBookings = facilityBookings.filter(
+            (b) => b.startTime <= endOfDay && b.endTime >= startOfDay
+          );
+
+          const hasOpenSlot = slots.some((slot) => {
+            if (slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours)) return false;
+            const slotStartMin = toMinutes(slot.startTime);
+            const slotEndMin = toMinutes(slot.endTime);
+            const currentBookings = dayBookings.filter((b) => {
+              const bStartMin = b.startTime.getHours() * 60 + b.startTime.getMinutes();
+              const bEndMin = b.endTime.getHours() * 60 + b.endTime.getMinutes();
+              return bookingOverlapsSlot(bStartMin, bEndMin, slotStartMin, slotEndMin);
+            }).length;
+            return currentBookings < slot.maxBookings;
+          });
+
+          if (hasOpenSlot) {
+            availableDatesCount++;
+            if (!nextAvailableDate) nextAvailableDate = dateStr;
+          }
+        }
+      }
+
+      result[facilityId] = {
+        nextAvailableDate,
+        availableDatesCount,
+        datesChecked: candidateDateStrs.length,
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error computing ceremony venue availability summaries:", error);
+    return {};
   }
 }
 

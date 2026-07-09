@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Expand, Info } from "lucide-react";
+import { Users, Expand, Info, CalendarCheck, CalendarX } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 type Config = {
@@ -35,12 +35,51 @@ type Config = {
   };
 };
 
+type AvailabilitySummary = {
+  nextAvailableDate: string | null;
+  availableDatesCount: number;
+  datesChecked: number;
+};
+
 type Props = {
   type: "WEDDING" | "NAMING";
   configs: Config[];
+  availability?: Record<string, AvailabilitySummary>;
 };
 
-export default function CeremonyCatalogClient({ type, configs }: Props) {
+/** Formats a YYYY-MM-DD ceremony date string as "Sat, Aug 2" without timezone shift. */
+function formatCeremonyDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GH", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function AvailabilityBadge({ summary }: { summary?: AvailabilitySummary }) {
+  if (!summary || summary.datesChecked === 0) return null;
+
+  if (!summary.nextAvailableDate) {
+    return (
+      <p className="flex items-center gap-1 text-xs font-medium text-[var(--muted)]">
+        <CalendarX size={12} /> No open dates in the next few months
+      </p>
+    );
+  }
+
+  return (
+    <p className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+      <CalendarCheck size={12} />
+      Next available {formatCeremonyDate(summary.nextAvailableDate)}
+      <span className="text-[var(--muted)] font-normal">
+        ({summary.availableDatesCount} of {summary.datesChecked} open)
+      </span>
+    </p>
+  );
+}
+
+export default function CeremonyCatalogClient({ type, configs, availability }: Props) {
   const router = useRouter();
   const [selectedConfig, setSelectedConfig] = useState<Config | null>(null);
 
@@ -126,6 +165,9 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
                   <Users size={12} />
                   <span>Capacity: {config.facility.capacity.toLocaleString()}</span>
                 </div>
+                <div className="pt-1">
+                  <AvailabilityBadge summary={availability?.[config.facility.id]} />
+                </div>
               </CardContent>
 
               <CardFooter className="px-4 pb-4 pt-0 flex items-center justify-between">
@@ -194,6 +236,7 @@ export default function CeremonyCatalogClient({ type, configs }: Props) {
                     Capacity: {selectedConfig.facility.capacity.toLocaleString()}
                   </span>
                 </div>
+                <AvailabilityBadge summary={availability?.[selectedConfig.facility.id]} />
                 <div className="flex items-center justify-between pt-2">
                   <div>
                     <span className="text-2xl font-bold text-[var(--navy)] dark:text-gray-100">
