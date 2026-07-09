@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
 import BookingsListClient from "@/components/bookings/BookingsListClient";
 import CeremonyBookingsTable, { type CeremonyBookingRow } from "@/components/bookings/CeremonyBookingsTable";
-import type { CeremonyDetails } from "@/lib/ceremony-utils";
+import { CEREMONY_CATEGORIES, type CeremonyDetails } from "@/lib/ceremony-utils";
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
 
@@ -33,7 +33,10 @@ export default async function BookingsPage({
   if (tab === "ceremony") {
     // ── Ceremony tab ──────────────────────────────────────────────────────────
     const where = {
-      ceremonyCode: { isNot: null },
+      OR: [
+        { ceremonyCode: { isNot: null } },
+        { category: { in: [...CEREMONY_CATEGORIES] } },
+      ],
       ...(status ? { status } : {}),
       deletedAt: null,
     };
@@ -59,7 +62,9 @@ export default async function BookingsPage({
     const ceremonyRows: CeremonyBookingRow[] = bookings.map((b) => {
       const booker = b.patron ?? b.user;
       const cd     = b.ceremonyDetails as CeremonyDetails | null;
-      const ctype  = b.ceremonyCode?.ceremonyType?.toLowerCase() as "wedding" | "naming" | null ?? null;
+      const ctype  = (cd?.type
+        ?? b.ceremonyCode?.ceremonyType?.toLowerCase()
+        ?? (b.category?.toUpperCase() === "WEDDING" ? "wedding" : b.category?.toUpperCase() === "NAMING" ? "naming" : null)) as "wedding" | "naming" | null;
       return {
         id:                b.id,
         title:             b.title,
@@ -132,6 +137,7 @@ export default async function BookingsPage({
   // ── Regular tab ─────────────────────────────────────────────────────────────
   const where = {
     ceremonyCode: null,
+    category: { notIn: [...CEREMONY_CATEGORIES] },
     ...(status ? { status } : {}),
     deletedAt: null,
   };
