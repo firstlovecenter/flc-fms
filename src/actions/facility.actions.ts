@@ -154,6 +154,18 @@ export async function deleteFacility(id: string) {
   return { success: true };
 }
 
+export async function reactivateFacility(id: string) {
+  const session = await requirePerm("facilities:manage");
+  await prisma.facility.update({
+    where: { id },
+    data: { isActive: true, deletedAt: null },
+  });
+
+  auditLog({ userId: session.sub, action: "REACTIVATE_FACILITY", entity: "Facility", entityId: id });
+  revalidatePath("/facilities");
+  return { success: true };
+}
+
 export async function toggleMaintenanceLock(
   facilityId: string,
   lock: boolean,

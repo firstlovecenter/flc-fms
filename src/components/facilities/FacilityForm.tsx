@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
-import { createFacility, updateFacility } from "@/actions/facility.actions";
+import { createFacility, updateFacility, deleteFacility, reactivateFacility } from "@/actions/facility.actions";
 import MediaUploader from "@/components/ui/MediaUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ interface Props {
     id: string; name: string; description: string | null;
     capacity: number;
     acUsageFee: number;
+    isActive: boolean;
     requiresBookingTerms: boolean;
     requiresItemBookingTerms: boolean;
     hasAccessCode: boolean;
@@ -71,6 +72,33 @@ export default function FacilityForm({ facility, categories }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(facility?.images || []);
   const isEdit = !!facility;
+  const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
+
+  async function handleDeactivate() {
+    if (!facility) return;
+    setDeactivating(true);
+    const result = await deleteFacility(facility.id);
+    setDeactivating(false);
+    if ("error" in result && result.error) {
+      setError(result.error as string);
+      return;
+    }
+    router.push("/facilities");
+    router.refresh();
+  }
+
+  async function handleReactivate() {
+    if (!facility) return;
+    setDeactivating(true);
+    const result = await reactivateFacility(facility.id);
+    setDeactivating(false);
+    if ("error" in result && result.error) {
+      setError(result.error as string);
+      return;
+    }
+    router.refresh();
+  }
   const [categoryMappings, setCategoryMappings] = useState<CategoryMappingDraft[]>(() => {
     const existing = new Map(
       (facility?.pricing ?? []).map((p) => [p.category, p])
@@ -377,13 +405,58 @@ export default function FacilityForm({ facility, categories }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-          {isSubmitting ? "Saving…" : isEdit ? "Update Facility" : "Create Facility"}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
-          Cancel
-        </Button>
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2 sm:justify-between">
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            {isSubmitting ? "Saving…" : isEdit ? "Update Facility" : "Create Facility"}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+        </div>
+
+        {isEdit && facility.isActive && !confirmingDeactivate && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setConfirmingDeactivate(true)}
+            className="w-full sm:w-auto"
+          >
+            Deactivate Facility
+          </Button>
+        )}
+        {isEdit && facility.isActive && confirmingDeactivate && (
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeactivate}
+              disabled={deactivating}
+              className="flex-1 sm:flex-none"
+            >
+              {deactivating ? "Deactivating…" : "Confirm Deactivate"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmingDeactivate(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+        {isEdit && !facility.isActive && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleReactivate}
+            disabled={deactivating}
+            className="w-full sm:w-auto"
+          >
+            {deactivating ? "Reactivating…" : "Reactivate Facility"}
+          </Button>
+        )}
       </div>
     </Card></form>
   );
