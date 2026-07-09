@@ -299,12 +299,28 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     // Ceremony booking (staff bypass — no code required)
     const isCeremonyBooking = !!validated.ceremonyDetails;
     let ceremonyPrice: number | null = null;
-    if (isCeremonyBooking) {
-      const ctype = (validated.category?.toUpperCase() ?? "WEDDING") as "WEDDING" | "NAMING";
-      const cfg = await tx.ceremonyVenueConfig.findUnique({
-        where: { facilityId_type: { facilityId: validated.facilityId, type: ctype } },
+    let codeRecord: Awaited<ReturnType<typeof tx.ceremonyBookingCode.findFirst>> = null;
+    if (validated.ceremonyCodeId) {
+      codeRecord = await tx.ceremonyBookingCode.findFirst({
+        where: { id: validated.ceremonyCodeId, status: "ACTIVE" },
       });
-      ceremonyPrice = cfg ? Number(cfg.price) : 0;
+      if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
+        return { error: "Invalid or expired ceremony code." };
+      }
+      if (codeRecord.facilityId && codeRecord.facilityId !== validated.facilityId) {
+        return { error: "This payment code was issued for a different venue." };
+      }
+    }
+    if (isCeremonyBooking) {
+      if (codeRecord?.amountPaid != null) {
+        ceremonyPrice = Number(codeRecord.amountPaid);
+      } else {
+        const ctype = (validated.category?.toUpperCase() ?? "WEDDING") as "WEDDING" | "NAMING";
+        const cfg = await tx.ceremonyVenueConfig.findUnique({
+          where: { facilityId_type: { facilityId: validated.facilityId, type: ctype } },
+        });
+        ceremonyPrice = cfg ? Number(cfg.price) : 0;
+      }
     }
 
     let totalAmount: number;
@@ -362,13 +378,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     });
 
     // Staff may optionally attach a ceremony code; consume it if provided.
-    if (validated.ceremonyCodeId) {
-      const codeRecord = await tx.ceremonyBookingCode.findFirst({
-        where: { id: validated.ceremonyCodeId, status: "ACTIVE" },
-      });
-      if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
-        return { error: "Invalid or expired ceremony code." };
-      }
+    if (validated.ceremonyCodeId && codeRecord) {
       await tx.ceremonyBookingCode.update({
         where: { id: validated.ceremonyCodeId },
         data: { status: "USED", usedAt: new Date(), bookingId: booking.id },
@@ -522,11 +532,18 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
       if (codeRecord.ceremonyType !== validated.category.toUpperCase()) {
         return { error: "This payment code is for a different ceremony type." };
       }
-      const config = await tx.ceremonyVenueConfig.findUnique({
-        where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
-      });
-      if (!config) return { error: "No ceremony configuration found for this venue." };
-      ceremonyPrice = Number(config.price);
+      if (codeRecord.facilityId && codeRecord.facilityId !== validated.facilityId) {
+        return { error: "This payment code was issued for a different venue." };
+      }
+      if (codeRecord.amountPaid != null) {
+        ceremonyPrice = Number(codeRecord.amountPaid);
+      } else {
+        const config = await tx.ceremonyVenueConfig.findUnique({
+          where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
+        });
+        if (!config) return { error: "No ceremony configuration found for this venue." };
+        ceremonyPrice = Number(config.price);
+      }
     }
 
     const amountResult = await computeConfiguredBookingAmount(
@@ -567,7 +584,8 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
         resolvedUnitPrice: ceremonyPrice ?? amountData.unitPrice,
         resolvedPricingSource: ceremonyPrice != null ? "CEREMONY_CONFIG" : amountData.pricingSource,
         ceremonyDetails: validated.ceremonyDetails ?? undefined,
-        status:       "PENDING",
+        // A validated ceremony code means payment is already confirmed — no separate approval needed.
+        status:       validated.ceremonyCodeId ? "APPROVED" : "PENDING",
       },
       include: { facility: true, patron: true },
     });
@@ -586,47 +604,73 @@ export async function createPatronBooking(data: z.infer<typeof BookingCreateSche
   if ("error" in txResult) return { error: txResult.error };
   const { booking } = txResult;
 
-  await Promise.allSettled([
-    ...(booking.patron?.phone ? [notifyBookingConfirmation({
-      phone:        booking.patron.phone,
-      bookingTitle: booking.title,
-      startTime:    booking.startTime,
-      facilityName: booking.facility?.name ?? "N/A",
-    })] : []),
-    ...(booking.patron?.email ? [sendBookingConfirmationEmail({
-      to:           booking.patron.email,
-      name:         booking.patron.name,
-      bookingTitle: booking.title,
-      facilityName: booking.facility?.name ?? "N/A",
-      startTime:    booking.startTime,
-      endTime:      booking.endTime,
-      totalAmount:  Number(booking.totalAmount),
-    })] : []),
-    sendPushToPatron(session.sub, {
-      title: "Booking Request Submitted",
-      body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
-      url:   "/patron/bookings",
-      tag:   `booking-created-${booking.id}`,
-    }),
-    (async () => {
-      const fms = await staffPhonesWithPermission("bookings:approve");
-      await Promise.allSettled(
-        fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
-          phone:        fm.phone!,
-          bookedBy:     booking.patron?.name ?? "Patron",
-          bookingTitle: booking.title,
-          facilityName: booking.facility?.name ?? "N/A",
-          startTime:    booking.startTime,
-        }))
-      );
-    })(),
-    sendPushToAllStaff({
-      title: "New Booking Pending Approval",
-      body:  `${booking.patron?.name ?? "Patron"} submitted "${booking.title}". Pending your approval.`,
-      url:   `/bookings/${booking.id}`,
-      tag:   `booking-pending-${booking.id}`,
-    }),
-  ]);
+  // A validated ceremony code means payment is already confirmed, so the booking is
+  // auto-approved — send the "confirmed" notice instead of a pending-approval one.
+  if (booking.status === "APPROVED") {
+    await Promise.allSettled([
+      ...(booking.patron?.phone ? [notifyBookingApproved({
+        phone:        booking.patron.phone,
+        bookingTitle: booking.title,
+        startTime:    booking.startTime,
+      })] : []),
+      ...(booking.patron?.email ? [sendBookingApprovedEmail({
+        to:           booking.patron.email,
+        name:         booking.patron.name,
+        bookingTitle: booking.title,
+        facilityName: booking.facility?.name ?? "N/A",
+        startTime:    booking.startTime,
+        totalAmount:  Number(booking.totalAmount),
+      })] : []),
+      sendPushToPatron(session.sub, {
+        title: "Booking Confirmed",
+        body:  `Your booking "${booking.title}" has been confirmed.`,
+        url:   "/patron/bookings",
+        tag:   `booking-created-${booking.id}`,
+      }),
+    ]);
+  } else {
+    await Promise.allSettled([
+      ...(booking.patron?.phone ? [notifyBookingConfirmation({
+        phone:        booking.patron.phone,
+        bookingTitle: booking.title,
+        startTime:    booking.startTime,
+        facilityName: booking.facility?.name ?? "N/A",
+      })] : []),
+      ...(booking.patron?.email ? [sendBookingConfirmationEmail({
+        to:           booking.patron.email,
+        name:         booking.patron.name,
+        bookingTitle: booking.title,
+        facilityName: booking.facility?.name ?? "N/A",
+        startTime:    booking.startTime,
+        endTime:      booking.endTime,
+        totalAmount:  Number(booking.totalAmount),
+      })] : []),
+      sendPushToPatron(session.sub, {
+        title: "Booking Request Submitted",
+        body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+        url:   "/patron/bookings",
+        tag:   `booking-created-${booking.id}`,
+      }),
+      (async () => {
+        const fms = await staffPhonesWithPermission("bookings:approve");
+        await Promise.allSettled(
+          fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
+            phone:        fm.phone!,
+            bookedBy:     booking.patron?.name ?? "Patron",
+            bookingTitle: booking.title,
+            facilityName: booking.facility?.name ?? "N/A",
+            startTime:    booking.startTime,
+          }))
+        );
+      })(),
+      sendPushToAllStaff({
+        title: "New Booking Pending Approval",
+        body:  `${booking.patron?.name ?? "Patron"} submitted "${booking.title}". Pending your approval.`,
+        url:   `/bookings/${booking.id}`,
+        tag:   `booking-pending-${booking.id}`,
+      }),
+    ]);
+  }
 
   auditLog({ userId: session.sub, action: "CREATE_PATRON_BOOKING", entity: "Booking", entityId: booking.id });
   revalidatePath("/bookings");
@@ -750,11 +794,18 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
       if (!codeRecord || (codeRecord.expiresAt && codeRecord.expiresAt < new Date())) {
         return { error: "Invalid or expired ceremony code." };
       }
-      const config = await tx.ceremonyVenueConfig.findUnique({
-        where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
-      });
-      if (!config) return { error: "No ceremony configuration found for this venue." };
-      ceremonyPrice = Number(config.price);
+      if (codeRecord.facilityId && codeRecord.facilityId !== validated.facilityId) {
+        return { error: "This payment code was issued for a different venue." };
+      }
+      if (codeRecord.amountPaid != null) {
+        ceremonyPrice = Number(codeRecord.amountPaid);
+      } else {
+        const config = await tx.ceremonyVenueConfig.findUnique({
+          where: { facilityId_type: { facilityId: validated.facilityId, type: codeRecord.ceremonyType } },
+        });
+        if (!config) return { error: "No ceremony configuration found for this venue." };
+        ceremonyPrice = Number(config.price);
+      }
     }
 
     const amountResult = await computeConfiguredBookingAmount(
@@ -795,7 +846,8 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
         resolvedUnitPrice: ceremonyPrice ?? amountData.unitPrice,
         resolvedPricingSource: ceremonyPrice != null ? "CEREMONY_CONFIG" : amountData.pricingSource,
         ceremonyDetails: validated.ceremonyDetails ?? undefined,
-        status: "PENDING",
+        // A validated ceremony code means payment is already confirmed — no separate approval needed.
+        status: validated.ceremonyCodeId ? "APPROVED" : "PENDING",
       },
       include: { facility: true },
     });
@@ -815,49 +867,75 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   const { booking } = txResult;
   const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL}/patron/register`;
 
-  await Promise.allSettled([
-    notifyBookingConfirmation({
-      phone:           validated.guestPhone,
-      bookingTitle:    booking.title,
-      startTime:       booking.startTime,
-      facilityName:    booking.facility?.name ?? "N/A",
-      accountClaimUrl: claimUrl,
-    }),
-    sendBookingConfirmationEmail({
-      to:              validated.guestEmail,
-      name:            validated.guestName,
-      bookingTitle:    booking.title,
-      facilityName:    booking.facility?.name ?? "N/A",
-      startTime:       booking.startTime,
-      endTime:         booking.endTime,
-      totalAmount:     Number(booking.totalAmount),
-      accountClaimUrl: claimUrl,
-    }),
-    sendPushToPatron(patron.id, {
-      title: "Booking Request Submitted",
-      body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
-      url:   "/patron/bookings",
-      tag:   `booking-created-${booking.id}`,
-    }),
-    (async () => {
-      const fms = await staffPhonesWithPermission("bookings:approve");
-      await Promise.allSettled(
-        fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
-          phone:        fm.phone!,
-          bookedBy:     validated.guestName,
-          bookingTitle: booking.title,
-          facilityName: booking.facility?.name ?? "N/A",
-          startTime:    booking.startTime,
-        }))
-      );
-    })(),
-    sendPushToAllStaff({
-      title: "New Guest Booking Pending Approval",
-      body:  `${validated.guestName} submitted "${booking.title}". Pending your approval.`,
-      url:   `/bookings/${booking.id}`,
-      tag:   `booking-pending-${booking.id}`,
-    }),
-  ]);
+  // A validated ceremony code means payment is already confirmed, so the booking is
+  // auto-approved — send the "confirmed" notice instead of a pending-approval one.
+  if (booking.status === "APPROVED") {
+    await Promise.allSettled([
+      notifyBookingApproved({
+        phone:        validated.guestPhone,
+        bookingTitle: booking.title,
+        startTime:    booking.startTime,
+      }),
+      sendBookingApprovedEmail({
+        to:           validated.guestEmail,
+        name:         validated.guestName,
+        bookingTitle: booking.title,
+        facilityName: booking.facility?.name ?? "N/A",
+        startTime:    booking.startTime,
+        totalAmount:  Number(booking.totalAmount),
+      }),
+      sendPushToPatron(patron.id, {
+        title: "Booking Confirmed",
+        body:  `Your booking "${booking.title}" has been confirmed.`,
+        url:   "/patron/bookings",
+        tag:   `booking-created-${booking.id}`,
+      }),
+    ]);
+  } else {
+    await Promise.allSettled([
+      notifyBookingConfirmation({
+        phone:           validated.guestPhone,
+        bookingTitle:    booking.title,
+        startTime:       booking.startTime,
+        facilityName:    booking.facility?.name ?? "N/A",
+        accountClaimUrl: claimUrl,
+      }),
+      sendBookingConfirmationEmail({
+        to:              validated.guestEmail,
+        name:            validated.guestName,
+        bookingTitle:    booking.title,
+        facilityName:    booking.facility?.name ?? "N/A",
+        startTime:       booking.startTime,
+        endTime:         booking.endTime,
+        totalAmount:     Number(booking.totalAmount),
+        accountClaimUrl: claimUrl,
+      }),
+      sendPushToPatron(patron.id, {
+        title: "Booking Request Submitted",
+        body:  `Your booking "${booking.title}" has been submitted and is pending approval.`,
+        url:   "/patron/bookings",
+        tag:   `booking-created-${booking.id}`,
+      }),
+      (async () => {
+        const fms = await staffPhonesWithPermission("bookings:approve");
+        await Promise.allSettled(
+          fms.filter(fm => fm.phone).map(fm => notifyFMBookingPending({
+            phone:        fm.phone!,
+            bookedBy:     validated.guestName,
+            bookingTitle: booking.title,
+            facilityName: booking.facility?.name ?? "N/A",
+            startTime:    booking.startTime,
+          }))
+        );
+      })(),
+      sendPushToAllStaff({
+        title: "New Guest Booking Pending Approval",
+        body:  `${validated.guestName} submitted "${booking.title}". Pending your approval.`,
+        url:   `/bookings/${booking.id}`,
+        tag:   `booking-pending-${booking.id}`,
+      }),
+    ]);
+  }
 
   auditLog({
     action: "CREATE_GUEST_BOOKING",

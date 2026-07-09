@@ -282,7 +282,7 @@ export async function getCeremonyReport(range?: DateRange) {
 
   const { from, to } = range ?? resolveDateRange("6m");
 
-  const [statusBreakdown, typeBreakdown] = await Promise.all([
+  const [statusBreakdown, typeBreakdown, venueRevenue] = await Promise.all([
     prisma.ceremonyBookingCode.groupBy({
       by: ["status"],
       where: { createdAt: { gte: from, lte: to } },
@@ -293,6 +293,12 @@ export async function getCeremonyReport(range?: DateRange) {
       where: { createdAt: { gte: from, lte: to } },
       _count: { _all: true },
     }),
+    prisma.ceremonyBookingCode.groupBy({
+      by: ["facilityId"],
+      where: { createdAt: { gte: from, lte: to }, facilityId: { not: null } },
+      _sum: { amountPaid: true },
+      _count: { _all: true },
+    }),
   ]);
 
   const total      = statusBreakdown.reduce((s, b) => s + b._count._all, 0);
@@ -300,6 +306,22 @@ export async function getCeremonyReport(range?: DateRange) {
   const used       = statusBreakdown.find((s) => s.status === "USED")?._count._all ?? 0;
   const expired    = statusBreakdown.find((s) => s.status === "EXPIRED")?._count._all ?? 0;
   const pending    = statusBreakdown.find((s) => s.status === "PENDING")?._count._all ?? 0;
+
+  const venueIds = venueRevenue.map((v) => v.facilityId).filter((id): id is string => !!id);
+  const venues = await prisma.facility.findMany({
+    where: { id: { in: venueIds } },
+    select: { id: true, name: true },
+  });
+  const venueNames = new Map(venues.map((v) => [v.id, v.name]));
+
+  const revenueByVenue = venueRevenue
+    .map((v) => ({
+      facilityId:   v.facilityId!,
+      facilityName: venueNames.get(v.facilityId!) ?? "Unknown venue",
+      totalPaid:    Number(v._sum.amountPaid ?? 0),
+      count:        v._count._all,
+    }))
+    .sort((a, b) => b.totalPaid - a.totalPaid);
 
   return {
     total,
@@ -310,6 +332,8 @@ export async function getCeremonyReport(range?: DateRange) {
     conversionRate: total > 0 ? Math.round((used / total) * 100) : 0,
     statusBreakdown: statusBreakdown.map((s) => ({ status: s.status, count: s._count._all })),
     typeBreakdown: typeBreakdown.map((t) => ({ type: t.ceremonyType, count: t._count._all })),
+    revenueByVenue,
+    totalRevenue: revenueByVenue.reduce((s, v) => s + v.totalPaid, 0),
   };
 }
 

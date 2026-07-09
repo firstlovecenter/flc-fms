@@ -94,6 +94,7 @@ model Facility {
   maintenance              MaintenanceRequest[]
   inventoryRequirements    FacilityInventoryRequirement[]
   ceremonyConfigs          CeremonyVenueConfig[]
+  ceremonyCodes            CeremonyBookingCode[]
 
   @@index([isActive])
   @@map("facilities")
@@ -755,6 +756,8 @@ model CeremonyBookingCode {
   code           String             @unique
   status         CeremonyCodeStatus @default(PENDING)
   ceremonyType   CeremonyType
+  facilityId     String?
+  amountPaid     Decimal?           @db.Decimal(10, 2)
   requesterName  String
   requesterPhone String
   requesterEmail String
@@ -768,11 +771,13 @@ model CeremonyBookingCode {
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
-  activatedBy User?    @relation(fields: [activatedById], references: [id])
-  booking     Booking? @relation(fields: [bookingId], references: [id])
+  activatedBy User?     @relation(fields: [activatedById], references: [id])
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
+  facility    Facility? @relation(fields: [facilityId], references: [id])
 
   @@index([status])
   @@index([requesterEmail])
+  @@index([facilityId])
   @@map("ceremony_booking_codes")
 }
 
