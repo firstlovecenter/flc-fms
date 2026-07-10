@@ -286,18 +286,21 @@ model Expense {
 }
 
 /**
- * Real-world payment source accounts (bank, mobile money, cash, etc.) that Facility
- * Managers maintain. Chosen on an expense at approval time to record which account the
- * money was actually paid from — separate from the "expense"/"savings" operating ledgers.
+ * Independent, FM-managed money accounts (e.g. "Expense Account", a bank account, mobile
+ * money, cash). Every account tracks its own balance — income recorded against it, minus
+ * approved expenses paid from it, minus/plus savings transfers moved to/from it. Accounts
+ * are never deleted, only deactivated, since they're referenced by financial history.
  */
 model Account {
-  id        String    @id @default(cuid())
-  name      String
-  isActive  Boolean   @default(true)
-  sortOrder Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  expenses  Expense[]
+  id                  String               @id @default(cuid())
+  name                String
+  isActive            Boolean              @default(true)
+  sortOrder           Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  expenses            Expense[]
+  incomes             Income[]
+  savingsTransactions SavingsTransaction[]
 
   @@index([isActive, sortOrder])
   @@map("accounts")
@@ -315,14 +318,22 @@ model Income {
   createdAt    DateTime  @default(now())
   bookingId    String?   @unique
   deletedAt    DateTime?
+  accountId    String?
   booking      Booking?  @relation(fields: [bookingId], references: [id])
   recordedBy   User?     @relation(fields: [recordedById], references: [id])
+  account      Account?  @relation(fields: [accountId], references: [id])
 
   @@index([receivedAt])
   @@index([receivedAt, deletedAt])
+  @@index([accountId])
   @@map("income")
 }
 
+/**
+ * A transfer between the savings pool and one operating Account. `accountId` is the
+ * counterparty account: the source for a DEPOSIT (money leaving that account into savings)
+ * or the destination for a WITHDRAWAL (money leaving savings into that account).
+ */
 model SavingsTransaction {
   id          String                 @id @default(cuid())
   type        SavingsTransactionType
@@ -331,9 +342,12 @@ model SavingsTransaction {
   createdById String
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
+  accountId   String?
   createdBy   User                   @relation(fields: [createdById], references: [id])
+  account     Account?               @relation(fields: [accountId], references: [id])
 
   @@index([type, createdAt])
+  @@index([accountId])
   @@map("savings_transactions")
 }
 

@@ -244,6 +244,7 @@ export function savingsToCSV(data: {
     type: "DEPOSIT" | "WITHDRAWAL";
     narration: string;
     createdByName: string;
+    accountName: string | null;
     amount: number;
     balanceAfter: number;
   }[];
@@ -252,11 +253,12 @@ export function savingsToCSV(data: {
   netSavings: number;
 }): string {
   const statement = toCSV(
-    ["Date", "Type", "Narration", "Recorded By", "Amount (GH₵)", "Balance (GH₵)"],
+    ["Date", "Type", "Narration", "Account", "Recorded By", "Amount (GH₵)", "Balance (GH₵)"],
     data.rows.map((r) => [
       r.createdAt.toISOString().slice(0, 10),
       r.type === "DEPOSIT" ? "Transfer In" : "Transfer Out",
       r.narration,
+      r.accountName ?? "",
       r.createdByName,
       (r.type === "DEPOSIT" ? r.amount : -r.amount).toFixed(2),
       r.balanceAfter.toFixed(2),

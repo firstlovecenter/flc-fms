@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { isTransactionLocked, transactionLockMessage } from "@/lib/transaction-lock";
+import { getAccountBalance } from "@/lib/finance";
 
 const IncomeSchema = z.object({
   title:      z.string().min(2),
@@ -14,6 +15,7 @@ const IncomeSchema = z.object({
   category:   z.string().min(2),
   source:     z.string().optional(),
   bookingId:  z.string().optional(),
+  accountId:  z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.coerce.date()});
 
 const UpdateIncomeSchema = z.object({
@@ -22,11 +24,16 @@ const UpdateIncomeSchema = z.object({
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
   source:     z.string().optional(),
+  accountId:  z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.coerce.date(),
 });
 
 export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
-  const session  = await requirePerm("finance:record_income");  const validated = IncomeSchema.parse(data);
+  const session  = await requirePerm("finance:record_income");
+  const validated = IncomeSchema.parse(data);
+
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to record this income against." };
 
   if (validated.bookingId) {
     const existingLinked = await prisma.income.findUnique({ where: { bookingId: validated.bookingId } });
@@ -43,6 +50,7 @@ export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
           amount: validated.amount,
           category: validated.category,
           source: validated.source,
+          accountId: validated.accountId,
           receivedAt: validated.receivedAt,
           deletedAt: null,
         },
@@ -103,12 +111,35 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
 
   const existing = await prisma.income.findFirst({
     where: { id: incomeId, deletedAt: null },
-    select: { createdAt: true },
+    select: { createdAt: true, accountId: true, amount: true },
   });
 
   if (!existing) return { error: "Income record not found." };
   if (isTransactionLocked(existing.createdAt)) {
     return { error: transactionLockMessage() };
+  }
+
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to record this income against." };
+
+  // Changing the amount or moving this income to a different account effectively removes
+  // its current contribution from the ORIGINAL account's balance — verify that account can
+  // still afford to lose it before applying the change (mirrors the balance checks every
+  // other money-moving action in this app already performs).
+  if (existing.accountId) {
+    const originalBalance = await getAccountBalance(existing.accountId);
+    const balanceWithoutThisIncome = originalBalance - Number(existing.amount);
+    const resultingBalance = existing.accountId === validated.accountId
+      ? balanceWithoutThisIncome + validated.amount
+      : balanceWithoutThisIncome;
+
+    if (resultingBalance < 0) {
+      return {
+        error: existing.accountId === validated.accountId
+          ? `Reducing this income would leave its account with a negative balance (GH₵${resultingBalance.toFixed(2)}).`
+          : `Moving this income off its current account would leave it with a negative balance (GH₵${resultingBalance.toFixed(2)}). Resolve that first.`,
+      };
+    }
   }
 
   const updated = await prisma.income.update({
@@ -129,12 +160,22 @@ export async function deleteIncome(incomeId: string) {
 
   const existing = await prisma.income.findFirst({
     where: { id: incomeId, deletedAt: null },
-    select: { createdAt: true },
+    select: { createdAt: true, accountId: true, amount: true },
   });
 
   if (!existing) return { error: "Income record not found." };
   if (isTransactionLocked(existing.createdAt)) {
     return { error: transactionLockMessage() };
+  }
+
+  if (existing.accountId) {
+    const originalBalance = await getAccountBalance(existing.accountId);
+    const balanceWithoutThisIncome = originalBalance - Number(existing.amount);
+    if (balanceWithoutThisIncome < 0) {
+      return {
+        error: `Deleting this income would leave its account with a negative balance (GH₵${balanceWithoutThisIncome.toFixed(2)}). Resolve that first.`,
+      };
+    }
   }
 
   await prisma.income.update({
