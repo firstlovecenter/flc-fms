@@ -283,7 +283,7 @@ export default async function TransactionsPage({
                         <td className="py-2.5 px-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
-                            {e.status === "APPROVED" && !e.receiptUrl && (
+                            {e.status === "APPROVED" && !e.receiptUrl && !e.isTransactionCharge && (
                               <StatusBadge
                                 status="UNPAID"
                                 label={isReceiptOverdue(e.approvedAt) ? "Receipt Overdue" : "Receipt Missing"}

@@ -64,9 +64,12 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
   }
 
   function handleToggle(id: string) {
+    setError(null);
     startTransition(async () => {
       const result = await toggleAccount(id);
-      if (result.success) {
+      if ("error" in result && result.error) {
+        setError(result.error);
+      } else if (result.success) {
         setAccounts((prev) =>
           prev.map((a) => (a.id === id ? { ...a, isActive: !a.isActive } : a))
         );

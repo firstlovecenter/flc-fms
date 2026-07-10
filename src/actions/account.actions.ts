@@ -69,6 +69,14 @@ export async function updateAccount(id: string, data: z.infer<typeof AccountSche
 export async function toggleAccount(id: string) {
   const session = await requirePerm("finance:manage_accounts");
   const account = await prisma.account.findUniqueOrThrow({ where: { id } });
+
+  if (account.isActive) {
+    const otherActiveCount = await prisma.account.count({ where: { isActive: true, NOT: { id } } });
+    if (otherActiveCount === 0) {
+      return { error: "At least one account must stay active so expenses can still be approved." };
+    }
+  }
+
   const updated = await prisma.account.update({
     where: { id },
     data: { isActive: !account.isActive },
@@ -88,6 +96,13 @@ export async function deleteAccount(id: string) {
   const usageCount = await prisma.expense.count({ where: { accountId: id } });
   if (usageCount > 0) {
     return { error: "This account has been used on approved expenses and can't be deleted. Deactivate it instead." };
+  }
+
+  if (account.isActive) {
+    const otherActiveCount = await prisma.account.count({ where: { isActive: true, NOT: { id } } });
+    if (otherActiveCount === 0) {
+      return { error: "At least one account must stay active so expenses can still be approved." };
+    }
   }
 
   await prisma.account.delete({ where: { id } });

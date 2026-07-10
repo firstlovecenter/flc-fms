@@ -114,6 +114,11 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
     });
     if (!current) return { error: "This expense has already been processed." };
 
+    // Re-verify the account is still valid inside the lock — it may have been
+    // deactivated or deleted in the window since the outer pre-check.
+    const currentAccount = await tx.account.findFirst({ where: { id: accountId, isActive: true } });
+    if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
+
     // Compute savings-aware available balance inside the lock
     const [incomeTotals, approvedExpAgg, savingsAgg] = await Promise.all([
       getTotalIncomeIncludingBookingRevenue(),
