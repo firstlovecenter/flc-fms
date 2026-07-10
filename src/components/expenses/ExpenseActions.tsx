@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { approveExpense, rejectExpense } from "@/actions/expense.actions";
+import { getActiveAccounts } from "@/actions/account.actions";
 import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export default function ExpenseActions({
   expenseId,
@@ -17,24 +19,34 @@ export default function ExpenseActions({
   const [mode, setMode] = useState<null | "approve" | "reject">(null);
   const [reason, setReason] = useState("");
   const [chargeAmount, setChargeAmount] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (mode === "approve" && accounts.length === 0) {
+      getActiveAccounts().then(setAccounts);
+    }
+  }, [mode, accounts.length]);
 
   if (isLocked) {
     return <span className="text-xs text-[var(--muted)]">Locked</span>;
   }
 
   async function handleApprove() {
+    if (!accountId) { setError("Select which account this expense is being paid from."); return; }
     setLoading(true);
     setError(null);
     try {
-      const result = await approveExpense(expenseId, parseFloat(chargeAmount) || 0);
+      const result = await approveExpense(expenseId, parseFloat(chargeAmount) || 0, accountId);
       if (result && "error" in result && result.error) {
         setError(result.error);
       } else if (result && "success" in result) {
         router.refresh();
         setMode(null);
         setChargeAmount("");
+        setAccountId("");
       } else {
         setError("Approval failed. Please try again.");
       }
@@ -75,7 +87,19 @@ export default function ExpenseActions({
             {error}
           </p>
         )}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
+          <NativeSelect
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            size="sm"
+            className="text-xs w-36"
+            autoFocus
+          >
+            <NativeSelectOption value="">Pay from…</NativeSelectOption>
+            {accounts.map((a) => (
+              <NativeSelectOption key={a.id} value={a.id}>{a.name}</NativeSelectOption>
+            ))}
+          </NativeSelect>
           <Input
             type="number"
             min="0"
@@ -84,7 +108,6 @@ export default function ExpenseActions({
             onChange={(e) => setChargeAmount(e.target.value)}
             placeholder="Charge (GH₵)…"
             className="text-xs py-1 w-28 min-h-8"
-            autoFocus
           />
           <button
             type="button"
@@ -97,7 +120,7 @@ export default function ExpenseActions({
           </button>
           <button
             type="button"
-            onClick={() => { setMode(null); setChargeAmount(""); setError(null); }}
+            onClick={() => { setMode(null); setChargeAmount(""); setAccountId(""); setError(null); }}
             className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
             title="Cancel"
           >

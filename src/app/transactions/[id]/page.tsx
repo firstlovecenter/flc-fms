@@ -20,6 +20,7 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
       createdBy:    { select: { name: true, email: true, role: true } },
       approvedBy:   { select: { name: true } },
       chargeExpense: { select: { id: true, amount: true, title: true, status: true } },
+      account:      { select: { name: true } },
     },
   });
 
@@ -91,6 +92,9 @@ export default async function ExpenseDetailPage({ params }: { params: { id: stri
           <p className="text-sm font-semibold text-gray-800">{formatDateTime(expense.createdAt)}</p>
           {expense.approvedBy && (
             <p className="text-xs text-[var(--muted)] mt-1">Approved by {expense.approvedBy.name}</p>
+          )}
+          {expense.account && (
+            <p className="text-xs text-[var(--muted)] mt-1">Paid via {expense.account.name}</p>
           )}
         </Card>
       </div>

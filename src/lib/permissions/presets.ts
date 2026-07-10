@@ -73,6 +73,7 @@ const OPERATIONS_NO_FINANCE: PermissionSet = {
   "finance:approve_expense": false,
   "finance:record_income": false,
   "finance:savings": false,
+  "finance:manage_accounts": false,
   "reports:view": false,
   "reports:manage_subscriptions": false,
 };
