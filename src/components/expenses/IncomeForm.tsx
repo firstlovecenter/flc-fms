@@ -20,6 +20,7 @@ const schema = z.object({
   category:   z.string().min(2, "Category is required"),
   source:     z.string().optional(),
   bookingId:  z.string().optional(),
+  accountId:  z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.string().min(1, "Date is required"),
 });
 
@@ -33,12 +34,14 @@ type BookingOption = {
   facility: { name: string } | null;
 };
 
+type AccountOption = { id: string; name: string };
+
 const CATEGORIES = [
   "Federal", "Events", "Weddings", "Namings",
   "ECG", "Fuel", "Donations", "Other",
 ];
 
-export default function IncomeForm() {
+export default function IncomeForm({ accounts }: { accounts: AccountOption[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [bookings, setBookings] = useState<BookingOption[]>([]);
@@ -61,6 +64,7 @@ export default function IncomeForm() {
       category:   data.category,
       source:     data.source || undefined,
       bookingId:  data.bookingId || undefined,
+      accountId:  data.accountId,
       receivedAt: new Date(data.receivedAt),
     });
 
@@ -119,6 +123,15 @@ export default function IncomeForm() {
           <Input id="income-received-at" {...register("receivedAt")} type="date" />
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="income-account">Account *</Label>
+        <select id="income-account" {...register("accountId")} className={cn(inputStyles)} defaultValue="">
+          <option value="" disabled>Select which account this income goes into…</option>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
       </div>
 
       {bookings.length > 0 && (

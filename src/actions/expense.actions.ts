@@ -8,7 +8,7 @@ import { requirePerm } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { getStaffAuthContext, ctxHasPermission } from "@/lib/permissions/session";
 import { auditLog } from "@/lib/audit";
-import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
+import { getAccountBalance } from "@/lib/finance";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { notifyFMExpenseSubmitted, notifyExpenseDecision } from "@/lib/notifications/sms";
 import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
@@ -119,24 +119,15 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
     const currentAccount = await tx.account.findFirst({ where: { id: accountId, isActive: true } });
     if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
 
-    // Compute savings-aware available balance inside the lock
-    const [incomeTotals, approvedExpAgg, savingsAgg] = await Promise.all([
-      getTotalIncomeIncludingBookingRevenue(),
-      tx.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
-      tx.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } }),
-    ]);
+    // Compute the CHOSEN account's own balance inside the lock — accounts are
+    // independent, so this expense can only draw against the account it's assigned to.
+    const accountBalance = await getAccountBalance(accountId, tx);
+    const totalRequired  = Number(current.amount) + sanitisedCharge;
 
-    const totalApprovedExpenses = Number(approvedExpAgg._sum.amount ?? 0);
-    const savingsDeposits       = Number(savingsAgg.find((r) => r.type === "DEPOSIT")?._sum.amount    ?? 0);
-    const savingsWithdrawals    = Number(savingsAgg.find((r) => r.type === "WITHDRAWAL")?._sum.amount ?? 0);
-    const netSavings            = savingsDeposits - savingsWithdrawals;
-    const availableBalance      = incomeTotals.totalIncome - totalApprovedExpenses - netSavings;
-    const totalRequired         = Number(current.amount) + sanitisedCharge;
-
-    if (totalRequired > availableBalance) {
+    if (totalRequired > accountBalance) {
       const msg = sanitisedCharge > 0
-        ? `Insufficient balance. Available: GH₵${availableBalance.toFixed(2)}, Required: GH₵${totalRequired.toFixed(2)} (expense GH₵${Number(current.amount).toFixed(2)} + charge GH₵${sanitisedCharge.toFixed(2)})`
-        : `Insufficient balance. Available: GH₵${availableBalance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`;
+        ? `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Required: GH₵${totalRequired.toFixed(2)} (expense GH₵${Number(current.amount).toFixed(2)} + charge GH₵${sanitisedCharge.toFixed(2)})`
+        : `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`;
       return { error: msg };
     }
 

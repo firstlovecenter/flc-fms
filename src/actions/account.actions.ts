@@ -10,10 +10,15 @@ const AccountSchema = z.object({
   name: z.string().min(2, "Account name is required").max(100),
 });
 
-/** Active accounts for the expense-approval account picker. */
-export async function getActiveAccounts() {
+/**
+ * Active accounts for account pickers (expense approval, income entry, savings transfer).
+ * Pass `includeAccountId` to also include one specific inactive account — e.g. a record
+ * being edited that's assigned to an account that's since been deactivated, so its current
+ * value still shows up as a selectable option.
+ */
+export async function getActiveAccounts(includeAccountId?: string) {
   return prisma.account.findMany({
-    where: { isActive: true },
+    where: includeAccountId ? { OR: [{ isActive: true }, { id: includeAccountId }] } : { isActive: true },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true },
   });
@@ -87,27 +92,3 @@ export async function toggleAccount(id: string) {
   return { success: true, account: updated };
 }
 
-export async function deleteAccount(id: string) {
-  const session = await requirePerm("finance:manage_accounts");
-
-  const account = await prisma.account.findUnique({ where: { id } });
-  if (!account) return { error: "Account not found." };
-
-  const usageCount = await prisma.expense.count({ where: { accountId: id } });
-  if (usageCount > 0) {
-    return { error: "This account has been used on approved expenses and can't be deleted. Deactivate it instead." };
-  }
-
-  if (account.isActive) {
-    const otherActiveCount = await prisma.account.count({ where: { isActive: true, NOT: { id } } });
-    if (otherActiveCount === 0) {
-      return { error: "At least one account must stay active so expenses can still be approved." };
-    }
-  }
-
-  await prisma.account.delete({ where: { id } });
-
-  auditLog({ userId: session.sub, action: "DELETE_ACCOUNT", entity: "Account", entityId: id, before: account });
-  revalidatePath("/transactions/accounts");
-  return { success: true };
-}

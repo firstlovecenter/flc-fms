@@ -5,42 +5,38 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
+import { getAccountBalance } from "@/lib/finance";
 
 const SavingsSchema = z.object({
   amount:    z.coerce.number().positive(),
   narration: z.string().min(5),
+  accountId: z.string().min(1, "Select which account this transfer involves"),
 });
 
 // Shared with expense.actions.ts — serialises all financial writes
 const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
+/** Deposit: moves money OUT of `accountId` and into the savings pool. */
 export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
   const session   = await requirePerm("finance:savings");
   const validated = SavingsSchema.parse(data);
 
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to transfer from." };
+
   const txResult = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
 
-    // Compute available balance inside the lock
-    const [incomeTotals, approvedExpAgg, savingsAgg] = await Promise.all([
-      getTotalIncomeIncludingBookingRevenue(),
-      tx.expense.aggregate({
-        where: { status: "APPROVED", deletedAt: null },
-        _sum: { amount: true },
-      }),
-      tx.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } }),
-    ]);
+    // Re-verify the account is still active inside the lock, and compute its balance —
+    // deposits can only draw down the specific account they're sourced from.
+    const currentAccount = await tx.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+    if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
 
-    const totalApprovedExpenses = Number(approvedExpAgg._sum.amount ?? 0);
-    const savingsDeposits       = Number(savingsAgg.find((r) => r.type === "DEPOSIT")?._sum.amount    ?? 0);
-    const savingsWithdrawals    = Number(savingsAgg.find((r) => r.type === "WITHDRAWAL")?._sum.amount ?? 0);
-    const netSavings            = savingsDeposits - savingsWithdrawals;
-    const availableBalance      = incomeTotals.totalIncome - totalApprovedExpenses - netSavings;
+    const accountBalance = await getAccountBalance(validated.accountId, tx);
 
-    if (validated.amount > availableBalance) {
+    if (validated.amount > accountBalance) {
       return {
-        error: `Insufficient available balance. Available: GH₵${availableBalance.toFixed(2)}, Requested: GH₵${validated.amount.toFixed(2)}`,
+        error: `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Requested: GH₵${validated.amount.toFixed(2)}`,
       };
     }
 
@@ -50,6 +46,7 @@ export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
         amount:      validated.amount,
         narration:   validated.narration,
         createdById: session.sub,
+        accountId:   validated.accountId,
       },
     });
     return { record };
@@ -62,20 +59,28 @@ export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
     action:   "SAVINGS_DEPOSIT",
     entity:   "SavingsTransaction",
     entityId: txResult.record.id,
-    after:    { amount: validated.amount, narration: validated.narration },
+    after:    { amount: validated.amount, narration: validated.narration, accountId: validated.accountId },
   });
   revalidatePath("/transactions");
   return { success: true, record: txResult.record };
 }
 
+/** Withdrawal: moves money OUT of the savings pool and into `accountId`. */
 export async function withdrawFromSavings(data: z.infer<typeof SavingsSchema>) {
   const session   = await requirePerm("finance:savings");
   const validated = SavingsSchema.parse(data);
 
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to transfer into." };
+
   const txResult = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
 
-    // Compute current savings balance inside the lock
+    const currentAccount = await tx.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+    if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
+
+    // Compute current savings balance inside the lock — the pool itself is the constraint,
+    // regardless of which account the money is being paid back into.
     const savingsAgg = await tx.savingsTransaction.groupBy({
       by: ["type"],
       _sum: { amount: true },
@@ -96,6 +101,7 @@ export async function withdrawFromSavings(data: z.infer<typeof SavingsSchema>) {
         amount:      validated.amount,
         narration:   validated.narration,
         createdById: session.sub,
+        accountId:   validated.accountId,
       },
     });
     return { record };
@@ -117,7 +123,10 @@ export async function withdrawFromSavings(data: z.infer<typeof SavingsSchema>) {
 export async function getSavingsTransactions() {
   await requirePerm("finance:savings");
   return prisma.savingsTransaction.findMany({
-    include: { createdBy: { select: { name: true } } },
+    include: {
+      createdBy: { select: { name: true } },
+      account:   { select: { name: true } },
+    },
     orderBy: { createdAt: "desc" },
     take: 100,
   });

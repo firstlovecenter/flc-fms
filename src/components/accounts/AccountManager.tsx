@@ -1,22 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Pencil, Check, X, Trash2 } from "lucide-react";
+import { Plus, Pencil, Check, X } from "lucide-react";
 import {
   createAccount,
   updateAccount,
   toggleAccount,
-  deleteAccount,
 } from "@/actions/account.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 
 interface Account {
   id: string;
   name: string;
   isActive: boolean;
   sortOrder: number;
+  balance: number;
 }
 
 export default function AccountManager({ initialAccounts }: { initialAccounts: Account[] }) {
@@ -77,34 +78,19 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
     });
   }
 
-  function handleDelete(account: Account) {
-    const confirmed = window.confirm(
-      `Delete account "${account.name}"? This cannot be undone.`
-    );
-    if (!confirmed) return;
-
-    setError(null);
-    startTransition(async () => {
-      const result = await deleteAccount(account.id);
-      if ("error" in result && result.error) {
-        setError(result.error);
-        return;
-      }
-
-      setAccounts((prev) => prev.filter((a) => a.id !== account.id));
-      if (editingId === account.id) cancel();
-    });
-  }
-
   return (
     <Card className="p-6 space-y-4">
       {error && (
         <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
+      <p className="text-xs text-[var(--muted)]">
+        Accounts can be deactivated but never deleted — they're permanently tied to financial history.
+      </p>
+
       <div className="space-y-2">
         {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between py-3 px-4 bg-white border border-[var(--border)] rounded-xl">
+          <div key={account.id} className="flex items-center justify-between py-3 px-4 bg-white border border-[var(--border)] rounded-xl flex-wrap gap-2">
             {editingId === account.id ? (
               <div className="flex items-center gap-3 flex-1 flex-wrap">
                 <Input
@@ -123,9 +109,14 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
               </div>
             ) : (
               <>
-                <span className={`text-sm font-medium ${account.isActive ? "text-[var(--navy)]" : "text-gray-400 line-through"}`}>
-                  {account.name}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${account.isActive ? "text-[var(--navy)]" : "text-gray-400 line-through"}`}>
+                    {account.name}
+                  </span>
+                  <span className={`text-sm font-semibold tabular-nums ${account.balance >= 0 ? "text-success" : "text-danger"}`}>
+                    {formatCurrency(account.balance)}
+                  </span>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleToggle(account.id)}
@@ -144,15 +135,6 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
                     className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)]"
                   >
                     <Pencil size={13} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(account)}
-                    disabled={isPending}
-                    className="p-1.5 rounded-lg hover:bg-danger/10 text-[var(--muted)] hover:text-danger disabled:opacity-50"
-                    title="Delete account"
-                    aria-label="Delete account"
-                  >
-                    <Trash2 size={13} />
                   </button>
                 </div>
               </>

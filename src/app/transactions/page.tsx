@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank, Wallet } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
-import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
+import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement, getAllAccountBalances } from "@/lib/finance";
 import { isReceiptOverdue } from "@/lib/receipt-policy";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -72,7 +72,7 @@ export default async function TransactionsPage({
   const [
     expenses, expenseTotal, expenseSummary,
     incomeRecords, incomeTotals, incomeByCategory,
-    savingsStatement, savingsAgg,
+    savingsStatement, savingsAgg, accountBalances,
   ] = await Promise.all([
     prisma.expense.findMany({
       where: expenseWhere,
@@ -95,7 +95,10 @@ export default async function TransactionsPage({
       _count: true,
     }),
     canApproveExpenses ? prisma.income.findMany({
-      include: { recordedBy: { select: { name: true } } },
+      include: {
+        recordedBy: { select: { name: true } },
+        account:    { select: { name: true } },
+      },
       orderBy: { receivedAt: "desc" },
       take: 50,
     }) : Promise.resolve([]),
@@ -115,6 +118,7 @@ export default async function TransactionsPage({
       by: ["type"],
       _sum: { amount: true },
     }) : Promise.resolve([]),
+    canApproveExpenses ? getAllAccountBalances() : Promise.resolve([]),
   ]);
 
   const incomeByCategryList = incomeByCategory.map((c) => ({
@@ -214,6 +218,28 @@ export default async function TransactionsPage({
             <p className={`text-2xl font-bold tabular-nums ${availableBalance >= 0 ? "text-success" : "text-danger"}`}>{formatCurrency(availableBalance)}</p>
           </Card>
         </div>
+      )}
+
+      {/* Per-Account Balances */}
+      {canApproveExpenses && accountBalances.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--cream)] flex justify-between items-center">
+            <h3 className="font-semibold text-[var(--navy)] text-sm">Account Balances</h3>
+            {canManageAccounts && (
+              <Link href="/transactions/accounts" className="text-xs text-[var(--navy)] hover:underline">Manage →</Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+            {accountBalances.map((a) => (
+              <div key={a.id} className="p-3 rounded-lg border border-[var(--border)]">
+                <p className="text-xs font-medium text-[var(--muted)] truncate" title={a.name}>{a.name}</p>
+                <p className={`text-lg font-bold tabular-nums ${a.balance >= 0 ? "text-success" : "text-danger"}`}>
+                  {formatCurrency(a.balance)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {/* Tabs */}
@@ -345,7 +371,10 @@ export default async function TransactionsPage({
                           <p className="font-medium">{r.title}</p>
                           <p className="text-xs text-[var(--muted)] line-clamp-1">{r.narration}</p>
                         </td>
-                        <td className="py-3 px-4 text-[var(--slate)]">{r.category}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">
+                          {r.category}
+                          {r.account && <p className="text-xs text-[var(--muted)]">Into {r.account.name}</p>}
+                        </td>
                         <td className="py-3 px-4 text-[var(--muted)]">{r.source ?? "—"}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{r.recordedBy?.name ?? "System"}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(r.receivedAt)}</td>
@@ -582,7 +611,14 @@ export default async function TransactionsPage({
                             {s.type === "DEPOSIT" ? "Transfer In" : "Transfer Out"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-[var(--slate)]">{s.narration}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">
+                          {s.narration}
+                          {s.accountName && (
+                            <p className="text-xs text-[var(--muted)] mt-0.5">
+                              {s.type === "DEPOSIT" ? `From ${s.accountName}` : `Into ${s.accountName}`}
+                            </p>
+                          )}
+                        </td>
                         <td className="py-3 px-4 text-[var(--slate)]">{s.createdByName}</td>
                         <td className="py-3 px-4 text-[var(--slate)]">{formatDate(s.createdAt)}</td>
                         <td className={`py-3 px-4 text-right font-semibold tabular-nums ${s.type === "DEPOSIT" ? "text-success" : "text-maintenance"}`}>

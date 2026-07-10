@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { isTransactionLocked } from "@/lib/transaction-lock";
+import { getActiveAccounts } from "@/actions/account.actions";
 import IncomeEditForm from "@/components/expenses/IncomeEditForm";
 
 export default async function EditIncomePage({ params }: { params: { id: string } }) {
@@ -16,10 +17,13 @@ export default async function EditIncomePage({ params }: { params: { id: string 
       amount: true,
       category: true,
       source: true,
+      accountId: true,
       receivedAt: true,
       createdAt: true,
     },
   });
+
+  const accounts = await getActiveAccounts(income?.accountId ?? undefined);
 
   if (!income) notFound();
 
@@ -45,6 +49,7 @@ export default async function EditIncomePage({ params }: { params: { id: string 
           ...income,
           amount: Number(income.amount),
         }}
+        accounts={accounts}
       />
     </div>
   );

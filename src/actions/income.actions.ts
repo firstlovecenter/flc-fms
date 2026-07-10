@@ -14,6 +14,7 @@ const IncomeSchema = z.object({
   category:   z.string().min(2),
   source:     z.string().optional(),
   bookingId:  z.string().optional(),
+  accountId:  z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.coerce.date()});
 
 const UpdateIncomeSchema = z.object({
@@ -22,11 +23,16 @@ const UpdateIncomeSchema = z.object({
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
   source:     z.string().optional(),
+  accountId:  z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.coerce.date(),
 });
 
 export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
-  const session  = await requirePerm("finance:record_income");  const validated = IncomeSchema.parse(data);
+  const session  = await requirePerm("finance:record_income");
+  const validated = IncomeSchema.parse(data);
+
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to record this income against." };
 
   if (validated.bookingId) {
     const existingLinked = await prisma.income.findUnique({ where: { bookingId: validated.bookingId } });
@@ -43,6 +49,7 @@ export async function recordIncome(data: z.infer<typeof IncomeSchema>) {
           amount: validated.amount,
           category: validated.category,
           source: validated.source,
+          accountId: validated.accountId,
           receivedAt: validated.receivedAt,
           deletedAt: null,
         },
@@ -110,6 +117,9 @@ export async function updateIncome(incomeId: string, data: z.infer<typeof Update
   if (isTransactionLocked(existing.createdAt)) {
     return { error: transactionLockMessage() };
   }
+
+  const account = await prisma.account.findFirst({ where: { id: validated.accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to record this income against." };
 
   const updated = await prisma.income.update({
     where: { id: incomeId },

@@ -7,33 +7,48 @@ import { z } from "zod";
 import { useState } from "react";
 import { depositToSavings } from "@/actions/savings.actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, inputStyles } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-interface Props {
-  availableBalance: number;
+interface AccountOption {
+  id: string;
+  name: string;
+  balance: number;
 }
 
-export default function SavingsDepositForm({ availableBalance }: Props) {
+interface Props {
+  accounts: AccountOption[];
+}
+
+const schema = z.object({
+  amount:    z.coerce.number().positive("Amount must be positive"),
+  narration: z.string().min(5, "Provide a brief narration (min 5 characters)"),
+  accountId: z.string().min(1, "Select which account to transfer from"),
+});
+
+type FormData = z.infer<typeof schema>;
+
+export default function SavingsDepositForm({ accounts }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const schema = z.object({
-    amount:    z.coerce.number().positive("Amount must be positive")
-      .max(availableBalance, `Cannot exceed available balance of GH₵${availableBalance.toFixed(2)}`),
-    narration: z.string().min(5, "Provide a brief narration (min 5 characters)"),
-  });
-
-  type FormData = z.infer<typeof schema>;
-
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
+  const selectedAccount = accounts.find((a) => a.id === watch("accountId"));
+  const isLocked = accounts.length === 0;
+
   async function onSubmit(data: FormData) {
     setError(null);
+    const account = accounts.find((a) => a.id === data.accountId);
+    if (account && data.amount > account.balance) {
+      setError(`Cannot exceed "${account.name}"'s balance of GH₵${account.balance.toFixed(2)}`);
+      return;
+    }
     const result = await depositToSavings(data);
     if ("error" in result && result.error) {
       setError(result.error as string);
@@ -43,28 +58,32 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
     }
   }
 
-  const isLocked = availableBalance <= 0;
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
-      {/* Balance info banner */}
-      <div className={`rounded-lg px-4 py-3 text-sm flex items-center justify-between border ${
-        isLocked
-          ? "bg-red-50 border-red-200 text-red-700"
-          : "bg-emerald-50 border-emerald-200 text-emerald-800"
-      }`}>
-        <span>Available operating balance</span>
-        <span className="font-bold tabular-nums">GH₵{availableBalance.toFixed(2)}</span>
-      </div>
-
       {isLocked && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-700 text-sm">
-          There are no funds in the operating account to transfer into savings right now.
+          There are no active accounts to transfer from. Create one under Transactions ▸ Accounts.
         </div>
       )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+      )}
+
+      <div>
+        <Label htmlFor="savings-deposit-account">From Account *</Label>
+        <select id="savings-deposit-account" {...register("accountId")} className={cn(inputStyles)} disabled={isLocked}>
+          <option value="" disabled>Select an account…</option>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.name} — GH₵{a.balance.toFixed(2)}</option>)}
+        </select>
+        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
+      </div>
+
+      {selectedAccount && (
+        <div className="rounded-lg px-4 py-3 text-sm flex items-center justify-between border bg-emerald-50 border-emerald-200 text-emerald-800">
+          <span>Available balance in &ldquo;{selectedAccount.name}&rdquo;</span>
+          <span className="font-bold tabular-nums">GH₵{selectedAccount.balance.toFixed(2)}</span>
+        </div>
       )}
 
       <div>
@@ -74,7 +93,6 @@ export default function SavingsDepositForm({ availableBalance }: Props) {
           {...register("amount")}
           type="text"
           inputMode="decimal"
-          max={availableBalance}
           placeholder="0.00"
           disabled={isLocked}
         />

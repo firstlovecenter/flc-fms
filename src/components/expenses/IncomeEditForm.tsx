@@ -19,6 +19,7 @@ const schema = z.object({
   amount: z.coerce.number().positive("Amount must be positive"),
   category: z.string().min(2, "Category is required"),
   source: z.string().optional(),
+  accountId: z.string().min(1, "Select which account this income is recorded against"),
   receivedAt: z.string().min(1, "Date is required"),
 });
 
@@ -32,8 +33,10 @@ type IncomeEditFormProps = {
     amount: number;
     category: string;
     source: string | null;
+    accountId: string | null;
     receivedAt: Date;
   };
+  accounts: { id: string; name: string }[];
 };
 
 const CATEGORIES = [
@@ -41,7 +44,7 @@ const CATEGORIES = [
   "ECG", "Fuel", "Donations", "Other",
 ];
 
-export default function IncomeEditForm({ income }: IncomeEditFormProps) {
+export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +56,7 @@ export default function IncomeEditForm({ income }: IncomeEditFormProps) {
       amount: income.amount,
       category: income.category,
       source: income.source ?? "",
+      accountId: income.accountId ?? "",
       receivedAt: new Date(income.receivedAt).toISOString().split("T")[0],
     },
   });
@@ -65,6 +69,7 @@ export default function IncomeEditForm({ income }: IncomeEditFormProps) {
       amount: data.amount,
       category: data.category,
       source: data.source || undefined,
+      accountId: data.accountId,
       receivedAt: new Date(data.receivedAt),
     });
 
@@ -118,6 +123,15 @@ export default function IncomeEditForm({ income }: IncomeEditFormProps) {
           <Input id="income-edit-received-at" {...register("receivedAt")} type="date" />
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="income-edit-account">Account *</Label>
+        <select id="income-edit-account" {...register("accountId")} className={cn(inputStyles)}>
+          <option value="" disabled>Select which account this income goes into…</option>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
