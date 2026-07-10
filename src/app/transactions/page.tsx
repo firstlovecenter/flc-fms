@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Wrench, Zap, PiggyBank, Wallet } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { getTotalIncomeIncludingBookingRevenue, getSavingsStatement } from "@/lib/finance";
+import { isReceiptOverdue } from "@/lib/receipt-policy";
 import { isExpenseLocked, isTransactionLocked } from "@/lib/transaction-lock";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -29,6 +30,7 @@ export default async function TransactionsPage({
   const canApproveExpenses = session.role === "SUPER_ADMIN" || (perms?.["finance:approve_expense"] ?? false);
   const canRecordIncome = session.role === "SUPER_ADMIN" || (perms?.["finance:record_income"] ?? false);
   const canSavings = session.role === "SUPER_ADMIN" || (perms?.["finance:savings"] ?? false);
+  const canManageAccounts = session.role === "SUPER_ADMIN" || (perms?.["finance:manage_accounts"] ?? false);
   const canSubmitExpenses =
     session.role === "SUPER_ADMIN" ||
     (perms ? hasPermission(session.role, session.permissions, "finance:submit_expense") : false);
@@ -79,6 +81,7 @@ export default async function TransactionsPage({
         approvedBy: { select: { name: true } },
         maintenanceRequest: { select: { id: true, title: true } },
         chargeExpense: { select: { id: true, amount: true } },
+        account: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * take,
@@ -175,6 +178,11 @@ export default async function TransactionsPage({
             {canApproveExpenses && (
               <Link href="/transactions/savings/deposit" className={cn(buttonVariants({ variant: "outline" }), "gap-2 justify-center w-full sm:w-auto")}>
                 <PiggyBank size={16} /> Transfer to Savings
+              </Link>
+            )}
+            {canManageAccounts && (
+              <Link href="/transactions/accounts" className={cn(buttonVariants({ variant: "outline" }), "gap-2 justify-center w-full sm:w-auto")}>
+                <Wallet size={16} /> Manage Accounts
               </Link>
             )}
           </>
@@ -276,7 +284,11 @@ export default async function TransactionsPage({
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && (
-                              <StatusBadge status="UNPAID" label="Receipt Missing" size="xs" />
+                              <StatusBadge
+                                status="UNPAID"
+                                label={isReceiptOverdue(e.approvedAt) ? "Receipt Overdue" : "Receipt Missing"}
+                                size="xs"
+                              />
                             )}
                           </div>
                         </td>
@@ -416,7 +428,10 @@ export default async function TransactionsPage({
                             <p className="text-xs text-[var(--muted)] line-clamp-1 mt-0.5">{e.narration}</p>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-[var(--slate)]">{e.category}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">
+                          {e.category}
+                          {e.account && <p className="text-xs text-[var(--muted)]">Paid via {e.account.name}</p>}
+                        </td>
                         <td className="py-3 px-4 text-[var(--slate)]">
                           {e.createdBy.name}
                           <p className="text-xs text-[var(--muted)]">{e.createdBy.role}</p>
@@ -427,7 +442,11 @@ export default async function TransactionsPage({
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={e.status} size="xs" />
                             {e.status === "APPROVED" && !e.receiptUrl && !e.isTransactionCharge && (
-                              <StatusBadge status="UNPAID" label="Receipt Missing" size="xs" />
+                              <StatusBadge
+                                status="UNPAID"
+                                label={isReceiptOverdue(e.approvedAt) ? "Receipt Overdue" : "Receipt Missing"}
+                                size="xs"
+                              />
                             )}
                           </div>
                         </td>

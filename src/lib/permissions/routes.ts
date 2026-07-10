@@ -88,6 +88,7 @@ export const STAFF_ACTION_ITEMS: NavItemDef[] = [
 /** Page-level permission requirements (exact path or prefix). */
 export const ROUTE_PERMISSIONS: { pattern: string; permission: Permission | Permission[]; exact?: boolean }[] = [
   { pattern: "/transactions", permission: ["finance:view", "finance:submit_expense"], exact: true },
+  { pattern: "/transactions/accounts", permission: "finance:manage_accounts" },
   { pattern: "/transactions/new-expense", permission: "finance:submit_expense" },
   { pattern: "/transactions/new-income", permission: "finance:record_income" },
   { pattern: "/transactions/savings", permission: "finance:savings" },

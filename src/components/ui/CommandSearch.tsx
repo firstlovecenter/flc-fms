@@ -19,6 +19,7 @@ import {
   ClipboardList,
   ListTodo,
   KeyRound,
+  Wallet,
   Settings,
   UserCircle,
   ShieldAlert,
@@ -58,6 +59,7 @@ const NAV_ICONS: Record<string, React.ElementType> = {
   "/inventory": Boxes,
   "/maintenance": Wrench,
   "/transactions": ArrowLeftRight,
+  "/transactions/accounts": Wallet,
   "/reports": BarChart3,
   "/staff": Users,
   "/users": Users,
@@ -85,6 +87,7 @@ const NAV_KEYWORDS: Record<string, string[]> = {
   "/inventory": ["stock", "equipment"],
   "/maintenance": ["repairs", "schedule"],
   "/transactions": ["income", "expenses", "finance", "savings"],
+  "/transactions/accounts": ["payment source", "bank", "mobile money", "cash", "accounts"],
   "/reports": ["analytics", "summary"],
   "/staff": ["employees", "team"],
   "/settings": ["settings", "configuration", "contact"],
@@ -134,6 +137,16 @@ function buildSearchItems(
       href: "/ceremony-codes/bishops",
       icon: NAV_ICONS["/ceremony-codes/bishops"],
       keywords: NAV_KEYWORDS["/ceremony-codes/bishops"],
+      group: "Navigate",
+    });
+  }
+
+  if (hasPerm("finance:manage_accounts")) {
+    items.push({
+      label: "Accounts",
+      href: "/transactions/accounts",
+      icon: NAV_ICONS["/transactions/accounts"],
+      keywords: NAV_KEYWORDS["/transactions/accounts"],
       group: "Navigate",
     });
   }

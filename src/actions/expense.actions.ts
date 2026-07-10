@@ -12,6 +12,7 @@ import { getTotalIncomeIncludingBookingRevenue } from "@/lib/finance";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { notifyFMExpenseSubmitted, notifyExpenseDecision } from "@/lib/notifications/sms";
 import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
+import { getBlockingReceiptExpense } from "@/lib/receipt-policy";
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -35,6 +36,14 @@ const ReceiptOnlyUpdateSchema = z.object({
 
 export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
   const session  = await requirePerm("finance:submit_expense");
+
+  const blocking = await getBlockingReceiptExpense(session.sub);
+  if (blocking) {
+    return {
+      error: `You have an approved expense ("${blocking.title}") awaiting a receipt for over 24 hours. Upload its receipt before submitting a new request.`,
+    };
+  }
+
   const validated = ExpenseSchema.parse(data);
 
   const expense = await prisma.expense.create({
@@ -66,11 +75,15 @@ export async function submitExpense(data: z.infer<typeof ExpenseSchema>) {
 // so the balance check and the approval update are always atomic with respect to each other.
 const FINANCE_ADVISORY_LOCK = 3141592653589793n;
 
-export async function approveExpense(expenseId: string, chargeAmount: number = 0) {
+export async function approveExpense(expenseId: string, chargeAmount: number = 0, accountId?: string) {
   const session = await requirePerm("finance:approve_expense");
 
   // Sanitise charge amount — must be non-negative
   const sanitisedCharge = Math.max(0, Number(chargeAmount) || 0);
+
+  if (!accountId) return { error: "Select which account this expense is being paid from." };
+  const account = await prisma.account.findFirst({ where: { id: accountId, isActive: true } });
+  if (!account) return { error: "Select a valid, active account to pay this expense from." };
 
   // Quick pre-flight: verify existence + lock window before entering the serialised path
   const preCheck = await prisma.expense.findFirst({
@@ -138,6 +151,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
           status:             "APPROVED",
           isTransactionCharge: true,
           approvedAt:         now,
+          accountId,
         },
         select: { id: true },
       });
@@ -150,6 +164,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
         status:       "APPROVED",
         approvedById: session.sub,
         approvedAt:   now,
+        accountId,
         ...(chargeExpenseId ? { chargeExpenseId } : {}),
       },
       include: { createdBy: true },

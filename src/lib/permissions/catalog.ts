@@ -14,6 +14,7 @@ export const PERMISSION_META = {
   "finance:approve_expense":{ label: "Approve Expenses",       description: "Approve or reject expense requests." },
   "finance:record_income":  { label: "Record Income",          description: "Record income entries." },
   "finance:savings":        { label: "Manage Savings",         description: "Deposit to or withdraw from the savings account." },
+  "finance:manage_accounts":{ label: "Manage Accounts",        description: "Create and manage the payment-source accounts (bank, mobile money, cash) expenses can be paid from." },
   "facilities:view":        { label: "View Facilities",        description: "View facility listings and details." },
   "facilities:manage":      { label: "Manage Facilities",      description: "Edit facility details, slots, pricing, and maintenance locks." },
   "items:view":             { label: "View Items & Packages",  description: "View bookable items and bundles." },
@@ -66,7 +67,7 @@ export const PERMISSION_GROUPS: {
   {
     title: "Finance",
     permissions: [
-      "finance:view", "finance:submit_expense", "finance:approve_expense", "finance:record_income", "finance:savings",
+      "finance:view", "finance:submit_expense", "finance:approve_expense", "finance:record_income", "finance:savings", "finance:manage_accounts",
     ].map((key) => ({ key: key as Permission, ...PERMISSION_META[key as Permission] })),
   },
   {

@@ -272,14 +272,35 @@ model Expense {
   maintenanceRequestId String?             @unique
   isTransactionCharge  Boolean             @default(false)
   chargeExpenseId      String?             @unique
+  accountId            String?
   approvedBy           User?               @relation("ApprovedExpenses", fields: [approvedById], references: [id])
   createdBy            User                @relation("CreatedExpenses", fields: [createdById], references: [id])
   maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   chargeExpense        Expense?            @relation("ChargeExpense", fields: [chargeExpenseId], references: [id])
   linkedExpense        Expense?            @relation("ChargeExpense")
+  account              Account?            @relation(fields: [accountId], references: [id])
 
   @@index([status])
+  @@index([accountId])
   @@map("expenses")
+}
+
+/**
+ * Real-world payment source accounts (bank, mobile money, cash, etc.) that Facility
+ * Managers maintain. Chosen on an expense at approval time to record which account the
+ * money was actually paid from — separate from the "expense"/"savings" operating ledgers.
+ */
+model Account {
+  id        String    @id @default(cuid())
+  name      String
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expenses  Expense[]
+
+  @@index([isActive, sortOrder])
+  @@map("accounts")
 }
 
 model Income {
