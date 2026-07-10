@@ -102,35 +102,6 @@ export async function getSavingsStatement(filters?: {
   return { rows, deposits, withdrawals, netSavings: balance };
 }
 
-/**
- * Whole-church total across every account — income minus approved expenses minus net
- * savings transfers. Because every dollar belongs to exactly one account, this grand total
- * is unaffected by how money is split across accounts; it equals the sum of every
- * individual account's balance from getAccountBalance.
- */
-export async function getAvailableBalance(): Promise<{
-  totalIncome: number;
-  totalApprovedExpenses: number;
-  netSavings: number;
-  availableBalance: number;
-}> {
-  const [incomeTotals, approvedExpAgg, netSavings] = await Promise.all([
-    getTotalIncomeIncludingBookingRevenue(),
-    prisma.expense.aggregate({
-      where: { status: "APPROVED", deletedAt: null },
-      _sum: { amount: true },
-    }),
-    getNetSavings(),
-  ]);
-  const totalApprovedExpenses = Number(approvedExpAgg._sum.amount ?? 0);
-  return {
-    totalIncome: incomeTotals.totalIncome,
-    totalApprovedExpenses,
-    netSavings,
-    availableBalance: incomeTotals.totalIncome - totalApprovedExpenses - netSavings,
-  };
-}
-
 type FinanceClient = {
   income: { aggregate: typeof prisma.income.aggregate };
   expense: { aggregate: typeof prisma.expense.aggregate };

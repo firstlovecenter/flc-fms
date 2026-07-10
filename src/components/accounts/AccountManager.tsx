@@ -85,7 +85,7 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
       )}
 
       <p className="text-xs text-[var(--muted)]">
-        Accounts can be deactivated but never deleted — they're permanently tied to financial history.
+        Accounts can be deactivated but never deleted — they&rsquo;re permanently tied to financial history.
       </p>
 
       <div className="space-y-2">

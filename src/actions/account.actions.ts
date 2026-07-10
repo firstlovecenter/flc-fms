@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
+import { getAccountBalance } from "@/lib/finance";
+
+/** Treat anything under half a cent as zero — guards against float rounding noise. */
+const ZERO_EPSILON = 0.005;
 
 const AccountSchema = z.object({
   name: z.string().min(2, "Account name is required").max(100),
@@ -78,7 +82,18 @@ export async function toggleAccount(id: string) {
   if (account.isActive) {
     const otherActiveCount = await prisma.account.count({ where: { isActive: true, NOT: { id } } });
     if (otherActiveCount === 0) {
-      return { error: "At least one account must stay active so expenses can still be approved." };
+      return { error: "At least one account must stay active so income, expenses, and savings transfers can still be recorded." };
+    }
+
+    // A deactivated account is dropped from the "active accounts" balance summary, so an
+    // account still holding money must be swept to GH₵0 before it can be hidden — otherwise
+    // that balance would silently disappear from the accounts overview while still counting
+    // toward the whole-church total.
+    const balance = await getAccountBalance(id);
+    if (Math.abs(balance) > ZERO_EPSILON) {
+      return {
+        error: `"${account.name}" still has a balance of GH₵${balance.toFixed(2)}. Transfer it out (e.g. to savings or another account) before deactivating.`,
+      };
     }
   }
 
