@@ -120,7 +120,8 @@ export default function IncomeForm({ accounts }: { accounts: AccountOption[] }) 
         </div>
         <div>
           <Label htmlFor="income-received-at">Date Received *</Label>
-          <Input id="income-received-at" {...register("receivedAt")} type="date" />
+          <Input id="income-received-at" {...register("receivedAt")} type="date" max={new Date().toISOString().split("T")[0]} />
+          <p className="text-xs text-[var(--muted)] mt-1">You can pick a past date for income received earlier.</p>
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
       </div>

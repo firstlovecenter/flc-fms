@@ -451,12 +451,13 @@ export async function getOperationalReport() {
       _count: { _all: true },
     }),
     prisma.expense.aggregate({
+      where: { deletedAt: null },
       _sum: { amount: true },
       _count: { _all: true },
     }),
     prisma.expense.groupBy({
       by: ["category"],
-      where: { status: "APPROVED" },
+      where: { status: "APPROVED", deletedAt: null },
       _sum: { amount: true },
       _count: { _all: true },
       orderBy: { _sum: { amount: "desc" } },

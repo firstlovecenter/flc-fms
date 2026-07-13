@@ -43,6 +43,7 @@ export default async function TransactionsPage({
     ? searchParams.status as "PENDING" | "APPROVED" | "REJECTED" : undefined;
 
   const expenseWhere = {
+    deletedAt: null,
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(!canApproveExpenses ? { createdById: session.sub } : {}),
   };
@@ -71,7 +72,7 @@ export default async function TransactionsPage({
   // Fetch data in parallel
   const [
     expenses, expenseTotal, expenseSummary,
-    incomeRecords, incomeTotals, incomeByCategory,
+    incomeRecords, incomeTotal, incomeTotals, incomeByCategory,
     savingsStatement, savingsAgg, accountBalances,
   ] = await Promise.all([
     prisma.expense.findMany({
@@ -95,18 +96,23 @@ export default async function TransactionsPage({
       _count: true,
     }),
     canApproveExpenses ? prisma.income.findMany({
+      where: { deletedAt: null },
       include: {
         recordedBy: { select: { name: true } },
         account:    { select: { name: true } },
       },
       orderBy: { receivedAt: "desc" },
-      take: 50,
+      // Only the income tab pages through history; the overview just needs the latest few
+      skip: tab === "income" ? (page - 1) * take : 0,
+      take,
     }) : Promise.resolve([]),
+    canApproveExpenses ? prisma.income.count({ where: { deletedAt: null } }) : Promise.resolve(0),
     canApproveExpenses
       ? getTotalIncomeIncludingBookingRevenue()
       : Promise.resolve({ recordedIncome: 0, paidBookingRevenue: 0, totalIncome: 0 }),
     canApproveExpenses ? prisma.income.groupBy({
       by: ["category"],
+      where: { deletedAt: null },
       _sum: { amount: true },
       _count: true,
       orderBy: { _sum: { amount: "desc" } },
@@ -128,6 +134,7 @@ export default async function TransactionsPage({
   })).sort((a, b) => Number(b._sum.amount ?? 0) - Number(a._sum.amount ?? 0));
 
   const expensePages = Math.ceil(expenseTotal / take);
+  const incomePages = Math.ceil(incomeTotal / take);
   const pendingExp = expenseSummary.find((s) => s.status === "PENDING");
   const approvedExp = expenseSummary.find((s) => s.status === "APPROVED");
   const totalIncome = incomeTotals.totalIncome;
@@ -389,6 +396,14 @@ export default async function TransactionsPage({
               </div>
             )}
           </Card>
+
+          {incomePages > 1 && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="text-xs text-[var(--muted)] mr-auto">Page {page} of {incomePages}</span>
+              {page > 1 && <Link href={`/transactions?tab=income&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline" }))}>Previous</Link>}
+              {page < incomePages && <Link href={`/transactions?tab=income&page=${page + 1}`} className={cn(buttonVariants({ variant: "default" }))}>Next</Link>}
+            </div>
+          )}
         </>
       )}
 
@@ -465,7 +480,7 @@ export default async function TransactionsPage({
                           {e.createdBy.name}
                           <p className="text-xs text-[var(--muted)]">{e.createdBy.role}</p>
                         </td>
-                        <td className="py-3 px-4 text-[var(--slate)]">{formatDate(e.createdAt)}</td>
+                        <td className="py-3 px-4 text-[var(--slate)]">{formatDate(e.spentAt ?? e.createdAt)}</td>
                         <td className="py-3 px-4 text-right font-semibold tabular-nums">{formatCurrency(Number(e.amount))}</td>
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap items-center gap-2">

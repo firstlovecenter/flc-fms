@@ -19,6 +19,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
       createdById: true,
       receiptUrl: true,
       createdAt: true,
+      spentAt: true,
     },
   });
 

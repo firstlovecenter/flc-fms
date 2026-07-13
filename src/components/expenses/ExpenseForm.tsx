@@ -22,6 +22,7 @@ const schema = z.object({
   amount:     z.coerce.number().positive("Amount must be positive"),
   category:   z.string().min(2, "Category is required"),
   receiptUrl: z.string().url().optional(),
+  spentAt:    z.string().min(1, "Date is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -52,8 +53,11 @@ export default function ExpenseForm() {
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const { isOnline, enqueue } = useOfflineQueue();
 
+  const today = new Date().toISOString().split("T")[0];
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: { spentAt: today },
   });
 
   async function onSubmit(data: FormData) {
@@ -71,6 +75,7 @@ export default function ExpenseForm() {
           amount:    data.amount,
           category:  data.category,
           receiptUrl: receiptUrl || undefined,
+          spentAt:   data.spentAt,
         },
       });
       setSavedOffline(true);
@@ -85,6 +90,7 @@ export default function ExpenseForm() {
       amount:     data.amount,
       category:   data.category,
       receiptUrl: receiptUrl || undefined,
+      spentAt:    new Date(data.spentAt),
     });
 
     if ("error" in result && result.error) {
@@ -169,6 +175,13 @@ export default function ExpenseForm() {
           </select>
           {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="expense-spent-at">Date Spent *</Label>
+        <Input id="expense-spent-at" {...register("spentAt")} type="date" max={today} />
+        <p className="text-xs text-[var(--muted)] mt-1">You can pick a past date for expenses that were paid earlier.</p>
+        {errors.spentAt && <p className="text-red-500 text-xs mt-1">{errors.spentAt.message}</p>}
       </div>
 
       <div>

@@ -120,7 +120,7 @@ export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps
         </div>
         <div>
           <Label htmlFor="income-edit-received-at">Date Received *</Label>
-          <Input id="income-edit-received-at" {...register("receivedAt")} type="date" />
+          <Input id="income-edit-received-at" {...register("receivedAt")} type="date" max={new Date().toISOString().split("T")[0]} />
           {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
       </div>
