@@ -265,6 +265,9 @@ model Expense {
   status               ExpenseStatus       @default(PENDING)
   receiptUrl           String?
   rejectionReason      String?
+  /// The date the money was actually spent (supports backdated entries). Nullable for
+  /// legacy rows — code falls back to approvedAt/createdAt when unset.
+  spentAt              DateTime?
   deletedAt            DateTime?
   createdAt            DateTime            @default(now())
   approvedAt           DateTime?

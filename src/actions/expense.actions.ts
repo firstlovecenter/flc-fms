@@ -8,11 +8,14 @@ import { requirePerm } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
 import { getStaffAuthContext, ctxHasPermission } from "@/lib/permissions/session";
 import { auditLog } from "@/lib/audit";
-import { getAccountBalance } from "@/lib/finance";
+import { getAccountLedgerEvents, findNegativeBalancePoint, expenseEffectiveDate, toPesewas } from "@/lib/finance";
 import { isExpenseLocked, transactionLockMessage } from "@/lib/transaction-lock";
 import { notifyFMExpenseSubmitted, notifyExpenseDecision } from "@/lib/notifications/sms";
 import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { getBlockingReceiptExpense } from "@/lib/receipt-policy";
+
+// Allow a day of slack so "today" picked in any timezone never trips the future check.
+const notInFuture = (d: Date | undefined) => !d || d.getTime() <= Date.now() + 24 * 60 * 60 * 1000;
 
 const ExpenseSchema = z.object({
   title:      z.string().min(2).max(200),
@@ -20,6 +23,7 @@ const ExpenseSchema = z.object({
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
   receiptUrl: z.string().url().optional(),
+  spentAt:    z.coerce.date().optional().refine(notInFuture, "Spend date cannot be in the future"),
 });
 
 const UpdateExpenseSchema = z.object({
@@ -28,6 +32,7 @@ const UpdateExpenseSchema = z.object({
   amount:     z.coerce.number().positive(),
   category:   z.string().min(2),
   receiptUrl: z.string().url().optional(),
+  spentAt:    z.coerce.date().optional().refine(notInFuture, "Spend date cannot be in the future"),
 });
 
 const ReceiptOnlyUpdateSchema = z.object({
@@ -110,7 +115,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
     // Re-verify inside the lock — another request may have approved it while we waited
     const current = await tx.expense.findFirst({
       where: { id: expenseId, status: "PENDING", deletedAt: null },
-      select: { amount: true, title: true },
+      select: { amount: true, title: true, spentAt: true },
     });
     if (!current) return { error: "This expense has already been processed." };
 
@@ -119,19 +124,28 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
     const currentAccount = await tx.account.findFirst({ where: { id: accountId, isActive: true } });
     if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
 
-    // Compute the CHOSEN account's own balance inside the lock — accounts are
-    // independent, so this expense can only draw against the account it's assigned to.
-    const accountBalance = await getAccountBalance(accountId, tx);
-    const totalRequired  = Number(current.amount) + sanitisedCharge;
-
-    if (totalRequired > accountBalance) {
-      const msg = sanitisedCharge > 0
-        ? `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Required: GH₵${totalRequired.toFixed(2)} (expense GH₵${Number(current.amount).toFixed(2)} + charge GH₵${sanitisedCharge.toFixed(2)})`
-        : `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Expense: GH₵${Number(current.amount).toFixed(2)}`;
-      return { error: msg };
-    }
-
     const now = new Date();
+
+    // Replay the CHOSEN account's full timeline with this expense (and its charge) applied
+    // at the spend date. Because the expense may be backdated, checking today's balance is
+    // not enough — the account must never dip below zero at ANY point from the spend date
+    // onwards. Accounts are independent, so this only draws against the assigned account.
+    const effectiveAt = current.spentAt ?? now;
+    const events = await getAccountLedgerEvents(accountId, tx);
+    events.push({ at: effectiveAt, deltaPesewas: -toPesewas(current.amount) });
+    if (sanitisedCharge > 0) {
+      events.push({ at: effectiveAt, deltaPesewas: -toPesewas(sanitisedCharge) });
+    }
+    const negative = findNegativeBalancePoint(events);
+    if (negative) {
+      const totalRequired = Number(current.amount) + sanitisedCharge;
+      const breakdown = sanitisedCharge > 0
+        ? ` (expense GH₵${Number(current.amount).toFixed(2)} + charge GH₵${sanitisedCharge.toFixed(2)})`
+        : "";
+      return {
+        error: `Insufficient balance in "${currentAccount.name}": paying GH₵${totalRequired.toFixed(2)}${breakdown} on ${effectiveAt.toISOString().split("T")[0]} would take the account to GH₵${negative.balance.toFixed(2)} on ${negative.at.toISOString().split("T")[0]}.`,
+      };
+    }
 
     // Create charge expense first (if applicable) so we have its id
     let chargeExpenseId: string | undefined;
@@ -147,6 +161,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
           status:             "APPROVED",
           isTransactionCharge: true,
           approvedAt:         now,
+          spentAt:            effectiveAt,
           accountId,
         },
         select: { id: true },
@@ -160,6 +175,7 @@ export async function approveExpense(expenseId: string, chargeAmount: number = 0
         status:       "APPROVED",
         approvedById: session.sub,
         approvedAt:   now,
+        spentAt:      effectiveAt,
         accountId,
         ...(chargeExpenseId ? { chargeExpenseId } : {}),
       },
@@ -249,7 +265,7 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, status: true, createdById: true, isTransactionCharge: true },
+    select: { createdAt: true, status: true, createdById: true, isTransactionCharge: true, accountId: true, spentAt: true, approvedAt: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
@@ -268,6 +284,40 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
     const validated = UpdateExpenseSchema.parse(data);
     if (isExpenseLocked(existing.createdAt, existing.status)) {
       return { error: transactionLockMessage() };
+    }
+
+    // An APPROVED expense already draws money from its account, so changing its amount or
+    // spend date can overdraw the account somewhere on its timeline. Replay the account's
+    // history with this expense replaced by its edited version, under the same advisory
+    // lock every other money-moving action uses.
+    if (existing.status === "APPROVED" && existing.accountId) {
+      const accountId = existing.accountId;
+      const txResult = await prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${FINANCE_ADVISORY_LOCK})`;
+
+        const newEffectiveAt = validated.spentAt ?? expenseEffectiveDate(existing);
+        const events = await getAccountLedgerEvents(accountId, tx, { expenseId });
+        events.push({ at: newEffectiveAt, deltaPesewas: -toPesewas(validated.amount) });
+
+        const negative = findNegativeBalancePoint(events);
+        if (negative) {
+          return {
+            error: `This change would take the expense's account to GH₵${negative.balance.toFixed(2)} on ${negative.at.toISOString().split("T")[0]}. Accounts can never go negative at any point in time.`,
+          };
+        }
+
+        const updated = await tx.expense.update({
+          where: { id: expenseId },
+          data: validated,
+        });
+        return { updated };
+      });
+
+      if ("error" in txResult) return { error: txResult.error };
+
+      auditLog({ userId: session.sub, action: "UPDATE_EXPENSE", entity: "Expense", entityId: expenseId });
+      revalidatePath("/transactions");
+      return { success: true, expense: txResult.updated };
     }
 
     const updated = await prisma.expense.update({

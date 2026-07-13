@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
-import { getAccountBalance } from "@/lib/finance";
+import { getAccountLedgerEvents, findNegativeBalancePoint, toPesewas } from "@/lib/finance";
 
 const SavingsSchema = z.object({
   amount:    z.coerce.number().positive(),
@@ -32,11 +32,15 @@ export async function depositToSavings(data: z.infer<typeof SavingsSchema>) {
     const currentAccount = await tx.account.findFirst({ where: { id: validated.accountId, isActive: true } });
     if (!currentAccount) return { error: "The selected account is no longer active. Choose another account." };
 
-    const accountBalance = await getAccountBalance(validated.accountId, tx);
-
-    if (validated.amount > accountBalance) {
+    // Replay the account's full timeline with this deposit applied — since income and
+    // expenses can be backdated, this also guards against a dip anywhere in history,
+    // not just today's balance.
+    const events = await getAccountLedgerEvents(validated.accountId, tx);
+    events.push({ at: new Date(), deltaPesewas: -toPesewas(validated.amount) });
+    const negative = findNegativeBalancePoint(events);
+    if (negative) {
       return {
-        error: `Insufficient balance in "${currentAccount.name}". Available: GH₵${accountBalance.toFixed(2)}, Requested: GH₵${validated.amount.toFixed(2)}`,
+        error: `Insufficient balance in "${currentAccount.name}": transferring GH₵${validated.amount.toFixed(2)} to savings would take the account to GH₵${negative.balance.toFixed(2)}.`,
       };
     }
 

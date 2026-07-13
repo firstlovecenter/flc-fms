@@ -21,6 +21,7 @@ const schema = z.object({
   amount: z.coerce.number().positive("Amount must be positive"),
   category: z.string().min(2, "Category is required"),
   receiptUrl: z.string().url().optional(),
+  spentAt: z.string().min(1, "Date is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -34,6 +35,7 @@ type ExpenseEditFormProps = {
     category: string;
     status?: string;
     receiptUrl?: string | null;
+    spentAt?: Date | null;
   };
   receiptOnly?: boolean;
 };
@@ -62,6 +64,8 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [receiptError, setReceiptError] = useState<string | null>(null);
 
+  const today = new Date().toISOString().split("T")[0];
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -70,6 +74,7 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
       amount: expense.amount,
       category: expense.category,
       receiptUrl: expense.receiptUrl ?? undefined,
+      spentAt: expense.spentAt ? new Date(expense.spentAt).toISOString().split("T")[0] : today,
     },
   });
 
@@ -81,6 +86,7 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
       amount: receiptOnly ? expense.amount : data.amount,
       category: receiptOnly ? expense.category : data.category,
       receiptUrl: receiptUrl || undefined,
+      spentAt: receiptOnly ? undefined : new Date(data.spentAt),
     });
 
     if ("error" in result && result.error) {
@@ -147,6 +153,12 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
           </select>
           {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="expense-edit-spent-at">Date Spent *</Label>
+        <Input id="expense-edit-spent-at" {...register("spentAt")} type="date" max={today} disabled={receiptOnly} />
+        {errors.spentAt && <p className="text-red-500 text-xs mt-1">{errors.spentAt.message}</p>}
       </div>
 
       <div>
