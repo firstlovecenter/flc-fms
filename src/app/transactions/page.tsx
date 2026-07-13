@@ -43,6 +43,7 @@ export default async function TransactionsPage({
     ? searchParams.status as "PENDING" | "APPROVED" | "REJECTED" : undefined;
 
   const expenseWhere = {
+    deletedAt: null,
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(!canApproveExpenses ? { createdById: session.sub } : {}),
   };

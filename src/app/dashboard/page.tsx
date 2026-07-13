@@ -39,9 +39,9 @@ export default async function DashboardPage() {
     prisma.booking.count({ where: { status: "PENDING" } }),
     prisma.booking.count({ where: { status: "APPROVED" } }),
     prisma.maintenanceRequest.count({ where: { status: { in: ["OPEN","IN_PROGRESS"] } } }),
-    prisma.expense.count({ where: { status: "PENDING" } }),
+    prisma.expense.count({ where: { status: "PENDING", deletedAt: null } }),
     getTotalIncomeIncludingBookingRevenue(),
-    prisma.expense.aggregate({ where: { status: "APPROVED" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { status: "APPROVED", deletedAt: null }, _sum: { amount: true } }),
     canViewFinances
       ? prisma.savingsTransaction.groupBy({ by: ["type"], _sum: { amount: true } })
       : Promise.resolve([] as { type: string; _sum: { amount: unknown } }[]),
