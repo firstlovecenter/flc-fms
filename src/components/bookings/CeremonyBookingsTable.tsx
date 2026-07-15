@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { formatCurrency, formatDateTime, cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
+import { Phone, MessageCircle, Search, CalendarDays, ChevronRight } from "lucide-react";
+import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { buttonVariants } from "@/components/ui/button-variants";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
-import { Search } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 
 export type CeremonyBookingRow = {
   id: string;
@@ -48,15 +49,45 @@ interface Props {
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
 
+function normalizeTel(phone: string) {
+  return phone.replace(/[^\d+]/g, "");
+}
+
+function normalizeWhatsApp(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
+function typeLabel(type: CeremonyBookingRow["ceremonyType"]) {
+  if (type === "wedding") return <span className="badge bg-pink-50 text-pink-700 border border-pink-200">Wedding</span>;
+  if (type === "naming") return <span className="badge bg-info/10 text-info border border-info/25">Naming</span>;
+  return <span className="text-[var(--muted)] text-xs">—</span>;
+}
+
+function principalNames(b: CeremonyBookingRow) {
+  if (b.ceremonyType === "wedding") {
+    if (b.brideName && b.groomName) return `${b.brideName} & ${b.groomName}`;
+    return b.brideName ?? b.groomName ?? "—";
+  }
+  if (b.ceremonyType === "naming") {
+    const child = b.childrenNames ?? "—";
+    const parents = [b.fatherName, b.motherName].filter(Boolean).join(" & ");
+    return parents ? `${child} (${parents})` : child;
+  }
+  return "—";
+}
+
 export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmin }: Props) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const filtered = bookings.filter((b) => {
+    if (deletedIds.has(b.id)) return false;
     if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
     if (typeFilter === "WEDDING" && b.ceremonyType !== "wedding") return false;
-    if (typeFilter === "NAMING"  && b.ceremonyType !== "naming")  return false;
+    if (typeFilter === "NAMING" && b.ceremonyType !== "naming") return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       const names = [b.title, b.bookerName, b.brideName, b.groomName, b.fatherName, b.motherName, b.childrenNames, b.ceremonyCodeValue]
@@ -66,23 +97,16 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
     return true;
   });
 
-  function typeLabel(type: CeremonyBookingRow["ceremonyType"]) {
-    if (type === "wedding") return <span className="badge bg-pink-50 text-pink-700 border border-pink-200">Wedding</span>;
-    if (type === "naming")  return <span className="badge bg-info/10 text-info border border-info/25">Naming</span>;
-    return <span className="text-[var(--muted)] text-xs">—</span>;
+  const selected = useMemo(() => bookings.find((b) => b.id === selectedId) ?? null, [bookings, selectedId]);
+
+  function closeModal() {
+    setSelectedId(null);
   }
 
-  function principalNames(b: CeremonyBookingRow) {
-    if (b.ceremonyType === "wedding") {
-      if (b.brideName && b.groomName) return `${b.brideName} & ${b.groomName}`;
-      return b.brideName ?? b.groomName ?? "—";
-    }
-    if (b.ceremonyType === "naming") {
-      const child = b.childrenNames ?? "—";
-      const parents = [b.fatherName, b.motherName].filter(Boolean).join(" & ");
-      return parents ? `${child} (${parents})` : child;
-    }
-    return "—";
+  function handleDeleted() {
+    if (!selectedId) return;
+    setDeletedIds((prev) => new Set(prev).add(selectedId));
+    closeModal();
   }
 
   return (
@@ -127,78 +151,154 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
         <span className="text-xs text-[var(--muted)] sm:ml-auto">{filtered.length} booking{filtered.length !== 1 ? "s" : ""}</span>
       </div>
 
-      {filtered.length === 0 ? (
-        <Card className="p-12 text-center text-[var(--muted)]">
-          <p className="text-sm">No ceremony bookings found.</p>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gradient-to-br from-[rgba(22,26,31,0.03)] to-[rgba(22,26,31,0.01)] border-b border-[var(--border)]">
-                <tr>
-                  {["Type", "Ceremony Date", "Venue", "Couple / Family", "Code", "Amount", "Status", "Actions"].map((h) => (
-                    <th key={h} className="text-left py-3 px-4 font-semibold text-[var(--navy)] text-xs">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((b) => (
-                  <tr key={b.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
-                    <td className="py-3 px-4">{typeLabel(b.ceremonyType)}</td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-medium text-[var(--navy)]">{new Date(b.startTime).toLocaleDateString("en-GH", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</div>
-                      <div className="text-xs text-[var(--muted)]">{new Date(b.startTime).toLocaleTimeString("en-GH", { hour: "2-digit", minute: "2-digit" })}</div>
-                    </td>
-                    <td className="py-3 px-4 text-[var(--slate)]">{b.facilityName}</td>
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-[var(--navy)] max-w-[200px] truncate" title={principalNames(b)}>
-                        {principalNames(b)}
-                      </div>
-                      {b.bookerName && b.bookerName !== "—" && (
-                        <div className="text-xs text-[var(--muted)]">Booked by: {b.bookerName}</div>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      {b.ceremonyCodeValue ? (
-                        <code className="text-xs bg-[var(--cream)] px-2 py-0.5 rounded font-mono border border-[var(--border)]">
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={<CalendarDays />}
+            title="No ceremony bookings found"
+            description="No ceremony bookings match your current filters."
+          />
+        ) : (
+          filtered.map((b) => (
+            <Card
+              key={b.id}
+              role="button"
+              tabIndex={0}
+              className="block w-full text-left hover:shadow-md transition-shadow p-3 px-4 gap-0 py-3 cursor-pointer"
+              onClick={() => setSelectedId(b.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedId(b.id);
+                }
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {typeLabel(b.ceremonyType)}
+                    <span className="font-semibold text-[var(--navy)] text-sm truncate">{principalNames(b)}</span>
+                    <StatusBadge status={b.status} size="xs" />
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)] flex-wrap">
+                    {b.bookerName && b.bookerName !== "—" && <span>Booked by {b.bookerName}</span>}
+                    <span>•</span>
+                    <span>{b.facilityName}</span>
+                    <span>•</span>
+                    <span>{formatDateTime(new Date(b.startTime))}</span>
+                    {b.ceremonyCodeValue && (
+                      <>
+                        <span>•</span>
+                        <code className="text-[11px] bg-[var(--cream)] px-1.5 py-0.5 rounded font-mono border border-[var(--border)]">
                           {b.ceremonyCodeValue}
                         </code>
-                      ) : (
-                        <span className="text-[var(--muted)] text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-[var(--navy)] whitespace-nowrap">
-                      {formatCurrency(b.totalAmount)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge status={b.status} />
-                      {b.rejectionReason && (
-                        <p className="text-xs text-danger mt-0.5 max-w-[140px] truncate" title={b.rejectionReason}>
-                          {b.rejectionReason}
-                        </p>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 flex-wrap">
-                        <Link href={`/bookings/${b.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>View</Link>
-                        {canManage && b.status === "PENDING" && (
-                          <BookingActions bookingId={b.id} />
-                        )}
-                        {b.status === "APPROVED" && canManage && (
-                          <CompleteBookingButton bookingId={b.id} />
-                        )}
-                        {canManage && ["PENDING", "APPROVED"].includes(b.status) && (
-                          <CancelBookingButton bookingId={b.id} />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-semibold text-[var(--gold)] text-sm">{formatCurrency(b.totalAmount)}</span>
+                  <ChevronRight size={16} className="text-[var(--muted)]" />
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4" onClick={closeModal}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  {typeLabel(selected.ceremonyType)}
+                  <h2 className="text-lg font-semibold text-[var(--navy)]">{principalNames(selected)}</h2>
+                </div>
+                <p className="text-xs text-[var(--muted)]">{selected.facilityName} • {selected.title}</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={closeModal}>Close</Button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="p-3 gap-0 py-3">
+                  <p className="text-xs text-[var(--muted)] mb-1.5">Status</p>
+                  <StatusBadge status={selected.status} size="sm" />
+                </Card>
+                <Card className="p-3 gap-0 py-3">
+                  <p className="text-xs text-[var(--muted)]">Amount</p>
+                  <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
+                </Card>
+                {selected.ceremonyCodeValue && (
+                  <Card className="p-3 gap-0 py-3">
+                    <p className="text-xs text-[var(--muted)]">Ceremony Code</p>
+                    <code className="text-xs font-mono">{selected.ceremonyCodeValue}</code>
+                  </Card>
+                )}
+              </div>
+
+              <div className="text-sm">
+                <p>
+                  <strong>Booked By:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}
+                </p>
+                {selected.bookerPhone && (
+                  <div className="flex items-center gap-3 mt-1.5 mb-1">
+                    <a
+                      href={`tel:${normalizeTel(selected.bookerPhone)}`}
+                      className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
+                    >
+                      <Phone size={12} /> Call Booker
+                    </a>
+                    <a
+                      href={`https://wa.me/${normalizeWhatsApp(selected.bookerPhone)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-success hover:underline"
+                    >
+                      <MessageCircle size={12} /> WhatsApp Booker
+                    </a>
+                  </div>
+                )}
+                <p><strong>Date:</strong> {formatDateTime(new Date(selected.startTime))}</p>
+                <p><strong>Duration:</strong> {durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours</p>
+                {selected.notes && <p className="mt-2"><strong>Notes:</strong> {selected.notes}</p>}
+                {selected.rejectionReason && <p className="mt-2 text-danger"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
+              </div>
+
+              {selected.ceremonyType === "wedding" && (
+                <Card className="p-4 gap-0 py-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Wedding Details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <p><strong>Bride:</strong> {selected.brideName ?? "—"}</p>
+                    <p><strong>Groom:</strong> {selected.groomName ?? "—"}</p>
+                    {selected.contactWhatsApp && <p><strong>Contact (WhatsApp):</strong> {selected.contactWhatsApp}</p>}
+                  </div>
+                </Card>
+              )}
+
+              {selected.ceremonyType === "naming" && (
+                <Card className="p-4 gap-0 py-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Naming Ceremony Details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <p><strong>Child:</strong> {selected.childrenNames ?? "—"}</p>
+                    <p><strong>Birthday:</strong> {selected.childBirthday ?? "—"}</p>
+                    <p><strong>Father:</strong> {selected.fatherName ?? "—"}</p>
+                    <p><strong>Mother:</strong> {selected.motherName ?? "—"}</p>
+                    {selected.pastorName && <p><strong>Pastor:</strong> {selected.pastorName}</p>}
+                  </div>
+                </Card>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
+                {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
+                {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
+                {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
+                {isSuperAdmin && <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />}
+              </div>
+            </div>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );
