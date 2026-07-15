@@ -1430,8 +1430,30 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
   return { success: true, booking };
 }
 
-export async function deleteBookingByManager(_bookingId: string) {
-  return { error: "Bookings cannot be deleted once submitted. Use cancel instead." };
+/**
+ * Permanently removes a booking and its dependent records from the database.
+ * Restricted to Super Admin — this is a hard delete, not a status change, and
+ * cannot be undone. Financial records (Income) and ceremony codes are kept
+ * but detached from the deleted booking rather than deleted themselves.
+ */
+export async function deleteBooking(bookingId: string) {
+  const session = await getSession();
+  if (!session) return { error: "Unauthorized" };
+  if (session.role !== "SUPER_ADMIN") return { error: "Only Super Admins can delete bookings." };
+
+  const existing = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!existing) return { error: "Booking not found." };
+
+  await prisma.$transaction([
+    prisma.income.updateMany({ where: { bookingId }, data: { bookingId: null } }),
+    prisma.ceremonyBookingCode.updateMany({ where: { bookingId }, data: { bookingId: null } }),
+    prisma.booking.delete({ where: { id: bookingId } }),
+  ]);
+
+  auditLog({ userId: session.sub, action: "DELETE_BOOKING", entity: "Booking", entityId: bookingId, before: existing });
+  revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}`);
+  return { success: true };
 }
 
 export async function getBookings(filters: {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
-import { Phone, MessageCircle, Search, Filter, X, CalendarDays } from "lucide-react";
+import { Phone, MessageCircle, Search, Filter, X, CalendarDays, ChevronRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
+import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { updateBookingByManager } from "@/actions/booking.actions";
 
 type BookingItem = {
@@ -187,6 +188,12 @@ export default function BookingsListClient({
     setSelectedId(null);
     setEditing(false);
     setError(null);
+  }
+
+  function handleDeleted() {
+    if (!selectedId) return;
+    setBookings((prev) => prev.filter((b) => b.id !== selectedId));
+    closeModal();
   }
 
   function saveEdit() {
@@ -385,9 +392,9 @@ export default function BookingsListClient({
                     <span>{formatDateTime(new Date(b.startTime))}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="font-semibold text-[var(--gold)] text-sm">{formatCurrency(b.totalAmount)}</span>
-                  <span className="text-xs text-[var(--muted)]">Open</span>
+                  <ChevronRight size={16} className="text-[var(--muted)]" />
                 </div>
               </div>
             </Card>
@@ -481,6 +488,9 @@ export default function BookingsListClient({
                         bookerName={selected.bookerName}
                         bookerPhone={selected.bookerPhone}
                       />
+                    )}
+                    {isSuperAdmin && (
+                      <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />
                     )}
 
                   </div>

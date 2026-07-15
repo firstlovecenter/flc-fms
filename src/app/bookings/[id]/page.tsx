@@ -10,6 +10,7 @@ import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
 import SendAccessCodeButton from "@/components/bookings/SendAccessCodeButton";
+import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -44,6 +45,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
   if (!booking) notFound();
 
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["bookings:approve"] ?? false);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
   const contact   = booking.patron ?? booking.user;
   const cd = booking.ceremonyDetails as CeremonyDetails | null;
 
@@ -260,6 +262,7 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
             bookerName={contact.name}
           />
         )}
+        {isSuperAdmin && <DeleteBookingButton bookingId={booking.id} redirectTo="/bookings" />}
       </div>
     </div>
   );
