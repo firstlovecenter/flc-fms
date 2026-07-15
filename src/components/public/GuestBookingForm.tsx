@@ -102,6 +102,7 @@ export default function GuestBookingForm({
   ceremonyDays = [],
   defaultContactEmail = "",
   allowCeremony = true,
+  allowPriceOverride = false,
   officePhone,
   officeEmail,
 }: {
@@ -117,6 +118,8 @@ export default function GuestBookingForm({
   defaultContactEmail?: string;
   /** Staff only: whether the Wedding/Naming options may be chosen in-form. */
   allowCeremony?: boolean;
+  /** Staff only: whether this session may waive/override the booking price. */
+  allowPriceOverride?: boolean;
   /** Shown as a call/email CTA in place of the old code-request page. */
   officePhone?: string;
   officeEmail?: string;
@@ -167,11 +170,12 @@ export default function GuestBookingForm({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Only Facility Managers and Super Admins may waive/override the price —
+  // Facility/Booking Managers and Super Admins may waive/override the price —
   // their bookings auto-approve immediately, skipping the usual approval-time
-  // waive-billing option, so this is their only chance to adjust it.
-  const isPricingManager =
-    mode === "staff" && ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(currentUserRole ?? "");
+  // waive-billing option, so this is their only chance to adjust it. Resolved
+  // server-side (allowPriceOverride) since "Booking Manager" isn't always a
+  // literal role — it can be a STAFF account with the right permission.
+  const isPricingManager = mode === "staff" && allowPriceOverride;
   const [waiveBilling, setWaiveBilling] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
 

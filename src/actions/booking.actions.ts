@@ -44,7 +44,7 @@ const BookingFieldsSchema = z.object({
   ceremonyCodeId: z.string().optional(),
   contactPhone: z.string().optional(),
   // Manager-only price controls (createStaffBooking ignores these unless the
-  // session role is FACILITY_MANAGER or SUPER_ADMIN — see canOverridePrice).
+  // session is auto-approve-eligible — see isAutoApprovedBooking).
   waiveBilling: z.boolean().optional().default(false),
   overrideAmount: z.coerce.number().nonnegative().optional(),
 });
@@ -76,22 +76,16 @@ function hasPrivilegedBooking(session: { role: string; authContext?: { permissio
   return session.authContext?.permissions["bookings:approve"] ?? false;
 }
 
-// Auto-approval is deliberately narrower than "can approve bookings" — being
-// granted bookings:approve (e.g. to review other people's requests) does not
-// by itself mean this staff member's own bookings should skip review. Only
+// Deliberately narrower than "can approve bookings" — being granted
+// bookings:approve (e.g. to review other people's requests) does not by
+// itself mean this staff member's own bookings should skip review. Only
 // Facility Managers, Super Admins, and staff explicitly granted the dedicated
 // bookings:auto_approve permission (seeded true for the Booking Manager
-// preset) get this.
+// preset) get this — which also gates the price-waive/override controls,
+// since those bookings skip the approval screen's own waive option entirely.
 function isAutoApprovedBooking(session: { role: string; authContext?: { permissions: Record<string, boolean> } | null }) {
   if (session.role === "SUPER_ADMIN" || session.role === "FACILITY_MANAGER") return true;
   return session.authContext?.permissions["bookings:auto_approve"] ?? false;
-}
-
-// Only Super Admins and Facility/Booking Managers may waive or override the
-// computed price at booking-creation time (skipping the approval step's
-// waive-billing option, since their bookings auto-approve immediately).
-function canOverridePrice(role: string) {
-  return role === "FACILITY_MANAGER" || role === "SUPER_ADMIN";
 }
 
 function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
@@ -387,11 +381,11 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
       pricingSource = amountResult.pricingSource;
     }
 
-    // Facility Managers and Super Admins can waive or set a custom price at
-    // creation time. Their bookings auto-approve immediately, so they never see
-    // the approval screen's own waive-billing option — this is their only chance.
+    // Facility/Booking Managers and Super Admins can waive or set a custom price
+    // at creation time. Their bookings auto-approve immediately, so they never
+    // see the approval screen's own waive-billing option — this is their only chance.
     let isBillingWaived = false;
-    if (canOverridePrice(session.role)) {
+    if (isAutoApprovedBooking(session)) {
       if (validated.waiveBilling) {
         totalAmount = 0;
         unitPrice = 0;

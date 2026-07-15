@@ -15,6 +15,9 @@ export default async function NewBookingPage({
   const isCeremony  = bookingType === "wedding" || bookingType === "naming";
   const canBookCeremonies =
     Boolean(session.authContext?.permissions["ceremony:manage"]) || session.role === "SUPER_ADMIN";
+  const canOverridePricing =
+    Boolean(session.authContext?.permissions["bookings:auto_approve"]) ||
+    session.role === "SUPER_ADMIN" || session.role === "FACILITY_MANAGER";
 
   if (isCeremony && !canBookCeremonies) {
     redirect("/bookings/new");
@@ -87,6 +90,7 @@ export default async function NewBookingPage({
         isCeremonyBooking={isCeremony}
         defaultCategory={ceremonyType ?? undefined}
         allowCeremony={canBookCeremonies}
+        allowPriceOverride={canOverridePricing}
       />
     </div>
   );
