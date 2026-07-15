@@ -11,7 +11,8 @@ import { Separator } from "@/components/ui/separator";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export default async function PublicFacilityDetailPage({ params }: { params: { id: string } }) {
+export default async function PublicFacilityDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const facility = await prisma.facility.findFirst({
     where: { id: params.id, isActive: true },
     include: {

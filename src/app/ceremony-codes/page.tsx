@@ -10,11 +10,10 @@ export const metadata = { title: "Ceremony Codes" };
 
 const CODE_STATUSES = new Set<CeremonyCodeStatus>(["PENDING", "ACTIVE", "USED", "EXPIRED"]);
 
-export default async function CeremonyCodesPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; search?: string; page?: string };
+export default async function CeremonyCodesPage(props: {
+  searchParams: Promise<{ status?: string; search?: string; page?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   await requirePerm("ceremony:manage");
 
   const parsedPage = Number(searchParams.page);

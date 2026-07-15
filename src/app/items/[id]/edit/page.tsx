@@ -7,7 +7,8 @@ import AddItemForm from "@/components/items/AddItemForm";
 
 import { Card } from "@/components/ui/card";
 
-export default async function EditItemPage({ params }: { params: { id: string } }) {
+export default async function EditItemPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("items:manage");
 
   const item = await prisma.bookableItem.findUnique({ where: { id: params.id } });

@@ -21,11 +21,12 @@ import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Duty Logs" };
 
-export default async function DutyPage({
-  searchParams,
-}: {
-  searchParams: { date?: string };
-}) {
+export default async function DutyPage(
+  props: {
+    searchParams: Promise<{ date?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await requirePerm("duty:view");
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["duty:manage"] ?? false);
 

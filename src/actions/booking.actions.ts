@@ -252,7 +252,7 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
   }
 
   // Rate limit: 20 booking creations per staff member per 10 minutes
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed: rlAllowed } = await rateLimit(`booking_create:${session.sub}:${ip}`, 20, 600);
   if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 
@@ -535,7 +535,7 @@ export async function createPatronBooking(data: z.input<typeof BookingCreateSche
   const validated = BookingCreateSchema.parse(data);
 
   // Rate limit: 10 booking creations per patron per 10 minutes
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed: rlAllowed } = await rateLimit(`booking_create:${session.sub}:${ip}`, 10, 600);
   if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 
@@ -787,7 +787,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   const validated = GuestBookingSchema.parse(data);
 
   // Rate limit: 5 guest bookings per IP per 10 minutes
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const { allowed: rlAllowed } = await rateLimit(`guest_booking:${ip}`, 5, 600);
   if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 

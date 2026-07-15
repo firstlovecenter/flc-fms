@@ -5,9 +5,11 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { DataTable } from "@/components/layout/DataTable";
 import PageHeader from "@/components/layout/PageHeader";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
 
-export default async function AuditPage({ searchParams }: { searchParams: { page?: string; action?: string } }) {
+import { Card } from "@/components/ui/card";
+
+export default async function AuditPage(props: { searchParams: Promise<{ page?: string; action?: string }> }) {
+  const searchParams = await props.searchParams;
   await requireRole("SUPER_ADMIN");
 
   const page = Number(searchParams.page ?? 1);

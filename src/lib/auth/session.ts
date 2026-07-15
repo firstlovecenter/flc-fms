@@ -36,14 +36,14 @@ export async function verifyJWT(token: string): Promise<SessionPayload | null> {
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyJWT(token);
 }
 
 export async function setSession(payload: SessionPayload): Promise<void> {
   const token = await signJWT(payload);
-  cookies().set(COOKIE_NAME, token, {
+  (await cookies()).set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -51,14 +51,14 @@ export async function setSession(payload: SessionPayload): Promise<void> {
     path: "/"});
 }
 
-export function clearSession(): void {
-  cookies().delete(COOKIE_NAME);
+export async function clearSession(): Promise<void> {
+  (await cookies()).delete(COOKIE_NAME);
 }
 
 /** Save the original SUPER_ADMIN session so impersonation can be reversed. */
 export async function setImpersonationBackup(payload: SessionPayload): Promise<void> {
   const token = await signJWT(payload);
-  cookies().set(IMPERSONATION_COOKIE_NAME, token, {
+  (await cookies()).set(IMPERSONATION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -68,11 +68,11 @@ export async function setImpersonationBackup(payload: SessionPayload): Promise<v
 }
 
 export async function getImpersonationBackup(): Promise<SessionPayload | null> {
-  const token = cookies().get(IMPERSONATION_COOKIE_NAME)?.value;
+  const token = (await cookies()).get(IMPERSONATION_COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyJWT(token);
 }
 
-export function clearImpersonationBackup(): void {
-  cookies().delete(IMPERSONATION_COOKIE_NAME);
+export async function clearImpersonationBackup(): Promise<void> {
+  (await cookies()).delete(IMPERSONATION_COOKIE_NAME);
 }

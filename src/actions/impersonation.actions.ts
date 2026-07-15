@@ -97,8 +97,8 @@ export async function stopImpersonating(): Promise<{ error: string } | { redirec
   const backup = await getImpersonationBackup();
   if (!backup || backup.role !== "SUPER_ADMIN") {
     // Safety fallback — something is wrong, clear everything.
-    clearSession();
-    clearImpersonationBackup();
+    await clearSession();
+    await clearImpersonationBackup();
     return { redirectTo: "/login" };
   }
 
@@ -107,7 +107,7 @@ export async function stopImpersonating(): Promise<{ error: string } | { redirec
   const impersonatedRole = session.role;
 
   await setSession(backup);
-  clearImpersonationBackup();
+  await clearImpersonationBackup();
 
   auditLog({
     userId:   backup.sub,

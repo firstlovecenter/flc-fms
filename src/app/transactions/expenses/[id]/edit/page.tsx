@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import { isExpenseLocked } from "@/lib/transaction-lock";
 import ExpenseEditForm from "@/components/expenses/ExpenseEditForm";
 
-export default async function EditExpensePage({ params }: { params: { id: string } }) {
+export default async function EditExpensePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm(["finance:view", "finance:submit_expense"]);
 
   const expense = await prisma.expense.findUnique({

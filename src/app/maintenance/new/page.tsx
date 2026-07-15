@@ -2,11 +2,12 @@ import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceForm from "@/components/maintenance/MaintenanceForm";
 
-export default async function NewMaintenancePage({
-  searchParams,
-}: {
-  searchParams: { taskId?: string; title?: string };
-}) {
+export default async function NewMaintenancePage(
+  props: {
+    searchParams: Promise<{ taskId?: string; title?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requirePerm("maintenance:create");
 
   const facilities = await prisma.facility.findMany({

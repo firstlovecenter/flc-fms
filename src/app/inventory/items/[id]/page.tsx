@@ -14,7 +14,8 @@ function fmt(d: Date | string) {
   return new Date(d).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default async function InventoryItemDetailPage({ params }: { params: { id: string } }) {
+export default async function InventoryItemDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm("inventory:view");
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["inventory:manage"] ?? false);
 
@@ -40,7 +41,6 @@ export default async function InventoryItemDetailPage({ params }: { params: { id
           </div>
         )}
       </div>
-
       <Card className="p-5 space-y-4">
         <div className="flex flex-wrap gap-2">
           <ItemStatusBadge status={item.status} />
@@ -100,12 +100,11 @@ export default async function InventoryItemDetailPage({ params }: { params: { id
           <div className="flex gap-2 flex-wrap pt-1">
             {item.images.map((src) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={src} src={src} alt={item.name} className="w-24 h-24 object-cover rounded-lg border border-[var(--border)]" />
+              (<img key={src} src={src} alt={item.name} className="w-24 h-24 object-cover rounded-lg border border-[var(--border)]" />)
             ))}
           </div>
         )}
       </Card>
-
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--border)]">
           <h3 className="font-semibold text-[var(--navy)] text-sm">Recent Checkouts</h3>
@@ -137,7 +136,6 @@ export default async function InventoryItemDetailPage({ params }: { params: { id
           </div>
         )}
       </Card>
-
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--border)]">
           <h3 className="font-semibold text-[var(--navy)] text-sm">Maintenance Log</h3>

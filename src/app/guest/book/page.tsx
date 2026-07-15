@@ -6,7 +6,8 @@ import PublicShell from "@/components/public/PublicShell";
 import GuestPageHero from "@/components/public/GuestPageHero";
 import { getCeremonyFacilityIds, getCeremonyDays } from "@/actions/ceremony-venue.actions";
 import { getSiteSettings } from "@/actions/site-settings.actions";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 type SearchParams = {
   facilityId?: string;
@@ -29,7 +30,8 @@ function parseLines(raw: string | undefined) {
   });
 }
 
-export default async function GuestBookPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function GuestBookPage(props: { searchParams: Promise<SearchParams> }) {
+  const searchParams = await props.searchParams;
   const isItemBooking = searchParams.type === "items";
   // A ceremony deep-link only needs the type (+ venue); the payment code is
   // collected in-form. Codeless links from the unified catalog still count.

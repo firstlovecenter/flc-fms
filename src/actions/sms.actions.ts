@@ -20,7 +20,7 @@ export async function sendCustomSMSToBooker(data: z.input<typeof SendCustomSMSSc
   const validated = SendCustomSMSSchema.parse(data);
 
   // Rate limit: 20 SMS per staff per 10 minutes
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed } = await rateLimit(`custom_sms:${session.sub}:${ip}`, 20, 600);
   if (!allowed) return { error: "Too many SMS sent. Please wait a few minutes." };
 
@@ -60,7 +60,7 @@ export async function sendBulkSMSToBookers(data: z.input<typeof BulkSMSSchema>) 
   const session = await requirePerm("bookings:approve");
   const validated = BulkSMSSchema.parse(data);
 
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed } = await rateLimit(`bulk_sms:${session.sub}:${ip}`, 5, 600);
   if (!allowed) return { error: "Too many bulk SMS requests. Please wait a few minutes." };
 
@@ -100,7 +100,7 @@ export async function getSMSBalanceAction() {
 export async function sendAccessCodeToBooker(bookingId: string) {
   const session = await requirePerm("bookings:approve");
 
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? session.sub;
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
   const { allowed } = await rateLimit(`access_code_sms:${session.sub}:${ip}`, 20, 600);
   if (!allowed) return { error: "Too many SMS sent. Please wait a few minutes." };
 

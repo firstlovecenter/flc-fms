@@ -5,7 +5,8 @@ import { isTransactionLocked } from "@/lib/transaction-lock";
 import { getActiveAccounts } from "@/actions/account.actions";
 import IncomeEditForm from "@/components/expenses/IncomeEditForm";
 
-export default async function EditIncomePage({ params }: { params: { id: string } }) {
+export default async function EditIncomePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("finance:record_income");
 
   const income = await prisma.income.findUnique({

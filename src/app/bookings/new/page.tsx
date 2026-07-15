@@ -4,11 +4,12 @@ import BookingForm from "@/components/bookings/BookingForm";
 import { getCeremonyDays, getCeremonyFacilityIds } from "@/actions/ceremony-venue.actions";
 import { redirect } from "next/navigation";
 
-export default async function NewBookingPage({
-  searchParams,
-}: {
-  searchParams: { facilityId?: string; type?: string };
-}) {
+export default async function NewBookingPage(
+  props: {
+    searchParams: Promise<{ facilityId?: string; type?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await requirePerm("bookings:create");
 
   const bookingType = searchParams.type ?? "regular";

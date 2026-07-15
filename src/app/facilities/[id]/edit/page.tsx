@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import FacilityForm from "@/components/facilities/FacilityForm";
 import { getBookingCategories } from "@/actions/category.actions";
 
-export default async function EditFacilityPage({ params }: { params: { id: string } }) {
+export default async function EditFacilityPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("facilities:manage");
   const categories = await getBookingCategories(false);
 

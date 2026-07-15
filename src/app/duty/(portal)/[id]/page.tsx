@@ -5,20 +5,22 @@ import { getDutyLogById } from "@/lib/duty/queries";
 import { serializeDutyLog } from "@/components/duty/types";
 import DutyLogPanel from "@/components/duty/DutyLogPanel";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const log = await getDutyLogById(params.id);
   return { title: log ? log.template.name : "Duty Log" };
 }
 
-export default async function DutyDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function DutyDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const session = await requirePerm("duty:view");
   const log = await getDutyLogById(params.id);
   if (!log) notFound();

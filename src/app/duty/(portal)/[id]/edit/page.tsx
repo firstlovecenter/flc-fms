@@ -5,11 +5,12 @@ import { requirePerm } from "@/lib/auth/guards";
 import { getActiveStaffForDuty, getDutyLogById } from "@/lib/duty/queries";
 import EditDutyAssignmentForm from "@/components/duty/EditDutyAssignmentForm";
 
-export default async function EditDutyAssignmentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EditDutyAssignmentPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await requirePerm("duty:manage");
 
   const log = await getDutyLogById(params.id);

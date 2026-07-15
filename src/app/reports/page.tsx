@@ -18,11 +18,12 @@ import { Users } from "lucide-react";
 
 type Tab = "financial" | "bookings" | "facilities" | "inventory" | "ceremony" | "patrons" | "maintenance";
 
-export default async function ReportsPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string; period?: string; from?: string; to?: string };
-}) {
+export default async function ReportsPage(
+  props: {
+    searchParams: Promise<{ tab?: string; period?: string; from?: string; to?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requirePerm("reports:view");
 
   const tab    = (searchParams.tab    ?? "financial") as Tab;

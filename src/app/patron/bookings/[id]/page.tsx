@@ -11,7 +11,8 @@ import CheckInRequestButton from "@/components/patron/CheckInRequestButton";
 
 import { Card } from "@/components/ui/card";
 
-export default async function PatronBookingDetailPage({ params }: { params: { id: string } }) {
+export default async function PatronBookingDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session || session.role !== "PATRON") redirect("/patron/login");
 

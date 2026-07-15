@@ -19,11 +19,12 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function DutyDisplayPage({
-  searchParams,
-}: {
-  searchParams: { date?: string; view?: string };
-}) {
+export default async function DutyDisplayPage(
+  props: {
+    searchParams: Promise<{ date?: string; view?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const view: DutyDisplayView =
     searchParams.view === "weekly" ? "weekly" : "daily";
 

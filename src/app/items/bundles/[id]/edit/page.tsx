@@ -8,7 +8,8 @@ import AddBundleForm from "@/components/items/AddBundleForm";
 
 import { Card } from "@/components/ui/card";
 
-export default async function EditBundlePage({ params }: { params: { id: string } }) {
+export default async function EditBundlePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("items:manage");
 
   const [bundle, availableItems] = await Promise.all([

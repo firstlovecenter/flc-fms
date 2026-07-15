@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import MaintenanceStatusUpdate from "@/components/maintenance/MaintenanceStatusUpdate";
 import { Card } from "@/components/ui/card";
 
-export default async function MaintenanceDetailPage({ params }: { params: { id: string } }) {
+export default async function MaintenanceDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm("maintenance:view");
 
   const req = await prisma.maintenanceRequest.findFirst({

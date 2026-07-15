@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
 import StaffRowActions from "@/components/staff/StaffRowActions";
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN:      "Super Admin",
@@ -18,7 +18,8 @@ const ROLE_LABELS: Record<string, string> = {
   STAFF:            "Staff",
 };
 
-export default async function StaffDetailPage({ params }: Props) {
+export default async function StaffDetailPage(props: Props) {
+  const params = await props.params;
   const session = await requirePerm("staff:manage");
 
   const member = await prisma.user.findFirst({

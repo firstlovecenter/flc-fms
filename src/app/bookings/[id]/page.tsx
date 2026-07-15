@@ -23,7 +23,8 @@ function normalizeWhatsApp(phone: string) {
   return phone.replace(/\D/g, "");
 }
 
-export default async function BookingDetailPage({ params }: { params: { id: string } }) {
+export default async function BookingDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm("bookings:view");
 
   const booking = await prisma.booking.findFirst({
