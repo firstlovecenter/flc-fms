@@ -74,7 +74,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── Inject headers for downstream server components / actions ──────────────
+  // Always strip identity headers from the incoming request first — they are
+  // trusted downstream, so a client must never be able to supply them itself.
   const requestHeaders = new Headers(req.headers);
+  requestHeaders.delete("x-user-id");
+  requestHeaders.delete("x-user-role");
   if (session?.sub)    requestHeaders.set("x-user-id",          session.sub);
   if (session?.role)   requestHeaders.set("x-user-role",        session.role);
 
