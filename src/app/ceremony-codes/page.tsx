@@ -1,12 +1,14 @@
 import Link from "next/link";
+import type { CeremonyCodeStatus, Prisma } from "@prisma/client";
 import { requirePerm } from "@/lib/auth/guards";
-import { listCeremonyCodes } from "@/actions/ceremony-code.actions";
-import { listCeremonyDateOverrides } from "@/actions/ceremony-venue.actions";
+import { prisma } from "@/lib/db/prisma";
 import CeremonyCodesClient from "@/components/ceremony/CeremonyCodesClient";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Ceremony Codes" };
+
+const CODE_STATUSES = new Set<CeremonyCodeStatus>(["PENDING", "ACTIVE", "USED", "EXPIRED"]);
 
 export default async function CeremonyCodesPage({
   searchParams,
@@ -15,14 +17,49 @@ export default async function CeremonyCodesPage({
 }) {
   await requirePerm("ceremony:manage");
 
-  const [{ codes, total }, dateOverrides] = await Promise.all([
-    listCeremonyCodes({
-      status: searchParams.status,
-      search: searchParams.search,
-      page: searchParams.page ? Number(searchParams.page) : 1,
-    }),
-    listCeremonyDateOverrides(),
-  ]);
+  const parsedPage = Number(searchParams.page);
+  const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const pageSize = 20;
+  const status = searchParams.status as CeremonyCodeStatus | undefined;
+  const where: Prisma.CeremonyBookingCodeWhereInput = {
+    ...(status && CODE_STATUSES.has(status) ? { status } : {}),
+    ...(searchParams.search
+      ? {
+          OR: [
+            { requesterName: { contains: searchParams.search, mode: "insensitive" as const } },
+            { requesterEmail: { contains: searchParams.search, mode: "insensitive" as const } },
+            { requesterPhone: { contains: searchParams.search } },
+          ],
+        }
+      : {}),
+  };
+
+  // Keep this render deliberately sequential. Apart from avoiding redundant
+  // permission/session reads, it prevents a small page from opening several
+  // pooled database connections at once in a serverless function.
+  const codes = await prisma.ceremonyBookingCode.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    include: {
+      activatedBy: { select: { name: true } },
+      facility: { select: { id: true, name: true } },
+    },
+  });
+  const total = await prisma.ceremonyBookingCode.count({ where });
+
+  // Date overrides are an auxiliary tab. If an older deployment/database is
+  // briefly out of sync, code management should still remain available.
+  const dateOverrides = await prisma.ceremonyDateOverride
+    .findMany({
+      include: { createdBy: { select: { name: true } } },
+      orderBy: { date: "asc" },
+    })
+    .catch((error) => {
+      console.error("[ceremony-codes] Unable to load date overrides", error);
+      return [];
+    });
 
   return (
     <div className="w-full space-y-5">
