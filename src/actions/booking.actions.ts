@@ -407,6 +407,9 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
       return { error: overlapCount >= 1 ? "This time slot is fully booked." : "Facility already has a booking for that time slot." };
     }
 
+    // Only Facility/Booking Managers and Super Admins are trusted to self-approve.
+    const autoApproved = isAutoApprovedBooking(session);
+
     const booking = await tx.booking.create({
       data: {
         facilityId:   validated.facilityId,
@@ -424,8 +427,9 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
         resolvedPricingSource: pricingSource,
         isBillingWaived,
         ceremonyDetails: validated.ceremonyDetails ?? undefined,
-        // Only Facility/Booking Managers and Super Admins are trusted to self-approve.
-        status:       isAutoApprovedBooking(session) ? "APPROVED" : "PENDING",
+        status:       autoApproved ? "APPROVED" : "PENDING",
+        // A booking that auto-approves has, in effect, been self-approved by its creator.
+        ...(autoApproved ? { approvedById: session.sub, approvedAt: new Date() } : {}),
       },
       include: { facility: true, user: true, patron: true },
     });
@@ -1037,6 +1041,8 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
     where: { id: bookingId },
     data: {
       status: "APPROVED",
+      approvedById: session.sub,
+      approvedAt: new Date(),
       ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0 } : {}),
     },
     include: { patron: true, user: true, facility: true },

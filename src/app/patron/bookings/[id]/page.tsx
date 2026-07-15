@@ -24,6 +24,7 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
       lineItems: {
         include: { item: true, bundle: true },
       },
+      approvedBy: { select: { name: true } },
       checkIn: true,
     },
   });
@@ -50,6 +51,20 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
       {booking.rejectionReason && (
         <div className="bg-danger/10 border border-danger/25 rounded-lg p-4 text-danger text-sm">
           <strong>Rejection reason:</strong> {booking.rejectionReason}
+        </div>
+      )}
+
+      {(booking.status === "APPROVED" || booking.status === "COMPLETED") && (
+        <div className="bg-success/10 border border-success/25 rounded-lg p-4 text-sm">
+          <strong className="text-success">Approved by:</strong>{" "}
+          {booking.approvedBy ? (
+            <span className="text-[var(--navy)]">
+              {booking.approvedBy.name}
+              {booking.approvedAt && <> on {formatDateTime(booking.approvedAt)}</>}
+            </span>
+          ) : (
+            <span className="text-[var(--muted)]">Auto-approved via payment code — no staff approver on record.</span>
+          )}
         </div>
       )}
 
