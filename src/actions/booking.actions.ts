@@ -1441,7 +1441,10 @@ export async function deleteBooking(bookingId: string) {
   if (!session) return { error: "Unauthorized" };
   if (session.role !== "SUPER_ADMIN") return { error: "Only Super Admins can delete bookings." };
 
-  const existing = await prisma.booking.findUnique({ where: { id: bookingId } });
+  const existing = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { lineItems: true, checkIn: true, income: true, ceremonyCode: true },
+  });
   if (!existing) return { error: "Booking not found." };
 
   await prisma.$transaction([
