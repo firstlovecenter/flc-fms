@@ -30,7 +30,7 @@ export function auditLog(params: AuditParams): void {
     let ip = "unknown";
     let ua = "unknown";
     try {
-      const h = headers();
+      const h = await headers();
       ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown";
       ua = h.get("user-agent") ?? "unknown";
     } catch {

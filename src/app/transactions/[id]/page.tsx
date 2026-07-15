@@ -11,7 +11,8 @@ import ExpenseActions from "@/components/expenses/ExpenseActions";
 
 import { Card } from "@/components/ui/card";
 
-export default async function ExpenseDetailPage({ params }: { params: { id: string } }) {
+export default async function ExpenseDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm(["finance:view", "finance:submit_expense"]);
 
   const expense = await prisma.expense.findFirst({

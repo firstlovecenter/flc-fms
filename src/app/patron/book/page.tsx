@@ -4,7 +4,8 @@ import PatronBookingForm from "@/components/patron/PatronBookingForm";
 import PageHeader from "@/components/layout/PageHeader";
 import { getSiteSettings } from "@/actions/site-settings.actions";
 
-export default async function PatronBookPage({ searchParams }: { searchParams: { facilityId?: string } }) {
+export default async function PatronBookPage(props: { searchParams: Promise<{ facilityId?: string }> }) {
+  const searchParams = await props.searchParams;
   const session = await requirePatron();
 
   const patron = await prisma.patron.findUnique({

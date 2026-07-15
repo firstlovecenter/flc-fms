@@ -6,7 +6,8 @@ import { getInventoryItem, getInventoryCategories } from "@/actions/inventory.ac
 import InventoryItemForm from "@/components/inventory/InventoryItemForm";
 import { Card } from "@/components/ui/card";
 
-export default async function EditInventoryItemPage({ params }: { params: { id: string } }) {
+export default async function EditInventoryItemPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("inventory:manage");
 
   const [item, categories] = await Promise.all([

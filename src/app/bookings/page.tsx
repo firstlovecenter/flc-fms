@@ -13,11 +13,12 @@ const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCEL
 
 type Tab = "regular" | "ceremony";
 
-export default async function BookingsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; page?: string; tab?: string };
-}) {
+export default async function BookingsPage(
+  props: {
+    searchParams: Promise<{ status?: string; page?: string; tab?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await requirePerm("bookings:view");
 
   const tab    = (searchParams.tab ?? "regular") as Tab;

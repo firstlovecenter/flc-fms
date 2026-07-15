@@ -4,20 +4,22 @@ import { requirePerm } from "@/lib/auth/guards";
 import { getDutyTemplateById } from "@/lib/duty/queries";
 import EditDutyTemplateForm from "@/components/duty/EditDutyTemplateForm";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const template = await getDutyTemplateById(params.id);
   return { title: template ? `Edit ${template.name}` : "Edit duty form" };
 }
 
-export default async function EditDutyTemplatePage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EditDutyTemplatePage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await requirePerm("duty:manage");
 
   const template = await getDutyTemplateById(params.id);

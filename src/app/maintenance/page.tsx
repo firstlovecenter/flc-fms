@@ -10,11 +10,12 @@ import { buttonVariants } from "@/components/ui/button-variants";
 
 const STATUS_FILTERS = ["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
-export default async function MaintenancePage({
-  searchParams,
-}: {
-  searchParams: { status?: string; priority?: string };
-}) {
+export default async function MaintenancePage(
+  props: {
+    searchParams: Promise<{ status?: string; priority?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await requirePerm("maintenance:view");
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["maintenance:manage"] ?? false);
 

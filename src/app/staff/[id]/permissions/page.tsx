@@ -15,7 +15,8 @@ const ROLE_LABELS: Record<string, string> = {
   STAFF: "Staff",
 };
 
-export default async function StaffPermissionsPage({ params }: { params: { id: string } }) {
+export default async function StaffPermissionsPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("staff:manage");
 
   const staff = await prisma.user.findFirst({

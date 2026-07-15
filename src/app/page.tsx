@@ -13,11 +13,12 @@ import { getSiteSettings } from "@/actions/site-settings.actions";
 
 type Tab = "venues" | "items" | "packages";
 
-export default async function PublicHomePage({
-  searchParams,
-}: {
-  searchParams: { tab?: string; vtype?: string };
-}) {
+export default async function PublicHomePage(
+  props: {
+    searchParams: Promise<{ tab?: string; vtype?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const tab: Tab =
     searchParams.tab === "items" ? "items"
     : searchParams.tab === "packages" ? "packages"

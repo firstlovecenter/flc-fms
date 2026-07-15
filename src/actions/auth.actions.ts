@@ -26,7 +26,7 @@ const StaffLoginSchema = z.object({
 });
 
 export async function loginAnyAccount(formData: FormData) {
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const { allowed } = await rateLimit(`login:${ip}`, 10, 60);
   if (!allowed) return { error: "Too many attempts. Try again in a minute." };
 
@@ -132,7 +132,7 @@ export async function logout() {
   if (session) {
     auditLog({ userId: session.sub, action: "LOGOUT", entity: "User", entityId: session.sub });
   }
-  clearSession();
+  await clearSession();
   redirect("/login");
 }
 

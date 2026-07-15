@@ -13,13 +13,15 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 
-export default async function SuperAdminUsersPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; q?: string };
-}) {
+import { Card } from "@/components/ui/card";
+
+export default async function SuperAdminUsersPage(
+  props: {
+    searchParams: Promise<{ status?: string; q?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await getSession();
   if (!session || session.role !== "SUPER_ADMIN") redirect("/login");
 

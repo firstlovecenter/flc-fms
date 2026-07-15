@@ -13,7 +13,8 @@ import { Card } from "@/components/ui/card";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default async function FacilityDetailPage({ params }: { params: { id: string } }) {
+export default async function FacilityDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await requirePerm("facilities:view");
 
   const facility = await prisma.facility.findFirst({
@@ -82,7 +83,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           )}
         </div>
       </div>
-
       {/* Status banners */}
       {facility.underMaintenance && (
         <div className="bg-maintenance/10 border border-maintenance/25 rounded-lg p-4 flex items-center gap-3 text-maintenance">
@@ -105,7 +105,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           This facility is inactive.
         </div>
       )}
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Category pricing */}
         <Card className="p-5">
@@ -162,7 +161,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           )}
         </Card>
       </div>
-
       {/* Time Slots summary */}
       {(() => {
         const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -210,32 +208,30 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           </Card>
         );
       })()}
-
       {/* Upcoming bookings */}      <Card className="p-6">
-        <h2 className="font-semibold text-[var(--navy)] mb-4">Upcoming Bookings ({facility.bookings.length})</h2>
-        {facility.bookings.length === 0 ? (
-          <p className="text-sm text-[var(--muted)]">No upcoming bookings.</p>
-        ) : (
-          <div className="space-y-2">
-            {facility.bookings.map((b) => (
-              <div key={b.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-[var(--border)] last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-[var(--navy)]">{b.title}</p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {formatDateTime(b.startTime)} → {formatDateTime(b.endTime)}
-                  </p>
-                  <p className="text-xs text-[var(--muted)]">By: {(b.patron ?? b.user)?.name ?? "Unknown"}</p>
+          <h2 className="font-semibold text-[var(--navy)] mb-4">Upcoming Bookings ({facility.bookings.length})</h2>
+          {facility.bookings.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">No upcoming bookings.</p>
+          ) : (
+            <div className="space-y-2">
+              {facility.bookings.map((b) => (
+                <div key={b.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-[var(--border)] last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--navy)]">{b.title}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {formatDateTime(b.startTime)} → {formatDateTime(b.endTime)}
+                    </p>
+                    <p className="text-xs text-[var(--muted)]">By: {(b.patron ?? b.user)?.name ?? "Unknown"}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-semibold">{formatCurrency(Number(b.totalAmount))}</span>
+                    <StatusBadge status={b.status} size="xs" />
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-semibold">{formatCurrency(Number(b.totalAmount))}</span>
-                  <StatusBadge status={b.status} size="xs" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
+              ))}
+            </div>
+          )}
+        </Card>
       {/* Open maintenance */}
       {facility.maintenance.length > 0 && (
         <Card className="p-6 border-maintenance/25">
@@ -256,7 +252,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           </div>
         </Card>
       )}
-
       {/* Ceremony Configurations */}
       {canManage && (
         <div className="space-y-3">
@@ -275,7 +270,6 @@ export default async function FacilityDetailPage({ params }: { params: { id: str
           </div>
         </div>
       )}
-
     </div>
   );
 }

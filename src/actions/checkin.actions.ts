@@ -278,7 +278,7 @@ const GuestLookupSchema = z.object({
 export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLookupSchema>) {
   const { phone } = GuestLookupSchema.parse(data);
 
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const { allowed } = await rateLimit(`guest_checkin_lookup:${ip}`, 10, 300);
   if (!allowed) return { error: "Too many attempts. Please try again later." };
 
@@ -372,7 +372,7 @@ export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInReque
 
   const { bookingId, phone, latitude, longitude } = parsed.data;
 
-  const ip = headers().get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   const { allowed } = await rateLimit(`guest_checkin_req:${ip}`, 10, 300);
   if (!allowed) return { error: "Too many attempts. Please try again later." };
 

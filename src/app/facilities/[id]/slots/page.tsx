@@ -5,7 +5,8 @@ import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import TimeSlotManager from "@/components/facilities/TimeSlotManager";
 
-export default async function FacilitySlotsPage({ params }: { params: { id: string } }) {
+export default async function FacilitySlotsPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await requirePerm("facilities:manage");
 
   const facility = await prisma.facility.findFirst({

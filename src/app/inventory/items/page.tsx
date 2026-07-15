@@ -13,11 +13,12 @@ import { ConditionBadge, ItemStatusBadge } from "@/components/inventory/ItemBadg
 
 import { Card } from "@/components/ui/card";
 
-export default async function InventoryItemsPage({
-  searchParams,
-}: {
-  searchParams: { categoryId?: string; status?: string; search?: string; page?: string };
-}) {
+export default async function InventoryItemsPage(
+  props: {
+    searchParams: Promise<{ categoryId?: string; status?: string; search?: string; page?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await requirePerm("inventory:manage");
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["inventory:manage"] ?? false);
 
