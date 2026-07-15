@@ -737,10 +737,10 @@ export default function GuestBookingForm({
 
         {/* 3-column picker */}
         {(selectedFacility || category) && (
-          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_260px] divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
+          <div className="grid min-w-0 grid-cols-1 xl:grid-cols-[auto_minmax(0,1fr)_minmax(220px,260px)] divide-y xl:divide-y-0 xl:divide-x divide-[var(--border)]">
 
             {/* LEFT — Calendar */}
-            <div className="p-5">
+            <div className="min-w-0 p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-3">
                 Select a Date
               </p>
@@ -759,7 +759,7 @@ export default function GuestBookingForm({
             </div>
 
             {/* CENTER — Time Slots */}
-            <div className="p-5">
+            <div className="min-w-0 p-5">
               {!selectedFacility ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-16">
                   <Clock size={30} className="mb-3 text-[var(--muted)] dark:text-gray-400 opacity-25" />
@@ -849,7 +849,7 @@ export default function GuestBookingForm({
             </div>
 
             {/* RIGHT — Venue Details */}
-            <div className="p-5 bg-[#fafaf8] dark:bg-[rgba(15,26,43,0.4)]">
+            <div className="min-w-0 p-5 bg-[#fafaf8] dark:bg-[rgba(15,26,43,0.4)]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400 mb-4">
                 Venue Details
               </p>
@@ -939,7 +939,7 @@ export default function GuestBookingForm({
 
   // ─── STEP 2: Guest info + Booking details ────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
       {/* Summary card */}
       <div className="rounded-xl p-4 text-[#fff] bg-[var(--navy)] dark:bg-[rgba(15,26,43,0.8)] border border-transparent dark:border-[rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-4">

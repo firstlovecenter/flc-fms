@@ -78,7 +78,7 @@ export default async function NewBookingPage(
   const { title, subtitle } = titles[bookingType] ?? titles.regular;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full max-w-6xl space-y-6">
       <div>
         <h1 className="page-title">{title}</h1>
         <p className="text-sm page-subtitle">{subtitle}</p>
