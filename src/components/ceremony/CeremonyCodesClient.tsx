@@ -54,6 +54,7 @@ type Code = {
 type DateOverride = {
   id: string;
   date: Date;
+  type: "ADD" | "EXCLUDE";
   note: string | null;
   createdBy: { name: string };
   createdAt: Date;
@@ -266,7 +267,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
 
   // Date overrides state
   const [dateOverrides, setDateOverrides] = useState<DateOverride[]>(initialDateOverrides);
+  const addedOverrides = dateOverrides.filter((d) => d.type === "ADD");
+  const excludedOverrides = dateOverrides.filter((d) => d.type === "EXCLUDE");
+  const excludedStrs = new Set(excludedOverrides.map((o) => toDateStr(new Date(o.date))));
   const [showAddDate, setShowAddDate] = useState(false);
+  const [addDateMode, setAddDateMode] = useState<"ADD" | "EXCLUDE">("ADD");
   const [newDate, setNewDate] = useState("");
   const [newDateNote, setNewDateNote] = useState("");
   const [dateActionLoading, setDateActionLoading] = useState<string | null>(null);
@@ -277,15 +282,23 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
     setDateActionLoading("add");
     setDateError(null);
     try {
-      const result = await addCeremonyDateOverride({ date: newDate, note: newDateNote || undefined });
+      const result = await addCeremonyDateOverride({ date: newDate, note: newDateNote || undefined, type: addDateMode });
       if ("error" in result) { setDateError(result.error as string); }
       else { setShowAddDate(false); setNewDate(""); setNewDateNote(""); refresh(); }
-    } catch { setDateError("Failed to add date."); }
+    } catch { setDateError("Failed to save date."); }
     finally { setDateActionLoading(null); }
   }
 
+  function openExcludeModal(dateStr: string) {
+    setAddDateMode("EXCLUDE");
+    setNewDate(dateStr);
+    setNewDateNote("");
+    setDateError(null);
+    setShowAddDate(true);
+  }
+
   async function handleRemoveDate(id: string) {
-    if (!confirm("Remove this extra ceremony day? It will no longer be blocked for general bookings.")) return;
+    if (!confirm("Remove this override? Extra days will no longer be blocked for general bookings; excluded automatic days will become ceremony days again.")) return;
     setDateActionLoading(id);
     try {
       await removeCeremonyDateOverride(id);
@@ -392,7 +405,6 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
 
   // Compute upcoming first Saturdays for display
   const firstSaturdays = getFirstSaturdaysForMonths(12);
-  const overrideStrs = new Set(dateOverrides.map((o) => toDateStr(new Date(o.date))));
 
   return (
     <div className="space-y-4">
@@ -433,7 +445,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-[var(--navy)] text-sm">Automatic Ceremony Days</h3>
-                <p className="text-xs text-[var(--muted)] mt-0.5">First Saturday of every month — always blocked for general bookings</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">First Saturday of every month — blocked for general bookings unless excluded below</p>
               </div>
               <Calendar size={16} className="text-[var(--muted)]" />
             </div>
@@ -444,22 +456,52 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Day</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {firstSaturdays.map((d) => (
-                    <tr key={toDateStr(d)} className="hover:bg-gray-50">
-                      <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
-                        {d.toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-2.5 text-[var(--muted)]">Saturday</td>
-                      <td className="px-4 py-2.5">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                          <Check size={10} /> Ceremony Day
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {firstSaturdays.map((d) => {
+                    const dateStr = toDateStr(d);
+                    const isExcluded = excludedStrs.has(dateStr);
+                    const excludeOverride = excludedOverrides.find((o) => toDateStr(new Date(o.date)) === dateStr);
+                    return (
+                      <tr key={dateStr} className="hover:bg-gray-50">
+                        <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
+                          {d.toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-2.5 text-[var(--muted)]">Saturday</td>
+                        <td className="px-4 py-2.5">
+                          {isExcluded ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+                              <X size={10} /> Blocked
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                              <Check size={10} /> Ceremony Day
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          {isExcluded ? (
+                            <button
+                              onClick={() => excludeOverride && handleRemoveDate(excludeOverride.id)}
+                              disabled={!excludeOverride || dateActionLoading === excludeOverride.id}
+                              className="text-xs font-semibold text-[var(--gold)] hover:underline disabled:opacity-50"
+                            >
+                              Restore
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => openExcludeModal(dateStr)}
+                              className="text-xs font-semibold text-red-500 hover:underline"
+                            >
+                              Exclude
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -473,14 +515,14 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                 <p className="text-xs text-[var(--muted)] mt-0.5">Additional Saturdays designated as ceremony-only days</p>
               </div>
               <Button
-                onClick={() => { setShowAddDate(true); setDateError(null); setNewDate(""); setNewDateNote(""); }}
+                onClick={() => { setAddDateMode("ADD"); setShowAddDate(true); setDateError(null); setNewDate(""); setNewDateNote(""); }}
                 size="sm"
                 className="text-xs gap-1"
               >
                 <Plus size={12} /> Add Saturday
               </Button>
             </div>
-            {dateOverrides.length === 0 ? (
+            {addedOverrides.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-[var(--muted)]">
                 No extra ceremony days added yet.
               </div>
@@ -496,7 +538,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {dateOverrides.map((o) => (
+                    {addedOverrides.map((o) => (
                       <tr key={o.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
                           {new Date(o.date).toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
@@ -523,9 +565,14 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
 
           {/* Add date modal */}
           {showAddDate && (
-            <Modal title="Add Extra Ceremony Saturday" onClose={() => setShowAddDate(false)}>
+            <Modal
+              title={addDateMode === "EXCLUDE" ? "Exclude Automatic Ceremony Day" : "Add Extra Ceremony Saturday"}
+              onClose={() => setShowAddDate(false)}
+            >
               <p className="text-xs text-[var(--muted)]">
-                This Saturday will be blocked for general bookings and available for ceremony bookings.
+                {addDateMode === "EXCLUDE"
+                  ? "This automatic first Saturday will no longer be a ceremony day — it becomes bookable for regular events instead."
+                  : "This Saturday will be blocked for general bookings and available for ceremony bookings."}
               </p>
               <div className="space-y-3">
                 <div>
@@ -534,6 +581,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
+                    disabled={addDateMode === "EXCLUDE"}
                     className="text-sm"
                   />
                 </div>
@@ -543,16 +591,21 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                     value={newDateNote}
                     onChange={(e) => setNewDateNote(e.target.value)}
                     className="text-sm"
-                    placeholder="e.g. Special event date"
+                    placeholder={addDateMode === "EXCLUDE" ? "e.g. Public holiday" : "e.g. Special event date"}
                   />
                 </div>
                 {dateError && <p className="text-xs text-danger">{dateError}</p>}
                 <Button
                   onClick={handleAddDate}
                   disabled={!newDate || dateActionLoading === "add"}
+                  variant={addDateMode === "EXCLUDE" ? "destructive" : "default"}
                   className="w-full text-sm"
                 >
-                  {dateActionLoading === "add" ? "Adding…" : "Add Ceremony Day"}
+                  {dateActionLoading === "add"
+                    ? "Saving…"
+                    : addDateMode === "EXCLUDE"
+                    ? "Exclude This Day"
+                    : "Add Ceremony Day"}
                 </Button>
               </div>
             </Modal>

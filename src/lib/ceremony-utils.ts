@@ -108,19 +108,25 @@ export function isCeremonyCategory(category: string | null | undefined): boolean
 }
 
 /**
- * True if `date` is a designated ceremony day: the first Saturday of its month,
- * or a staff-added CeremonyDateOverride. Accepts either the global prisma client
- * or a transaction client so it can be called both inside and outside a transaction.
+ * True if `date` is a designated ceremony day: the first Saturday of its month
+ * (unless staff excluded it via an EXCLUDE override), or a staff-added ADD
+ * override. Accepts either the global prisma client or a transaction client
+ * so it can be called both inside and outside a transaction.
  */
 export async function isCeremonyDay(
-  db: { ceremonyDateOverride: { findMany: (args: { select: { date: true } }) => Promise<{ date: Date }[]> } },
+  db: {
+    ceremonyDateOverride: {
+      findMany: (args: { select: { date: true; type: true } }) => Promise<{ date: Date; type: "ADD" | "EXCLUDE" }[]>;
+    };
+  },
   date: Date,
 ): Promise<boolean> {
   const dateStr = toDateStr(date);
+  const overrides = await db.ceremonyDateOverride.findMany({ select: { date: true, type: true } });
+  const override = overrides.find((o) => toDateStr(o.date) === dateStr);
+  if (override) return override.type === "ADD";
   const firstSats = getFirstSaturdaysForMonths(13).map(toDateStr);
-  if (firstSats.includes(dateStr)) return true;
-  const overrides = await db.ceremonyDateOverride.findMany({ select: { date: true } });
-  return overrides.some((o) => toDateStr(o.date) === dateStr);
+  return firstSats.includes(dateStr);
 }
 
 export function generateCeremonyCode(): string {

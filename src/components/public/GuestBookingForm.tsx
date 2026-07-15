@@ -526,31 +526,39 @@ export default function GuestBookingForm({
       } : {}),
     };
 
-    const result =
-      mode === "guest"
-        ? await createGuestBooking({
-            ...bookingPayload,
-            guestName,
-            guestEmail,
-            guestPhone,
-          })
-        : mode === "patron"
-          ? await createPatronBooking(bookingPayload)
-          : await createStaffBooking(bookingPayload);
+    try {
+      const result =
+        mode === "guest"
+          ? await createGuestBooking({
+              ...bookingPayload,
+              guestName,
+              guestEmail,
+              guestPhone,
+            })
+          : mode === "patron"
+            ? await createPatronBooking(bookingPayload)
+            : await createStaffBooking(bookingPayload);
 
-    setSubmitting(false);
-    if ("error" in result && result.error) {
-      setError(result.error as string);
-      return;
+      if ("error" in result && result.error) {
+        setError(result.error as string);
+        return;
+      }
+
+      if (mode === "guest") {
+        setSuccessMessage("Booking request submitted successfully! You can create a patron account to track your booking status.");
+        return;
+      }
+
+      router.push(mode === "patron" ? "/patron/bookings" : "/bookings");
+      router.refresh();
+    } catch {
+      // A thrown (rather than returned) error still needs to clear the
+      // submitting state — otherwise the button is stuck on "Submitting…"
+      // forever with no feedback for the user to act on.
+      setError("Something went wrong while submitting your booking. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (mode === "guest") {
-      setSuccessMessage("Booking request submitted successfully! You can create a patron account to track your booking status.");
-      return;
-    }
-
-    router.push(mode === "patron" ? "/patron/bookings" : "/bookings");
-    router.refresh();
   }
 
   if (successMessage) {

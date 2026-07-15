@@ -60,34 +60,43 @@ export async function getCeremonyFacilityIds(type: CeremonyType): Promise<string
 }
 
 /**
- * Returns all ceremony days (first Saturdays + staff-added extras) as YYYY-MM-DD strings
- * for the next 13 months. Used by ceremony booking (allowed) and general booking (blocked).
+ * Returns all ceremony days (first Saturdays, minus any staff-excluded ones,
+ * plus staff-added extras) as YYYY-MM-DD strings for the next 13 months. Used
+ * by ceremony booking (allowed) and general booking (blocked).
  */
 export async function getCeremonyDays(): Promise<string[]> {
-  const extras = await prisma.ceremonyDateOverride.findMany({
-    select: { date: true },
+  const overrides = await prisma.ceremonyDateOverride.findMany({
+    select: { date: true, type: true },
   });
-  const extraStrs = extras.map((e) => toDateStr(e.date));
-  const firstSats = getFirstSaturdaysForMonths(13).map(toDateStr);
-  return [...new Set([...firstSats, ...extraStrs])].sort();
+  const excluded = new Set(
+    overrides.filter((o) => o.type === "EXCLUDE").map((o) => toDateStr(o.date)),
+  );
+  const added = overrides
+    .filter((o) => o.type === "ADD")
+    .map((o) => toDateStr(o.date));
+  const firstSats = getFirstSaturdaysForMonths(13)
+    .map(toDateStr)
+    .filter((d) => !excluded.has(d));
+  return [...new Set([...firstSats, ...added])].sort();
 }
 
-/** Staff: designate an extra Saturday as a ceremony day. */
-export async function addCeremonyDateOverride(data: { date: string; note?: string }) {
+/** Staff: designate an extra Saturday as a ceremony day, or exclude an automatic first Saturday. */
+export async function addCeremonyDateOverride(data: { date: string; note?: string; type?: "ADD" | "EXCLUDE" }) {
   const session = await requirePerm("ceremony:manage");
   const d = new Date(data.date + "T12:00:00.000Z");
   if (d.getUTCDay() !== 6) return { error: "Only Saturdays can be designated as ceremony days." };
+  const type = data.type ?? "ADD";
 
   await prisma.ceremonyDateOverride.upsert({
     where: { date: d },
-    create: { date: d, note: data.note ?? null, createdById: session.sub },
-    update: { note: data.note ?? null },
+    create: { date: d, type, note: data.note ?? null, createdById: session.sub },
+    update: { type, note: data.note ?? null },
   });
   revalidatePath("/ceremony-codes");
   return { success: true };
 }
 
-/** Staff: remove a staff-added ceremony day (first Saturdays are always ceremony days). */
+/** Staff: remove a date override — restores it to whatever it would default to (automatic or not a ceremony day). */
 export async function removeCeremonyDateOverride(id: string) {
   await requirePerm("ceremony:manage");
   await prisma.ceremonyDateOverride.delete({ where: { id } });
@@ -95,7 +104,7 @@ export async function removeCeremonyDateOverride(id: string) {
   return { success: true };
 }
 
-/** Staff: list all stored extra ceremony day overrides. */
+/** Staff: list all stored ceremony day overrides (both ADD and EXCLUDE). */
 export async function listCeremonyDateOverrides() {
   await requirePerm("ceremony:manage");
   return prisma.ceremonyDateOverride.findMany({
