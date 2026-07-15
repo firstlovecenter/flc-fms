@@ -71,6 +71,12 @@ function hasPrivilegedBooking(session: { role: string; authContext?: { permissio
   return session.authContext?.permissions["bookings:approve"] ?? false;
 }
 
+// Facility Managers and Super Admins are trusted to self-approve — their bookings
+// (including ceremony bookings) skip the pending-review queue entirely.
+function isAutoApprovedStaffRole(role: string) {
+  return role === "FACILITY_MANAGER" || role === "SUPER_ADMIN";
+}
+
 function violatesLeadTime(startTime: Date, hours = LEAD_TIME_HOURS) {
   const now = Date.now();
   const bookingTime = startTime.getTime();
@@ -287,10 +293,18 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
     return { error: "This date is reserved for ceremony bookings. Please choose a different date for a regular booking." };
   }
 
+  // The contact email identifies who this booking is actually for. If it matches an
+  // existing member account, link that patron to the booking so all booking notices
+  // (confirmation, approval, rejection, cancellation, completion) reach them instead
+  // of the staff member who entered the booking.
+  const contactPatron = await prisma.patron.findFirst({
+    where: { email: validated.contactEmail },
+  });
+
   // Wrap conflict check + pricing computation + booking creation in a single transaction
   // with an advisory lock to prevent race conditions on concurrent bookings.
   type TxResult =
-    | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; user: { name: string; phone: string | null; email: string } | null } }
+    | { booking: Awaited<ReturnType<typeof prisma.booking.create>> & { facility: { name: string } | null; user: { name: string; phone: string | null; email: string } | null; patron: { name: string; phone: string | null; email: string } | null } }
     | { error: string };
 
   const txResult: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
@@ -361,6 +375,7 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
       data: {
         facilityId:   validated.facilityId,
         userId:       session.sub,
+        patronId:     contactPatron?.id,
         category:     validated.category,
         title:        validated.title,
         description:  validated.description,
@@ -372,9 +387,9 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
         resolvedUnitPrice: unitPrice,
         resolvedPricingSource: pricingSource,
         ceremonyDetails: validated.ceremonyDetails ?? undefined,
-        status:       session.role === "FACILITY_MANAGER" ? "APPROVED" : "PENDING",
+        status:       isAutoApprovedStaffRole(session.role) ? "APPROVED" : "PENDING",
       },
-      include: { facility: true, user: true },
+      include: { facility: true, user: true, patron: true },
     });
 
     // Staff may optionally attach a ceremony code; consume it if provided.
@@ -391,28 +406,38 @@ export async function createStaffBooking(data: z.infer<typeof BookingCreateSchem
   if ("error" in txResult) return { error: txResult.error };
   const { booking } = txResult;
 
-  // All notifications fired in parallel — booking is already persisted
+  // The contact (matched member, if any) is who the booking is actually for — they
+  // get the booking notices. The staff member who entered the booking gets a
+  // lightweight receipt instead, since they already see the result in the app.
   await Promise.allSettled([
-    ...(booking.user?.phone ? [notifyBookingConfirmation({
-      phone:        booking.user.phone,
+    ...(booking.patron?.phone ? [notifyBookingConfirmation({
+      phone:        booking.patron.phone,
       bookingTitle: booking.title,
       startTime:    booking.startTime,
       facilityName: booking.facility?.name ?? "N/A",
     })] : []),
-    ...(booking.user?.email ? [sendBookingConfirmationEmail({
-      to:           booking.user.email,
-      name:         booking.user.name,
+    sendBookingConfirmationEmail({
+      to:           validated.contactEmail,
+      name:         booking.patron?.name ?? "there",
       bookingTitle: booking.title,
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       endTime:      booking.endTime,
       totalAmount:  Number(booking.totalAmount),
-    })] : []),
-    sendPushToUser(session.sub, {
+    }),
+    ...(contactPatron ? [sendPushToPatron(contactPatron.id, {
       title: booking.status === "APPROVED" ? "Booking Approved ✓" : "Booking Request Submitted",
       body:  booking.status === "APPROVED"
         ? `Your booking "${booking.title}" was automatically approved.`
         : `Your booking "${booking.title}" has been submitted for review.`,
+      url:  "/patron/bookings",
+      tag:  `booking-created-${booking.id}`,
+    })] : []),
+    sendPushToUser(session.sub, {
+      title: booking.status === "APPROVED" ? "Booking Created ✓" : "Booking Submitted",
+      body:  booking.status === "APPROVED"
+        ? `"${booking.title}" was created and automatically approved.`
+        : `"${booking.title}" has been submitted for review.`,
       url:  `/bookings/${booking.id}`,
       tag:  `booking-created-${booking.id}`,
     }),
