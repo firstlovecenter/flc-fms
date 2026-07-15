@@ -99,6 +99,14 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
 
   const selected = useMemo(() => bookings.find((b) => b.id === selectedId) ?? null, [bookings, selectedId]);
 
+  const hasActiveFilters = !!(search || statusFilter !== "ALL" || typeFilter !== "ALL");
+
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("ALL");
+    setTypeFilter("ALL");
+  }
+
   function closeModal() {
     setSelectedId(null);
   }
@@ -157,6 +165,13 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
             icon={<CalendarDays />}
             title="No ceremony bookings found"
             description="No ceremony bookings match your current filters."
+            action={
+              hasActiveFilters ? (
+                <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           filtered.map((b) => (

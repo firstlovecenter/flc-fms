@@ -32,20 +32,21 @@ export default function DeleteBookingButton({
     onDeleted?.();
     if (redirectTo) {
       router.push(redirectTo);
+    } else {
+      router.refresh();
     }
-    router.refresh();
   }
 
   if (confirming) {
     return (
       <div className="flex flex-col gap-1.5">
         {error && <p className="text-xs text-danger">{error}</p>}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-danger font-medium">Permanently delete this booking?</span>
-          <Button type="button" variant="destructive" size="sm" onClick={handleDelete} disabled={loading}>
+          <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
             {loading ? "Deleting…" : "Confirm delete"}
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setConfirming(false)} disabled={loading}>
+          <Button type="button" variant="outline" onClick={() => setConfirming(false)} disabled={loading}>
             Cancel
           </Button>
         </div>
