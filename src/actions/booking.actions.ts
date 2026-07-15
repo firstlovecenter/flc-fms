@@ -1037,14 +1037,21 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
 export async function approveBooking(bookingId: string, waiveBilling = false) {
   const session = await requirePerm("bookings:approve");
 
-  const booking = await prisma.booking.update({
-    where: { id: bookingId },
+  // Guard against double-submit/race conditions overwriting the approver
+  // record — only a currently-PENDING booking can be approved.
+  const { count } = await prisma.booking.updateMany({
+    where: { id: bookingId, status: "PENDING" },
     data: {
       status: "APPROVED",
       approvedById: session.sub,
       approvedAt: new Date(),
       ...(waiveBilling ? { isBillingWaived: true, totalAmount: 0 } : {}),
     },
+  });
+  if (count === 0) return { error: "This booking is no longer pending approval." };
+
+  const booking = await prisma.booking.findUniqueOrThrow({
+    where: { id: bookingId },
     include: { patron: true, user: true, facility: true },
   });
 
@@ -1090,9 +1097,16 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
 export async function rejectBooking(bookingId: string, reason: string) {
   const session = await requirePerm("bookings:approve");
 
-  const booking = await prisma.booking.update({
-    where: { id: bookingId },
+  // Guard against double-submit/race conditions — only a currently-PENDING
+  // booking can be rejected.
+  const { count } = await prisma.booking.updateMany({
+    where: { id: bookingId, status: "PENDING" },
     data: { status: "REJECTED", rejectionReason: reason },
+  });
+  if (count === 0) return { error: "This booking is no longer pending approval." };
+
+  const booking = await prisma.booking.findUniqueOrThrow({
+    where: { id: bookingId },
     include: { patron: true, user: true },
   });
 
@@ -1393,6 +1407,12 @@ export async function updateBookingByManager(bookingId: string, data: z.input<ty
         resolvedUnitPrice: unitPrice,
         resolvedPricingSource: pricingSource,
         updatedAt:    new Date(),
+        // Editing an already-approved booking's terms (facility/time/price) is a
+        // Super Admin-only action — re-attribute the approval to them so the
+        // "Approved by" record reflects who's actually accountable for the
+        // terms as they now stand, rather than crediting the original approver
+        // for changes they never saw.
+        ...(existing.status === "APPROVED" ? { approvedById: session.sub, approvedAt: new Date() } : {}),
       },
       include: {
         facility: { select: { name: true } },
