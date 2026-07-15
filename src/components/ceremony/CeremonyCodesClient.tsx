@@ -285,7 +285,9 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       const result = await addCeremonyDateOverride({ date: newDate, note: newDateNote || undefined, type: addDateMode });
       if ("error" in result) { setDateError(result.error as string); }
       else { setShowAddDate(false); setNewDate(""); setNewDateNote(""); refresh(); }
-    } catch { setDateError("Failed to save date."); }
+    } catch (error) {
+      setDateError(error instanceof Error ? error.message : "Failed to save date. Please refresh and try again.");
+    }
     finally { setDateActionLoading(null); }
   }
 
@@ -440,6 +442,28 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{dateError}</div>
           )}
 
+          <Card className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-[var(--navy)] text-sm">Manage Ceremony Dates</h3>
+              <p className="text-xs text-[var(--muted)] mt-1">
+                Add another Saturday here, or exclude an automatic first Saturday from its row below.
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                setAddDateMode("ADD");
+                setShowAddDate(true);
+                setDateError(null);
+                setNewDate("");
+                setNewDateNote("");
+              }}
+              size="sm"
+              className="text-xs gap-1 shrink-0"
+            >
+              <Plus size={12} /> Add Another Saturday
+            </Button>
+          </Card>
+
           {/* Auto first Saturdays */}
           <Card className="overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
@@ -514,13 +538,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                 <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Saturdays</h3>
                 <p className="text-xs text-[var(--muted)] mt-0.5">Additional Saturdays designated as ceremony-only days</p>
               </div>
-              <Button
-                onClick={() => { setAddDateMode("ADD"); setShowAddDate(true); setDateError(null); setNewDate(""); setNewDateNote(""); }}
-                size="sm"
-                className="text-xs gap-1"
-              >
-                <Plus size={12} /> Add Saturday
-              </Button>
+              <Calendar size={16} className="text-[var(--muted)]" />
             </div>
             {addedOverrides.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-[var(--muted)]">
@@ -584,6 +602,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                     disabled={addDateMode === "EXCLUDE"}
                     className="text-sm"
                   />
+                  {addDateMode === "EXCLUDE" && (
+                    <p className="text-[11px] text-[var(--muted)] mt-1">
+                      To exclude a different automatic date, close this window and choose Exclude beside that date.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="text-xs">Note (optional)</Label>

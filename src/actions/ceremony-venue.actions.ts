@@ -83,15 +83,27 @@ export async function getCeremonyDays(): Promise<string[]> {
 /** Staff: designate an extra Saturday as a ceremony day, or exclude an automatic first Saturday. */
 export async function addCeremonyDateOverride(data: { date: string; note?: string; type?: "ADD" | "EXCLUDE" }) {
   const session = await requirePerm("ceremony:manage");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) return { error: "Please select a valid date." };
   const d = new Date(data.date + "T12:00:00.000Z");
+  if (Number.isNaN(d.getTime())) return { error: "Please select a valid date." };
   if (d.getUTCDay() !== 6) return { error: "Only Saturdays can be designated as ceremony days." };
   const type = data.type ?? "ADD";
 
-  await prisma.ceremonyDateOverride.upsert({
-    where: { date: d },
-    create: { date: d, type, note: data.note ?? null, createdById: session.sub },
-    update: { type, note: data.note ?? null },
-  });
+  try {
+    await prisma.ceremonyDateOverride.upsert({
+      where: { date: d },
+      create: { date: d, type, note: data.note?.trim() || null, createdById: session.sub },
+      update: { type, note: data.note?.trim() || null },
+    });
+  } catch (error) {
+    console.error("[ceremony-dates] Failed to save date override", {
+      date: data.date,
+      type,
+      userId: session.sub,
+      error,
+    });
+    return { error: "The date could not be saved. Please refresh the page and try again." };
+  }
   revalidatePath("/ceremony-codes");
   return { success: true };
 }
