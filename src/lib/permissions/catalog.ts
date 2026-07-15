@@ -7,6 +7,7 @@ export const PERMISSION_META = {
   "bookings:view":          { label: "View Bookings",          description: "See the bookings list and booking details." },
   "bookings:create":        { label: "Create Bookings",        description: "Create new facility bookings on behalf of the church." },
   "bookings:approve":       { label: "Approve Bookings",       description: "Approve or reject pending bookings." },
+  "bookings:auto_approve":  { label: "Auto-Approve Own Bookings", description: "Bookings this staff member creates skip the pending-review queue and are approved automatically." },
   "bookings:cancel":        { label: "Cancel Bookings",        description: "Cancel existing bookings." },
   "bookings:manage_content":{ label: "Manage Booking Content", description: "Edit booking terms and public booking content." },
   "finance:view":           { label: "View Finances",          description: "See transactions, balances, and the dashboard finance summary." },
@@ -61,7 +62,7 @@ export const PERMISSION_GROUPS: {
   {
     title: "Bookings",
     permissions: [
-      "bookings:view", "bookings:create", "bookings:approve", "bookings:cancel", "bookings:manage_content",
+      "bookings:view", "bookings:create", "bookings:approve", "bookings:auto_approve", "bookings:cancel", "bookings:manage_content",
     ].map((key) => ({ key: key as Permission, ...PERMISSION_META[key as Permission] })),
   },
   {

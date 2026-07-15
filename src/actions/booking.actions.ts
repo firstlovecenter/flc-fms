@@ -76,6 +76,17 @@ function hasPrivilegedBooking(session: { role: string; authContext?: { permissio
   return session.authContext?.permissions["bookings:approve"] ?? false;
 }
 
+// Auto-approval is deliberately narrower than "can approve bookings" — being
+// granted bookings:approve (e.g. to review other people's requests) does not
+// by itself mean this staff member's own bookings should skip review. Only
+// Facility Managers, Super Admins, and staff explicitly granted the dedicated
+// bookings:auto_approve permission (seeded true for the Booking Manager
+// preset) get this.
+function isAutoApprovedBooking(session: { role: string; authContext?: { permissions: Record<string, boolean> } | null }) {
+  if (session.role === "SUPER_ADMIN" || session.role === "FACILITY_MANAGER") return true;
+  return session.authContext?.permissions["bookings:auto_approve"] ?? false;
+}
+
 // Only Super Admins and Facility/Booking Managers may waive or override the
 // computed price at booking-creation time (skipping the approval step's
 // waive-billing option, since their bookings auto-approve immediately).
@@ -420,7 +431,7 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
         isBillingWaived,
         ceremonyDetails: validated.ceremonyDetails ?? undefined,
         // Only Facility/Booking Managers and Super Admins are trusted to self-approve.
-        status:       hasPrivilegedBooking(session) ? "APPROVED" : "PENDING",
+        status:       isAutoApprovedBooking(session) ? "APPROVED" : "PENDING",
       },
       include: { facility: true, user: true, patron: true },
     });
@@ -1417,7 +1428,9 @@ export async function getBookings(filters: {
   const where: Record<string, unknown> = { deletedAt: null };
   if (filters.status)     where.status = filters.status;
   if (filters.facilityId) where.facilityId = filters.facilityId;
-  if (session.role === "PATRON") where.patronId = session.sub;
+  // userId: null excludes staff-created bookings merely linked to this patron
+  // for notifications — only self-made bookings show here (see createStaffBooking).
+  if (session.role === "PATRON") { where.patronId = session.sub; where.userId = null; }
 
   if (filters.from || filters.to) {
     where.startTime = {
