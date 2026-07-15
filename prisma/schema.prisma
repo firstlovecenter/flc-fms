@@ -824,12 +824,24 @@ model CeremonyBookingCode {
   @@map("ceremony_booking_codes")
 }
 
+enum CeremonyDateOverrideType {
+  ADD
+  EXCLUDE
+}
+
+/**
+ * Admin-managed adjustments to the automatic ceremony-day calendar (first
+ * Saturday of every month). ADD designates an extra Saturday as a ceremony
+ * day; EXCLUDE removes an otherwise-automatic first Saturday (e.g. a holiday
+ * or a month the office wants closed for ceremonies) — see isCeremonyDay().
+ */
 model CeremonyDateOverride {
-  id          String   @id @default(cuid())
+  id          String                   @id @default(cuid())
   date        DateTime // stored at noon UTC; must be a Saturday
+  type        CeremonyDateOverrideType @default(ADD)
   note        String?
   createdById String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime                 @default(now())
 
   createdBy User @relation(fields: [createdById], references: [id])
 
