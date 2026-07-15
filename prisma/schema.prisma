@@ -22,6 +22,7 @@ model User {
   updatedAt             DateTime               @updatedAt
   auditLogs             AuditLog[]
   bookings              Booking[]
+  approvedBookings      Booking[]              @relation("BookingApprovedBy")
   approvedExpenses      Expense[]              @relation("ApprovedExpenses")
   createdExpenses       Expense[]              @relation("CreatedExpenses")
   createdIncome         Income[]
@@ -164,10 +165,13 @@ model Booking {
   updatedAt             DateTime             @updatedAt
   isBillingWaived       Boolean              @default(false)
   ceremonyDetails       Json?
+  approvedById          String?
+  approvedAt            DateTime?
   lineItems             BookingLineItem[]
   facility              Facility?            @relation(fields: [facilityId], references: [id])
   patron                Patron?              @relation(fields: [patronId], references: [id])
   user                  User?                @relation(fields: [userId], references: [id])
+  approvedBy            User?                @relation("BookingApprovedBy", fields: [approvedById], references: [id])
   income                Income?
   checkIn               FacilityCheckIn?
   ceremonyCode          CeremonyBookingCode?
@@ -176,6 +180,7 @@ model Booking {
   @@index([facilityId, status, deletedAt])
   @@index([status])
   @@index([category])
+  @@index([approvedById])
   @@map("bookings")
 }
 

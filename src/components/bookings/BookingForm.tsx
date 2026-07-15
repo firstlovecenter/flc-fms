@@ -24,6 +24,7 @@ export default function BookingForm({
   defaultCategory,
   ceremonyFlatPrice,
   allowCeremony,
+  allowPriceOverride,
 }: {
   facilities: Facility[];
   defaultFacilityId?: string;
@@ -33,6 +34,7 @@ export default function BookingForm({
   defaultCategory?: string;
   ceremonyFlatPrice?: number;
   allowCeremony?: boolean;
+  allowPriceOverride?: boolean;
 }) {
   return (
     <GuestBookingForm
@@ -45,6 +47,7 @@ export default function BookingForm({
       defaultCategory={defaultCategory}
       ceremonyFlatPrice={ceremonyFlatPrice}
       allowCeremony={allowCeremony}
+      allowPriceOverride={allowPriceOverride}
     />
   );
 }

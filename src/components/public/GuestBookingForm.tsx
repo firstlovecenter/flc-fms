@@ -102,6 +102,7 @@ export default function GuestBookingForm({
   ceremonyDays = [],
   defaultContactEmail = "",
   allowCeremony = true,
+  allowPriceOverride = false,
   officePhone,
   officeEmail,
 }: {
@@ -117,6 +118,8 @@ export default function GuestBookingForm({
   defaultContactEmail?: string;
   /** Staff only: whether the Wedding/Naming options may be chosen in-form. */
   allowCeremony?: boolean;
+  /** Staff only: whether this session may waive/override the booking price. */
+  allowPriceOverride?: boolean;
   /** Shown as a call/email CTA in place of the old code-request page. */
   officePhone?: string;
   officeEmail?: string;
@@ -159,12 +162,22 @@ export default function GuestBookingForm({
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [contactEmail, setContactEmail] = useState(defaultContactEmail);
+  const [contactPhone, setContactPhone] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Facility/Booking Managers and Super Admins may waive/override the price —
+  // their bookings auto-approve immediately, skipping the usual approval-time
+  // waive-billing option, so this is their only chance to adjust it. Resolved
+  // server-side (allowPriceOverride) since "Booking Manager" isn't always a
+  // literal role — it can be a STAFF account with the right permission.
+  const isPricingManager = mode === "staff" && allowPriceOverride;
+  const [waiveBilling, setWaiveBilling] = useState(false);
+  const [overrideAmount, setOverrideAmount] = useState("");
 
   // ── Ceremony-specific state ──────────────────────────────────────────────────
   // Wedding
@@ -430,6 +443,13 @@ export default function GuestBookingForm({
     return contactEmail.trim();
   }
 
+  function resolveBookingPhone() {
+    if (mode === "guest") return guestPhone.trim();
+    if (isCeremonyBooking && ceremonyType === "wedding") return coupleContact.trim();
+    if (isCeremonyBooking && ceremonyType === "naming") return fatherPhone.trim();
+    return contactPhone.trim();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
@@ -437,6 +457,11 @@ export default function GuestBookingForm({
     const bookingEmail = resolveBookingEmail();
     if (!bookingEmail || !isValidEmail(bookingEmail)) {
       setError("A valid email address is required to complete your booking.");
+      return;
+    }
+    const bookingPhone = resolveBookingPhone();
+    if (mode === "staff" && !bookingPhone) {
+      setError("A contact phone number is required to complete your booking.");
       return;
     }
     if (termsRequired && !agreedToTerms) {
@@ -492,6 +517,13 @@ export default function GuestBookingForm({
       contactEmail: bookingEmail,
       ...(builtCeremonyDetails ? { ceremonyDetails: builtCeremonyDetails } : {}),
       ...(resolvedCeremonyCodeId ? { ceremonyCodeId: resolvedCeremonyCodeId } : {}),
+      ...(mode === "staff" ? {
+        contactPhone: bookingPhone,
+        waiveBilling: isPricingManager && waiveBilling,
+        ...(isPricingManager && !waiveBilling && overrideAmount.trim() !== ""
+          ? { overrideAmount: Number(overrideAmount) }
+          : {}),
+      } : {}),
     };
 
     const result =
@@ -934,16 +966,57 @@ export default function GuestBookingForm({
       {(mode === "staff" || mode === "patron") && !isCeremonyBooking && (
         <Card className="p-5 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Contact Information</p>
-          <div>
-            <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
-            <Input
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              type="email"
-              placeholder="contact@example.com"
-              required
-            />
+          <div className={mode === "staff" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : undefined}>
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Email *</label>
+              <Input
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                type="email"
+                placeholder="contact@example.com"
+                required
+              />
+            </div>
+            {mode === "staff" && (
+              <div>
+                <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Phone *</label>
+                <Input
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="0244000000"
+                  required
+                />
+              </div>
+            )}
           </div>
+        </Card>
+      )}
+
+      {/* Pricing override — Facility Managers & Super Admins only */}
+      {isPricingManager && (
+        <Card className="p-5 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] dark:text-gray-400">Pricing (Manager Override)</p>
+          <label className="flex items-center gap-2 text-sm text-[var(--slate)] dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={waiveBilling}
+              onChange={(e) => setWaiveBilling(e.target.checked)}
+            />
+            Waive billing (mark as free)
+          </label>
+          {!waiveBilling && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Custom Amount (optional)</label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={overrideAmount}
+                onChange={(e) => setOverrideAmount(e.target.value)}
+                placeholder={estimatedCost != null ? `Default: ${formatCurrency(estimatedCost)}` : "Leave blank to use default pricing"}
+              />
+            </div>
+          )}
         </Card>
       )}
 
@@ -1239,6 +1312,7 @@ export default function GuestBookingForm({
             !title.trim() ||
             (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || !isValidEmail(guestEmail))) ||
             ((mode === "staff" || mode === "patron") && !isCeremonyBooking && (!contactEmail.trim() || !isValidEmail(contactEmail))) ||
+            (mode === "staff" && !isCeremonyBooking && !contactPhone.trim()) ||
             (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||

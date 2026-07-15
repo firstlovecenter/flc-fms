@@ -18,7 +18,9 @@ export default async function PatronDashboardPage() {
 
 	const [bookings, facilitiesOpen] = await Promise.all([
 		prisma.booking.findMany({
-			where: { patronId: session.sub },
+			// userId: null excludes staff-created bookings merely linked to this
+			// patron for notifications — only self-made bookings show here.
+			where: { patronId: session.sub, userId: null },
 			include: { facility: { select: { name: true } } },
 			orderBy: { createdAt: "desc" },
 			take: 5,

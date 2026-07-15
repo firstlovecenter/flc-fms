@@ -24,6 +24,7 @@ const BOOKING_MANAGER = pick({
   "bookings:view": true,
   "bookings:create": true,
   "bookings:approve": true,
+  "bookings:auto_approve": true,
   "bookings:cancel": true,
   "bookings:manage_content": true,
   "finance:submit_expense": true,
@@ -76,6 +77,9 @@ const OPERATIONS_NO_FINANCE: PermissionSet = {
   "finance:manage_accounts": false,
   "reports:view": false,
   "reports:manage_subscriptions": false,
+  // Can approve others' bookings, but is not itself trusted to skip review —
+  // that trust is reserved for Facility/Booking Managers and Super Admin.
+  "bookings:auto_approve": false,
 };
 
 export const PRESET_OPTIONS: {

@@ -13,7 +13,9 @@ export default async function PatronBookingsPage() {
 	if (!session || session.role !== "PATRON") redirect("/patron/login");
 
 	const bookings = await prisma.booking.findMany({
-		where: { patronId: session.sub },
+		// userId: null excludes staff-created bookings merely linked to this
+		// patron for notifications — only self-made bookings show here.
+		where: { patronId: session.sub, userId: null },
 		include: { facility: { select: { name: true } } },
 		orderBy: { createdAt: "desc" },
 	});
