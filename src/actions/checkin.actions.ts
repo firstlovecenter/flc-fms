@@ -18,7 +18,11 @@ export async function requestCheckIn(bookingId: string, coords?: { latitude: num
   const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
+      // userId: null excludes staff-created bookings merely linked to this
+      // patron for notifications — self check-in only applies to bookings
+      // the patron actually made themselves.
       patronId: session.sub,
+      userId: null,
       status: "APPROVED",
       deletedAt: null,
     },

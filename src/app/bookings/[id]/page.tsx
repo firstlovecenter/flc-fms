@@ -120,6 +120,9 @@ export default async function BookingDetailPage({ params }: { params: { id: stri
               </div>
             </>
           )}
+          {booking.patron && booking.user && (
+            <p className="text-xs text-[var(--muted)] mt-2">Booked by {booking.user.name} (staff)</p>
+          )}
         </Card>
       </div>
 

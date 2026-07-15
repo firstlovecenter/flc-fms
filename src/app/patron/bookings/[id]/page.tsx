@@ -16,7 +16,9 @@ export default async function PatronBookingDetailPage({ params }: { params: { id
   if (!session || session.role !== "PATRON") redirect("/patron/login");
 
   const booking = await prisma.booking.findFirst({
-    where: { id: params.id, patronId: session.sub },
+    // userId: null excludes staff-created bookings merely linked to this
+    // patron for notifications — only self-made bookings are reachable here.
+    where: { id: params.id, patronId: session.sub, userId: null },
     include: {
       facility: true,
       lineItems: {
