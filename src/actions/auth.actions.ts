@@ -36,7 +36,8 @@ export async function loginAnyAccount(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid input." };
 
-  const { email, password } = parsed.data;
+  const { password } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (user?.isActive) {
@@ -57,17 +58,7 @@ export async function loginAnyAccount(formData: FormData) {
     auditLog({ userId: user.id, action: "LOGIN", entity: "User", entityId: user.id });
     return { success: true, role: user.role, redirectTo: defaultRedirectForRole(user.role) };
   }
-
-  const patron = await prisma.patron.findUnique({ where: { email } });
-  if (!patron) return { error: "Invalid credentials." };
-
-  const valid = await bcrypt.compare(password, patron.passwordHash);
-  if (!valid) return { error: "Invalid credentials." };
-
-  await setSession({ sub: patron.id, role: "PATRON", name: patron.name, email: patron.email });
-  auditLog({ userId: patron.id, action: "LOGIN", entity: "Patron", entityId: patron.id });
-
-  return { success: true, role: "PATRON", redirectTo: "/patron/dashboard" };
+  return { error: "Invalid credentials." };
 }
 
 export async function loginStaff(formData: FormData) {
@@ -92,15 +83,16 @@ export async function registerPatron(formData: FormData) {
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
-  const { name, email, password, phone } = parsed.data;
+  const { name, password, phone } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
 
-  const exists = await prisma.patron.findUnique({ where: { email } });
+  const exists = await prisma.user.findUnique({ where: { email } });
 
   // If the email belongs to an auto-registered (unverified) patron from a guest
   // booking, let them claim the account by setting a real password.
-  if (exists && !exists.isVerified) {
+  if (exists && exists.role === "PATRON" && !exists.isVerified) {
     const passwordHash = await bcrypt.hash(password, 12);
-    const patron = await prisma.patron.update({
+    const patron = await prisma.user.update({
       where: { id: exists.id },
       data: { passwordHash, name, phone, isVerified: true },
     });
@@ -108,11 +100,11 @@ export async function registerPatron(formData: FormData) {
     return { success: true, redirectTo: "/patron/dashboard" };
   }
 
-  if (exists) return { error: "Email already registered. Please sign in instead." };
+  if (exists) return { error: "This email already belongs to an account. Please sign in instead." };
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const patron = await prisma.patron.create({
-    data: { email, passwordHash, name, phone, isVerified: true },
+  const patron = await prisma.user.create({
+    data: { email, passwordHash, name, phone, role: "PATRON", isPatron: true, isVerified: true },
   });
 
   await setSession({ sub: patron.id, role: "PATRON", name, email });
@@ -134,6 +126,37 @@ export async function logout() {
   }
   await clearSession();
   redirect("/login");
+}
+
+export async function switchToPatronContext() {
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+
+  const account = await prisma.user.findUnique({ where: { id: session.sub } });
+  if (!account?.isActive || !account.isPatron) return { error: "This account does not have patron access." };
+
+  await setSession({ sub: account.id, role: "PATRON", name: account.name, email: account.email });
+  auditLog({ userId: account.id, action: "SWITCH_TO_PATRON_CONTEXT", entity: "User", entityId: account.id });
+  return { success: true, redirectTo: "/patron/dashboard" };
+}
+
+export async function switchToStaffContext() {
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+
+  const account = await prisma.user.findUnique({ where: { id: session.sub } });
+  if (!account?.isActive || account.role === "PATRON") return { error: "This account does not have staff access." };
+
+  await setSession({
+    sub: account.id,
+    role: account.role,
+    name: account.name,
+    email: account.email,
+    permissions: account.permissions as Record<string, boolean>,
+    mustChangePassword: account.mustChangePassword,
+  });
+  auditLog({ userId: account.id, action: "SWITCH_TO_STAFF_CONTEXT", entity: "User", entityId: account.id });
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 // ── Create Staff User ────────────────────────────────────────────────────────
@@ -169,6 +192,7 @@ export async function createStaffUser(formData: FormData) {
     role:  formData.get("role"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+  parsed.data.email = parsed.data.email.trim().toLowerCase();
 
   const tempPassword = `Welcome@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
@@ -178,39 +202,47 @@ export async function createStaffUser(formData: FormData) {
   // neutral STAFF member with the preset's permissions (editable anytime).
   const { role: dbRole, permissions: permSet } = resolveStaffPreset(parsed.data.role);
 
-  const user = await prisma.user.create({
-    data: {
-      name:  parsed.data.name,
-      email: parsed.data.email,
-      phone: parsed.data.phone,
-      role:  dbRole as Role,
-      passwordHash,
-      mustChangePassword: true,
-      // Super Admin needs none (full access is implicit).
-      ...(permSet ? { permissions: permissionsToFullStored(permSet) } : {}),
-    },
-  });
+  const existingAccount = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (existingAccount && existingAccount.role !== "PATRON") {
+    return { error: "A staff account with this email already exists." };
+  }
+
+  const user = existingAccount
+    ? await prisma.user.update({
+        where: { id: existingAccount.id },
+        data: {
+          name: parsed.data.name,
+          phone: parsed.data.phone,
+          role: dbRole as Role,
+          ...(permSet ? { permissions: permissionsToFullStored(permSet) } : {}),
+        },
+      })
+    : await prisma.user.create({
+        data: {
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          role: dbRole as Role,
+          passwordHash,
+          mustChangePassword: true,
+          ...(permSet ? { permissions: permissionsToFullStored(permSet) } : {}),
+        },
+      });
 
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
 
-  // SMS first (primary)
-  await notifyStaffAppointment({
-    phone:        parsed.data.phone,
-    name:         parsed.data.name,
-    role:         parsed.data.role,
-    tempPassword: tempPassword,
-    loginUrl,
-  });
-  // Email (secondary)
-  await sendStaffAppointmentEmail({
-    to:           parsed.data.email,
-    name:         parsed.data.name,
-    role:         parsed.data.role,
-    tempPassword: tempPassword,
-    loginUrl,
-  });
+  if (!existingAccount) {
+    await notifyStaffAppointment({
+      phone: parsed.data.phone, name: parsed.data.name, role: parsed.data.role,
+      tempPassword, loginUrl,
+    });
+    await sendStaffAppointmentEmail({
+      to: parsed.data.email, name: parsed.data.name, role: parsed.data.role,
+      tempPassword, loginUrl,
+    });
+  }
 
-  auditLog({ userId: session.sub, action: "CREATE_STAFF", entity: "User", entityId: user.id, after: { role: user.role } });
+  auditLog({ userId: session.sub, action: existingAccount ? "PROMOTE_PATRON_TO_STAFF" : "CREATE_STAFF", entity: "User", entityId: user.id, after: { role: user.role } });
 
   return { success: true, userId: user.id };
 }

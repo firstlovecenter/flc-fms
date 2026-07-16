@@ -20,7 +20,7 @@ export default async function StaffPermissionsPage(props: { params: Promise<{ id
   await requirePerm("staff:manage");
 
   const staff = await prisma.user.findFirst({
-    where: { id: params.id, role: { not: "SUPER_ADMIN" } },
+    where: { id: params.id, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
     select: { id: true, name: true, email: true, role: true, permissions: true },
   });
 

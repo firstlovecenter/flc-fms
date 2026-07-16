@@ -8,8 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const patron = await prisma.patron.findUnique({
-    where: { id: session.sub },
+  const patron = await prisma.user.findFirst({
+    where: { id: session.sub, isPatron: true },
     select: { name: true, email: true, phone: true, profilePicture: true }});
 
   if (!patron) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,15 +32,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Check email uniqueness within campus
-  const existing = await prisma.patron.findFirst({
-    where: { email: email.trim(), NOT: { id: session.sub } }});
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await prisma.user.findFirst({
+    where: { email: { equals: normalizedEmail, mode: "insensitive" }, NOT: { id: session.sub } }});
   if (existing) return NextResponse.json({ error: "Email already in use." }, { status: 409 });
 
-  const updated = await prisma.patron.update({
+  const updated = await prisma.user.update({
     where: { id: session.sub },
     data: {
       name: name.trim(),
-      email: email.trim(),
+      email: normalizedEmail,
       phone: phone?.trim() || null,
       ...(profilePicture !== undefined ? { profilePicture } : {}),
     },

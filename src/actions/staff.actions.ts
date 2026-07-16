@@ -19,7 +19,7 @@ import { type Role, Prisma } from "@prisma/client";
 export async function getStaffMembers() {
   await requirePerm("staff:view");
   return prisma.user.findMany({
-    where: { isActive: true, role: { not: "SUPER_ADMIN" } },
+    where: { isActive: true, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
     select: {
       id: true, name: true, email: true, phone: true,
       role: true, permissions: true, lastLoginAt: true, createdAt: true,
@@ -141,6 +141,7 @@ export async function updateStaffMember(
 ) {
   const session = await requirePerm("staff:manage");
   const validated = UpdateStaffSchema.parse(data);
+  if (validated.email) validated.email = validated.email.trim().toLowerCase();
 
   const before = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -175,7 +176,7 @@ export async function updateStaffMember(
 export async function getInactiveStaffMembers() {
   await requirePerm("staff:view");
   return prisma.user.findMany({
-    where: { isActive: false, role: { not: "SUPER_ADMIN" } },
+    where: { isActive: false, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
     select: {
       id: true, name: true, email: true, phone: true,
       role: true, permissions: true, lastLoginAt: true, createdAt: true,

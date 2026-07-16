@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Menu, X } from "lucide-react";
-import { logout } from "@/actions/auth.actions";
+import { LogOut, Menu, X, Repeat2 } from "lucide-react";
+import { logout, switchToStaffContext } from "@/actions/auth.actions";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 interface PatronNavbarProps {
   initials: string;
   name: string;
+  canUseStaffContext?: boolean;
 }
 
 const NAV = [
@@ -21,7 +22,7 @@ const NAV = [
   { href: "/patron/profile",   label: "Profile" },
 ];
 
-export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
+export default function PatronNavbar({ initials, name, canUseStaffContext = false }: PatronNavbarProps) {
   const router   = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,6 +32,11 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
   async function handleLogout() {
     await logout();
     router.push("/patron/login");
+  }
+
+  async function handleStaffContext() {
+    const result = await switchToStaffContext();
+    if (result.success && result.redirectTo) router.push(result.redirectTo);
   }
 
   return (
@@ -88,6 +94,11 @@ export default function PatronNavbar({ initials, name }: PatronNavbarProps) {
             <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
             <ThemeModeSwitcher />
             <PushNotificationToggle />
+            {canUseStaffContext && (
+              <button onClick={handleStaffContext} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8rem] font-medium text-[var(--navy)] hover:bg-[var(--cream-dark)] bg-transparent border-0 cursor-pointer">
+                <Repeat2 size={13} /> Staff Portal
+              </button>
+            )}
             <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
             <button
               onClick={handleLogout}

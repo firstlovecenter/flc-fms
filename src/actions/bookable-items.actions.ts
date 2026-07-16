@@ -289,19 +289,24 @@ export async function createGuestItemBooking(raw: unknown) {
   }
 
   // Find or create guest patron
-  let patron = await prisma.patron.findUnique({ where: { email: data.guestEmail } });
+  const guestEmail = data.guestEmail.trim().toLowerCase();
+  let patron = await prisma.user.findFirst({ where: { email: { equals: guestEmail, mode: "insensitive" } } });
   if (!patron) {
     const crypto = await import("crypto");
     const tempHash = crypto.randomBytes(32).toString("hex");
-    patron = await prisma.patron.create({
+    patron = await prisma.user.create({
       data: {
-        email: data.guestEmail,
+        email: guestEmail,
         name:  data.guestName,
         phone: data.guestPhone,
         passwordHash: tempHash,
+        role: "PATRON",
+        isPatron: true,
         isVerified: false,
       },
     });
+  } else if (!patron.isPatron) {
+    patron = await prisma.user.update({ where: { id: patron.id }, data: { isPatron: true } });
   }
 
   // Collect all item IDs that need locking (direct items + bundle component items)

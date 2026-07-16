@@ -18,7 +18,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function main() {
   const users = await prisma.user.findMany({
-    where: { role: { not: "SUPER_ADMIN" } },
+    where: { role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
     select: { id: true, role: true, permissions: true },
   });
 

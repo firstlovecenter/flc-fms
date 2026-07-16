@@ -63,8 +63,8 @@ export async function impersonatePatron(patronId: string) {
     return { error: "Already impersonating. Stop the current session first." };
   }
 
-  const patron = await prisma.patron.findUnique({
-    where: { id: patronId },
+  const patron = await prisma.user.findFirst({
+    where: { id: patronId, isPatron: true },
     select: { id: true, name: true, email: true },
   });
   if (!patron) return { error: "Patron not found." };

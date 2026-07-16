@@ -25,7 +25,7 @@ export default async function SuperAdminUsersPage(
   const session = await getSession();
   if (!session || session.role !== "SUPER_ADMIN") redirect("/login");
 
-  const where: Prisma.PatronWhereInput = {};
+  const where: Prisma.UserWhereInput = { isPatron: true };
   if (searchParams.status === "verified")   where.isVerified = true;
   if (searchParams.status === "unverified") where.isVerified = false;
   if (searchParams.q?.trim()) {
@@ -37,13 +37,13 @@ export default async function SuperAdminUsersPage(
     ];
   }
 
-  const patrons = await prisma.patron.findMany({
+  const patrons = await prisma.user.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { bookings: true } } },
+    include: { _count: { select: { patronBookings: true } } },
   });
 
-  const total = await prisma.patron.count();
+  const total = await prisma.user.count({ where: { isPatron: true } });
 
   return (
     <div className="space-y-6 animate-fade-in relative">
@@ -111,7 +111,7 @@ export default async function SuperAdminUsersPage(
                   <td className="font-medium text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)]">{p.name}</td>
                   <td>{p.email}</td>
                   <td>{p.phone ?? "—"}</td>
-                  <td>{p._count.bookings}</td>
+                  <td>{p._count.patronBookings}</td>
                   <td className="whitespace-nowrap text-body-sm">{formatDate(p.createdAt)}</td>
                   <td>
                     <StatusBadge

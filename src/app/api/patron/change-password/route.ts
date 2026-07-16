@@ -19,14 +19,14 @@ export async function POST(req: NextRequest) {
   if (!current || !next) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   if (next.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
 
-  const patron = await prisma.patron.findUnique({ where: { id: session.sub } });
+  const patron = await prisma.user.findFirst({ where: { id: session.sub, isPatron: true } });
   if (!patron) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const valid = await bcrypt.compare(current, patron.passwordHash);
   if (!valid) return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
 
   const hash = await bcrypt.hash(next, 12);
-  await prisma.patron.update({ where: { id: session.sub }, data: { passwordHash: hash } });
+  await prisma.user.update({ where: { id: session.sub }, data: { passwordHash: hash } });
 
   // Notify patron of password change
   if (patron.phone) {

@@ -11,7 +11,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const [user, authCtx] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.sub },
-      select: { profilePicture: true },
+      select: { profilePicture: true, isPatron: true },
     }),
     session.role === "SUPER_ADMIN" ? null : getStaffAuthContext(session.sub),
   ]);
@@ -21,6 +21,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       name={session.name}
       role={session.role}
       profilePicture={user?.profilePicture ?? undefined}
+      canUsePatronContext={user?.isPatron ?? false}
       permissions={authCtx?.permissions}
       impersonatedBy={session.impersonatedBy}
     >

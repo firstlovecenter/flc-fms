@@ -31,21 +31,30 @@ export async function createPatron(data: {
 
   const parsed = CreatePatronSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+  parsed.data.email = parsed.data.email.trim().toLowerCase();
 
-  const exists = await prisma.patron.findFirst({
-    where: { OR: [{ email: parsed.data.email }, { phone: parsed.data.phone }] },
-  });
-  if (exists) return { error: "A patron with this email or phone already exists." };
+  const existingEmail = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (existingEmail?.isPatron) return { error: "A patron with this email already exists." };
+  const existingPhone = await prisma.user.findFirst({ where: { phone: parsed.data.phone } });
+  if (existingPhone && existingPhone.id !== existingEmail?.id) return { error: "Phone number already belongs to another account." };
+  if (existingEmail) {
+    await prisma.user.update({ where: { id: existingEmail.id }, data: { isPatron: true, isVerified: true } });
+    auditLog({ userId: session.sub, action: "ENABLE_PATRON_PROFILE", entity: "User", entityId: existingEmail.id });
+    revalidatePath("/users");
+    return { success: true };
+  }
 
   const tempPassword = `FLC@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-  const patron = await prisma.patron.create({
+  const patron = await prisma.user.create({
     data: {
       name:       parsed.data.name,
       email:      parsed.data.email,
       phone:      parsed.data.phone,
       passwordHash,
+      role: "PATRON",
+      isPatron: true,
       isVerified: true,
     },
   });
@@ -78,20 +87,21 @@ export async function updatePatron(
 
   const parsed = UpdatePatronSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+  parsed.data.email = parsed.data.email.trim().toLowerCase();
 
   // Check email uniqueness
-  const emailConflict = await prisma.patron.findFirst({
+  const emailConflict = await prisma.user.findFirst({
     where: { email: parsed.data.email, NOT: { id } },
   });
   if (emailConflict) return { error: "Email already in use by another patron." };
 
   // Check phone uniqueness
-  const phoneConflict = await prisma.patron.findFirst({
+  const phoneConflict = await prisma.user.findFirst({
     where: { phone: parsed.data.phone, NOT: { id } },
   });
   if (phoneConflict) return { error: "Phone already in use by another patron." };
 
-  const patron = await prisma.patron.update({
+  const patron = await prisma.user.update({
     where: { id },
     data: {
       name:       parsed.data.name,
@@ -116,7 +126,13 @@ export async function deletePatron(id: string) {
     return { error: `Cannot delete: patron has ${activeBookings} active booking${activeBookings !== 1 ? "s" : ""}.` };
   }
 
-  await prisma.patron.delete({ where: { id } });
+  const account = await prisma.user.findUnique({ where: { id }, select: { role: true, isPatron: true } });
+  if (!account?.isPatron) return { error: "Patron not found." };
+  if (account.role === "PATRON") {
+    await prisma.user.delete({ where: { id } });
+  } else {
+    await prisma.user.update({ where: { id }, data: { isPatron: false, isVerified: false } });
+  }
   auditLog({ userId: session.sub, action: "DELETE_PATRON", entity: "Patron", entityId: id });
   revalidatePath("/users");
   return { success: true };
@@ -125,13 +141,13 @@ export async function deletePatron(id: string) {
 export async function resetPatronPassword(id: string) {
   const session = await requireRole("SUPER_ADMIN");
 
-  const patron = await prisma.patron.findUnique({ where: { id } });
+  const patron = await prisma.user.findFirst({ where: { id, isPatron: true } });
   if (!patron) return { error: "Patron not found." };
 
   const tempPassword = `FLC@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-  await prisma.patron.update({ where: { id }, data: { passwordHash } });
+  await prisma.user.update({ where: { id }, data: { passwordHash } });
 
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/patron/login`;
 

@@ -26,9 +26,10 @@ import {
   ListTodo,
   PanelLeftClose,
   PanelLeftOpen,
+  Repeat2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { logout } from "@/actions/auth.actions";
+import { logout, switchToPatronContext } from "@/actions/auth.actions";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 import {
   STAFF_NAV_GROUPS,
@@ -45,6 +46,7 @@ type StaffSidebarProps = {
   name: string;
   profilePicture?: string;
   permissions?: PermissionSet;
+  canUsePatronContext?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
   collapsed?: boolean;
@@ -107,7 +109,7 @@ function NavItem({ href, label, Icon, isActive, accent = "gold", compact = false
   );
 }
 
-export default function StaffSidebar({ role, name, profilePicture, permissions, isOpen = false, onClose, collapsed = false, onToggleCollapse }: StaffSidebarProps) {
+export default function StaffSidebar({ role, name, profilePicture, permissions, canUsePatronContext = false, isOpen = false, onClose, collapsed = false, onToggleCollapse }: StaffSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const initials = getInitials(name);
@@ -122,6 +124,11 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
   async function handleLogout() {
     await logout();
     router.push("/login");
+  }
+
+  async function handlePatronContext() {
+    const result = await switchToPatronContext();
+    if (result.success && result.redirectTo) router.push(result.redirectTo);
   }
 
   const renderSidebar = (compact: boolean, desktop: boolean) => (
@@ -210,6 +217,15 @@ export default function StaffSidebar({ role, name, profilePicture, permissions, 
       </nav>
 
       <div className="p-3 border-t border-[hsl(var(--sb-border))]">
+        {canUsePatronContext && (
+          <button
+            onClick={handlePatronContext}
+            title={compact ? "Switch to Patron Portal" : undefined}
+            className={cn("w-full flex items-center gap-2.5 px-3 py-2 mb-1 rounded-lg text-[0.82rem] font-medium text-[hsl(var(--sb-fg))] hover:text-[hsl(var(--sb-fg-strong))] hover:bg-[hsl(var(--sb-hover-bg))]", compact && "justify-center px-0")}
+          >
+            <Repeat2 size={15} /> {!compact && "Switch to Patron Portal"}
+          </button>
+        )}
         {desktop && onToggleCollapse && (
           <button
             onClick={onToggleCollapse}

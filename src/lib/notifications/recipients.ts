@@ -14,7 +14,7 @@ export async function staffPhonesWithPermission(
   permission: Permission,
 ): Promise<{ phone: string | null }[]> {
   const staff = await prisma.user.findMany({
-    where: { isActive: true, phone: { not: null } },
+    where: { isActive: true, role: { not: "PATRON" }, phone: { not: null } },
     select: { phone: true, role: true, permissions: true },
   });
 

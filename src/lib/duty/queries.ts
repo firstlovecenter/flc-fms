@@ -54,7 +54,7 @@ export async function getDutyLogById(id: string) {
 
 export async function getActiveStaffForDuty() {
   return prisma.user.findMany({
-    where: { isActive: true, role: { not: "SUPER_ADMIN" } },
+    where: { isActive: true, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
     select: { id: true, name: true, role: true },
     orderBy: { name: "asc" },
   });
