@@ -77,6 +77,7 @@ export default async function BookingsPage(
         bookerName:        booker?.name ?? "—",
         bookerPhone:       booker?.phone ?? null,
         bookerEmail:       booker?.email ?? null,
+        createdByStaffName: b.user?.name ?? null,
         rejectionReason:   b.rejectionReason,
         notes:             b.notes,
         ceremonyType:      ctype,
@@ -209,6 +210,7 @@ export default async function BookingsPage(
       bookerName:      booker?.name ?? "-",
       bookerPhone:     booker?.phone ?? null,
       bookerEmail:     booker?.email ?? null,
+      createdByStaffName: b.user?.name ?? null,
       lineItems:       b.lineItems.map((li) => ({
         label:     li.item?.name ?? li.bundle?.name ?? "Item",
         unit:      li.item?.unit ?? null,

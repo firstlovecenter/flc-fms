@@ -19,6 +19,7 @@ export default function BookingForm({
   facilities,
   defaultFacilityId,
   currentUserRole,
+  currentStaffEmail,
   ceremonyDays,
   isCeremonyBooking,
   defaultCategory,
@@ -29,6 +30,7 @@ export default function BookingForm({
   facilities: Facility[];
   defaultFacilityId?: string;
   currentUserRole?: string;
+  currentStaffEmail?: string;
   ceremonyDays?: string[];
   isCeremonyBooking?: boolean;
   defaultCategory?: string;
@@ -42,6 +44,7 @@ export default function BookingForm({
       defaultFacilityId={defaultFacilityId}
       mode="staff"
       currentUserRole={currentUserRole}
+      currentStaffEmail={currentStaffEmail}
       ceremonyDays={ceremonyDays}
       isCeremonyBooking={isCeremonyBooking}
       defaultCategory={defaultCategory}

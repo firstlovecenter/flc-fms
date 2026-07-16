@@ -34,6 +34,7 @@ type BookingItem = {
   bookerName: string;
   bookerPhone: string | null;
   bookerEmail: string | null;
+  createdByStaffName: string | null;
   lineItems: { label: string; unit: string | null; quantity: number; unitPrice: number; subtotal: number }[];
 };
 
@@ -365,7 +366,7 @@ export default function BookingsListClient({
                     <StatusBadge status={b.status} size="xs" />
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
-                    <span>{b.bookerName || "-"}</span>
+                    <span>{b.createdByStaffName ? `Staff booking by ${b.createdByStaffName} · Contact: ${b.bookerName}` : `Patron booking by ${b.bookerName || "-"}`}</span>
                     {b.bookerPhone && (
                       <span className="inline-flex items-center gap-2">
                         <a
@@ -431,8 +432,10 @@ export default function BookingsListClient({
 
                   <div className="text-sm">
                     <p>
-                      <strong>Booked By:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}
+                      <strong>Booking Source:</strong>{" "}
+                      {selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : `Patron — ${selected.bookerName || "-"}`}
                     </p>
+                    {selected.createdByStaffName && <p><strong>Customer Contact:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}</p>}
                     {selected.bookerPhone && (
                       <div className="flex items-center gap-3 mt-1.5 mb-1">
                         <a

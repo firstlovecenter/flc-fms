@@ -24,6 +24,7 @@ export type CeremonyBookingRow = {
   bookerName: string;
   bookerPhone: string | null;
   bookerEmail: string | null;
+  createdByStaffName: string | null;
   rejectionReason: string | null;
   notes: string | null;
   // Ceremony-specific
@@ -196,7 +197,11 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
                     <StatusBadge status={b.status} size="xs" />
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)] flex-wrap">
-                    {b.bookerName && b.bookerName !== "—" && <span>Booked by {b.bookerName}</span>}
+                    {b.createdByStaffName ? (
+                      <span>Staff booking by {b.createdByStaffName} · Contact: {b.bookerName}</span>
+                    ) : b.bookerName && b.bookerName !== "—" ? (
+                      <span>Patron booking by {b.bookerName}</span>
+                    ) : null}
                     <span>•</span>
                     <span>{b.facilityName}</span>
                     <span>•</span>
@@ -255,8 +260,10 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
 
               <div className="text-sm">
                 <p>
-                  <strong>Booked By:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}
+                  <strong>Booking Source:</strong>{" "}
+                  {selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : `Patron — ${selected.bookerName || "-"}`}
                 </p>
+                {selected.createdByStaffName && <p><strong>Customer Contact:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}</p>}
                 {selected.bookerPhone && (
                   <div className="flex items-center gap-3 mt-1.5 mb-1">
                     <a

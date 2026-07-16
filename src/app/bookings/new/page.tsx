@@ -87,6 +87,7 @@ export default async function NewBookingPage(
         facilities={serialized}
         defaultFacilityId={searchParams.facilityId}
         currentUserRole={session.role}
+        currentStaffEmail={session.email}
         ceremonyDays={ceremonyDays}
         isCeremonyBooking={isCeremony}
         defaultCategory={ceremonyType ?? undefined}

@@ -113,7 +113,7 @@ export default async function BookingDetailPage(props: { params: Promise<{ id: s
         {/* Booker */}
         <Card className="p-5 gap-0 py-5">
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <User size={13} /> {booking.patron ? "Patron" : "Staff"}
+            <User size={13} /> {booking.user ? "Staff booking" : "Patron booking"}
           </div>
           <p className="font-semibold text-[var(--navy)]">{contact?.name}</p>
           <p className="text-sm page-subtitle">{contact?.email}</p>

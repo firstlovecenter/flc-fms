@@ -95,6 +95,7 @@ export default function GuestBookingForm({
   defaultFacilityId,
   mode = "guest",
   currentUserRole,
+  currentStaffEmail,
   ceremonyCodeId: initialCeremonyCodeId,
   isCeremonyBooking: initialIsCeremony = false,
   ceremonyFlatPrice,
@@ -110,6 +111,8 @@ export default function GuestBookingForm({
   defaultFacilityId?: string;
   mode?: BookingMode;
   currentUserRole?: string;
+  /** Used only to warn staff when they enter their own email as the customer contact. */
+  currentStaffEmail?: string;
   ceremonyCodeId?: string;
   isCeremonyBooking?: boolean;
   ceremonyFlatPrice?: number;
@@ -163,6 +166,7 @@ export default function GuestBookingForm({
   const [guestPhone, setGuestPhone] = useState("");
   const [contactEmail, setContactEmail] = useState(defaultContactEmail);
   const [contactPhone, setContactPhone] = useState("");
+  const [confirmedOwnContactEmail, setConfirmedOwnContactEmail] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -475,6 +479,11 @@ export default function GuestBookingForm({
     return contactPhone.trim();
   }
 
+  const usesStaffOwnEmail =
+    mode === "staff" &&
+    Boolean(currentStaffEmail) &&
+    resolveBookingEmail().toLowerCase() === currentStaffEmail?.trim().toLowerCase();
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
@@ -487,6 +496,10 @@ export default function GuestBookingForm({
     const bookingPhone = resolveBookingPhone();
     if (mode === "staff" && !bookingPhone) {
       setError("A contact phone number is required to complete your booking.");
+      return;
+    }
+    if (usesStaffOwnEmail && !confirmedOwnContactEmail) {
+      setError("This is your staff email. Confirm that this should remain the booking contact before continuing.");
       return;
     }
     if (termsRequired && !agreedToTerms) {
@@ -544,6 +557,7 @@ export default function GuestBookingForm({
       ...(resolvedCeremonyCodeId ? { ceremonyCodeId: resolvedCeremonyCodeId } : {}),
       ...(mode === "staff" ? {
         contactPhone: bookingPhone,
+        confirmOwnContactEmail: confirmedOwnContactEmail,
         waiveBilling: isPricingManager && waiveBilling,
         ...(isPricingManager && !waiveBilling && overrideAmount.trim() !== ""
           ? { overrideAmount: Number(overrideAmount) }
@@ -1004,6 +1018,24 @@ export default function GuestBookingForm({
         <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
+      {usesStaffOwnEmail && (
+        <Card className="p-4 border-warning/40 bg-warning/10 space-y-2">
+          <p className="text-sm font-semibold text-[var(--navy)] dark:text-gray-100">You entered your own staff email</p>
+          <p className="text-xs text-[var(--slate)] dark:text-gray-300">
+            This will remain a staff-created booking. Staff ceremony-code bypass and approval privileges will apply, and notifications will be sent to you instead of the customer.
+          </p>
+          <label className="flex items-start gap-2 text-sm text-[var(--slate)] dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={confirmedOwnContactEmail}
+              onChange={(e) => setConfirmedOwnContactEmail(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+            />
+            <span>I confirm that my email should be used as the contact for this staff booking.</span>
+          </label>
+        </Card>
+      )}
+
       {/* Contact email — staff & patron regular bookings */}
       {(mode === "staff" || mode === "patron") && !isCeremonyBooking && (
         <Card className="p-5 space-y-4">
@@ -1347,6 +1379,7 @@ export default function GuestBookingForm({
             (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim() || !isValidEmail(guestEmail))) ||
             ((mode === "staff" || mode === "patron") && !isCeremonyBooking && (!contactEmail.trim() || !isValidEmail(contactEmail))) ||
             (mode === "staff" && !isCeremonyBooking && !contactPhone.trim()) ||
+            (usesStaffOwnEmail && !confirmedOwnContactEmail) ||
             (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||

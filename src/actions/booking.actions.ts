@@ -47,6 +47,7 @@ const BookingFieldsSchema = z.object({
   ceremonyDetails: CeremonyDetailsSchema.optional(),
   ceremonyCodeId: z.string().optional(),
   contactPhone: z.string().optional(),
+  confirmOwnContactEmail: z.boolean().optional().default(false),
   // Manager-only price controls (createStaffBooking ignores these unless the
   // session is auto-approve-eligible — see isAutoApprovedBooking).
   waiveBilling: z.boolean().optional().default(false),
@@ -251,6 +252,13 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
   const parsed = BookingCreateSchema.safeParse(data);
   if (!parsed.success) return { error: bookingValidationError(parsed) };
   const validated = parsed.data;
+
+  if (
+    validated.contactEmail.trim().toLowerCase() === session.email.trim().toLowerCase() &&
+    !validated.confirmOwnContactEmail
+  ) {
+    return { error: "This is your staff email. Confirm that it should be used as the contact for this staff booking." };
+  }
 
   // The contact must be reachable by both channels — email and SMS.
   if (!validated.contactPhone?.trim()) {
