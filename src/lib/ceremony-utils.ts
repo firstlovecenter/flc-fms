@@ -22,8 +22,9 @@ export interface NamingDetails {
   motherName: string;
   motherPhone: string;
   email: string;
-  pastorName: string;
-  pastorPhone: string;
+  /** Legacy fields retained so older bookings can still be displayed. */
+  pastorName?: string;
+  pastorPhone?: string;
   bishopName: string;
   bishopPhone: string;
 }
@@ -54,8 +55,8 @@ export const NamingDetailsSchema = z.object({
   motherName: z.string().min(2, "Mother's name is required"),
   motherPhone: z.string().min(9, "Mother's contact is required"),
   email: z.string().min(1, "Email is required").email("Enter a valid email"),
-  pastorName: z.string().min(2, "Pastor's name is required"),
-  pastorPhone: z.string().min(9, "Pastor's contact is required"),
+  pastorName: z.string().optional(),
+  pastorPhone: z.string().optional(),
   bishopName: z.string().min(2, "Bishop's name is required"),
   bishopPhone: z.string().min(9, "Bishop's contact is required"),
 });

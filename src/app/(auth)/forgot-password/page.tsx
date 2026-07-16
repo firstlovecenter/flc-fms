@@ -35,12 +35,12 @@ export default function ForgotPasswordPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? "We couldn't send a reset code. Confirm the email address and try again.");
       } else {
         setStep("reset");
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("We couldn't reach the server. Check your internet connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -66,12 +66,12 @@ export default function ForgotPasswordPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? "We couldn't reset the password. Check the code and password, then try again.");
       } else {
         setSuccess(true);
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("We couldn't reach the server. Check your internet connection and try again.");
     } finally {
       setLoading(false);
     }

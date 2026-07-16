@@ -168,6 +168,7 @@ export default function GuestBookingForm({
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Facility/Booking Managers and Super Admins may waive/override the price —
@@ -194,8 +195,6 @@ export default function GuestBookingForm({
   const [motherName, setMotherName] = useState("");
   const [motherPhone, setMotherPhone] = useState("");
   const [namingEmail, setNamingEmail] = useState("");
-  const [pastorName, setPastorName] = useState("");
-  const [pastorPhone, setPastorPhone] = useState("");
   // Officiating Bishop — selected from the admin-managed list (shared by wedding + naming)
   const [bishopId, setBishopId] = useState("");
   const [bishops, setBishops] = useState<{ id: string; name: string; phone: string }[]>([]);
@@ -230,14 +229,24 @@ export default function GuestBookingForm({
       return;
     }
     const type = bookingType === "wedding" ? "WEDDING" : "NAMING";
+    setSetupError(null);
     getCeremonyBookableFacilities(type)
       .then((v) => setCeremonyVenues(v as Facility[]))
-      .catch(() => setCeremonyVenues([]));
+      .catch(() => {
+        setCeremonyVenues([]);
+        setSetupError("We couldn't load ceremony venues. Please refresh the page and try again.");
+      });
     if (ceremonyDays.length === 0) {
-      getCeremonyDays().then(setFetchedCeremonyDays).catch(() => setFetchedCeremonyDays([]));
+      getCeremonyDays().then(setFetchedCeremonyDays).catch(() => {
+        setFetchedCeremonyDays([]);
+        setSetupError("We couldn't load the ceremony dates. Please refresh the page and try again.");
+      });
     }
     if (bishops.length === 0) {
-      getActiveBishops().then(setBishops).catch(() => setBishops([]));
+      getActiveBishops().then(setBishops).catch(() => {
+        setBishops([]);
+        setSetupError("We couldn't load the list of bishops. Please refresh the page and try again.");
+      });
     }
   }, [bookingType, isCeremonyBooking, ceremonyDays.length, bishops.length]);
 
@@ -259,21 +268,26 @@ export default function GuestBookingForm({
   async function handleValidateCode() {
     setCodeChecking(true);
     setCodeError(null);
-    const res = await validateCeremonyCode(codeInput.trim());
-    setCodeChecking(false);
-    if (!res.valid || !res.codeId) {
-      setCodeError(res.error ?? "Invalid code.");
-      return;
+    try {
+      const res = await validateCeremonyCode(codeInput.trim());
+      if (!res.valid || !res.codeId) {
+        setCodeError(res.error ?? "This payment code is not valid. Check the code and try again.");
+        return;
+      }
+      const expected = bookingType === "wedding" ? "WEDDING" : "NAMING";
+      if (res.ceremonyType !== expected) {
+        setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
+        return;
+      }
+      if (res.facilityId && res.facilityId !== facilityId) {
+        setFacilityId(res.facilityId);
+      }
+      setValidatedCodeId(res.codeId);
+    } catch {
+      setCodeError("We couldn't verify this payment code. Check your connection and try again.");
+    } finally {
+      setCodeChecking(false);
     }
-    const expected = bookingType === "wedding" ? "WEDDING" : "NAMING";
-    if (res.ceremonyType !== expected) {
-      setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
-      return;
-    }
-    if (res.facilityId && res.facilityId !== facilityId) {
-      setFacilityId(res.facilityId);
-    }
-    setValidatedCodeId(res.codeId);
   }
 
   const requiresBookingTerms = Boolean(selectedFacility?.requiresBookingTerms);
@@ -401,7 +415,18 @@ export default function GuestBookingForm({
         );
 
     fetchSlots
-      .then((res) => setSlots(res.success ? res.slots || [] : []))
+      .then((res) => {
+        if (res.success) {
+          setSlots(res.slots || []);
+        } else {
+          setSlots([]);
+          setSetupError(res.error ?? "We couldn't load time slots for this date. Please choose another date or try again.");
+        }
+      })
+      .catch(() => {
+        setSlots([]);
+        setSetupError("We couldn't load time slots. Check your connection and try again.");
+      })
       .finally(() => setSlotsLoading(false));
   }, [selectedDate, facilityId, category, isCeremonyBooking, canBookMondays, bypassLeadTime]);
 
@@ -500,7 +525,7 @@ export default function GuestBookingForm({
       return {
         type: "naming" as const,
         fatherName, fatherPhone, fatherWhatsApp, childrenNames, childBirthday,
-        motherName, motherPhone, email: namingEmail, pastorName, pastorPhone,
+        motherName, motherPhone, email: namingEmail,
         bishopName: selectedBishop?.name ?? "", bishopPhone: selectedBishop?.phone ?? "",
       };
     })();
@@ -551,11 +576,15 @@ export default function GuestBookingForm({
 
       router.push(mode === "patron" ? "/patron/bookings" : "/bookings");
       router.refresh();
-    } catch {
+    } catch (submissionError) {
       // A thrown (rather than returned) error still needs to clear the
       // submitting state — otherwise the button is stuck on "Submitting…"
       // forever with no feedback for the user to act on.
-      setError("Something went wrong while submitting your booking. Please try again.");
+      setError(
+        submissionError instanceof TypeError
+          ? "We couldn't reach the booking service. Check your internet connection and try again."
+          : "We couldn't submit this booking. Refresh the page and try again; if the issue continues, contact the church office.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -577,6 +606,11 @@ export default function GuestBookingForm({
   if (step === 1) {
     return (
       <Card className="overflow-hidden">
+        {setupError && (
+          <div className="mx-5 mt-5 bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">
+            {setupError}
+          </div>
+        )}
         {/* Booking type selector */}
         {showTypeSelector && (
           <div className="px-5 pt-5">
@@ -1261,14 +1295,6 @@ export default function GuestBookingForm({
             <p className="text-xs font-semibold text-[var(--slate)] mb-3">Officiating Clergy</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Name *</label>
-                <Input value={pastorName} onChange={(e) => setPastorName(e.target.value)} className="text-sm" placeholder="Pastor's name" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Pastor&apos;s Contact *</label>
-                <Input value={pastorPhone} onChange={(e) => setPastorPhone(e.target.value)} className="text-sm" placeholder="Phone" required />
-              </div>
-              <div>
                 <label className="block text-xs font-medium text-[var(--muted)] mb-1">Officiating Bishop *</label>
                 <NativeSelect value={bishopId} onChange={(e) => setBishopId(e.target.value)} className="w-full" required>
                   <option value="">Select your Bishop…</option>
@@ -1325,7 +1351,7 @@ export default function GuestBookingForm({
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||
             (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail) || !bishopId)) ||
-            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !pastorName.trim() || !pastorPhone.trim() || !bishopId))
+            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !bishopId))
           }
           className="w-full sm:flex-1"
         >

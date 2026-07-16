@@ -61,7 +61,8 @@ export function useServerAction<TArgs extends unknown[], TData>(
           }
 
           if ("success" in result && !result.success) {
-            const msg = (result as { message?: string }).message ?? "An unexpected error occurred.";
+            const msg = (result as { message?: string }).message
+              ?? "The request could not be completed. Review your entries and try again.";
             setState({ data: null, error: msg, isPending: false });
             options.onError?.(msg);
             return;
@@ -71,7 +72,11 @@ export function useServerAction<TArgs extends unknown[], TData>(
           setState({ data, error: null, isPending: false });
           options.onSuccess?.(data);
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+          const msg = err instanceof TypeError
+            ? "The server could not be reached. Check your connection and try again."
+            : err instanceof Error && err.message && !err.message.includes("Server Components render")
+              ? err.message
+              : "The request could not be completed. Refresh the page and try again.";
           setState({ data: null, error: msg, isPending: false });
           options.onError?.(msg);
         }

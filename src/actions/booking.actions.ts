@@ -25,6 +25,10 @@ import {
 
 type AgreementTerm = "BOOKING_TERMS" | "ITEM_BOOKING_TERMS";
 
+function bookingValidationError(result: z.SafeParseError<unknown>) {
+  return result.error.issues[0]?.message ?? "Please review the booking details and try again.";
+}
+
 // Prisma interactive-transaction client type
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
@@ -244,7 +248,9 @@ async function countOverlappingBookings(
 
 export async function createStaffBooking(data: z.input<typeof BookingCreateSchema>) {
   const session  = await requirePerm("bookings:create");
-  const validated = BookingCreateSchema.parse(data);
+  const parsed = BookingCreateSchema.safeParse(data);
+  if (!parsed.success) return { error: bookingValidationError(parsed) };
+  const validated = parsed.data;
 
   // The contact must be reachable by both channels — email and SMS.
   if (!validated.contactPhone?.trim()) {
@@ -269,9 +275,10 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
     return { error: wantsCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
-  const facility = await prisma.facility.findFirstOrThrow({
+  const facility = await prisma.facility.findFirst({
     where: { id: validated.facilityId, isActive: true },
   });
+  if (!facility) return { error: "The selected venue is no longer available. Please choose another venue." };
 
   const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
   if (missingTerms.includes("BOOKING_TERMS")) {
@@ -532,7 +539,9 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
 
 export async function createPatronBooking(data: z.input<typeof BookingCreateSchema>) {
   const session  = await requirePatron();
-  const validated = BookingCreateSchema.parse(data);
+  const parsed = BookingCreateSchema.safeParse(data);
+  if (!parsed.success) return { error: bookingValidationError(parsed) };
+  const validated = parsed.data;
 
   // Rate limit: 10 booking creations per patron per 10 minutes
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? session.sub;
@@ -558,9 +567,10 @@ export async function createPatronBooking(data: z.input<typeof BookingCreateSche
     return { error: wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
-  const facility = await prisma.facility.findFirstOrThrow({
+  const facility = await prisma.facility.findFirst({
     where: { id: validated.facilityId, isActive: true },
   });
+  if (!facility) return { error: "The selected venue is no longer available. Please choose another venue." };
 
   const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
   if (missingTerms.includes("BOOKING_TERMS")) {
@@ -784,7 +794,9 @@ const GuestBookingSchema = z.object({
   path: ["endTime"]});
 
 export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema>) {
-  const validated = GuestBookingSchema.parse(data);
+  const parsed = GuestBookingSchema.safeParse(data);
+  if (!parsed.success) return { error: bookingValidationError(parsed) };
+  const validated = parsed.data;
 
   // Rate limit: 5 guest bookings per IP per 10 minutes
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
@@ -801,8 +813,9 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
     return { error: wantsCeremony ? MAX_CEREMONY_BOOKING_ADVANCE_ERROR : MAX_BOOKING_ADVANCE_ERROR };
   }
 
-  const facility = await prisma.facility.findFirstOrThrow({
+  const facility = await prisma.facility.findFirst({
     where: { id: validated.facilityId, isActive: true }});
+  if (!facility) return { error: "The selected venue is no longer available. Please choose another venue." };
 
   const missingTerms = getMissingFacilityTerms(facility, validated.acceptedTerms ?? []);
   if (missingTerms.includes("BOOKING_TERMS")) {
