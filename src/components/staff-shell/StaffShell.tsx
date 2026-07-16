@@ -18,6 +18,7 @@ export default function StaffShell({
   name,
   role,
   profilePicture,
+  canUsePatronContext,
   permissions,
   impersonatedBy,
 }: {
@@ -25,6 +26,7 @@ export default function StaffShell({
   name: string;
   role: string;
   profilePicture?: string;
+  canUsePatronContext?: boolean;
   permissions?: PermissionSet;
   impersonatedBy?: ImpersonatedBy;
 }) {
@@ -46,7 +48,7 @@ export default function StaffShell({
 
   return (
     <div className="surface-cool flex h-[100dvh] bg-cream overflow-hidden">
-      <StaffSidebar role={role} name={name} profilePicture={profilePicture} permissions={permissions} isOpen={menuOpen} onClose={close} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
+      <StaffSidebar role={role} name={name} profilePicture={profilePicture} permissions={permissions} canUsePatronContext={canUsePatronContext} isOpen={menuOpen} onClose={close} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {impersonatedBy && (
           <ImpersonationBanner

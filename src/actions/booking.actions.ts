@@ -331,8 +331,8 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
   // purposes only — patron-facing screens and self-service actions (cancel,
   // check-in) explicitly exclude staff-created bookings (see userId: null guards),
   // since a typed contact email is not proof the account owner consented to it.
-  const contactPatron = await prisma.patron.findFirst({
-    where: { email: { equals: validated.contactEmail.trim(), mode: "insensitive" } },
+  const contactPatron = await prisma.user.findFirst({
+    where: { email: { equals: validated.contactEmail.trim(), mode: "insensitive" }, isPatron: true },
   });
 
   // Wrap conflict check + pricing computation + booking creation in a single transaction
@@ -557,7 +557,7 @@ export async function createPatronBooking(data: z.input<typeof BookingCreateSche
   if (!rlAllowed) return { error: "Too many booking requests. Please wait a few minutes." };
 
   // Require email verification before allowing bookings
-  const patron = await prisma.patron.findUnique({
+  const patron = await prisma.user.findUnique({
     where: { id: session.sub },
     select: { isVerified: true },
   });
@@ -860,26 +860,24 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
   }
 
   // Find or create a Patron for the guest so booking is payable
-  let patron = await prisma.patron.findFirst({
-    where: {
-      OR: [
-        { email: validated.guestEmail },
-        ...(validated.guestPhone ? [{ phone: validated.guestPhone }] : []),
-      ],
-    },
-  });
+  const normalizedGuestEmail = validated.guestEmail.trim().toLowerCase();
+  let patron = await prisma.user.findFirst({ where: { email: { equals: normalizedGuestEmail, mode: "insensitive" } } });
   if (!patron) {
     const cryptoModule = await import("crypto");
     const tempHash = cryptoModule.randomBytes(32).toString("hex");
-    patron = await prisma.patron.create({
+    patron = await prisma.user.create({
       data: {
-        email: validated.guestEmail,
+        email: normalizedGuestEmail,
         name:  validated.guestName,
         phone: validated.guestPhone,
         passwordHash: tempHash,
+        role: "PATRON",
+        isPatron: true,
         isVerified: false,
       },
     });
+  } else if (!patron.isPatron) {
+    patron = await prisma.user.update({ where: { id: patron.id }, data: { isPatron: true } });
   }
 
   const guestMeta = `Guest: ${validated.guestName} | ${validated.guestEmail}${validated.guestPhone ? ` | ${validated.guestPhone}` : ""}`;

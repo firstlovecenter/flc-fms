@@ -25,10 +25,7 @@ export async function POST(req: NextRequest) {
   // Always return success to avoid user enumeration
   const successResponse = NextResponse.json({ success: true });
 
-  // Check User (staff) table first, then Patron table
-  const user = await prisma.user.findUnique({ where: { email } });
-  const patron = !user ? await prisma.patron.findUnique({ where: { email } }) : null;
-  const account = user ?? patron;
+  const account = await prisma.user.findUnique({ where: { email } });
   if (!account) return successResponse;
 
   // Generate 6-digit OTP

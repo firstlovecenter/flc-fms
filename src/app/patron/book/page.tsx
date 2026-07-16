@@ -8,8 +8,8 @@ export default async function PatronBookPage(props: { searchParams: Promise<{ fa
   const searchParams = await props.searchParams;
   const session = await requirePatron();
 
-  const patron = await prisma.patron.findUnique({
-    where: { id: session.sub },
+  const patron = await prisma.user.findFirst({
+    where: { id: session.sub, isPatron: true },
     select: { email: true },
   });
 

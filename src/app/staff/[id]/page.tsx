@@ -23,7 +23,7 @@ export default async function StaffDetailPage(props: Props) {
   const session = await requirePerm("staff:manage");
 
   const member = await prisma.user.findFirst({
-    where: { id: params.id },
+    where: { id: params.id, role: { not: "PATRON" } },
     select: {
       id: true, name: true, email: true, phone: true,
       profilePicture: true,

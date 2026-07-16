@@ -13,6 +13,8 @@ model User {
   name                  String
   phone                 String?
   role                  Role
+  isPatron              Boolean                @default(false)
+  isVerified            Boolean                @default(false)
   isActive              Boolean                @default(true)
   permissions           Json                   @default("{}")
   mustChangePassword    Boolean                @default(false)
@@ -22,6 +24,7 @@ model User {
   updatedAt             DateTime               @updatedAt
   auditLogs             AuditLog[]
   bookings              Booking[]
+  patronBookings        Booking[]              @relation("BookingPatron")
   approvedBookings      Booking[]              @relation("BookingApprovedBy")
   approvedExpenses      Expense[]              @relation("ApprovedExpenses")
   createdExpenses       Expense[]              @relation("CreatedExpenses")
@@ -46,22 +49,8 @@ model User {
 
   @@index([role])
   @@index([role, isActive])
+  @@index([isPatron, isActive])
   @@map("users")
-}
-
-model Patron {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  passwordHash   String
-  name           String
-  phone          String?   @unique
-  isVerified     Boolean   @default(false)
-  profilePicture String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  bookings       Booking[]
-
-  @@map("patrons")
 }
 
 model Facility {
@@ -169,7 +158,7 @@ model Booking {
   approvedAt            DateTime?
   lineItems             BookingLineItem[]
   facility              Facility?            @relation(fields: [facilityId], references: [id])
-  patron                Patron?              @relation(fields: [patronId], references: [id])
+  patron                User?                @relation("BookingPatron", fields: [patronId], references: [id])
   user                  User?                @relation(fields: [userId], references: [id])
   approvedBy            User?                @relation("BookingApprovedBy", fields: [approvedById], references: [id])
   income                Income?
@@ -536,6 +525,7 @@ enum Role {
   BOOKING_MANAGER
   VICAR
   STAFF
+  PATRON
 }
 
 enum BookingStatus {

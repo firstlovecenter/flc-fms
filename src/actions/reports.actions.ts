@@ -345,15 +345,16 @@ export async function getPatronsReport(range?: DateRange) {
   const { from, to } = range ?? resolveDateRange("6m");
 
   const [allPatrons, verifiedCount, activePatrons] = await Promise.all([
-    prisma.patron.findMany({
-      where: { createdAt: { gte: from, lte: to } },
+    prisma.user.findMany({
+      where: { isPatron: true, createdAt: { gte: from, lte: to } },
       select: { createdAt: true },
     }),
-    prisma.patron.count({ where: { isVerified: true } }),
+    prisma.user.count({ where: { isPatron: true, isVerified: true } }),
     // patrons with at least one booking in range
-    prisma.patron.count({
+    prisma.user.count({
       where: {
-        bookings: {
+        isPatron: true,
+        patronBookings: {
           some: {
             createdAt: { gte: from, lte: to },
             deletedAt: null,
@@ -363,7 +364,7 @@ export async function getPatronsReport(range?: DateRange) {
     }),
   ]);
 
-  const total = await prisma.patron.count();
+  const total = await prisma.user.count({ where: { isPatron: true } });
 
   // Group registrations by month
   const regByMonth: Record<string, number> = {};

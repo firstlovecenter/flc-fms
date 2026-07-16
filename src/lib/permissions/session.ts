@@ -18,7 +18,7 @@ export const getStaffAuthContext = cache(async (userId: string): Promise<StaffAu
     where: { id: userId },
     select: { id: true, role: true, permissions: true, isActive: true },
   });
-  if (!user || !user.isActive) return null;
+  if (!user || !user.isActive || user.role === "PATRON") return null;
 
   const stored = (user.permissions as Record<string, boolean>) ?? {};
   const permissions = resolvePermissions(user.role, stored);
