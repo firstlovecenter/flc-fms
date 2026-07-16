@@ -7,9 +7,6 @@ BEGIN
   IF EXISTS (SELECT 1 FROM "users" GROUP BY LOWER(TRIM("email")) HAVING COUNT(*) > 1) THEN
     RAISE EXCEPTION 'Cannot unify accounts: users contains duplicate emails with different casing.';
   END IF;
-  IF EXISTS (SELECT 1 FROM "patrons" GROUP BY LOWER(TRIM("email")) HAVING COUNT(*) > 1) THEN
-    RAISE EXCEPTION 'Cannot unify accounts: patrons contains duplicate emails with different casing.';
-  END IF;
 END $$;
 
 ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'PATRON';
@@ -21,10 +18,25 @@ CREATE TEMP TABLE "patron_account_map" (
   "accountId" TEXT NOT NULL
 ) ON COMMIT DROP;
 
-INSERT INTO "patron_account_map" ("patronId", "accountId")
-SELECT p."id", COALESCE(u."id", p."id")
+-- Older patron records may contain the same email with different casing. Pick
+-- one deterministic record as the account that survives, preferring a verified
+-- record and then the oldest identity.
+CREATE TEMP TABLE "canonical_patrons" ON COMMIT DROP AS
+SELECT DISTINCT ON (LOWER(TRIM(p."email"))) p.*
 FROM "patrons" p
-LEFT JOIN "users" u ON LOWER(u."email") = LOWER(p."email");
+ORDER BY
+  LOWER(TRIM(p."email")),
+  p."isVerified" DESC,
+  p."createdAt" ASC,
+  p."id" ASC;
+
+INSERT INTO "patron_account_map" ("patronId", "accountId")
+SELECT p."id", COALESCE(u."id", canonical."id")
+FROM "patrons" p
+JOIN "canonical_patrons" canonical
+  ON LOWER(TRIM(canonical."email")) = LOWER(TRIM(p."email"))
+LEFT JOIN "users" u
+  ON LOWER(TRIM(u."email")) = LOWER(TRIM(p."email"));
 
 -- Existing staff accounts with a matching patron email become dual accounts.
 UPDATE "users" u
@@ -33,8 +45,8 @@ SET
   "isVerified" = u."isVerified" OR p."isVerified",
   "phone" = COALESCE(u."phone", p."phone"),
   "profilePicture" = COALESCE(u."profilePicture", p."profilePicture")
-FROM "patrons" p
-WHERE LOWER(u."email") = LOWER(p."email");
+FROM "canonical_patrons" p
+WHERE LOWER(TRIM(u."email")) = LOWER(TRIM(p."email"));
 
 -- Patron-only identities become PATRON user accounts and retain credentials.
 INSERT INTO "users" (
@@ -46,9 +58,10 @@ SELECT
   p."id", p."email", p."passwordHash", p."name", p."phone", 'PATRON'::"Role", true,
   '{}'::jsonb, false, p."profilePicture", true, p."isVerified",
   p."createdAt", p."updatedAt"
-FROM "patrons" p
+FROM "canonical_patrons" p
 WHERE NOT EXISTS (
-  SELECT 1 FROM "users" u WHERE LOWER(u."email") = LOWER(p."email")
+  SELECT 1 FROM "users" u
+  WHERE LOWER(TRIM(u."email")) = LOWER(TRIM(p."email"))
 );
 
 ALTER TABLE "bookings" DROP CONSTRAINT IF EXISTS "bookings_patronId_fkey";
