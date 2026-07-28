@@ -265,7 +265,7 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
 
   const existing = await prisma.expense.findFirst({
     where: { id: expenseId, deletedAt: null },
-    select: { createdAt: true, status: true, createdById: true, isTransactionCharge: true, accountId: true, spentAt: true, approvedAt: true },
+    select: { createdAt: true, status: true, createdById: true, isTransactionCharge: true, accountId: true, spentAt: true, approvedAt: true, receiptUrl: true },
   });
 
   if (!existing) return { error: "Expense record not found." };
@@ -280,11 +280,14 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
     return { error: "You are not allowed to edit this expense." };
   }
 
-  if (canManage) {
+  // The one-week lock freezes the financial content of a transaction (amount, category,
+  // spend date), but a receipt is supporting evidence for money already moved — it must
+  // stay uploadable however old the expense is. So a locked expense falls through to the
+  // receipt-only branch instead of being rejected outright.
+  const locked = isExpenseLocked(existing.createdAt, existing.status);
+
+  if (canManage && !locked) {
     const validated = UpdateExpenseSchema.parse(data);
-    if (isExpenseLocked(existing.createdAt, existing.status)) {
-      return { error: transactionLockMessage() };
-    }
 
     // An APPROVED expense already draws money from its account, so changing its amount or
     // spend date can overdraw the account somewhere on its timeline. Replay the account's
@@ -331,6 +334,12 @@ export async function updateExpense(expenseId: string, data: z.infer<typeof Upda
   }
 
   const validated = ReceiptOnlyUpdateSchema.parse({ receiptUrl: data?.receiptUrl });
+
+  // A locked transaction may gain or have its receipt replaced, but never stripped —
+  // removing evidence from a closed period is not a receipt upload.
+  if (locked && existing.receiptUrl && !validated.receiptUrl) {
+    return { error: `${transactionLockMessage()} Its receipt can be replaced, but not removed.` };
+  }
 
   const updated = await prisma.expense.update({
     where: { id: expenseId },

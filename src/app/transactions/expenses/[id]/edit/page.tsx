@@ -33,29 +33,32 @@ export default async function EditExpensePage(props: { params: Promise<{ id: str
     notFound();
   }
 
-  if (isExpenseLocked(expense.createdAt, expense.status) && !requesterReceiptOnly) {
-    return (
-      <div className="w-full max-w-2xl space-y-4">
-        <h1 className="page-title">Edit Expense</h1>
-        <p className="text-sm text-danger bg-danger/10 border border-danger/25 rounded-lg p-3">
-          This transaction is locked because it is older than one week.
-        </p>
-      </div>
-    );
-  }
+  // A locked transaction can no longer be edited, but its receipt can still be
+  // uploaded or replaced — so it falls back to the receipt-only form.
+  const isLocked = isExpenseLocked(expense.createdAt, expense.status);
+  const receiptOnly = requesterReceiptOnly || isLocked;
 
   return (
     <div className="w-full max-w-2xl space-y-6">
       <div>
-        <h1 className="page-title">{requesterReceiptOnly ? "Upload Expense Receipt" : "Edit Expense"}</h1>
+        <h1 className="page-title">{receiptOnly ? "Upload Expense Receipt" : "Edit Expense"}</h1>
         <p className="text-sm page-subtitle">
-          {requesterReceiptOnly
-            ? "This expense is approved. You can only upload or replace the receipt file."
-            : "Update the selected expense record."}
+          {isLocked
+            ? "Only the receipt can be changed on this transaction."
+            : receiptOnly
+              ? "This expense is approved. You can only upload or replace the receipt file."
+              : "Update the selected expense record."}
         </p>
       </div>
+      {isLocked && (
+        <p className="text-sm text-danger bg-danger/10 border border-danger/25 rounded-lg p-3">
+          This transaction is locked because it is older than one week. Its details can no longer be
+          changed, but you can still upload or replace its receipt.
+        </p>
+      )}
       <ExpenseEditForm
-        receiptOnly={requesterReceiptOnly}
+        receiptOnly={receiptOnly}
+        allowRemoveReceipt={!isLocked}
         expense={{
           ...expense,
           amount: Number(expense.amount),
