@@ -16,8 +16,16 @@ export default function ExpenseRowActions({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Locked transactions can't be edited or deleted, but their receipt stays uploadable.
   if (isLocked) {
-    return <span className="text-xs text-[var(--muted)]">Locked</span>;
+    return (
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-xs text-[var(--muted)]">Locked</span>
+        <Link href={`/transactions/expenses/${expenseId}/edit`} className="text-xs text-[var(--navy)] hover:underline">
+          Receipt
+        </Link>
+      </div>
+    );
   }
 
   async function handleDelete() {

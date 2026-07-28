@@ -38,6 +38,8 @@ type ExpenseEditFormProps = {
     spentAt?: Date | null;
   };
   receiptOnly?: boolean;
+  /** Locked transactions may gain or swap a receipt, but never have one stripped. */
+  allowRemoveReceipt?: boolean;
 };
 
 const CATEGORIES = [
@@ -57,7 +59,11 @@ const CATEGORIES = [
   "Other",
 ];
 
-export default function ExpenseEditForm({ expense, receiptOnly = false }: ExpenseEditFormProps) {
+export default function ExpenseEditForm({
+  expense,
+  receiptOnly = false,
+  allowRemoveReceipt = true,
+}: ExpenseEditFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [receiptUrl, setReceiptUrl] = useState<string>(expense.receiptUrl ?? "");
@@ -186,13 +192,15 @@ export default function ExpenseEditForm({ expense, receiptOnly = false }: Expens
               >
                 <Link2 size={12} /> View uploaded receipt
               </a>
-              <button
-                type="button"
-                onClick={() => setReceiptUrl("")}
-                className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:underline"
-              >
-                <X size={12} /> Remove
-              </button>
+              {allowRemoveReceipt && (
+                <button
+                  type="button"
+                  onClick={() => setReceiptUrl("")}
+                  className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:underline"
+                >
+                  <X size={12} /> Remove
+                </button>
+              )}
             </>
           )}
         </div>

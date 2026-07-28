@@ -146,7 +146,7 @@ export default async function ExpenseDetailPage(props: { params: Promise<{ id: s
             href={`/transactions/expenses/${expense.id}/edit`}
             className={cn(buttonVariants({ variant: "outline" }))}
           >
-            {canUploadReceiptOnly && !canManage ? "Upload / Update Receipt" : "Edit Expense"}
+            {isLocked || (canUploadReceiptOnly && !canManage) ? "Upload / Update Receipt" : "Edit Expense"}
           </Link>
         </div>
       )}
