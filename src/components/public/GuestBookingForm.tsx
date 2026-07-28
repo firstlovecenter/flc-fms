@@ -90,6 +90,91 @@ function formatTime(time: string): string {
 type BookingMode = "guest" | "patron" | "staff";
 type BookingType = "regular" | "wedding" | "naming";
 
+/** Sentinel select value for a Bishop who isn't on the admin-managed list. */
+const OTHER_BISHOP = "OTHER";
+
+type BishopOption = { id: string; name: string; phone: string };
+
+/**
+ * Officiating Bishop picker — the admin-managed list plus an "Other" escape hatch
+ * where the requester types the Bishop's own name and number. Shared by the wedding
+ * and naming ceremony sections (`compact` matches the naming section's tighter type).
+ */
+function BishopPicker({
+  bishops,
+  bishopId,
+  onBishopIdChange,
+  customName,
+  onCustomNameChange,
+  customPhone,
+  onCustomPhoneChange,
+  compact = false,
+}: {
+  bishops: BishopOption[];
+  bishopId: string;
+  onBishopIdChange: (value: string) => void;
+  customName: string;
+  onCustomNameChange: (value: string) => void;
+  customPhone: string;
+  onCustomPhoneChange: (value: string) => void;
+  compact?: boolean;
+}) {
+  const selectedBishop = bishops.find((b) => b.id === bishopId) ?? null;
+  const isOther = bishopId === OTHER_BISHOP;
+  const labelClass = compact
+    ? "block text-xs font-medium text-[var(--muted)] mb-1"
+    : "block text-sm font-medium text-[var(--slate)] mb-1";
+  const inputClass = compact ? "text-sm" : undefined;
+
+  return (
+    <>
+      <div>
+        <label className={labelClass}>Officiating Bishop *</label>
+        <NativeSelect
+          value={bishopId}
+          onChange={(e) => onBishopIdChange(e.target.value)}
+          className="w-full"
+          required
+        >
+          <option value="">Select your Bishop…</option>
+          {bishops.map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+          <option value={OTHER_BISHOP}>Other (not listed)</option>
+        </NativeSelect>
+        {selectedBishop && (
+          <p className="text-xs text-[var(--muted)] mt-1">{selectedBishop.phone}</p>
+        )}
+      </div>
+
+      {isOther && (
+        <>
+          <div>
+            <label className={labelClass}>Bishop&apos;s Name *</label>
+            <Input
+              value={customName}
+              onChange={(e) => onCustomNameChange(e.target.value)}
+              className={inputClass}
+              placeholder="Full name of the officiating Bishop"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Bishop&apos;s Contact Number *</label>
+            <Input
+              value={customPhone}
+              onChange={(e) => onCustomPhoneChange(e.target.value)}
+              className={inputClass}
+              placeholder="0244000000"
+              required
+            />
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export default function GuestBookingForm({
   facilities,
   defaultFacilityId,
@@ -199,10 +284,29 @@ export default function GuestBookingForm({
   const [motherName, setMotherName] = useState("");
   const [motherPhone, setMotherPhone] = useState("");
   const [namingEmail, setNamingEmail] = useState("");
-  // Officiating Bishop — selected from the admin-managed list (shared by wedding + naming)
+  // Officiating Bishop — selected from the admin-managed list (shared by wedding + naming),
+  // or typed in by hand when "Other" is chosen for a Bishop who isn't on the list.
   const [bishopId, setBishopId] = useState("");
-  const [bishops, setBishops] = useState<{ id: string; name: string; phone: string }[]>([]);
+  const [bishops, setBishops] = useState<BishopOption[]>([]);
+  const [customBishopName, setCustomBishopName] = useState("");
+  const [customBishopPhone, setCustomBishopPhone] = useState("");
   const selectedBishop = bishops.find((b) => b.id === bishopId) ?? null;
+  const isOtherBishop = bishopId === OTHER_BISHOP;
+  const bishopName = isOtherBishop ? customBishopName.trim() : selectedBishop?.name ?? "";
+  const bishopPhone = isOtherBishop ? customBishopPhone.trim() : selectedBishop?.phone ?? "";
+  // Mirrors the server-side ceremony schema (name min 2, phone min 9) so a hand-typed
+  // Bishop is caught in the form rather than by a zod error after submitting.
+  const bishopComplete = isOtherBishop
+    ? bishopName.length >= 2 && bishopPhone.length >= 9
+    : Boolean(selectedBishop);
+
+  function handleBishopIdChange(next: string) {
+    setBishopId(next);
+    if (next !== OTHER_BISHOP) {
+      setCustomBishopName("");
+      setCustomBishopPhone("");
+    }
+  }
 
   // ── Unified booking-type state ───────────────────────────────────────────────
   const [ceremonyVenues, setCeremonyVenues] = useState<Facility[]>([]);
@@ -266,7 +370,7 @@ export default function GuestBookingForm({
     setValidatedCodeId(initialCeremonyCodeId ?? "");
     setCodeInput("");
     setCodeError(null);
-    setBishopId("");
+    handleBishopIdChange("");
   }
 
   async function handleValidateCode() {
@@ -510,6 +614,12 @@ export default function GuestBookingForm({
       setError("Please enter a valid payment code to continue.");
       return;
     }
+    if (isCeremonyBooking && !bishopComplete) {
+      setError(
+        "Please select the officiating Bishop — or choose “Other” and enter the Bishop's name and contact number.",
+      );
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -532,14 +642,14 @@ export default function GuestBookingForm({
         return {
           type: "wedding" as const,
           brideName, groomName, contactWhatsApp: coupleContact, email: coupleEmail,
-          bishopName: selectedBishop?.name ?? "", bishopPhone: selectedBishop?.phone ?? "",
+          bishopName, bishopPhone,
         };
       }
       return {
         type: "naming" as const,
         fatherName, fatherPhone, fatherWhatsApp, childrenNames, childBirthday,
         motherName, motherPhone, email: namingEmail,
-        bishopName: selectedBishop?.name ?? "", bishopPhone: selectedBishop?.phone ?? "",
+        bishopName, bishopPhone,
       };
     })();
 
@@ -1249,18 +1359,15 @@ export default function GuestBookingForm({
               <label className="block text-sm font-medium text-[var(--slate)] mb-1">Email *</label>
               <Input type="email" value={coupleEmail} onChange={(e) => setCoupleEmail(e.target.value)} placeholder="couple@email.com" required />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Officiating Bishop *</label>
-              <NativeSelect value={bishopId} onChange={(e) => setBishopId(e.target.value)} className="w-full" required>
-                <option value="">Select your Bishop…</option>
-                {bishops.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </NativeSelect>
-              {selectedBishop && (
-                <p className="text-xs text-[var(--muted)] mt-1">{selectedBishop.phone}</p>
-              )}
-            </div>
+            <BishopPicker
+              bishops={bishops}
+              bishopId={bishopId}
+              onBishopIdChange={handleBishopIdChange}
+              customName={customBishopName}
+              onCustomNameChange={setCustomBishopName}
+              customPhone={customBishopPhone}
+              onCustomPhoneChange={setCustomBishopPhone}
+            />
           </div>
         </Card>
       )}
@@ -1326,18 +1433,16 @@ export default function GuestBookingForm({
           <div>
             <p className="text-xs font-semibold text-[var(--slate)] mb-3">Officiating Clergy</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-[var(--muted)] mb-1">Officiating Bishop *</label>
-                <NativeSelect value={bishopId} onChange={(e) => setBishopId(e.target.value)} className="w-full" required>
-                  <option value="">Select your Bishop…</option>
-                  {bishops.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </NativeSelect>
-                {selectedBishop && (
-                  <p className="text-xs text-[var(--muted)] mt-1">{selectedBishop.phone}</p>
-                )}
-              </div>
+              <BishopPicker
+                bishops={bishops}
+                bishopId={bishopId}
+                onBishopIdChange={handleBishopIdChange}
+                customName={customBishopName}
+                onCustomNameChange={setCustomBishopName}
+                customPhone={customBishopPhone}
+                onCustomPhoneChange={setCustomBishopPhone}
+                compact
+              />
             </div>
           </div>
         </Card>
@@ -1383,8 +1488,8 @@ export default function GuestBookingForm({
             (isCeremonyBooking && mode !== "staff" && !resolvedCeremonyCodeId) ||
             (!isCeremonyBooking && categories.length > 0 && !category) ||
             (termsRequired && !agreedToTerms) ||
-            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail) || !bishopId)) ||
-            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !bishopId))
+            (isCeremonyBooking && ceremonyType === "wedding" && (!brideName.trim() || !groomName.trim() || !coupleContact.trim() || !coupleEmail.trim() || !isValidEmail(coupleEmail) || !bishopComplete)) ||
+            (isCeremonyBooking && ceremonyType === "naming" && (!fatherName.trim() || !fatherPhone.trim() || !fatherWhatsApp.trim() || !childrenNames.trim() || !childBirthday.trim() || !motherName.trim() || !motherPhone.trim() || !namingEmail.trim() || !isValidEmail(namingEmail) || !bishopComplete))
           }
           className="w-full sm:flex-1"
         >
