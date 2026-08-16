@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createGuestBooking, createPatronBooking, createStaffBooking } from "@/actions/booking.actions";
 import {
@@ -259,6 +259,13 @@ export default function GuestBookingForm({
   const [error, setError] = useState<string | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // The error banner sits above a long form, so on a phone it can be several
+  // screens away from the submit button — scroll it into view or a failed
+  // submission looks like nothing happened at all.
+  const errorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [error]);
 
   // Facility/Booking Managers and Super Admins may waive/override the price —
   // their bookings auto-approve immediately, skipping the usual approval-time
@@ -387,10 +394,17 @@ export default function GuestBookingForm({
         setCodeError(`This code is for a ${String(res.ceremonyType ?? "").toLowerCase()} booking, not a ${ceremonyType}.`);
         return;
       }
-      if (res.facilityId && res.facilityId !== facilityId) {
-        setFacilityId(res.facilityId);
-      }
       setValidatedCodeId(res.codeId);
+      if (res.facilityId && res.facilityId !== facilityId) {
+        // Switching the venue clears the chosen date/slot, so send the visitor
+        // back to pick them again instead of leaving them on a form that can
+        // no longer be submitted.
+        setFacilityId(res.facilityId);
+        setSetupError(
+          "This payment code was issued for a different venue. We've switched your booking to that venue — please choose your date and time again.",
+        );
+        setStep(1);
+      }
     } catch {
       setCodeError("We couldn't verify this payment code. Check your connection and try again.");
     } finally {
@@ -436,6 +450,7 @@ export default function GuestBookingForm({
 
   // When facility changes, reset and fetch categories
   useEffect(() => {
+    let cancelled = false;
     const f = venueList.find((x) => x.id === facilityId) ?? null;
     setSelectedFacility(f);
 
@@ -449,23 +464,35 @@ export default function GuestBookingForm({
     setSlots([]);
     setSelectedSlot(null);
 
-    // Ceremony bookings use a fixed category (WEDDING/NAMING) — skip category fetch.
-    if (f && !isCeremonyBooking) {
+    // Ceremony bookings use a fixed category (WEDDING/NAMING) — skip the category
+    // fetch, and drop any list left over from a regular venue the visitor looked
+    // at first. A stale list would otherwise render the category selector with
+    // WEDDING/NAMING selected — a value it never offers, since ceremony pricing
+    // rows are inactive — leaving an empty `required` field that silently blocks
+    // the whole form from submitting.
+    if (isCeremonyBooking) {
+      setCategories([]);
+    } else if (f) {
       getFacilityCategories(f.id).then((res) => {
-        if (res.success) {
-          setCategories(res.categories);
-          setCategory((prev) => {
-            if (prev && res.categories.some((c) => c.category === prev)) return prev;
-            // Auto-select when only one category is available
-            if (res.categories.length === 1) return res.categories[0].category;
-            return "";
-          });
-        }
+        // A late response must not overwrite state after the visitor has already
+        // switched to a ceremony type — that would blank out the fixed category.
+        if (cancelled || !res.success) return;
+        setCategories(res.categories);
+        setCategory((prev) => {
+          if (prev && res.categories.some((c) => c.category === prev)) return prev;
+          // Auto-select when only one category is available
+          if (res.categories.length === 1) return res.categories[0].category;
+          return "";
+        });
       });
-    } else if (!isCeremonyBooking) {
+    } else {
       setCategories([]);
       setCategory("");
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [facilityId, venueList, isCeremonyBooking]);
 
   useEffect(() => {
@@ -590,8 +617,21 @@ export default function GuestBookingForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedFacility || !selectedDate || !selectedSlot || !title.trim()) return;
-    if (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) return;
+    // These are chosen in step 1, but a venue change (e.g. a payment code issued
+    // for another venue) clears the slot behind the visitor's back — so say so
+    // rather than returning silently and leaving the button doing nothing.
+    if (!selectedFacility || !selectedDate || !selectedSlot) {
+      setError("Your venue, date, or time slot is no longer selected. Please go back and choose them again.");
+      return;
+    }
+    if (!title.trim()) {
+      setError("Please give this booking a title.");
+      return;
+    }
+    if (mode === "guest" && (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim())) {
+      setError("Please fill in your name, email, and phone number.");
+      return;
+    }
     const bookingEmail = resolveBookingEmail();
     if (!bookingEmail || !isValidEmail(bookingEmail)) {
       setError("A valid email address is required to complete your booking.");
@@ -1082,7 +1122,7 @@ export default function GuestBookingForm({
             </p>
             <Button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => { setSetupError(null); setStep(2); }}
               disabled={!category || !selectedFacility || !selectedDate || !selectedSlot}
               className="w-full sm:w-auto gap-2"
               style={{ opacity: category && selectedFacility && selectedDate && selectedSlot ? 1 : 0.35 }}
@@ -1097,7 +1137,16 @@ export default function GuestBookingForm({
 
   // ─── STEP 2: Guest info + Booking details ────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
+    <form
+      onSubmit={handleSubmit}
+      // Native validation blocks submission before `onSubmit` ever runs, and its
+      // bubble is easy to miss on a phone — surface it so the button is never
+      // silently inert.
+      onInvalidCapture={() => {
+        setError("Some required details are missing or incomplete. Please check the fields marked * below and try again.");
+      }}
+      className="max-w-2xl space-y-5"
+    >
       {/* Summary card */}
       <div className="rounded-xl p-4 text-[#fff] bg-[var(--navy)] dark:bg-[rgba(15,26,43,0.8)] border border-transparent dark:border-[rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-4">
@@ -1125,7 +1174,7 @@ export default function GuestBookingForm({
       </div>
 
       {error && (
-        <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
+        <div ref={errorRef} className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       {usesStaffOwnEmail && (
@@ -1241,8 +1290,8 @@ export default function GuestBookingForm({
         </Card>
       )}
 
-      {/* Event type */}
-      {categories.length > 1 && (
+      {/* Event type — never for ceremonies, whose category is fixed by the booking type */}
+      {!isCeremonyBooking && categories.length > 1 && (
         <div>
           <label className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300 mb-1">Event Type *</label>
           <NativeSelect
