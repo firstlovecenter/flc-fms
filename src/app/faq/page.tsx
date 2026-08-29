@@ -25,9 +25,12 @@ export default function FaqPage() {
 
         <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-[var(--slate)]">
-            Ready to continue with your reservation?
+            Have a complaint or suggestion about our facilities?
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <Link href="/feedback" className={cn(buttonVariants({ variant: "outline" }))}>
+              Submit Feedback
+            </Link>
             <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
               Back to Home
             </Link>

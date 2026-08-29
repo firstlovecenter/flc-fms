@@ -240,7 +240,7 @@ export default function FacilityForm({ facility, categories }: Props) {
           <label className="block text-sm font-medium text-[var(--slate)] mb-1">AC Usage Fee (Optional Add-on)</label>
           <Input {...register("acUsageFee")} type="text" inputMode="decimal" placeholder="0" />
           {errors.acUsageFee && <p className="text-danger text-xs mt-1">{errors.acUsageFee.message}</p>}
-          <p className="text-xs text-[var(--muted)] mt-1">Applied only when a booker selects air conditioner usage.</p>
+          <p className="text-xs text-[var(--muted)] mt-1">Reference rate for Front Office cash donations — not billed online.</p>
         </div>
       </div>
 

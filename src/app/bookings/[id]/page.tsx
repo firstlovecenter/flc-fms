@@ -150,6 +150,12 @@ export default async function BookingDetailPage(props: { params: Promise<{ id: s
           <FileText size={13} /> Booking Amount
         </div>
         <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
+        <p className="text-sm text-[var(--slate)] mt-3">
+          <strong>AC requested:</strong>{" "}
+          {booking.acRequested
+            ? "Yes — physical cash donation at Front Office."
+            : "No."}
+        </p>
       </Card>
 
       {booking.notes && (

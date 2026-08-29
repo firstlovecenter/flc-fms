@@ -42,6 +42,8 @@ const BOOKING_MANAGER = pick({
   "settings:manage": true,
   "tasks:view": true,
   "duty:view": true,
+  "feedback:view": true,
+  "feedback:manage": true,
 });
 
 /** Vicar — limited operational access. */
@@ -90,7 +92,7 @@ export const PRESET_OPTIONS: {
 }[] = [
   { value: "FACILITY_MANAGER", label: "Facility Manager", description: "Full access to everything except patron account management.", permissions: FACILITY_MANAGER },
   { value: "OPERATIONS_NO_FINANCE", label: "Operations (no finance)", description: "Full operations access without finance or reports.", permissions: OPERATIONS_NO_FINANCE },
-  { value: "BOOKING_MANAGER", label: "Booking Manager", description: "Bookings, manage facilities/items/patrons/ceremony, and reports. No finance.", permissions: BOOKING_MANAGER },
+  { value: "BOOKING_MANAGER", label: "Booking Manager", description: "Bookings, facilities/items/patrons/ceremony, facility feedback, and reports. No finance.", permissions: BOOKING_MANAGER },
   { value: "VICAR", label: "Vicar (limited)", description: "Bookings, maintenance, expenses, and patron views.", permissions: VICAR },
 ];
 

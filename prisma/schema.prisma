@@ -46,6 +46,7 @@ model User {
   dutyItemsSigned       DutyLogItem[]          @relation("DutyItemSignedBy")
   tasksCreated          Task[]                 @relation("TasksCreated")
   tasksAssigned         Task[]                 @relation("TasksAssigned")
+  resolvedFeedback      FacilityFeedback[]     @relation("ResolvedFeedback")
 
   @@index([role])
   @@index([role, isActive])
@@ -85,6 +86,7 @@ model Facility {
   inventoryRequirements    FacilityInventoryRequirement[]
   ceremonyConfigs          CeremonyVenueConfig[]
   ceremonyCodes            CeremonyBookingCode[]
+  feedback                 FacilityFeedback[]
 
   @@index([isActive])
   @@map("facilities")
@@ -561,6 +563,19 @@ enum MaintenancePriority {
   CRITICAL
 }
 
+enum FacilityFeedbackType {
+  COMPLAINT
+  FEEDBACK
+  SUGGESTION
+}
+
+enum FacilityFeedbackStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
 enum TaskPriority {
   LOW
   MEDIUM
@@ -853,6 +868,32 @@ model Bishop {
 
   @@index([isActive, sortOrder])
   @@map("bishops")
+}
+
+// ─── Public facility feedback / complaints ───────────────────────────────────
+
+model FacilityFeedback {
+  id             String                 @id @default(cuid())
+  type           FacilityFeedbackType
+  isAnonymous    Boolean                @default(false)
+  submitterName  String?
+  submitterEmail String?
+  submitterPhone String?
+  facilityId     String?
+  subject        String
+  message        String
+  status         FacilityFeedbackStatus @default(OPEN)
+  adminNotes     String?
+  resolvedAt     DateTime?
+  resolvedById   String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  facility   Facility? @relation(fields: [facilityId], references: [id])
+  resolvedBy User?     @relation("ResolvedFeedback", fields: [resolvedById], references: [id])
+
+  @@index([status, createdAt])
+  @@map("facility_feedback")
 }
 
 // ─── Site Settings (key-value store for FM-editable config) ──────────────────

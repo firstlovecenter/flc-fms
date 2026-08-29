@@ -200,6 +200,7 @@ export async function sendBookingConfirmationEmail(params: {
   endTime: Date;
   totalAmount: number;
   accountClaimUrl?: string;
+  acRequested?: boolean;
 }) {
   const nextSteps = [
     "Your request will be reviewed by a facility manager.",
@@ -208,6 +209,13 @@ export async function sendBookingConfirmationEmail(params: {
   if (params.accountClaimUrl) {
     nextSteps.push(`<a href="${esc(params.accountClaimUrl)}" style="color:#c8a35a;font-weight:600">Create an account</a> using the same email to track your booking status and receive updates.`);
   }
+  const acNote = params.acRequested
+    ? `
+        <div style="margin-top:14px;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.6">
+          <strong>Air conditioning:</strong> You indicated that you will require AC during this booking. Please make a physical cash donation at Front Office.
+        </div>
+      `
+    : "";
   await sendEmail({
     to: params.to,
     subject: `Booking Received: ${params.bookingTitle}`,
@@ -224,6 +232,7 @@ export async function sendBookingConfirmationEmail(params: {
         { label: "Estimated amount", value: esc(money(params.totalAmount)) },
       ],
       detailsHtml: `
+        ${acNote}
         <div style="margin-top:16px;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
           <p style="margin:0 0 8px;color:#0f172a;font-weight:700;font-size:13px">What happens next</p>
           ${bulletList(nextSteps)}
@@ -240,8 +249,16 @@ export async function sendBookingApprovedEmail(params: {
   facilityName: string;
   startTime: Date;
   totalAmount: number;
+  acRequested?: boolean;
 }) {
   const isWaived = params.totalAmount === 0;
+  const acNote = params.acRequested
+    ? `
+        <div style="margin-top:14px;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.6">
+          <strong>Air conditioning:</strong> You indicated that you will require AC during this booking. Please make a physical cash donation at Front Office.
+        </div>
+      `
+    : "";
 
   await sendEmail({
     to: params.to,
@@ -257,9 +274,12 @@ export async function sendBookingApprovedEmail(params: {
         { label: "Start time", value: esc(dt(params.startTime)) },
         { label: "Amount due", value: esc(money(params.totalAmount)) },
       ],
-      detailsHtml: isWaived
-        ? `<p style="margin-top:14px;color:#166534;font-size:14px;font-weight:700">Billing has been waived for this booking.</p>`
-        : undefined,
+      detailsHtml: [
+        isWaived
+          ? `<p style="margin-top:14px;color:#166534;font-size:14px;font-weight:700">Billing has been waived for this booking.</p>`
+          : "",
+        acNote,
+      ].filter(Boolean).join("") || undefined,
     }),
   });
 }
@@ -498,6 +518,82 @@ export async function sendCeremonyCodeEmail(params: {
           <p style="margin:10px 0 0;color:#64748b;font-size:12px">This code is valid for <strong>30 days</strong> and can only be used once.</p>
         </div>
       `,
+    }),
+  });
+}
+
+export async function sendFacilityFeedbackReceivedEmail(params: {
+  to: string;
+  feedbackId: string;
+  typeLabel: string;
+  subject: string;
+  message: string;
+  facilityName: string | null;
+  isAnonymous: boolean;
+  submitterName: string | null;
+  submitterEmail: string | null;
+  submitterPhone: string | null;
+}) {
+  const excerpt =
+    params.message.length > 400 ? `${params.message.slice(0, 400)}…` : params.message;
+
+  const contactRows = params.isAnonymous
+    ? [{ label: "Submitter", value: "<strong>Anonymous</strong> — no contact details provided" }]
+    : [
+        { label: "Name", value: esc(params.submitterName ?? "—") },
+        ...(params.submitterEmail
+          ? [{ label: "Email", value: esc(params.submitterEmail) }]
+          : []),
+        ...(params.submitterPhone
+          ? [{ label: "Phone", value: esc(params.submitterPhone) }]
+          : []),
+      ];
+
+  await sendEmail({
+    to: params.to,
+    subject: `[${params.typeLabel}] ${params.subject}`,
+    html: renderEmailTemplate({
+      preheader: `New ${params.typeLabel.toLowerCase()} submitted for review.`,
+      badge: params.typeLabel,
+      title: "New facility feedback received",
+      intro: `A new ${params.typeLabel.toLowerCase()} has been submitted through the public feedback form.`,
+      rows: [
+        { label: "Type", value: esc(params.typeLabel) },
+        { label: "Subject", value: esc(params.subject) },
+        { label: "Facility", value: esc(params.facilityName ?? "Not specified") },
+        ...contactRows,
+      ],
+      detailsHtml: `
+        <div style="margin-top:14px;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
+          <p style="margin:0 0 6px;color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Message</p>
+          <p style="margin:0;color:#334155;font-size:14px;line-height:1.7;white-space:pre-wrap">${esc(excerpt)}</p>
+        </div>
+      `,
+      ctaLabel: "Review submission",
+      ctaUrl: `${APP_URL}/feedback/${params.feedbackId}`,
+    }),
+  });
+}
+
+export async function sendFacilityFeedbackConfirmationEmail(params: {
+  to: string;
+  name: string;
+  typeLabel: string;
+  subject: string;
+}) {
+  await sendEmail({
+    to: params.to,
+    subject: `We received your ${params.typeLabel.toLowerCase()}`,
+    html: renderEmailTemplate({
+      preheader: `Your ${params.typeLabel.toLowerCase()} has been received.`,
+      badge: "Feedback Received",
+      title: "Thank you for your submission",
+      intro: `Hi ${esc(params.name)}, we have received your ${params.typeLabel.toLowerCase()} regarding <strong>${esc(params.subject)}</strong>.`,
+      detailsHtml: bulletList([
+        "Our team will review your submission.",
+        "If follow-up is needed, we will contact you using the details you provided.",
+      ]),
+      footerNote: `This is an automated confirmation from ${APP_NAME}.`,
     }),
   });
 }

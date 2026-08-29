@@ -107,6 +107,12 @@ export default async function PatronBookingDetailPage(props: { params: Promise<{
             {booking.isBillingWaived && (
               <p className="text-sm text-success font-medium mt-1">Billing waived</p>
             )}
+            <p className="text-sm text-[var(--slate)] mt-3">
+              <strong>AC requested:</strong>{" "}
+              {booking.acRequested
+                ? "Yes — physical cash donation at Front Office."
+                : "No."}
+            </p>
           </div>
         </div>
       </Card>

@@ -37,6 +37,8 @@ export const PERMISSION_META = {
   "reports:view":           { label: "View Reports",           description: "Access the reports dashboard and download CSVs." },
   "reports:manage_subscriptions": { label: "Manage Report Subscriptions", description: "Manage scheduled report email subscribers." },
   "tasks:view":             { label: "View Tasks",             description: "Access the personal task inbox." },
+  "feedback:view":          { label: "View Feedback",          description: "View public facility feedback and complaints." },
+  "feedback:manage":        { label: "Manage Feedback",        description: "Update status and add internal notes on feedback submissions." },
 } as const;
 
 export type Permission = keyof typeof PERMISSION_META;
@@ -93,6 +95,7 @@ export const PERMISSION_GROUPS: {
     title: "Operations",
     permissions: [
       "duty:view", "duty:manage", "checkin:perform", "ceremony:manage", "settings:manage", "tasks:view",
+      "feedback:view", "feedback:manage",
     ].map((key) => ({ key: key as Permission, ...PERMISSION_META[key as Permission] })),
   },
   {

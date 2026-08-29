@@ -50,6 +50,7 @@ export const STAFF_NAV_GROUPS: NavGroupDef[] = [
       { href: "/items", label: "Items & Packages", accent: "inventory", permission: "items:view" },
       { href: "/inventory", label: "Inventory", accent: "inventory", permission: "inventory:view" },
       { href: "/maintenance", label: "Maintenance", accent: "maintenance", permission: "maintenance:view" },
+      { href: "/feedback", label: "Feedback", accent: "gold", permission: "feedback:view" },
     ],
   },
   {
@@ -113,6 +114,8 @@ export const ROUTE_PERMISSIONS: { pattern: string; permission: Permission | Perm
   { pattern: "/inventory", permission: "inventory:view", exact: true },
   { pattern: "/maintenance/new", permission: "maintenance:create" },
   { pattern: "/maintenance", permission: "maintenance:view", exact: true },
+  { pattern: "/feedback/", permission: "feedback:view" },
+  { pattern: "/feedback", permission: "feedback:view", exact: true },
   { pattern: "/staff/", permission: "staff:manage" },
   { pattern: "/staff", permission: "staff:view", exact: true },
   { pattern: "/duty/templates", permission: "duty:manage" },

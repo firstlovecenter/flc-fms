@@ -177,9 +177,10 @@ async function computeConfiguredBookingAmount(
   category: string,
   startTime: Date,
   endTime: Date,
-  useAirConditioner = false,
+  // AC is recorded via acRequested but paid as a cash donation at Front Office — never billed online.
+  _useAirConditioner = false,
 ) {
-  const [pricing, facility, activeCategory] = await Promise.all([
+  const [pricing, activeCategory] = await Promise.all([
     db.facilityPricing.findFirst({
       where: {
         facilityId,
@@ -187,7 +188,6 @@ async function computeConfiguredBookingAmount(
         isActive: true,
       },
     }),
-    db.facility.findUnique({ where: { id: facilityId }, select: { acUsageFee: true } }),
     db.bookingCategory.findFirst({ where: { slug: category, isActive: true }, select: { id: true } }),
   ]);
 
@@ -197,10 +197,8 @@ async function computeConfiguredBookingAmount(
   const slot = await findApplicableTimeSlot(db, facilityId, category, startTime, endTime);
   if (!slot) return { error: "No category-specific slot mapping found for the selected date/time." as const };
 
-  const acFee = useAirConditioner ? Number(facility?.acUsageFee ?? 0) : 0;
-
   if (slot.isFree) {
-    return { totalAmount: acFee, unitPrice: 0, pricingSource: "SLOT_FREE" as const };
+    return { totalAmount: 0, unitPrice: 0, pricingSource: "SLOT_FREE" as const };
   }
 
   const day = startTime.getDay();
@@ -213,10 +211,9 @@ async function computeConfiguredBookingAmount(
   // NOTE: Weekdays are NOT automatically free — pricing must be configured via freeDays
   // or a slot-level isFree/pricePerHourOverride.
   const baseAmount = pricing.freeDays.includes(day) ? 0 : unitPrice;
-  const totalAmount = baseAmount + acFee;
   const pricingSource = slot.pricePerHourOverride != null ? "SLOT_OVERRIDE" as const : "CATEGORY_BASE" as const;
 
-  return { totalAmount, unitPrice: baseAmount, pricingSource };
+  return { totalAmount: baseAmount, unitPrice: baseAmount, pricingSource };
 }
 
 /**
@@ -490,6 +487,7 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
           facilityName: booking.facility?.name ?? "N/A",
           startTime:    booking.startTime,
           totalAmount:  Number(booking.totalAmount),
+          acRequested:  booking.acRequested,
         })
       : sendBookingConfirmationEmail({
           to:           validated.contactEmail,
@@ -499,6 +497,7 @@ export async function createStaffBooking(data: z.input<typeof BookingCreateSchem
           startTime:    booking.startTime,
           endTime:      booking.endTime,
           totalAmount:  Number(booking.totalAmount),
+          acRequested:  booking.acRequested,
         }),
     ...(contactPatron ? [sendPushToPatron(contactPatron.id, {
       title: isApproved ? "Booking Approved ✓" : "Booking Request Submitted",
@@ -723,6 +722,7 @@ export async function createPatronBooking(data: z.input<typeof BookingCreateSche
         facilityName: booking.facility?.name ?? "N/A",
         startTime:    booking.startTime,
         totalAmount:  Number(booking.totalAmount),
+        acRequested:  booking.acRequested,
       })] : []),
       sendPushToPatron(session.sub, {
         title: "Booking Confirmed",
@@ -747,6 +747,7 @@ export async function createPatronBooking(data: z.input<typeof BookingCreateSche
         startTime:    booking.startTime,
         endTime:      booking.endTime,
         totalAmount:  Number(booking.totalAmount),
+        acRequested:  booking.acRequested,
       })] : []),
       sendPushToPatron(session.sub, {
         title: "Booking Request Submitted",
@@ -987,6 +988,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
         facilityName: booking.facility?.name ?? "N/A",
         startTime:    booking.startTime,
         totalAmount:  Number(booking.totalAmount),
+        acRequested:  booking.acRequested,
       }),
       sendPushToPatron(patron.id, {
         title: "Booking Confirmed",
@@ -1013,6 +1015,7 @@ export async function createGuestBooking(data: z.infer<typeof GuestBookingSchema
         endTime:         booking.endTime,
         totalAmount:     Number(booking.totalAmount),
         accountClaimUrl: claimUrl,
+        acRequested:     booking.acRequested,
       }),
       sendPushToPatron(patron.id, {
         title: "Booking Request Submitted",
@@ -1089,6 +1092,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
       facilityName: booking.facility?.name ?? "N/A",
       startTime:    booking.startTime,
       totalAmount:  Number(booking.totalAmount),
+      acRequested:  booking.acRequested,
     })] : []),
     booking.patronId
       ? sendPushToPatron(booking.patronId, {

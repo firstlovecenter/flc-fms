@@ -913,7 +913,8 @@ export async function estimateFacilityBookingAmount(
   category: string,
   startTime: Date,
   endTime: Date,
-  useAirConditioner = false,
+  // Kept for call-site compatibility; AC is cash-only at Front Office and never billed online.
+  _useAirConditioner = false,
 ) {
   try {
     if (!category) {
@@ -933,7 +934,7 @@ export async function estimateFacilityBookingAmount(
       }),
       prisma.facility.findUnique({
         where: { id: facilityId },
-        select: { acUsageFee: true },
+        select: { id: true },
       }),
     ]);
 
@@ -975,27 +976,25 @@ export async function estimateFacilityBookingAmount(
     }
 
     // Zero out price only if explicitly configured: slot.isFree or day is in freeDays.
-    // Weekdays are NOT automatically free.
+    // Weekdays are NOT automatically free. AC is never included in the online total.
     if (slot?.isFree || pricing.freeDays.includes(dayOfWeek)) {
-      const acFee = useAirConditioner ? Number(facility.acUsageFee ?? 0) : 0;
       return {
         success: true,
-        totalAmount: acFee,
+        totalAmount: 0,
         price: 0,
-        acUsageFee: acFee,
+        acUsageFee: 0,
       };
     }
 
     const unitPrice = slot?.pricePerHourOverride !== null && slot?.pricePerHourOverride !== undefined
       ? Number(slot.pricePerHourOverride)
       : Number(pricing.price);
-    const acFee = useAirConditioner ? Number(facility.acUsageFee ?? 0) : 0;
 
     return {
       success: true,
-      totalAmount: unitPrice + acFee,
+      totalAmount: unitPrice,
       price: unitPrice,
-      acUsageFee: acFee,
+      acUsageFee: 0,
     };
   } catch (error) {
     console.error("Error estimating booking amount:", error);

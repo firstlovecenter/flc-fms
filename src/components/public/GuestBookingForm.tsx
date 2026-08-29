@@ -237,7 +237,8 @@ export default function GuestBookingForm({
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [useAirConditioner, setUseAirConditioner] = useState(false);
+  /** null until the booker answers the required Yes/No AC question */
+  const [useAirConditioner, setUseAirConditioner] = useState<boolean | null>(null);
   // Allow FM, Booking Manager, and Super Admin to book on Mondays (all booking modes)
   const canBookMondays =
     ["FACILITY_MANAGER", "BOOKING_MANAGER", "SUPER_ADMIN"].includes(currentUserRole ?? "");
@@ -565,16 +566,14 @@ export default function GuestBookingForm({
       .finally(() => setSlotsLoading(false));
   }, [selectedDate, facilityId, category, isCeremonyBooking, canBookMondays, bypassLeadTime]);
 
-  // Compute estimated cost from selected slot
+  // Compute estimated cost from selected slot (AC is cash-only at Front Office — not billed online)
   const estimatedCost = (() => {
     if (isCeremonyBooking) {
       const flat = selectedFacility?.flatPrice ?? ceremonyFlatPrice;
       return flat != null ? Number(flat) : null;
     }
     if (!selectedSlot) return null;
-    const base = selectedSlot.isFree ? 0 : selectedSlot.effectivePricePerHour;
-    const ac = useAirConditioner ? Number(selectedFacility?.acUsageFee ?? 0) : 0;
-    return base + ac;
+    return selectedSlot.isFree ? 0 : selectedSlot.effectivePricePerHour;
   })();
 
   const disabledDays = [
@@ -660,6 +659,10 @@ export default function GuestBookingForm({
       );
       return;
     }
+    if (useAirConditioner === null) {
+      setError("Please indicate whether you will require air conditioning (AC) during your booking.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -700,7 +703,7 @@ export default function GuestBookingForm({
       description: description || undefined,
       startTime,
       endTime,
-      useAirConditioner,
+      useAirConditioner: useAirConditioner === true,
       acceptedTerms: agreedToTerms ? requiredTerms : [],
       contactEmail: bookingEmail,
       ...(builtCeremonyDetails ? { ceremonyDetails: builtCeremonyDetails } : {}),
@@ -1321,19 +1324,35 @@ export default function GuestBookingForm({
         />
       </div>
 
-      {selectedFacility && Number(selectedFacility.acUsageFee ?? 0) > 0 && (
-        <Card className="p-4">
-          <label className="flex items-start gap-3 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useAirConditioner}
-              onChange={(e) => setUseAirConditioner(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-[var(--border)]"
-            />
-            <span>
-              Add air conditioner usage for this booking (+{formatCurrency(Number(selectedFacility.acUsageFee))}).
-            </span>
-          </label>
+      {selectedFacility && (
+        <Card className="p-4 space-y-3">
+          <p className="block text-sm font-medium text-[var(--slate)] dark:text-gray-300">
+            Will you require the use of air conditioning (AC) during your booking? *
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+              <input
+                type="radio"
+                name="useAirConditioner"
+                checked={useAirConditioner === true}
+                onChange={() => setUseAirConditioner(true)}
+                className="h-4 w-4 border-[var(--border)]"
+                required
+              />
+              Yes
+            </label>
+            <label className="flex items-center gap-2 text-sm text-[var(--slate)] dark:text-gray-300 cursor-pointer">
+              <input
+                type="radio"
+                name="useAirConditioner"
+                checked={useAirConditioner === false}
+                onChange={() => setUseAirConditioner(false)}
+                className="h-4 w-4 border-[var(--border)]"
+                required
+              />
+              No
+            </label>
+          </div>
         </Card>
       )}
 

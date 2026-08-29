@@ -1,5 +1,7 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/db/prisma";
+import { resolvePermissions } from "@/lib/permissions/resolve";
+import type { Permission } from "@/lib/permissions/catalog";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -57,6 +59,28 @@ export async function sendPushToAllStaff(payload: PushPayload) {
   });
 
   await sendToSubscriptions(subs, payload);
+}
+
+// ── Send push to staff with a specific permission ─────────────────────────────
+
+export async function sendPushToStaffWithPermission(
+  permission: Permission,
+  payload: PushPayload,
+) {
+  if (!ensureVapid()) return;
+
+  const staff = await prisma.user.findMany({
+    where: { isActive: true, role: { not: "PATRON" } },
+    select: { id: true, role: true, permissions: true },
+  });
+
+  const userIds = staff
+    .filter((u) =>
+      resolvePermissions(u.role, u.permissions as Record<string, boolean> | null)[permission],
+    )
+    .map((u) => u.id);
+
+  await Promise.allSettled(userIds.map((userId) => sendPushToUser(userId, payload)));
 }
 
 // ── Internal: send to a list of subscriptions ────────────────────────────────

@@ -23,6 +23,7 @@ import {
   Settings,
   UserCircle,
   ShieldAlert,
+  MessageSquare,
   Plus,
   X,
 } from "lucide-react";
@@ -58,6 +59,7 @@ const NAV_ICONS: Record<string, React.ElementType> = {
   "/items": Package,
   "/inventory": Boxes,
   "/maintenance": Wrench,
+  "/feedback": MessageSquare,
   "/transactions": ArrowLeftRight,
   "/transactions/accounts": Wallet,
   "/reports": BarChart3,
@@ -86,6 +88,7 @@ const NAV_KEYWORDS: Record<string, string[]> = {
   "/items": ["bundles", "bookable items"],
   "/inventory": ["stock", "equipment"],
   "/maintenance": ["repairs", "schedule"],
+  "/feedback": ["complaints", "suggestions", "public feedback"],
   "/transactions": ["income", "expenses", "finance", "savings"],
   "/transactions/accounts": ["payment source", "bank", "mobile money", "cash", "accounts"],
   "/reports": ["analytics", "summary"],
