@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,12 +120,12 @@ export default function FeedbackForm({
         <p className="text-sm text-[var(--muted)]">
           Reference: <strong>{submittedId.slice(0, 8).toUpperCase()}</strong>
         </p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2 text-sm font-semibold mt-2 text-[var(--navy)] dark:text-[var(--gold)]"
         >
           ← Back to home
-        </a>
+        </Link>
       </div>
     );
   }
