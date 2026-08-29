@@ -88,7 +88,7 @@ const NAV_KEYWORDS: Record<string, string[]> = {
   "/items": ["bundles", "bookable items"],
   "/inventory": ["stock", "equipment"],
   "/maintenance": ["repairs", "schedule"],
-  "/feedback": ["complaints", "suggestions", "public feedback"],
+  "/feedback": ["complaints", "suggestions", "public feedback", "complaint form"],
   "/transactions": ["income", "expenses", "finance", "savings"],
   "/transactions/accounts": ["payment source", "bank", "mobile money", "cash", "accounts"],
   "/reports": ["analytics", "summary"],

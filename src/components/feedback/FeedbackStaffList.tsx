@@ -50,7 +50,7 @@ export default async function FeedbackStaffList({
       <PageHeader
         variant="hero"
         eyebrow="Public Submissions"
-        title="Facility Feedback"
+        title="Complaints & Feedback"
         description={`${items.length} submission${items.length !== 1 ? "s" : ""} to review`}
         className="relative z-10"
       />

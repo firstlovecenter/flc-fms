@@ -35,6 +35,18 @@ export function resolvePermissions(
   for (const k of ALL_PERMISSIONS) {
     if (typeof normalized[k] === "boolean") merged[k] = normalized[k];
   }
+
+  // Booking Manager–style STAFF accounts created before feedback shipped may lack
+  // these keys in stored JSON. Grant only when not explicitly set either way.
+  if (
+    merged["bookings:approve"] &&
+    merged["ceremony:manage"] &&
+    typeof normalized["feedback:view"] !== "boolean"
+  ) {
+    merged["feedback:view"] = true;
+    merged["feedback:manage"] = true;
+  }
+
   return merged;
 }
 

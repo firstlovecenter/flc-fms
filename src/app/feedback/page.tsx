@@ -50,7 +50,7 @@ export default async function FeedbackPage(props: {
       <div className="space-y-6">
         <GuestPageHero
           eyebrow="We Value Your Voice"
-          title="Facility Feedback"
+          title="Complaints & Feedback"
           description="Share a complaint, feedback, or suggestion about our facilities. You can choose to remain anonymous or leave contact details if you'd like us to follow up."
         />
         <Card className="p-6 md:p-8">

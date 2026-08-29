@@ -40,6 +40,7 @@ export const STAFF_NAV_GROUPS: NavGroupDef[] = [
       { href: "/checkin", label: "Check-In", accent: "bookings", permission: "checkin:perform" },
       { href: "/ceremony-codes", label: "Ceremony Codes", accent: "bookings", permission: "ceremony:manage" },
       { href: "/bookings/content", label: "Booking Content", accent: "bookings", permission: "bookings:manage_content" },
+      { href: "/feedback", label: "Complaints & Feedback", accent: "gold", permission: "feedback:view" },
       { href: "/duty", label: "Duty Logs", accent: "duty", permission: "duty:view" },
     ],
   },
@@ -50,7 +51,6 @@ export const STAFF_NAV_GROUPS: NavGroupDef[] = [
       { href: "/items", label: "Items & Packages", accent: "inventory", permission: "items:view" },
       { href: "/inventory", label: "Inventory", accent: "inventory", permission: "inventory:view" },
       { href: "/maintenance", label: "Maintenance", accent: "maintenance", permission: "maintenance:view" },
-      { href: "/feedback", label: "Feedback", accent: "gold", permission: "feedback:view" },
     ],
   },
   {

@@ -198,6 +198,15 @@ export default async function PublicHomePage(
               Guest Booking <ArrowRight size={18} />
             </Link>
             <Link
+              href="/feedback"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
+              )}
+            >
+              Complaints
+            </Link>
+            <Link
               href="/faq"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
