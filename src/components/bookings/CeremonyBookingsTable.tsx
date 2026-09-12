@@ -19,6 +19,7 @@ export type CeremonyBookingRow = {
   facilityName: string;
   status: string;
   totalAmount: number;
+  acRequested: boolean;
   startTime: string;
   endTime: string;
   bookerName: string;
@@ -195,6 +196,11 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
                     {typeLabel(b.ceremonyType)}
                     <span className="font-semibold text-[var(--navy)] text-sm truncate">{principalNames(b)}</span>
                     <StatusBadge status={b.status} size="xs" />
+                    {b.acRequested && (
+                      <span className="inline-flex items-center rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--navy)]">
+                        AC
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)] flex-wrap">
                     {b.createdByStaffName ? (
@@ -249,6 +255,14 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
                 <Card className="p-3 gap-0 py-3">
                   <p className="text-xs text-[var(--muted)]">Amount</p>
                   <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
+                </Card>
+                <Card className="p-3 gap-0 py-3">
+                  <p className="text-xs text-[var(--muted)]">AC requested</p>
+                  <p className="text-sm font-medium text-[var(--navy)]">
+                    {selected.acRequested
+                      ? "Yes — physical cash donation at Front Office."
+                      : "No."}
+                  </p>
                 </Card>
                 {selected.ceremonyCodeValue && (
                   <Card className="p-3 gap-0 py-3">

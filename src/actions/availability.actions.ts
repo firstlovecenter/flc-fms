@@ -12,6 +12,8 @@ import {
   MIN_BOOKING_NOTICE_HOURS,
 } from "@/lib/booking-window";
 
+type SlotUnavailableReason = "capacity" | "lead_time";
+
 interface TimeSlotAvailability {
   id: string;
   startTime: string;
@@ -23,6 +25,18 @@ interface TimeSlotAvailability {
   maxBookings: number;
   currentBookings: number;
   isAvailable: boolean;
+  /** Why the slot is blocked; null when available. Capacity takes priority over lead time. */
+  unavailableReason: SlotUnavailableReason | null;
+}
+
+function getUnavailableReason(
+  currentBookings: number,
+  maxBookings: number,
+  blockedByLeadTime: boolean,
+): SlotUnavailableReason | null {
+  if (currentBookings >= maxBookings) return "capacity";
+  if (blockedByLeadTime) return "lead_time";
+  return null;
 }
 
 const DEFAULT_LEAD_TIME_HOURS = MIN_BOOKING_NOTICE_HOURS;
@@ -230,7 +244,12 @@ export async function getFacilityAvailability(
 
         const currentBookings = overlappingBookings.length;
         const blockedByLeadTime = slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours);
-        const isAvailable = currentBookings < slot.maxBookings && !blockedByLeadTime;
+        const unavailableReason = getUnavailableReason(
+          currentBookings,
+          slot.maxBookings,
+          blockedByLeadTime,
+        );
+        const isAvailable = unavailableReason === null;
         const basePrice = categoryPricing2 ? Number(categoryPricing2.price) : 0;
         // Zero out price only if explicitly configured: slot.isFree or the day is in freeDays.
         // Weekdays are NOT automatically free — pricing is determined solely by slot/category config.
@@ -252,6 +271,7 @@ export async function getFacilityAvailability(
           maxBookings: slot.maxBookings,
           currentBookings,
           isAvailable,
+          unavailableReason,
         };
       }
     );
@@ -354,6 +374,11 @@ export async function getCeremonyAvailability(
         return bookingOverlapsSlot(bStartMin, bEndMin, slotStartMin, slotEndMin);
       }).length;
       const blockedByLeadTime = slotStartsBeforeLeadTime(date, slot.startTime, leadTimeHours);
+      const unavailableReason = getUnavailableReason(
+        currentBookings,
+        slot.maxBookings,
+        blockedByLeadTime,
+      );
       return {
         id: slot.id,
         startTime: slot.startTime,
@@ -364,7 +389,8 @@ export async function getCeremonyAvailability(
         effectivePricePerHour: flatPrice,
         maxBookings: slot.maxBookings,
         currentBookings,
-        isAvailable: currentBookings < slot.maxBookings && !blockedByLeadTime,
+        isAvailable: unavailableReason === null,
+        unavailableReason,
       };
     });
 

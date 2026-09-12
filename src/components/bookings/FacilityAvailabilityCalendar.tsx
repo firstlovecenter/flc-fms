@@ -21,6 +21,7 @@ interface TimeSlot {
   maxBookings: number;
   currentBookings: number;
   isAvailable: boolean;
+  unavailableReason: "capacity" | "lead_time" | null;
 }
 
 interface FacilityAvailabilityCalendarProps {
@@ -278,6 +279,8 @@ export default function FacilityAvailabilityCalendar({
                     <div style={{ textAlign: "right" }}>
                       {slot.isAvailable ? (
                         <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--success)" }}>✓ Available</span>
+                      ) : slot.unavailableReason === "lead_time" ? (
+                        <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--muted)" }}>Too soon</span>
                       ) : (
                         <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--danger)" }}>✗ Booked</span>
                       )}

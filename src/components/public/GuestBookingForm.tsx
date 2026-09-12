@@ -70,6 +70,7 @@ interface TimeSlot {
   maxBookings: number;
   currentBookings: number;
   isAvailable: boolean;
+  unavailableReason: "capacity" | "lead_time" | null;
 }
 
 function formatCategoryLabel(slug: string): string {
@@ -1037,7 +1038,9 @@ export default function GuestBookingForm({
                               )}
                               {isSelected && <Check size={14} color="#fff" />}
                               {!slot.isAvailable && (
-                                <span className="text-xs text-[var(--muted)] dark:text-gray-400">Full</span>
+                                <span className="text-xs text-[var(--muted)] dark:text-gray-400">
+                                  {slot.unavailableReason === "lead_time" ? "Too soon" : "Full"}
+                                </span>
                               )}
                             </div>
                           </button>

@@ -1114,6 +1114,7 @@ export async function approveBooking(bookingId: string, waiveBilling = false) {
   auditLog({ userId: session.sub, action: "APPROVE_BOOKING", entity: "Booking", entityId: bookingId });
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${bookingId}`);
+  revalidatePath("/guest/book");
   return { success: true, booking };
 }
 
@@ -1167,6 +1168,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
   auditLog({ userId: session.sub, action: "REJECT_BOOKING", entity: "Booking", entityId: bookingId, after: { reason } });
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${bookingId}`);
+  revalidatePath("/guest/book");
   return { success: true, booking };
 }
 
