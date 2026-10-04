@@ -7,7 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
-import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 
 interface PatronNavbarProps {
   initials: string;
@@ -92,7 +91,6 @@ export default function PatronNavbar({ initials, name, canUseStaffContext = fals
               <span className="text-[0.82rem] font-semibold text-[var(--navy)]">{name.split(" ")[0]}</span>
             </div>
             <div className="hidden md:block w-px h-5 bg-[var(--border)]" />
-            <ThemeModeSwitcher />
             <PushNotificationToggle />
             {canUseStaffContext && (
               <button onClick={handleStaffContext} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8rem] font-medium text-[var(--navy)] hover:bg-[var(--cream-dark)] bg-transparent border-0 cursor-pointer">

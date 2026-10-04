@@ -2,243 +2,196 @@ import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { cn, formatCurrency } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { ArrowRight, CheckCircle2, Package, Layers } from "lucide-react";
-import PublicSplitShell from "@/components/public/PublicSplitShell";
-import VenueCatalog from "@/components/public/VenueCatalog";
-import ItemsCatalogClient from "@/components/public/ItemsCatalogClient";
-import CatalogTabs from "@/components/public/CatalogTabs";
-import { getCeremonyVenueConfigs } from "@/actions/ceremony-venue.actions";
-import { getCeremonyVenueAvailabilitySummaries } from "@/actions/availability.actions";
+import { ArrowRight, Package, Layers, Building2 } from "lucide-react";
+import PublicShell from "@/components/public/PublicShell";
+import VisitorHero from "@/components/public/VisitorHero";
+import VisitorSection from "@/components/public/VisitorSection";
+import CategoryCard from "@/components/public/CategoryCard";
 import { getSiteSettings } from "@/actions/site-settings.actions";
 
-type Tab = "venues" | "items" | "packages";
+// Counts and imagery come from live data; without this the page would be
+// prerendered at build time and the figures would freeze.
+export const dynamic = "force-dynamic";
 
-export default async function PublicHomePage(
-  props: {
-    searchParams: Promise<{ tab?: string; vtype?: string }>;
-  }
-) {
-  const searchParams = await props.searchParams;
-  const tab: Tab =
-    searchParams.tab === "items" ? "items"
-    : searchParams.tab === "packages" ? "packages"
-    : "venues";
-  const vtype: "regular" | "naming" | "wedding" =
-    searchParams.vtype === "wedding" ? "wedding"
-    : searchParams.vtype === "naming" ? "naming"
-    : "regular";
-
-  // ── Facilities ──────────────────────────────────────────────────────────────
-  const rawFacilities = await prisma.facility.findMany({
-    where: { isActive: true },
-    select: {
-      id: true, name: true, description: true,
-      underMaintenance: true, maintenanceStartsAt: true, maintenanceEndsAt: true,
-      capacity: true, availableFrom: true, availableTo: true,
-      amenities: true, images: true, sortOrder: true,
-      pricing: { select: { category: true, price: true }, where: { isActive: true } },
-    },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
-
-  const now = new Date();
-  const facilities = rawFacilities
-    .map(f => {
-      const expired = f.underMaintenance && f.maintenanceEndsAt && new Date(f.maintenanceEndsAt) < now;
-      return {
-        ...f,
-        underMaintenance: expired ? false : f.underMaintenance,
-        pricePerHour: (f.pricing.length ? Math.min(...f.pricing.map((p) => Number(p.price))) : 0).toString(),
-        supportedCategories: f.pricing.map(p => p.category as string),
-        maintenanceStartsAt: f.maintenanceStartsAt?.toISOString() ?? null,
-        maintenanceEndsAt: f.maintenanceEndsAt?.toISOString() ?? null,
-        pricing: undefined,
-      };
-    })
-    .sort((a, b) => (a.underMaintenance === b.underMaintenance ? 0 : a.underMaintenance ? 1 : -1));
-
-  // ── Bookable items ───────────────────────────────────────────────────────────
-  const rawItems = await prisma.bookableItem.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
-  const items = rawItems.map(i => ({ ...i, pricePerUnit: i.pricePerUnit.toString() }));
-
-  // ── Bundles ──────────────────────────────────────────────────────────────────
-  const rawBundles = await prisma.bookableBundle.findMany({
-    where: { isActive: true },
-    include: { components: { include: { item: true } } },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
-  const bundles = rawBundles.map(b => ({
-    ...b,
-    price: b.price.toString(),
-    components: b.components.map(c => ({
-      ...c,
-      item: { ...c.item, pricePerUnit: c.item.pricePerUnit.toString() },
-    })),
-  }));
-
-  // ── Site settings ────────────────────────────────────────────────────────────
-  const siteSettings = await getSiteSettings();
-
-  // ── Ceremony venues (for the Naming / Wedding catalog filters) ───────────────
-  const [weddingConfigs, namingConfigs, weddingAvailability, namingAvailability] = await Promise.all([
-    getCeremonyVenueConfigs("WEDDING"),
-    getCeremonyVenueConfigs("NAMING"),
-    getCeremonyVenueAvailabilitySummaries("WEDDING"),
-    getCeremonyVenueAvailabilitySummaries("NAMING"),
+/**
+ * Landing page. Marketing only — one clear next action (Book now). The
+ * browsable catalogue lives at /catalog.
+ */
+export default async function PublicHomePage() {
+  const [facilities, itemCount, bundleCount, siteSettings] = await Promise.all([
+    prisma.facility.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        capacity: true,
+        images: true,
+        pricing: { select: { price: true }, where: { isActive: true } },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    prisma.bookableItem.count({ where: { isActive: true } }),
+    prisma.bookableBundle.count({ where: { isActive: true } }),
+    getSiteSettings(),
   ]);
 
-  // ── Hero subtitle ─────────────────────────────────────────────────────────────
-  const minRate = facilities.length > 0
-    ? formatCurrency(Math.min(...facilities.map(f => Number(f.pricePerHour))))
-    : formatCurrency(0);
+  const prices = facilities.flatMap(f => f.pricing.map(p => Number(p.price))).filter(p => p > 0);
+  const minRate = prices.length > 0 ? formatCurrency(Math.min(...prices)).replace(".00", "") : null;
   const maxCapacity = facilities.length > 0
     ? Math.max(...facilities.map(f => f.capacity)).toLocaleString()
     : "0";
+  const venueImage = facilities.find(f => f.images?.length)?.images?.[0] ?? null;
+  const gallery = facilities.filter(f => f.images?.length).slice(0, 6);
 
   return (
-    <PublicSplitShell
-      key="home-shell"
+    <PublicShell
       current="home"
-      eyebrow="Venues, Items & Packages"
-      title="Everything you need for your perfect event"
+      maxWidth="lg"
       officePhone={siteSettings.officePhone || undefined}
       officeEmail={siteSettings.officeEmail || undefined}
-      subtitle={
-        <>
-          {facilities.length} premium {facilities.length === 1 ? "venue" : "venues"} •{" "}
-          {items.length} bookable {items.length === 1 ? "item" : "items"} •{" "}
-          {bundles.length} curated {bundles.length === 1 ? "package" : "packages"} — starting at {minRate.replace(".00", "")}
-        </>
+      hero={
+        <VisitorHero
+          variant="photo"
+          image="/left-split-bg.jpg"
+          focalPoint="50% 42%"
+          eyebrow="First Love Center"
+          title="Host your next conference, wedding or gathering"
+          subtitle={`Halls that seat up to ${maxCapacity}, everything you need.`}
+        >
+          <Link
+            href="/guest/book"
+            className={cn(buttonVariants({ variant: "default" }), "h-12 gap-2 px-9 text-sm font-semibold uppercase tracking-[0.12em]")}
+          >
+            Book now <ArrowRight size={17} aria-hidden />
+          </Link>
+        </VisitorHero>
       }
     >
-      {/* Tab navigation */}
-      <div className="animate-fade-in" />
-      <CatalogTabs
-        active={tab}
-        counts={{ venues: facilities.length, items: items.length, packages: bundles.length }}
-      />
-
-      {/* Tab: Venues — Regular / Naming / Wedding filter */}
-      {tab === "venues" && (
-        <>
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-[var(--navy)] dark:text-gray-100 mb-1">Venues & Halls</h2>
-              <p className="text-sm text-slate-500 flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-success" /> Verified venues • Capacity up to {maxCapacity} guests
-              </p>
-            </div>
-          </div>
-          <VenueCatalog
-            facilities={facilities}
-            weddingConfigs={weddingConfigs}
-            namingConfigs={namingConfigs}
-            weddingAvailability={weddingAvailability}
-            namingAvailability={namingAvailability}
-            defaultType={vtype}
-            officePhone={siteSettings.officePhone || undefined}
-            officeEmail={siteSettings.officeEmail || undefined}
+      <VisitorSection
+        id="campus-services"
+        eyebrow="Enjoy campus services"
+        title="Browse by category"
+        description="Choose a service to see what is available."
+      >
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <CategoryCard
+            title="Halls and venues"
+            description="Spaces for conferences, weddings, namings and gatherings of every size."
+            icon={Building2}
+            href="/catalog?tab=venues"
+            image={venueImage}
+            imageAlt="A First Love Center hall set up for a gathering"
+            accent="host"
+            meta={`${facilities.length} ${facilities.length === 1 ? "space" : "spaces"}`}
+            cta="Browse venues"
           />
-        </>
-      )}
+          <CategoryCard
+            title="Items to hire"
+            description="Chairs, tables, canopies and sound equipment, hired by the piece."
+            icon={Package}
+            href={itemCount > 0 ? "/catalog?tab=items" : undefined}
+            accent="stay"
+            meta={itemCount > 0 ? `${itemCount} available` : undefined}
+            cta="Browse items"
+          />
+          <CategoryCard
+            title="Packages"
+            description="Everything for a particular kind of gathering, at one flat price."
+            icon={Layers}
+            href={bundleCount > 0 ? "/catalog?tab=packages" : undefined}
+            accent="celebrate"
+            meta={bundleCount > 0 ? `${bundleCount} curated` : undefined}
+            cta="Browse packages"
+          />
+        </div>
+      </VisitorSection>
 
-      {/* Tab: Single Items */}
-      {tab === "items" && (
-        <>
-          <div className="mb-6">
-            <h2 className="font-display text-2xl font-bold text-[var(--navy)] mb-1">Individual Items</h2>
-            <p className="text-sm text-slate-500">
-              Rent chairs, tables, tents, audio equipment and more — individually, for any external event.
-            </p>
-          </div>
-          {items.length === 0 ? (
-            <EmptyState icon={<Package size={32} className="text-[var(--gold)]" />} title="No items listed yet" />
-          ) : (
-            <ItemsCatalogClient items={items} bundles={[]} mode="items" />
-          )}
-        </>
-      )}
-
-      {/* Tab: Packages / Bundles */}
-      {tab === "packages" && (
-        <>
-          <div className="mb-6">
-            <h2 className="font-display text-2xl font-bold text-[var(--navy)] mb-1">Packages & Bouquets</h2>
-            <p className="text-sm text-slate-500">
-              Curated bundles — everything you need for a specific event type, at one flat price.
-            </p>
-          </div>
-          {bundles.length === 0 ? (
-            <EmptyState icon={<Layers size={32} className="text-[var(--gold)]" />} title="No packages listed yet" />
-          ) : (
-            <ItemsCatalogClient items={[]} bundles={bundles} mode="packages" />
-          )}
-        </>
-      )}
-
-      {/* CTA */}
-      <section className="relative mt-20 p-6 sm:p-10 md:p-14 bg-[var(--navy)] dark:bg-[#0f1b30] rounded-3xl overflow-hidden group border border-transparent dark:border-slate-700/60">
-        <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] bg-[length:4px_4px]" aria-hidden="true" />
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent dark:from-[#1d3358] skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="text-center md:text-left max-w-xl">
-            <span className="text-[var(--gold)] text-xs font-bold uppercase tracking-widest block mb-3">Ready to Book?</span>
-            <h3 className="font-display text-3xl md:text-4xl font-bold text-[#fff] mb-4 leading-tight">
-              Start your reservation in minutes
-            </h3>
-            <p className="text-slate-300 dark:text-slate-300/90">
-              Book venues, items or packages as a guest, or create a patron account for faster checkout and booking history.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-            <Link href="/guest/book" className={cn(buttonVariants({ variant: "gold" }), "gap-2 px-8 py-4 text-base")}>
-              Guest Booking <ArrowRight size={18} />
-            </Link>
+      {gallery.length > 0 && (
+        <VisitorSection
+          id="spaces"
+          eyebrow="A look around"
+          title="Our spaces"
+          description="A few of the halls and venues on campus."
+          meta={
             <Link
-              href="/feedback"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
-              )}
+              href="/catalog?tab=venues"
+              className="font-semibold text-[var(--gold-muted)] underline-offset-4 hover:underline"
             >
-              Complaints
+              See all
             </Link>
+          }
+        >
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {gallery.map((facility, index) => (
+              <Link
+                key={facility.id}
+                href={`/catalog/facilities/${facility.id}`}
+                // First tile runs double-width on larger screens so the grid
+                // isn't a flat row of identical squares.
+                className={cn(
+                  "group relative block overflow-hidden rounded-[var(--r-2xl)] no-underline shadow-[var(--shadow-sm)]",
+                  index === 0 && "col-span-2 md:row-span-2"
+                )}
+              >
+                <div className={cn("relative", index === 0 ? "aspect-[4/3] md:aspect-[3/2]" : "aspect-[4/3]")}>
+                  <img
+                    src={facility.images[0]}
+                    alt={facility.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div
+                    className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <h3
+                      className={cn(
+                        "text-[#fff] drop-shadow",
+                        index === 0 ? "text-xl sm:text-2xl" : "text-base"
+                      )}
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {facility.name}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-[rgba(255,255,255,0.85)]">
+                      Seats {facility.capacity.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </VisitorSection>
+      )}
+
+      <section className="mb-4 overflow-hidden rounded-[var(--r-3xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+        <div className="flex flex-col items-start gap-6 p-7 sm:p-10 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <h2 className="font-display text-2xl text-[var(--navy)] sm:text-3xl">
+              Ready when you are
+            </h2>
+            <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
+              Tell us what you are planning and we will confirm the details
+              {minRate ? ` — spaces start from ${minRate}.` : "."}
+            </p>
+          </div>
+          <div className="flex w-full shrink-0 flex-col items-start gap-3 sm:w-auto sm:flex-row sm:items-center">
             <Link
-              href="/faq"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
-              )}
+              href="/guest/book"
+              className={cn(buttonVariants({ variant: "default" }), "w-full gap-2 px-7 sm:w-auto")}
             >
-              FAQs
+              Book now <ArrowRight size={17} aria-hidden />
             </Link>
             <Link
               href="/patron/register"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "border-white/30 bg-white/10 text-[#fff] hover:bg-white/15 hover:text-[#fff] px-8 py-4 text-base"
-              )}
+              className="text-sm font-semibold text-[var(--gold-muted)] underline-offset-4 hover:underline"
             >
-              Create Account
+              Create an account
             </Link>
           </div>
         </div>
       </section>
-    </PublicSplitShell>
-  );
-}
-
-function EmptyState({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div className="empty-state card border-dashed mt-4 py-20">
-      <div className="w-20 h-20 rounded-full bg-[var(--gold)]/10 flex items-center justify-center mb-6">
-        {icon}
-      </div>
-      <h3>{title}</h3>
-      <p>Check back soon — our team is adding more options.</p>
-    </div>
+    </PublicShell>
   );
 }

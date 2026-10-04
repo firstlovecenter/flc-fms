@@ -95,11 +95,15 @@
   --font-display: var(--font-outfit, 'Outfit'), system-ui, sans-serif;
   --font-body:    var(--font-outfit, 'Outfit'), system-ui, sans-serif;
 
+  /* Radius scale. Inner elements sit tighter than their containers, so the
+     larger steps exist for panels/hero blocks rather than controls. */
   --r-xs:  4px;
   --r-sm:  6px;
   --r-md:  8px;
-  --r-lg:  10px;
-  --r-xl:  14px;
+  --r-lg:  12px;
+  --r-xl:  16px;
+  --r-2xl: 22px;
+  --r-3xl: 28px;
 
   --shadow-xs: 0 1px 2px rgba(22,26,31,0.04);
   --shadow-sm: 0 1px 3px rgba(22,26,31,0.06);
@@ -162,21 +166,43 @@
 /* ─── Warm surface (public/patron/auth — default on body) ───────────────────
    Cream canvas, Playfair display headings, navy/gold brand.                */
 .surface-warm {
-  --cream-hsl:      215 20% 95%;
-  --cream-dark-hsl: 214 14% 94%;
-  --border-hsl:     214 14% 89%;
-  --text-muted-hsl: 215 12% 47%;
-  --surface:        #FCFDFE;
+  /* Palette lifted from anagkazo-campus.com's own global tokens. Warm cream
+     canvas, gold primary, soft charcoal body copy. */
+  --cream-hsl:      48 71% 94%;   /* #FAF5E5 — page canvas */
+  --cream-dark-hsl: 46 60% 86%;   /* #F0E6C5 — hover fills, pale gold panels */
+  --border-hsl:     45 32% 84%;
+  --text-muted-hsl: 0 0% 29%;     /* #4A4A4A — body copy */
+  --navy-hsl:       0 0% 13%;     /* #222222 — headings */
+  --surface:        #FFFFFF;
+  --white:          #FFFFFF;
   --page-bg:        hsl(var(--cream-hsl));
+
+  /* Gold primary (#DCA54A) with its darker hover (#D09A40). */
+  --gold-hsl:        38 68% 58%;  /* #DCA54A */
+  --gold-bright-hsl: 38 70% 64%;
+  --gold-muted-hsl:  36 62% 38%;  /* AA-safe gold for text and links */
+  --gold-pale-hsl:   46 60% 86%;  /* #F0E6C5 */
+
+  /* Experience accents — orientation only; photography stays dominant. */
+  --accent-stay:   174 53% 53%;   /* Teal  #46C8C4 — accommodation */
+  --accent-tours:  205 91% 67%;   /* Sky   #5DB5F7 — tours, transport, info */
+  --accent-host:    37 90% 63%;   /* Gold         — halls, hosting */
+  --accent-celebrate: 327 71% 70%; /* Rose #E97CB2 — weddings, namings */
+
+  /* anagkazo-campus.com pairing: DM Serif Display headings, Open Sans body. */
+  --font-display: var(--font-dm-serif, 'DM Serif Display'), Georgia, serif;
+  --font-body:    var(--font-open-sans, 'Open Sans'), ui-sans-serif, system-ui, sans-serif;
 
   --ui-background: var(--cream-hsl);
   --ui-foreground: var(--navy-hsl);
-  --ui-card: 210 20% 99%;
+  /* Cards sit as pure white panels on the sand canvas. */
+  --ui-card: 0 0% 100%;
   --ui-card-foreground: var(--navy-hsl);
-  --ui-popover: 210 20% 99%;
+  --ui-popover: 0 0% 100%;
   --ui-popover-foreground: var(--navy-hsl);
   --ui-primary: var(--gold-hsl);
-  --ui-primary-foreground: 0 0% 100%;
+  /* Charcoal on gold is the accessible pairing the brand guide mandates. */
+  --ui-primary-foreground: 0 0% 13%;
   --ui-secondary: var(--cream-dark-hsl);
   --ui-secondary-foreground: var(--navy-hsl);
   --ui-muted: var(--cream-dark-hsl);
@@ -185,6 +211,13 @@
   --ui-accent-foreground: var(--navy-hsl);
   --ui-border: var(--border-hsl);
   --ui-input: var(--border-hsl);
+  --ui-ring: var(--gold-hsl);
+
+  --submit-bg: hsl(var(--gold-hsl));
+  --submit-bg-hover: hsl(37 86% 56%);
+  --submit-fg: #222222;
+  --submit-border: hsl(var(--gold-hsl));
+  --submit-ring: hsl(var(--gold-hsl) / 0.35);
 
   --cream: hsl(var(--cream-hsl));
   --cream-dark: hsl(var(--cream-dark-hsl));
@@ -433,7 +466,17 @@
     font-family: var(--font-display);
     line-height: 1.15;
     letter-spacing: -0.01em;
+    text-wrap: balance;
   }
+
+  p { text-wrap: pretty; }
+
+  /* DM Serif Display is already tightly fitted — it only wants a hair of
+     negative tracking at hero sizes, unlike the sans it replaced. */
+  .surface-warm h1 { letter-spacing: -0.012em; }
+  .surface-warm h2 { letter-spacing: -0.008em; }
+  .surface-warm h3,
+  .surface-warm h4 { letter-spacing: 0; }
 
   ::selection { background: var(--gold-pale); color: var(--navy); }
 }
@@ -499,43 +542,56 @@
     border-radius: var(--r-sm);
   }
 
-  /* GLASSMORPHIC CARDS */
+  /* GLASSMORPHIC CARDS
+     Edge refraction = outer tinted shadow + a 1px inset highlight on the top
+     edge and a soft inset shade on the bottom. Without the insets the blur
+     reads as flat translucency rather than glass. */
   .card-glass {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: var(--r-lg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(10, 22, 40, 0.12);
+    border-radius: var(--r-xl);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    box-shadow:
+      0 8px 32px hsl(var(--navy-hsl) / 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -1px 0 hsl(var(--navy-hsl) / 0.06);
   }
 
   .dark .card-glass {
     background: rgba(10, 22, 40, 0.45);
-    border: 1px solid rgba(200, 163, 90, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid hsl(var(--gold-hsl) / 0.15);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
     color: rgba(255, 255, 255, 0.9);
+  }
+
+  .card-glass {
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   .card-glass:hover {
     background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(200, 163, 90, 0.3);
-    transition: all 0.3s ease;
+    border-color: hsl(var(--gold-hsl) / 0.3);
   }
 
   .card-glass-dark {
     background: rgba(10, 22, 40, 0.45);
-    border: 1px solid rgba(200, 163, 90, 0.15);
-    border-radius: var(--r-lg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 8px 32px rgba(10, 22, 40, 0.2);
+    border: 1px solid hsl(var(--gold-hsl) / 0.15);
+    border-radius: var(--r-xl);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow:
+      0 8px 32px rgba(10, 22, 40, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.9);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   .card-glass-dark:hover {
     background: rgba(10, 22, 40, 0.55);
-    border-color: rgba(200, 163, 90, 0.25);
-    transition: all 0.3s ease;
+    border-color: hsl(var(--gold-hsl) / 0.25);
   }
 
   /* GLASS BADGE */
@@ -550,7 +606,7 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(200, 163, 90, 0.2);
+    border: 1px solid hsl(var(--gold-hsl) / 0.2);
     backdrop-filter: blur(8px);
     color: rgba(255, 255, 255, 0.85);
   }
@@ -898,11 +954,49 @@
 
 /* MODERN SHADOWS */
 .shadow-glow {
-  box-shadow: 0 0 32px rgba(200, 163, 90, 0.2);
+  box-shadow: 0 0 32px hsl(var(--gold-hsl) / 0.2);
 }
 
 .shadow-glow-lg {
-  box-shadow: 0 0 48px rgba(200, 163, 90, 0.3);
+  box-shadow: 0 0 48px hsl(var(--gold-hsl) / 0.3);
+}
+
+/* ─── Texture & depth ────────────────────────────────────────────────────────
+   Flat vector surfaces read as sterile. `.texture-grain` lays a tiny
+   fractal-noise tile over a section to break up large areas of solid colour
+   and gradients. It must never intercept pointer events.                    */
+.texture-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.dark .texture-grain::after { opacity: 0.22; }
+
+/* Ambient off-centre wash. Radial rather than a 45° linear fade so the light
+   reads as coming from a single source instead of a flat sweep. */
+.ambient-wash {
+  background-image:
+    radial-gradient(70% 55% at 85% 12%, hsl(var(--gold-hsl) / 0.09) 0%, transparent 70%),
+    radial-gradient(60% 50% at 8% 92%, hsl(var(--navy-hsl) / 0.06) 0%, transparent 72%);
+}
+
+/* Spotlight border: a hairline that picks up the accent on hover. Pairs with
+   .hover-lift on catalog cards. */
+.ring-spotlight {
+  position: relative;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.ring-spotlight:hover {
+  border-color: hsl(var(--gold-hsl) / 0.38);
+  box-shadow:
+    0 14px 38px hsl(var(--navy-hsl) / 0.13),
+    0 0 0 1px hsl(var(--gold-hsl) / 0.16);
 }
 
 /* GRADIENT BACKGROUNDS */
@@ -1077,7 +1171,7 @@
 
 /* ─── Focus-visible accessibility ring ──────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(200, 163, 90, 0.7);
+  outline: 2px solid hsl(var(--gold-hsl) / 0.75);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -1086,7 +1180,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgba(200, 163, 90, 0.7);
+  outline: 2px solid hsl(var(--gold-hsl) / 0.75);
   outline-offset: 2px;
 }
 
@@ -1386,6 +1480,20 @@ textarea:focus-visible {
 }
 
 .dark .surface-warm {
+  /* .surface-warm pins the ink to Charcoal for light mode. `.dark` lives on
+     <html> while the scope lives on <body>, so the inversion has to be
+     restated here or public headings render black-on-black. */
+  --navy-hsl:       40 20% 96%;
+  --navy-mid-hsl:   40 14% 86%;
+  --navy-light-hsl: 36 10% 74%;
+  --text-muted-hsl: 220 7% 68%;
+
+  /* Gold holds its hue in dark mode; only the text-safe variant lightens. */
+  --gold-hsl:        37 90% 63%;
+  --gold-bright-hsl: 37 95% 72%;
+  --gold-muted-hsl:  37 85% 68%;
+  --gold-pale-hsl:   34 30% 16%;
+
   --cream: transparent;
   --cream-dark: rgba(37, 39, 43, 0.5);
   --surface: rgba(22, 24, 28, 0.78);
@@ -1396,29 +1504,35 @@ textarea:focus-visible {
   --text-muted: hsl(var(--text-muted-hsl));
   --page-bg: transparent;
 
-  --ui-background: 222 14% 7%;
-  --ui-foreground: 210 20% 96%;
-  --ui-card: 220 13% 10%;
-  --ui-card-foreground: 210 20% 96%;
-  --ui-popover: 220 13% 10%;
-  --ui-popover-foreground: 210 20% 96%;
-  --ui-primary: 349 100% 63%;
-  --ui-primary-foreground: 0 0% 100%;
-  --ui-secondary: 217 10% 16%;
-  --ui-secondary-foreground: 210 20% 96%;
-  --ui-muted: 217 10% 16%;
-  --ui-muted-foreground: 215 10% 68%;
-  --ui-accent: 217 10% 16%;
-  --ui-accent-foreground: 210 20% 96%;
-  --ui-border: 217 10% 15%;
-  --ui-input: 217 10% 16%;
-  --ui-ring: 349 100% 63%;
+  --ui-background: 24 8% 8%;
+  --ui-foreground: 40 20% 96%;
+  --ui-card: 24 7% 12%;
+  --ui-card-foreground: 40 20% 96%;
+  --ui-popover: 24 7% 12%;
+  --ui-popover-foreground: 40 20% 96%;
+  --ui-primary: var(--gold-hsl);
+  --ui-primary-foreground: 0 0% 13%;
+  --ui-secondary: 24 6% 18%;
+  --ui-secondary-foreground: 40 20% 96%;
+  --ui-muted: 24 6% 18%;
+  --ui-muted-foreground: 220 7% 68%;
+  --ui-accent: 24 6% 20%;
+  --ui-accent-foreground: 40 20% 96%;
+  --ui-border: 24 6% 18%;
+  --ui-input: 24 6% 20%;
+  --ui-ring: var(--gold-hsl);
 
-  --field-bg: #16181C;
-  --field-bg-focus: #1D2026;
-  --field-fg: #F1F5F9;
-  --field-placeholder: #9CA3AF;
-  --field-border: #2A2D33;
+  --submit-bg: hsl(var(--gold-hsl));
+  --submit-bg-hover: hsl(37 95% 70%);
+  --submit-fg: #222222;
+  --submit-border: hsl(var(--gold-hsl));
+  --submit-ring: hsl(var(--gold-hsl) / 0.35);
+
+  --field-bg: #1B1917;
+  --field-bg-focus: #231F1C;
+  --field-fg: #F5F3F0;
+  --field-placeholder: #A8A29E;
+  --field-border: #302B27;
 
   --page-hero-bg:
     radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.12), transparent 34%),

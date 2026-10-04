@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
 
+/**
+ * Interior visitor-page header. Light panel with a pill eyebrow and charcoal
+ * type, matching VisitorHero's `plain` variant — a dark block here would read
+ * as a stray section on the sand canvas.
+ */
 export default function GuestPageHero({
   eyebrow,
   title,
@@ -16,17 +21,20 @@ export default function GuestPageHero({
   return (
     <section
       className={cn(
-        "rounded-[var(--r-lg)] border relative overflow-hidden p-6 md:p-7",
-        "bg-gradient-to-br from-[var(--navy)] to-[var(--navy-mid)]",
-        "dark:from-[rgba(15,26,43,0.65)] dark:to-[rgba(15,26,43,0.45)] dark:backdrop-blur-xl",
-        "border-[rgba(255,66,102,0.34)] dark:border-[var(--border)] shadow-lg text-[#fff]",
+        "rounded-[var(--r-2xl)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-sm)] md:p-8",
         className
       )}
     >
-      <p className="text-eyebrow text-[#fff]/65 mb-2">{eyebrow}</p>
-      <h1 className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1]">{title}</h1>
-      <p className="text-body-sm text-[#fff]/75 mt-2 max-w-[700px]">{description}</p>
-      {children && <div className="flex flex-wrap gap-2 mt-4">{children}</div>}
+      <div className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--gold-hsl)/0.12)] px-3 py-1.5 text-xs font-semibold text-[var(--gold-muted)]">
+        {eyebrow}
+      </div>
+      <h1 className="font-display mt-4 text-[clamp(1.6rem,3vw,2.25rem)] font-bold leading-[1.15] text-[var(--navy)]">
+        {title}
+      </h1>
+      <p className="mt-2 max-w-[640px] leading-relaxed text-[var(--text-muted)]">
+        {description}
+      </p>
+      {children && <div className="mt-5 flex flex-wrap items-center gap-2">{children}</div>}
     </section>
   );
 }

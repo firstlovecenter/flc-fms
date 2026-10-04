@@ -761,11 +761,13 @@ export default function GuestBookingForm({
   if (successMessage) {
     return (
       <Card className="p-8 text-center space-y-4">
-        <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center bg-green-500/12 dark:bg-green-500/20">
-          <Check size={28} className="text-green-600" />
+        <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center bg-[hsl(var(--success-hsl)/0.14)]">
+          <Check size={28} className="text-success" />
         </div>
-        <h2 className="font-display font-bold text-[var(--navy)] dark:text-gray-100 text-xl">Booking Submitted!</h2>
-        <p className="text-sm text-[var(--slate)] dark:text-gray-300">{successMessage}</p>
+        <h2 className="font-display font-bold text-[var(--navy)] text-xl">
+          Your visit has been planned
+        </h2>
+        <p className="text-sm text-[var(--text-muted)]">{successMessage}</p>
       </Card>
     );
   }

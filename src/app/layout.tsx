@@ -1,15 +1,30 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Outfit } from "next/font/google";
+import { Outfit, DM_Serif_Display, Open_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { GlobalDarkBackground } from "@/components/theme/global-dark-background";
 import PullToRefresh from "@/components/layout/PullToRefresh";
 
 const outfit = Outfit({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-outfit",
+  display: "swap",
+});
+
+// Public/visitor type pairing, matching anagkazo-campus.com exactly:
+// DM Serif Display headings over an Open Sans body. Scoped to .surface-warm;
+// staff data surfaces keep Outfit.
+const dmSerifDisplay = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-dm-serif",
+  display: "swap",
+});
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-open-sans",
   display: "swap",
 });
 
@@ -29,10 +44,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#EEF1F5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F1114" },
-  ],
+  themeColor: "#FAF5E5",
   width: "device-width",
   initialScale: 1,
 };
@@ -41,10 +53,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="en" suppressHydrationWarning className={outfit.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${outfit.variable} ${dmSerifDisplay.variable} ${openSans.variable}`}
+    >
       <body className="surface-warm font-sans antialiased">
         <ThemeProvider>
-          <GlobalDarkBackground />
           <PullToRefresh />
           {children}
         </ThemeProvider>

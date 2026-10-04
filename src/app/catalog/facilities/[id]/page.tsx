@@ -40,9 +40,9 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
           
           {/* Header Section */}
           <section className="relative">
-            <Link 
-              href="/" 
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[var(--navy)] transition-colors mb-6 group"
+            <Link
+              href="/catalog"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--navy)] transition-colors mb-6 group"
             >
               <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Back to Catalog
             </Link>
@@ -62,7 +62,7 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                 <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-[var(--navy)] leading-tight tracking-tight mb-4 drop-shadow-sm">
                   {facility.name}
                 </h1>
-                <p className="text-lg text-slate-600 leading-relaxed font-light">
+                <p className="text-lg text-[var(--text-muted)] leading-relaxed font-light">
                   {facility.description ?? "Experience premium amenities and unparalleled service in our professionally managed space."}
                 </p>
               </div>
@@ -118,7 +118,7 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                 <div className="w-12 h-12 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <span className="text-xl">💰</span>
                 </div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Standard Rate</p>
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-1">Standard Rate</p>
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-4xl text-[var(--navy)] font-bold">{formatCurrency(standardRate)}</span>
                 </div>
@@ -130,10 +130,10 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                 <div className="w-12 h-12 rounded-2xl bg-[var(--navy)]/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Users size={22} className="text-[var(--navy-light)]" />
                 </div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Max Capacity</p>
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-1">Max Capacity</p>
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-4xl text-[var(--navy)] font-bold">{facility.capacity.toLocaleString()}</span>
-                  <span className="text-sm text-slate-500 font-medium">guests</span>
+                  <span className="text-sm text-[var(--text-muted)] font-medium">guests</span>
                 </div>
               </CardContent>
             </Card>
@@ -143,10 +143,10 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                 <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Clock3 size={22} className="text-info" />
                 </div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Daily Hours</p>
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-1">Daily Hours</p>
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-3xl text-[var(--navy)] font-bold tracking-tight">
-                    {facility.availableFrom} <span className="text-slate-300 font-light mx-1">-</span> {facility.availableTo}
+                    {facility.availableFrom} <span className="text-[var(--text-muted)] font-light mx-1">-</span> {facility.availableTo}
                   </span>
                 </div>
               </CardContent>
@@ -158,7 +158,7 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
             <div className="lg:col-span-2 space-y-6">
               <Card className="bg-white/60 dark:bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-white/80 dark:border-[rgba(255,255,255,0.1)] shadow-sm rounded-3xl overflow-hidden">
                 <CardContent className="p-8 md:p-10">
-                  <h2 className="font-display text-2xl text-[var(--navy)] font-semibold border-b border-slate-100 pb-4 mb-6">Facility Details</h2>
+                  <h2 className="font-display text-2xl text-[var(--navy)] font-semibold border-b border-[var(--border)] pb-4 mb-6">Facility Details</h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -169,7 +169,7 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                         {DAYS.map((day, idx) => {
                           const isAvailable = facility.availableDays.includes(idx);
                           return (
-                            <Badge key={day} variant={isAvailable ? "secondary" : "outline"} className={`px-3 py-1.5 font-medium ${isAvailable ? "bg-[var(--navy)]/5 text-[var(--navy)]" : "text-slate-300 border-dashed"}`}>
+                            <Badge key={day} variant={isAvailable ? "secondary" : "outline"} className={`px-3 py-1.5 font-medium ${isAvailable ? "bg-[var(--navy)]/5 text-[var(--navy)]" : "text-[var(--text-muted)] border-dashed"}`}>
                               {day}
                             </Badge>
                           );
@@ -184,13 +184,13 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                       {facility.amenities.length > 0 ? (
                         <ul className="grid grid-cols-1 gap-3">
                           {facility.amenities.map((item, i) => (
-                            <li key={i} className="flex items-center gap-3 text-slate-600 text-sm">
+                            <li key={i} className="flex items-center gap-3 text-[var(--text-muted)] text-sm">
                               <span className="w-1.5 h-1.5 rounded-full bg-[var(--gold)]"></span> {item}
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-sm text-slate-400 italic">No specific amenities listed.</p>
+                        <p className="text-sm text-[var(--text-muted)] italic">No specific amenities listed.</p>
                       )}
                     </div>
                   </div>
@@ -206,13 +206,13 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
               </h3>
               
               {facility.bookings.length === 0 ? (
-                <div className="text-center py-10 bg-white/40 dark:bg-[rgba(255,255,255,0.03)] rounded-2xl border border-dashed border-slate-200">
-                  <CalendarRange size={32} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-sm text-slate-500 font-medium">Fully available this week.</p>
-                  <p className="text-xs text-slate-400 mt-1">Be the first to book!</p>
+                <div className="text-center py-10 bg-white/40 dark:bg-[rgba(255,255,255,0.03)] rounded-2xl border border-dashed border-[var(--border)]">
+                  <CalendarRange size={32} className="mx-auto text-[var(--text-muted)] mb-3" />
+                  <p className="text-sm text-[var(--text-muted)] font-medium">Fully available this week.</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Be the first to book!</p>
                 </div>
               ) : (
-                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[var(--border)] before:to-transparent">
                   {facility.bookings.map((booking) => {
                     const startDate = new Date(booking.startTime);
                     const isApproved = booking.status === "APPROVED";
@@ -220,15 +220,15 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
                       <div key={booking.id} className="relative flex items-center justify-between pl-6 md:pl-0">
                         <div className="hidden md:flex w-24 flex-col text-right pr-4">
                           <span className="text-xs font-bold text-[var(--navy)]">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          <span className="text-[10px] text-slate-400 uppercase">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] uppercase">{startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                         </div>
                         <div className={`absolute left-0 md:left-1/2 -ml-1 md:-ml-[5px] w-3 h-3 rounded-full border-2 border-white dark:border-[#0f1a2b] shadow-sm z-10 ${isApproved ? "bg-success" : "bg-info"}`}></div>
-                        <div className="bg-white/80 dark:bg-[rgba(255,255,255,0.05)] rounded-xl p-3 shadow-sm border border-slate-100 flex-1 md:ml-4 w-full">
+                        <div className="bg-white/80 dark:bg-[rgba(255,255,255,0.05)] rounded-xl p-3 shadow-sm border border-[var(--border)] flex-1 md:ml-4 w-full">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-bold text-slate-700 md:hidden">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('en-US', { hour: 'numeric' })}</span>
+                            <span className="text-xs font-bold text-[var(--navy)] md:hidden">{startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('en-US', { hour: 'numeric' })}</span>
                             <StatusBadge status={booking.status} size="xs" className="print:hidden" />
                           </div>
-                          <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
+                          <span className="text-xs text-[var(--text-muted)] flex items-center gap-1 font-medium">
                             <Clock3 size={11} /> {Math.round((new Date(booking.endTime).getTime() - startDate.getTime()) / (1000 * 60 * 60))} hours
                           </span>
                         </div>
@@ -240,33 +240,33 @@ export default async function PublicFacilityDetailPage(props: { params: Promise<
             </div>
           </section>
 
-          {/* Super-CTA Section */}
-          <section className="relative mt-12 rounded-[2rem] overflow-hidden group">
-            <div className="absolute inset-0 bg-[var(--navy)] dark:bg-[#0f1b30]">
-              <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] bg-[length:4px_4px]" aria-hidden />
-              <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--navy-light)] to-transparent dark:from-[#1d3358] skew-x-12 translate-x-32 group-hover:translate-x-10 transition-transform duration-1000 ease-out"></div>
-            </div>
-            
-            <div className="relative p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 z-10">
-              <div className="text-center md:text-left">
-                <span className="text-[var(--gold)] text-sm font-bold uppercase tracking-widest block mb-2">Ready to Reserve?</span>
-                <h2 className="text-3xl md:text-4xl font-display text-[#fff] font-bold max-w-xl leading-tight">
-                  Secure your dates before they&apos;re gone.
+          {/* One clear next action */}
+          <section className="mt-12 overflow-hidden rounded-[var(--r-3xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+            <div className="flex flex-col items-start gap-6 p-7 sm:p-10 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--gold-muted)]">
+                  Available to book
+                </p>
+                <h2 className="font-display text-2xl font-bold leading-tight text-[var(--navy)] sm:text-3xl">
+                  Hold these dates for your gathering
                 </h2>
+                <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
+                  Tell us when you need {facility.name} and we will confirm the details.
+                </p>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+
+              <div className="flex w-full shrink-0 flex-col items-start gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <Link
                   href={`/guest/book?facilityId=${facility.id}`}
-                  className="inline-flex items-center justify-center bg-[#fff] text-[#0a1628] hover:bg-[#f1ede4] dark:bg-[var(--gold)] dark:text-[#080F1A] dark:hover:bg-[var(--gold-bright)] rounded-full px-8 h-14 text-base font-semibold shadow-xl border-0"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--r-lg)] bg-[var(--submit-bg)] px-7 text-base font-semibold text-[var(--submit-fg)] no-underline transition-colors hover:bg-[var(--submit-bg-hover)] sm:w-auto"
                 >
-                  Reserve as Guest
+                  Plan your visit <ArrowRight size={17} aria-hidden />
                 </Link>
                 <Link
                   href="/patron/login"
-                  className="inline-flex items-center justify-center bg-transparent text-[#fff] border border-white/20 hover:bg-white/10 rounded-full px-8 h-14 text-base font-medium"
+                  className="text-sm font-semibold text-[var(--gold-muted)] underline-offset-4 hover:underline"
                 >
-                  Patron Sign In
+                  Sign in
                 </Link>
               </div>
             </div>

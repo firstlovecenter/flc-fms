@@ -9,6 +9,15 @@ import { getSiteSettings } from "@/actions/site-settings.actions";
 
 import { Card } from "@/components/ui/card";
 
+const chipClass =
+  "inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--cream)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)]";
+
+const chipLinkClass = `${chipClass} no-underline transition-colors hover:border-[var(--border-dark)] hover:text-[var(--navy)]`;
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return <span className={chipClass}>{children}</span>;
+}
+
 type SearchParams = {
   facilityId?: string;
   type?: string;
@@ -159,32 +168,30 @@ export default async function GuestBookPage(props: { searchParams: Promise<Searc
     >
       <div className="space-y-6">
         <GuestPageHero
-          eyebrow={isItemBooking ? "Items & Packages Booking" : "Public Booking"}
-          title={isItemBooking ? "Item Booking Request" : "Guest Booking Request"}
+          eyebrow={isItemBooking ? "Items and packages" : "Plan your visit"}
+          title={isItemBooking ? "Tell us what you need" : "Plan your visit"}
           description={
             isItemBooking
-              ? "Reserve items or packages for your external event. Our team will confirm availability and pricing."
-              : <>Submit a booking as a guest, or <Link href="/patron/register" className="text-[var(--gold-pale)] underline">create an account</Link> to track your booking status.</>
+              ? "Choose the items or packages for your gathering. We will confirm what is available and what it costs."
+              : <>Tell us what you are planning and we will take care of the rest. You can also <Link href="/patron/register" className="font-semibold text-[var(--gold-muted)] underline-offset-4 hover:underline">create an account</Link> to keep your visits in one place.</>
           }
         >
             {isItemBooking ? (
               <>
-                <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
-                  {initialLines.length} item type{initialLines.length !== 1 ? "s" : ""} selected
-                </span>
-                <Link href="/?tab=items" className="badge bg-white/10 text-[#fff] border border-white/25 no-underline">
-                  ← Back to Home
+                <Chip>
+                  {initialLines.length} item type{initialLines.length !== 1 ? "s" : ""} added
+                </Chip>
+                <Link href="/catalog?tab=items" className={chipLinkClass}>
+                  ← Back to services
                 </Link>
               </>
             ) : (
               <>
-                <span className="badge bg-[rgba(200,163,90,0.15)] text-[var(--gold-pale)] border border-[rgba(200,163,90,0.45)]">
-                  {facilities.length} facilities available
-                </span>
-                <span className="badge bg-white/10 text-[#fff] border border-white/25">
-                  Same-day review by staff
-                </span>
-                <Link href="/?tab=items" className="badge bg-white/10 text-[#fff] border border-white/25 no-underline">
+                <Chip>
+                  {facilities.length} {facilities.length === 1 ? "space" : "spaces"} available
+                </Chip>
+                <Chip>Reviewed the same day</Chip>
+                <Link href="/catalog?tab=items" className={chipLinkClass}>
                   Browse items →
                 </Link>
               </>

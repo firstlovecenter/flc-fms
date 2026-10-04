@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+import Link from "next/link";
 import { Phone, Mail, Check } from "lucide-react";
 import PublicSiteNav from "@/components/public/PublicSiteNav";
 import type { PublicNavPage } from "@/components/public/public-nav";
@@ -88,6 +89,11 @@ export type PublicShellProps = {
   subtitle?: ReactNode;
   maxWidth?: "md" | "lg" | "xl";
   className?: string;
+  /**
+   * Full-bleed hero rendered between the header and the contained content.
+   * Escapes the page container so photo heroes can run edge to edge.
+   */
+  hero?: ReactNode;
 };
 
 export default function PublicShell({
@@ -101,6 +107,7 @@ export default function PublicShell({
   subtitle,
   maxWidth = "lg",
   className,
+  hero,
 }: PublicShellProps) {
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
   const showBookCta = current !== "guest";
@@ -144,28 +151,83 @@ export default function PublicShell({
   }
 
   return (
-    <div className={cn("surface-warm min-h-screen bg-[var(--page-bg,var(--cream))] dark:bg-transparent relative overflow-x-hidden", className)}>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[radial-gradient(circle,rgba(148,163,184,0.08)_0%,transparent_70%)]" />
-        <div className="absolute top-1/3 -left-16 w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(22,26,31,0.04)_0%,transparent_70%)] dark:opacity-40" />
-      </div>
-      <header className="sticky top-0 z-20 bg-[rgba(255,255,255,0.88)] dark:bg-[rgba(10,18,30,0.85)] backdrop-blur-md border-b border-[var(--border)]">
-        <nav className="py-3.5">
+    <div
+      className={cn(
+        "surface-warm min-h-dvh bg-[var(--page-bg,var(--cream))] dark:bg-transparent relative overflow-x-hidden flex flex-col",
+        className
+      )}
+    >
+      <header className="sticky top-0 z-20 bg-[rgba(255,255,255,0.95)] dark:bg-[rgba(27,25,23,0.92)] backdrop-blur-md border-b border-[var(--border)]">
+        <nav className="py-3">
           <PageContainer maxWidth={maxWidth}>
             <PublicSiteNav current={current} variant="top" showBookCta={showBookCta} />
           </PageContainer>
         </nav>
-        {(officePhone || officeEmail) && (
-          <div className="border-t border-[var(--border)] bg-[rgba(22,26,31,0.02)] dark:bg-[rgba(255,255,255,0.02)]">
+        {/* With a hero the image should run straight under the nav; the Front
+            Desk details still live in the footer. */}
+        {!hero && (officePhone || officeEmail) && (
+          <div className="border-t border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(255,255,255,0.02)]">
             <PageContainer maxWidth={maxWidth} className="py-1.5">
               <ContactStrip officePhone={officePhone} officeEmail={officeEmail} />
             </PageContainer>
           </div>
         )}
       </header>
-      <main className="relative z-10 py-8 md:py-12 animate-fade-in">
+
+      {hero && <div className="relative z-10 animate-fade-in">{hero}</div>}
+
+      <main className={cn("relative z-10 flex-1 animate-fade-in", hero ? "pb-12" : "py-8 md:py-12")}>
         <PageContainer maxWidth={maxWidth}>{children}</PageContainer>
       </main>
+
+      <PublicFooter officePhone={officePhone} officeEmail={officeEmail} maxWidth={maxWidth} />
     </div>
+  );
+}
+
+/** Calm single-line footer — navigational essentials and legal only. */
+function PublicFooter({
+  officePhone,
+  officeEmail,
+  maxWidth,
+}: {
+  officePhone?: string;
+  officeEmail?: string;
+  maxWidth: "md" | "lg" | "xl";
+}) {
+  return (
+    <footer className="relative z-10 border-t border-[var(--border)] bg-[var(--surface)]">
+      <PageContainer maxWidth={maxWidth} className="py-6">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className="text-caption text-[var(--text-muted)]">
+            First Love Center · Campus Services
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
+            <Link href="/faq" className="text-caption text-[var(--text-muted)] hover:text-[var(--navy)] transition-colors">
+              Help
+            </Link>
+            <Link href="/feedback" className="text-caption text-[var(--text-muted)] hover:text-[var(--navy)] transition-colors">
+              Share feedback
+            </Link>
+            {officeEmail && (
+              <a
+                href={`mailto:${officeEmail}`}
+                className="text-caption text-[var(--text-muted)] hover:text-[var(--navy)] transition-colors"
+              >
+                Front Desk
+              </a>
+            )}
+            {officePhone && (
+              <a
+                href={`tel:${officePhone}`}
+                className="text-caption text-[var(--text-muted)] hover:text-[var(--navy)] transition-colors"
+              >
+                {officePhone}
+              </a>
+            )}
+          </div>
+        </div>
+      </PageContainer>
+    </footer>
   );
 }

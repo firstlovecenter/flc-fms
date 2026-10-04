@@ -5,7 +5,6 @@ import { Menu, Search } from "lucide-react";
 import Image from "next/image";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
 import CommandSearch from "@/components/ui/CommandSearch";
-import { ThemeModeSwitcher } from "@/components/theme/theme-mode-switcher";
 import type { PermissionSet } from "@/lib/permissions";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -88,7 +87,6 @@ export default function Topbar({
           <Search size={15} />
         </button>
 
-        <ThemeModeSwitcher />
         <PushNotificationToggle compact />
 
         {/* Divider */}

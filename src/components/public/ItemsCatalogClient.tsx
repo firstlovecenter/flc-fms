@@ -136,13 +136,13 @@ export default function ItemsCatalogClient({
                       <button
                         onClick={() => updateQty(line.id, line.type, -1)}
                         aria-label={`Decrease quantity of ${line.name}`}
-                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+                        className="w-6 h-6 rounded-full bg-[var(--cream-dark)] flex items-center justify-center hover:bg-[var(--cream-dark)] dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Minus size={12} /></button>
                       <span className="w-6 text-center font-bold">{line.qty}</span>
                       <button
                         onClick={() => updateQty(line.id, line.type, 1)}
                         aria-label={`Increase quantity of ${line.name}`}
-                        className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+                        className="w-6 h-6 rounded-full bg-[var(--cream-dark)] flex items-center justify-center hover:bg-[var(--cream-dark)] dark:bg-slate-800 dark:hover:bg-slate-700"
                       ><Plus size={12} /></button>
                     </div>
                     <button

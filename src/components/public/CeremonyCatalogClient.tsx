@@ -122,7 +122,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
             >
               {/* Image */}
               <div
-                className="relative h-48 bg-slate-100 dark:bg-[rgba(255,255,255,0.04)] overflow-hidden cursor-pointer"
+                className="relative h-48 bg-[var(--cream-dark)] dark:bg-[rgba(255,255,255,0.04)] overflow-hidden cursor-pointer"
                 onClick={() => setSelectedConfig(config)}
               >
                 {config.images[0] ? (
@@ -132,7 +132,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)]">
                     <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
@@ -156,7 +156,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
               </div>
 
               <CardContent className="p-4 space-y-1">
-                <h3 className="font-bold text-[var(--navy)] dark:text-gray-100 text-base leading-snug">
+                <h3 className="font-bold text-[var(--navy)] text-base leading-snug">
                   {config.facility.name}
                 </h3>
                 {config.description && (
@@ -175,7 +175,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
 
               <CardFooter className="px-4 pb-4 pt-0 flex items-center justify-between">
                 <div>
-                  <span className="text-xl font-bold text-[var(--navy)] dark:text-gray-100">
+                  <span className="text-xl font-bold text-[var(--navy)]">
                     {formatCurrency(Number(config.price))}
                   </span>
                   <p className="text-[11px] text-[var(--muted)]">Payment code required</p>
@@ -224,7 +224,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
               )}
               <div className="p-6 space-y-4">
                 <DialogHeader>
-                  <DialogTitle className="text-xl text-[var(--navy)] dark:text-gray-100">
+                  <DialogTitle className="text-xl text-[var(--navy)]">
                     {selectedConfig.facility.name}
                   </DialogTitle>
                 </DialogHeader>
@@ -242,7 +242,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
                 <AvailabilityBadge summary={availability?.[selectedConfig.facility.id]} />
                 <div className="flex items-center justify-between pt-2">
                   <div>
-                    <span className="text-2xl font-bold text-[var(--navy)] dark:text-gray-100">
+                    <span className="text-2xl font-bold text-[var(--navy)]">
                       {formatCurrency(Number(selectedConfig.price))}
                     </span>
                     <p className="text-xs text-[var(--muted)]">Payment code required to book</p>

@@ -109,7 +109,7 @@ export default function FeedbackForm({
         <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
           <CheckCircle2 size={32} className="text-success" />
         </div>
-        <h3 className="font-display text-2xl font-bold text-[var(--navy)] dark:text-gray-100">
+        <h3 className="font-display text-2xl font-bold text-[var(--navy)]">
           Submission Received
         </h3>
         <p className="text-[var(--slate)] dark:text-gray-300 max-w-md mx-auto">
