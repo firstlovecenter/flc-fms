@@ -4,6 +4,7 @@ import { Outfit, DM_Serif_Display, Open_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import PullToRefresh from "@/components/layout/PullToRefresh";
+import StaleBuildGuard from "@/components/layout/StaleBuildGuard";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="surface-warm font-sans antialiased">
         <ThemeProvider>
+          <StaleBuildGuard />
           <PullToRefresh />
           {children}
         </ThemeProvider>

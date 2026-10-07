@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v5";
+const CACHE_VERSION = "v6";
 const STATIC_CACHE  = `cfms-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `cfms-runtime-${CACHE_VERSION}`;
 const DATA_CACHE    = `cfms-data-${CACHE_VERSION}`;
@@ -117,6 +117,20 @@ self.addEventListener("fetch", (event) => {
   // Skip all other /api/ routes (auth callbacks, uploads, webhooks)
   if (url.pathname.startsWith("/api/")) return;
 
+  // Never cache React Server Component payloads (client-side navigations,
+  // prefetches, router.refresh). They embed the build ID, chunk paths and
+  // Server Action IDs of the deployment that produced them; serving a stale
+  // one after a deploy pins the client to the old build, causing
+  // "Server Action ... was not found on the server" and chunk-load crashes.
+  if (
+    url.searchParams.has("_rsc") ||
+    request.headers.get("RSC") === "1" ||
+    request.headers.has("Next-Router-Prefetch") ||
+    request.headers.has("Next-Router-State-Tree")
+  ) {
+    return;
+  }
+
   // ── Static assets (_next/static): cache-first (immutable content hashes) ──
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
@@ -157,9 +171,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   // ── Navigation & Next data: network-first → cached → /offline ────────────
+  // No timeout: on slow networks a timeout would serve HTML from a previous
+  // deployment, whose chunks and Server Action IDs may no longer exist.
+  // Cached HTML is only a fallback when the network is actually unreachable.
   if (request.mode === "navigate" || url.pathname.startsWith("/_next/data/")) {
     event.respondWith(
-      fetchWithTimeout(request, 5000)
+      fetch(request)
         .then((response) => {
           if (response.status === 200) {
             const clone = response.clone();
@@ -249,24 +266,6 @@ self.addEventListener("sync", (event) => {
     );
   }
 });
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-// Fetches with a timeout to prevent long waits on slow networks
-function fetchWithTimeout(request, timeoutMs) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
-    fetch(request).then(
-      (response) => {
-        clearTimeout(timer);
-        resolve(response);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      }
-    );
-  });
-}
 
 // ── Message handling ──────────────────────────────────────────────────────────
 // Periodically clean old runtime cache entries
