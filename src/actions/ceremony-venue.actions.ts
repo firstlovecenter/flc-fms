@@ -80,14 +80,19 @@ export async function getCeremonyDays(): Promise<string[]> {
   return [...new Set([...firstSats, ...added])].sort();
 }
 
-/** Staff: designate an extra Saturday as a ceremony day, or exclude an automatic first Saturday. */
+/** Staff: designate an extra day (any day except Monday) as a ceremony day, or exclude an automatic first Saturday. */
 export async function addCeremonyDateOverride(data: { date: string; note?: string; type?: "ADD" | "EXCLUDE" }) {
   const session = await requirePerm("ceremony:manage");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) return { error: "Please select a valid date." };
   const d = new Date(data.date + "T12:00:00.000Z");
   if (Number.isNaN(d.getTime())) return { error: "Please select a valid date." };
-  if (d.getUTCDay() !== 6) return { error: "Only Saturdays can be designated as ceremony days." };
   const type = data.type ?? "ADD";
+  if (type === "EXCLUDE" && d.getUTCDay() !== 6) {
+    return { error: "Only automatic first Saturdays can be excluded." };
+  }
+  if (type === "ADD" && d.getUTCDay() === 1) {
+    return { error: "Mondays are office off-days and cannot be ceremony days." };
+  }
 
   try {
     await prisma.ceremonyDateOverride.upsert({

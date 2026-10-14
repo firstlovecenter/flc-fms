@@ -102,6 +102,23 @@ export function toDateStr(d: Date): string {
 /** The two ceremony booking categories, as stored on Booking.category (uppercase). */
 export const CEREMONY_CATEGORIES = ["WEDDING", "NAMING"] as const;
 
+/**
+ * Ceremony time slots are configured on Saturday (the automatic ceremony day).
+ * When staff add a weekday as an extra ceremony day, that weekday uses its own
+ * ceremony-category slots if any exist, otherwise it reuses Saturday's.
+ */
+export const CEREMONY_SLOT_FALLBACK_DAY = 6;
+
+/**
+ * Picks the ceremony slots that apply to `dayOfWeek` from a list fetched for
+ * both that day and CEREMONY_SLOT_FALLBACK_DAY.
+ */
+export function pickCeremonySlotsForDay<T extends { dayOfWeek: number }>(slots: T[], dayOfWeek: number): T[] {
+  const own = slots.filter((s) => s.dayOfWeek === dayOfWeek);
+  if (own.length > 0 || dayOfWeek === CEREMONY_SLOT_FALLBACK_DAY) return own;
+  return slots.filter((s) => s.dayOfWeek === CEREMONY_SLOT_FALLBACK_DAY);
+}
+
 /** True if `category` (case-insensitive) is a ceremony category (WEDDING/NAMING). */
 export function isCeremonyCategory(category: string | null | undefined): boolean {
   if (!category) return false;
@@ -111,7 +128,7 @@ export function isCeremonyCategory(category: string | null | undefined): boolean
 /**
  * True if `date` is a designated ceremony day: the first Saturday of its month
  * (unless staff excluded it via an EXCLUDE override), or a staff-added ADD
- * override. Accepts either the global prisma client or a transaction client
+ * override (any day except Monday). Accepts either the global prisma client or a transaction client
  * so it can be called both inside and outside a transaction.
  */
 export async function isCeremonyDay(

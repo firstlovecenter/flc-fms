@@ -446,7 +446,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <div>
               <h3 className="font-semibold text-[var(--navy)] text-sm">Manage Ceremony Dates</h3>
               <p className="text-xs text-[var(--muted)] mt-1">
-                Add another Saturday here, or exclude an automatic first Saturday from its row below.
+                Add another ceremony day (any day except Monday), or exclude an automatic first Saturday from its row below.
               </p>
             </div>
             <Button
@@ -460,7 +460,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               size="sm"
               className="text-xs gap-1 shrink-0"
             >
-              <Plus size={12} /> Add Another Saturday
+              <Plus size={12} /> Add Ceremony Day
             </Button>
           </Card>
 
@@ -535,8 +535,8 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
           <Card className="overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Saturdays</h3>
-                <p className="text-xs text-[var(--muted)] mt-0.5">Additional Saturdays designated as ceremony-only days</p>
+                <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Days</h3>
+                <p className="text-xs text-[var(--muted)] mt-0.5">Additional days designated as ceremony-only days. Weekdays without their own ceremony time slots use the Saturday slots.</p>
               </div>
               <Calendar size={16} className="text-[var(--muted)]" />
             </div>
@@ -550,6 +550,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Day</th>
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Note</th>
                       <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Added By</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Action</th>
@@ -560,6 +561,9 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                       <tr key={o.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
                           {new Date(o.date).toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-2.5 text-[var(--muted)]">
+                          {new Date(o.date).toLocaleDateString("en-GH", { weekday: "long" })}
                         </td>
                         <td className="px-4 py-2.5 text-[var(--muted)] hidden md:table-cell text-xs">{o.note ?? "—"}</td>
                         <td className="px-4 py-2.5 text-[var(--muted)] hidden md:table-cell text-xs">{o.createdBy.name}</td>
@@ -584,17 +588,17 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
           {/* Add date modal */}
           {showAddDate && (
             <Modal
-              title={addDateMode === "EXCLUDE" ? "Exclude Automatic Ceremony Day" : "Add Extra Ceremony Saturday"}
+              title={addDateMode === "EXCLUDE" ? "Exclude Automatic Ceremony Day" : "Add Extra Ceremony Day"}
               onClose={() => setShowAddDate(false)}
             >
               <p className="text-xs text-[var(--muted)]">
                 {addDateMode === "EXCLUDE"
                   ? "This automatic first Saturday will no longer be a ceremony day — it becomes bookable for regular events instead."
-                  : "This Saturday will be blocked for general bookings and available for ceremony bookings."}
+                  : "This day will be blocked for general bookings and available for ceremony bookings. Mondays are not allowed."}
               </p>
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">Date (must be a Saturday) *</Label>
+                  <Label className="text-xs">{addDateMode === "EXCLUDE" ? "Date" : "Date (any day except Monday)"} *</Label>
                   <Input
                     type="date"
                     value={newDate}

@@ -15,7 +15,13 @@ import { sendPushToPatron, sendPushToUser, sendPushToAllStaff } from "@/lib/noti
 import { staffPhonesWithPermission } from "@/lib/notifications/recipients";
 import { getFacilityMaintenanceConflict } from "./maintenance.actions";
 import { timeRangeContains } from "@/lib/time-utils";
-import { CeremonyDetailsSchema, isCeremonyCategory, isCeremonyDay } from "@/lib/ceremony-utils";
+import {
+  CEREMONY_SLOT_FALLBACK_DAY,
+  CeremonyDetailsSchema,
+  isCeremonyCategory,
+  isCeremonyDay,
+  pickCeremonySlotsForDay,
+} from "@/lib/ceremony-utils";
 import {
   MAX_BOOKING_ADVANCE_ERROR,
   MAX_BOOKING_ADVANCE_HOURS,
@@ -145,15 +151,18 @@ async function findApplicableTimeSlot(
 
   // Fetch all active slots for this day/category, then check containment in JS
   // so overnight slots (e.g. 22:00→04:00) are handled correctly.
-  const candidates = await db.facilityTimeSlot.findMany({
+  // Ceremony bookings on an added weekday fall back to Saturday's ceremony slots.
+  const ceremony = isCeremonyCategory(category);
+  const fetched = await db.facilityTimeSlot.findMany({
     where: {
       facilityId,
-      dayOfWeek,
+      dayOfWeek: ceremony ? { in: [dayOfWeek, CEREMONY_SLOT_FALLBACK_DAY] } : dayOfWeek,
       category,
       isActive: true,
     },
     orderBy: { startTime: "asc" },
   });
+  const candidates = ceremony ? pickCeremonySlotsForDay(fetched, dayOfWeek) : fetched;
 
   return candidates.find((slot) =>
     timeRangeContains(slot.startTime, slot.endTime, start, end),

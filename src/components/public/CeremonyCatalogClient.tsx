@@ -98,7 +98,7 @@ export default function CeremonyCatalogClient({ type, configs, availability, off
       <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 px-4 py-3">
         <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
         <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
-          {ceremonyLabel} bookings are held on ceremony Saturdays and require a{" "}
+          {ceremonyLabel} bookings are held on designated ceremony days and require a{" "}
           <strong>payment code</strong>. Contact our office to arrange payment and receive your code.
         </p>
         <ContactOfficeLink
