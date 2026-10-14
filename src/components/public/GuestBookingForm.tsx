@@ -459,7 +459,7 @@ export default function GuestBookingForm({
     if (f) {
       setSelectedDate((prev) => {
         if (!prev) return prev;
-        return isCeremonyBooking || f.availableDays.includes(prev.getDay()) ? prev : undefined;
+        return f.availableDays.includes(prev.getDay()) ? prev : undefined;
       });
     }
 
@@ -584,9 +584,8 @@ export default function GuestBookingForm({
       ? []
       : [{ after: addDays(new Date(), isCeremonyBooking ? MAX_CEREMONY_BOOKING_ADVANCE_DAYS : MAX_BOOKING_ADVANCE_DAYS) }]),
     ...(canBookMondays ? [] : [{ dayOfWeek: [1] }]),
-    // Ceremony bookings are gated by ceremony days below, which may fall on any weekday.
     (date: Date) =>
-      !!(!isCeremonyBooking && selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
+      !!(selectedFacility && !selectedFacility.availableDays.includes(date.getDay())),
     // Ceremony booking: only ceremony days are selectable
     ...(isCeremonyBooking && effectiveCeremonyDays.length > 0
       ? [(date: Date) => !effectiveCeremonyDays.includes(toDateStr(date))]
@@ -791,8 +790,8 @@ export default function GuestBookingForm({
             <div className="grid grid-cols-3 gap-2">
               {([
                 { key: "regular", label: "Regular", icon: CalendarDays, hint: "Events & meetings" },
-                { key: "wedding", label: "Wedding", icon: Heart, hint: "Ceremony days only" },
-                { key: "naming", label: "Naming", icon: Baby, hint: "Ceremony days only" },
+                { key: "wedding", label: "Wedding", icon: Heart, hint: "Saturdays only" },
+                { key: "naming", label: "Naming", icon: Baby, hint: "Saturdays only" },
               ] as const).map(({ key, label, icon: Icon, hint }) => {
                 const active = bookingType === key;
                 return (
@@ -823,7 +822,7 @@ export default function GuestBookingForm({
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 px-4 py-3">
               <Info size={16} className="text-[var(--gold)] shrink-0" aria-hidden />
               <p className="text-sm text-[var(--slate)] dark:text-gray-300 min-w-0 flex-1">
-                {ceremonyType === "wedding" ? "Wedding" : "Naming"} bookings are held on designated ceremony days and require a <strong>payment code</strong>
+                {ceremonyType === "wedding" ? "Wedding" : "Naming"} bookings are held on ceremony Saturdays and require a <strong>payment code</strong>
                 {estimatedCost != null ? <> — this venue is <strong>{formatCurrency(estimatedCost)}</strong></> : null}. Contact our office to arrange payment and receive your code.
               </p>
               <ContactOfficeLink

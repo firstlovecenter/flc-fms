@@ -80,7 +80,7 @@ export async function getCeremonyDays(): Promise<string[]> {
   return [...new Set([...firstSats, ...added])].sort();
 }
 
-/** Staff: designate an extra day (any day except Monday) as a ceremony day, or exclude an automatic first Saturday. */
+/** Staff: designate an extra day as a ceremony day, or exclude an automatic first Saturday. */
 export async function addCeremonyDateOverride(data: { date: string; note?: string; type?: "ADD" | "EXCLUDE" }) {
   const session = await requirePerm("ceremony:manage");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) return { error: "Please select a valid date." };
@@ -89,9 +89,6 @@ export async function addCeremonyDateOverride(data: { date: string; note?: strin
   const type = data.type ?? "ADD";
   if (type === "EXCLUDE" && d.getUTCDay() !== 6) {
     return { error: "Only automatic first Saturdays can be excluded." };
-  }
-  if (type === "ADD" && d.getUTCDay() === 1) {
-    return { error: "Mondays are office off-days and cannot be ceremony days." };
   }
 
   try {

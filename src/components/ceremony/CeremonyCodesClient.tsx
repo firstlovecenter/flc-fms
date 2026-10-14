@@ -446,7 +446,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <div>
               <h3 className="font-semibold text-[var(--navy)] text-sm">Manage Ceremony Dates</h3>
               <p className="text-xs text-[var(--muted)] mt-1">
-                Add another ceremony day (any day except Monday), or exclude an automatic first Saturday from its row below.
+                Add another ceremony day, or exclude an automatic first Saturday from its row below.
               </p>
             </div>
             <Button
@@ -536,7 +536,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-[var(--navy)] text-sm">Extra Ceremony Days</h3>
-                <p className="text-xs text-[var(--muted)] mt-0.5">Additional days designated as ceremony-only days. Weekdays without their own ceremony time slots use the Saturday slots.</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">Additional days designated as ceremony-only days</p>
               </div>
               <Calendar size={16} className="text-[var(--muted)]" />
             </div>
@@ -594,11 +594,11 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               <p className="text-xs text-[var(--muted)]">
                 {addDateMode === "EXCLUDE"
                   ? "This automatic first Saturday will no longer be a ceremony day — it becomes bookable for regular events instead."
-                  : "This day will be blocked for general bookings and available for ceremony bookings. Mondays are not allowed."}
+                  : "This day will be blocked for general bookings and available for ceremony bookings."}
               </p>
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">{addDateMode === "EXCLUDE" ? "Date" : "Date (any day except Monday)"} *</Label>
+                  <Label className="text-xs">Date *</Label>
                   <Input
                     type="date"
                     value={newDate}

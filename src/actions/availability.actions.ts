@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { bookingOverlapsSlot, toMinutes } from "@/lib/time-utils";
-import { CEREMONY_SLOT_FALLBACK_DAY, isCeremonyDay, pickCeremonySlotsForDay, toDateStr } from "@/lib/ceremony-utils";
+import { isCeremonyDay, toDateStr } from "@/lib/ceremony-utils";
 import { getCeremonyDays } from "@/actions/ceremony-venue.actions";
 import {
   isBeyondMaxBookingAdvance,
@@ -329,13 +329,13 @@ export async function getCeremonyAvailability(
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [config, facility, candidateSlots, existingBookings] = await Promise.all([
+    const [config, facility, timeSlots, existingBookings] = await Promise.all([
       prisma.ceremonyVenueConfig.findUnique({
         where: { facilityId_type: { facilityId, type } },
       }),
       prisma.facility.findUnique({ where: { id: facilityId }, select: { underMaintenance: true } }),
       prisma.facilityTimeSlot.findMany({
-        where: { facilityId, dayOfWeek: { in: [dayOfWeek, CEREMONY_SLOT_FALLBACK_DAY] }, isActive: true, category: type },
+        where: { facilityId, dayOfWeek, isActive: true, category: type },
         orderBy: { startTime: "asc" },
       }),
       prisma.booking.findMany({
@@ -359,7 +359,6 @@ export async function getCeremonyAvailability(
     if (facility?.underMaintenance) {
       return { success: true, slots: [], emergencyMaintenance: true, message: "Facility is under emergency maintenance." };
     }
-    const timeSlots = pickCeremonySlotsForDay(candidateSlots, dayOfWeek);
     if (timeSlots.length === 0) {
       return { success: true, slots: [], message: "No ceremony time slots configured for this day." };
     }
@@ -415,8 +414,7 @@ export interface CeremonyVenueAvailabilitySummary {
  * Bulk-computes availability for every active ceremony venue of `type`, so bookers
  * can compare venues by open ceremony dates before deciding which one to pay for.
  * Time slots are fetched once per facility for every weekday that has an upcoming
- * ceremony day (plus Saturday, the fallback) and checked against each day within
- * the horizon.
+ * ceremony day and checked against each ceremony day within the horizon.
  */
 export async function getCeremonyVenueAvailabilitySummaries(
   type: "WEDDING" | "NAMING",
@@ -461,7 +459,7 @@ export async function getCeremonyVenueAvailabilitySummaries(
       prisma.facilityTimeSlot.findMany({
         where: {
           facilityId: { in: facilityIds },
-          dayOfWeek: { in: [...new Set([...candidateDates.map((d) => d.getDay()), CEREMONY_SLOT_FALLBACK_DAY])] },
+          dayOfWeek: { in: [...new Set(candidateDates.map((d) => d.getDay()))] },
           isActive: true,
           category: type,
         },
@@ -503,7 +501,7 @@ export async function getCeremonyVenueAvailabilitySummaries(
         for (let i = 0; i < candidateDates.length; i++) {
           const date = candidateDates[i];
           const dateStr = candidateDateStrs[i];
-          const slots = pickCeremonySlotsForDay(facilitySlots, date.getDay());
+          const slots = facilitySlots.filter((s) => s.dayOfWeek === date.getDay());
           const startOfDay = new Date(date);
           startOfDay.setHours(0, 0, 0, 0);
           const endOfDay = new Date(date);
