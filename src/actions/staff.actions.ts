@@ -15,7 +15,7 @@ import {
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 import { type Role, Prisma } from "@prisma/client";
-import { checkStaffTarget, permissionsBeyondActor } from "@/lib/permissions/staff-guard";
+import { checkStaffTarget } from "@/lib/permissions/staff-guard";
 
 export async function getStaffMembers() {
   await requirePerm("staff:view");
@@ -45,10 +45,6 @@ export async function updateStaffPermissions(
     Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, Boolean(permissions[k])]))
   );
   const nextSet = Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, clean[k] ?? false])) as PermissionSet;
-  const beyond = permissionsBeyondActor(session, nextSet);
-  if (beyond.length > 0) {
-    return { error: `You can only grant permissions you hold yourself (not: ${beyond.join(", ")}).` };
-  }
   const full = permissionsToFullStored(nextSet);
 
   await prisma.user.update({
@@ -218,9 +214,6 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
   if ("error" in check) return check;
   if (nextRole === "FACILITY_MANAGER" && session.role !== "SUPER_ADMIN") {
     return { error: "Only Super Admin can assign the Facility Manager role." };
-  }
-  if (permissionsBeyondActor(session, permSet).length > 0) {
-    return { error: "You can only assign a role whose permissions you hold yourself." };
   }
 
   if (target.role === "SUPER_ADMIN" && session.role !== "SUPER_ADMIN") {
