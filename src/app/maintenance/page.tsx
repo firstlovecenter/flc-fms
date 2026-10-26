@@ -10,6 +10,8 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { FilterPills } from "@/components/layout/ListControls";
 import { EmptyState } from "@/components/ui/empty";
 
+const TH = "px-4 py-2.5 text-left text-xs font-medium text-[var(--muted)] whitespace-nowrap";
+
 const STATUS_FILTERS = ["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
 export default async function MaintenancePage(
@@ -101,11 +103,28 @@ export default async function MaintenancePage(
           }
         />
       ) : (
-        <ul className="divide-y divide-border/70 rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
-          {serializedRequests.map((r) => (
-            <MaintenanceRequestCard key={r.id} request={r} canManage={canManage} />
-          ))}
-        </ul>
+        <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/60">
+              <tr>
+                <th data-mobile="title" className={TH}>Request</th>
+                <th data-mobile="meta" className={TH}>Facility</th>
+                <th data-mobile="meta" className={cn(TH, "sm:max-lg:hidden")}>Priority</th>
+                <th data-mobile="meta" className={TH}>Raised</th>
+                <th data-mobile="meta" className={cn(TH, "text-right sm:max-lg:hidden")}>Cost</th>
+                <th data-mobile="badge" className={TH}>Status</th>
+                <th className={cn(TH, "w-px")}><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {serializedRequests.map((r) => (
+                <MaintenanceRequestCard key={r.id} request={r} canManage={canManage} />
+              ))}
+            </tbody>
+          </table>
+          </div>
+        </div>
       )}
     </div>
   );

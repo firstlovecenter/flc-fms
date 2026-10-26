@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
-import { Search, SlidersHorizontal, X, CalendarDays, ChevronRight, Pencil, ArrowUpRight } from "lucide-react";
+import { Search, SlidersHorizontal, X, CalendarDays, Pencil, ArrowUpRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,8 @@ import SendSMSButton from "@/components/bookings/SendSMSButton";
 import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { updateBookingByManager } from "@/actions/booking.actions";
 import { RecordSheet, SheetSection, DetailGrid } from "@/components/layout/RecordSheet";
-import { AcPill, ContactButtons, DateChip, formatTimeRange } from "@/components/bookings/booking-list-parts";
+import { ContactButtons } from "@/components/bookings/booking-list-parts";
+import BookingTable from "@/components/bookings/BookingTable";
 
 type BookingItem = {
   id: string;
@@ -358,49 +359,26 @@ export default function BookingsListClient({
           }
         />
       ) : (
-        <ul className="divide-y divide-border/70 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
-          {filtered.map((b) => (
-            <li key={b.id}>
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label={`Open ${b.title}`}
-                className="group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-5"
-                onClick={() => openModal(b)}
-                onKeyDown={(e) => {
-                  if (e.target !== e.currentTarget) return;
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openModal(b);
-                  }
-                }}
-              >
-                <DateChip iso={b.startTime} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="truncate text-sm font-medium text-[var(--navy)]">{b.title}</span>
-                    <StatusBadge status={b.status} size="xs" />
-                    {b.acRequested && <AcPill />}
-                  </div>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
-                    <span>{b.facilityName}</span>
-                    <span aria-hidden>·</span>
-                    <span>{formatTimeRange(b.startTime, b.endTime)}</span>
-                    <span aria-hidden>·</span>
-                    <span className="truncate">
-                      {b.createdByStaffName ? `${b.bookerName || "—"} (by ${b.createdByStaffName})` : b.bookerName || "—"}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {b.bookerPhone && <ContactButtons phone={b.bookerPhone} compact />}
-                  <span className="ml-1 hidden text-sm font-medium tabular-nums text-[var(--navy)] sm:inline">{formatCurrency(b.totalAmount)}</span>
-                  <ChevronRight size={16} className="text-[var(--muted)] transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <BookingTable
+          onOpen={(id) => {
+            const b = bookings.find((x) => x.id === id);
+            if (b) openModal(b);
+          }}
+          rows={filtered.map((b) => ({
+            id: b.id,
+            title: b.title,
+            subtitle: labelForCategory(b.category, categories),
+            facility: b.facilityName,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            booker: b.bookerName,
+            bookerNote: b.createdByStaffName ? `Booked by ${b.createdByStaffName}` : "Patron request",
+            phone: b.bookerPhone,
+            amount: b.totalAmount,
+            status: b.status,
+            ac: b.acRequested,
+          }))}
+        />
       )}
 
       {/* ── Details ──────────────────────────────────────────────────── */}
