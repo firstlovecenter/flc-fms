@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import BookingForm from "@/components/bookings/BookingForm";
 import { getCeremonyDays, getCeremonyFacilityIds } from "@/actions/ceremony-venue.actions";
 import { redirect } from "next/navigation";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default async function NewBookingPage(
   props: {
@@ -79,10 +80,12 @@ export default async function NewBookingPage(
 
   return (
     <div className="w-full max-w-6xl space-y-6">
-      <div>
-        <h1 className="page-title">{title}</h1>
-        <p className="text-sm page-subtitle">{subtitle}</p>
-      </div>
+      <PageHeader
+        back={{ href: "/bookings", label: "Bookings" }}
+        title={title}
+        description={subtitle}
+        className="mb-0"
+      />
       <BookingForm
         facilities={serialized}
         defaultFacilityId={searchParams.facilityId}

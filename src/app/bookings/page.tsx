@@ -5,11 +5,20 @@ import { prisma } from "@/lib/db/prisma";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
+import { FilterPills, ListPagination, SegmentLinks } from "@/components/layout/ListControls";
 import BookingsListClient from "@/components/bookings/BookingsListClient";
 import CeremonyBookingsTable, { type CeremonyBookingRow } from "@/components/bookings/CeremonyBookingsTable";
 import { CEREMONY_CATEGORIES, type CeremonyDetails } from "@/lib/ceremony-utils";
 
-const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
+const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"] as const;
+const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
+  ALL: "All",
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
 
 type Tab = "regular" | "ceremony";
 
@@ -33,16 +42,16 @@ export default async function BookingsPage(
 
   if (tab === "ceremony") {
     // ── Ceremony tab ──────────────────────────────────────────────────────────
-    const where = {
+    const tabWhere = {
       OR: [
         { ceremonyCode: { isNot: null } },
         { category: { in: [...CEREMONY_CATEGORIES] } },
       ],
-      ...(status ? { status } : {}),
       deletedAt: null,
     };
+    const where = { ...tabWhere, ...(status ? { status } : {}) };
 
-    const [bookings, total] = await prisma.$transaction([
+    const [bookings, total, statusCounts] = await prisma.$transaction([
       prisma.booking.findMany({
         where,
         include: {
@@ -56,9 +65,8 @@ export default async function BookingsPage(
         take,
       }),
       prisma.booking.count({ where }),
+      prisma.booking.groupBy({ by: ["status"], where: tabWhere, orderBy: { status: "asc" }, _count: { _all: true } }),
     ]);
-
-    const pages = Math.ceil(total / take);
 
     const ceremonyRows: CeremonyBookingRow[] = bookings.map((b) => {
       const booker = b.patron ?? b.user;
@@ -97,26 +105,9 @@ export default async function BookingsPage(
     });
 
     return (
-      <div className="space-y-4 animate-fade-in">
-        <PageHeader
-          title="Bookings"
-          description={`${total} ceremony booking${total !== 1 ? "s" : ""}`}
-          actions={canManage ? (
-            <>
-              <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
-                <Plus size={15} /> New Booking
-              </Link>
-              <Link href="/bookings/new?type=wedding" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
-                <Plus size={15} /> New Wedding
-              </Link>
-              <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
-                <Plus size={15} /> New Naming
-              </Link>
-            </>
-          ) : undefined}
-        />
-
-        <TabBar tab="ceremony" status={searchParams.status} />
+      <div className="space-y-5 animate-fade-in">
+        <BookingsHeader canManage={canManage} />
+        <ListControls tab="ceremony" status={searchParams.status} counts={statusCounts} />
 
         <CeremonyBookingsTable
           bookings={ceremonyRows}
@@ -124,28 +115,25 @@ export default async function BookingsPage(
           isSuperAdmin={isSuperAdmin}
         />
 
-        {pages > 1 && (
-          <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
-            <span>Page {page} of {pages}</span>
-            <div className="flex gap-2">
-            {page > 1 && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>← Prev</Link>}
-            {page < pages && <Link href={`/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Next →</Link>}
-            </div>
-          </div>
-        )}
+        <ListPagination
+          page={page}
+          pageSize={take}
+          total={total}
+          hrefFor={(p) => `/bookings?tab=ceremony&status=${searchParams.status ?? "ALL"}&page=${p}`}
+        />
       </div>
     );
   }
 
   // ── Regular tab ─────────────────────────────────────────────────────────────
-  const where = {
+  const tabWhere = {
     ceremonyCode: null,
     category: { notIn: [...CEREMONY_CATEGORIES] },
-    ...(status ? { status } : {}),
     deletedAt: null,
   };
+  const where = { ...tabWhere, ...(status ? { status } : {}) };
 
-  const [bookings, total, facilities, categories] = await prisma.$transaction([
+  const [bookings, total, facilities, categories, statusCounts] = await prisma.$transaction([
     prisma.booking.findMany({
       where,
       include: {
@@ -181,9 +169,8 @@ export default async function BookingsPage(
       select: { slug: true, name: true },
       orderBy: { sortOrder: "asc" },
     }),
+    prisma.booking.groupBy({ by: ["status"], where: tabWhere, orderBy: { status: "asc" }, _count: { _all: true } }),
   ]);
-
-  const pages = Math.ceil(total / take);
 
   const STATUS_PRIORITY: Record<string, number> = { PENDING: 0, APPROVED: 1, COMPLETED: 2, REJECTED: 3, CANCELLED: 4 };
   const sorted = [...bookings].sort((a, b) => {
@@ -230,38 +217,9 @@ export default async function BookingsPage(
   }));
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <PageHeader
-        title="Bookings"
-        description={`${total} regular booking${total !== 1 ? "s" : ""}`}
-        actions={canManage ? (
-          <>
-            <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
-              <Plus size={15} /> New Booking
-            </Link>
-            <Link href="/bookings/new?type=wedding" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
-              <Plus size={15} /> New Wedding
-            </Link>
-            <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
-              <Plus size={15} /> New Naming
-            </Link>
-          </>
-        ) : undefined}
-      />
-
-      <TabBar tab="regular" status={searchParams.status} />
-
-      <div className="flex gap-2 flex-wrap">
-        {STATUSES.map((s) => {
-          const active = (searchParams.status ?? "ALL") === s;
-          return (
-            <Link key={s} href={`/bookings?tab=regular&status=${s}`}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${active ? "bg-[var(--navy)] text-white border-[var(--navy)]" : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"}`}>
-              {s}
-            </Link>
-          );
-        })}
-      </div>
+    <div className="space-y-5 animate-fade-in">
+      <BookingsHeader canManage={canManage} />
+      <ListControls tab="regular" status={searchParams.status} counts={statusCounts} />
 
       <BookingsListClient
         initialBookings={bookingRows}
@@ -271,45 +229,76 @@ export default async function BookingsPage(
         categories={categories}
       />
 
-      {pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-[var(--slate)] pt-2">
-          <span>Page {page} of {pages}</span>
-          <div className="flex gap-2">
-            {page > 1 && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page - 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>← Prev</Link>}
-            {page < pages && <Link href={`/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${page + 1}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Next →</Link>}
-          </div>
-        </div>
-      )}
+      <ListPagination
+        page={page}
+        pageSize={take}
+        total={total}
+        hrefFor={(p) => `/bookings?tab=regular&status=${searchParams.status ?? "ALL"}&page=${p}`}
+      />
     </div>
   );
 }
 
-// ── Tab navigation component ──────────────────────────────────────────────────
+// ── Page pieces ───────────────────────────────────────────────────────────────
 
-function TabBar({ tab, status }: { tab: Tab; status?: string }) {
-  const statusParam = status && status !== "ALL" ? `&status=${status}` : "";
+function BookingsHeader({ canManage }: { canManage: boolean }) {
   return (
-    <div className="flex gap-1 border-b border-[var(--border)]">
-      <Link
-        href={`/bookings?tab=regular${statusParam}`}
-        className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
-          tab === "regular"
-            ? "border-[var(--navy)] text-[var(--navy)]"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] hover:border-gray-300"
-        }`}
-      >
-        Regular Bookings
-      </Link>
-      <Link
-        href={`/bookings?tab=ceremony${statusParam}`}
-        className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
-          tab === "ceremony"
-            ? "border-[var(--navy)] text-[var(--navy)]"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] hover:border-gray-300"
-        }`}
-      >
-        Ceremony Bookings
-      </Link>
+    <PageHeader
+      title="Bookings"
+      description="Review requests, keep track of upcoming use, and reach bookers. Pending requests are listed first."
+      actions={canManage ? (
+        <>
+          <Link href="/bookings/new?type=wedding" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+            <Plus size={15} /> Wedding
+          </Link>
+          <Link href="/bookings/new?type=naming" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+            <Plus size={15} /> Naming
+          </Link>
+          <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
+            <Plus size={15} /> New booking
+          </Link>
+        </>
+      ) : undefined}
+      className="mb-0"
+    />
+  );
+}
+
+/** Regular / ceremony tabs, then the status pills with a count for each. */
+function ListControls({
+  tab,
+  status,
+  counts,
+}: {
+  tab: Tab;
+  status?: string;
+  counts: { status: string; _count: { _all: number } }[];
+}) {
+  const statusParam = status && status !== "ALL" ? `&status=${status}` : "";
+  const countFor = (s: string) =>
+    s === "ALL"
+      ? counts.reduce((n, c) => n + c._count._all, 0)
+      : counts.find((c) => c.status === s)?._count._all ?? 0;
+  return (
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <SegmentLinks
+        label="Booking type"
+        value={tab}
+        tabs={[
+          { value: "regular", label: "Regular", href: `/bookings?tab=regular${statusParam}` },
+          { value: "ceremony", label: "Ceremonies", href: `/bookings?tab=ceremony${statusParam}` },
+        ]}
+      />
+      <FilterPills
+        label="Status"
+        value={status ?? "ALL"}
+        options={STATUSES.map((s) => ({
+          value: s,
+          label: STATUS_LABELS[s],
+          count: countFor(s),
+          href: `/bookings?tab=${tab}&status=${s}`,
+        }))}
+      />
     </div>
   );
 }

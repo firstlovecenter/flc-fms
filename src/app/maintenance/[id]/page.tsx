@@ -115,7 +115,7 @@ export default async function MaintenanceDetailPage(props: { params: Promise<{ i
         <Card className="p-5 border-l-4 border-l-[var(--gold)]">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[rgba(200,163,90,0.12)] border border-[rgba(200,163,90,0.2)] flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-[hsl(var(--gold-hsl)/0.12)] border border-[hsl(var(--gold-hsl)/0.2)] flex items-center justify-center flex-shrink-0">
                 <Receipt size={16} className="text-[var(--gold)]" />
               </div>
               <div>

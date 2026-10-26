@@ -32,7 +32,16 @@ function getValidatedVapidKey() {
   }
 }
 
-export default function PushNotificationToggle({ compact }: { compact?: boolean } = {}) {
+const ROUND =
+  "flex size-10 items-center justify-center rounded-full border border-border/70 bg-card shadow-[var(--shadow-xs)] transition-colors";
+const ROW =
+  "flex h-9 w-full items-center gap-2.5 rounded-full px-3 text-[0.8rem] font-medium transition-colors";
+
+/**
+ * `compact` is the round icon button in the staff header; `row` is a full-width
+ * row in the staff sidebar's account panel.
+ */
+export default function PushNotificationToggle({ compact, row }: { compact?: boolean; row?: boolean } = {}) {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -155,10 +164,19 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
     return compact ? (
       <button
         disabled
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--muted)] cursor-not-allowed"
+        className={`${ROUND} text-[var(--muted)] cursor-not-allowed opacity-70`}
         title="Notifications blocked — enable in browser settings"
       >
         <BellOff size={15} strokeWidth={1.5} />
+      </button>
+    ) : row ? (
+      <button
+        disabled
+        className={`${ROW} text-muted-foreground cursor-not-allowed opacity-70`}
+        title="Notifications blocked — enable in browser settings"
+      >
+        <BellOff size={16} className="opacity-80" />
+        Notifications blocked
       </button>
     ) : (
       <button
@@ -177,20 +195,35 @@ export default function PushNotificationToggle({ compact }: { compact?: boolean 
       <button
         onClick={handleToggle}
         disabled={loading}
-        className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200 ${
-          subscribed
-            ? "bg-[rgba(255,66,102,0.12)] border-[rgba(255,66,102,0.28)] text-[var(--gold)] hover:-translate-y-0.5"
-            : "bg-[var(--cream-dark)] border-[var(--border)] text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[var(--cream)] hover:border-[var(--border-dark)] hover:-translate-y-0.5"
-        }`}
+        aria-label={subscribed ? "Disable push notifications" : "Enable push notifications"}
+        className={`${ROUND} ${subscribed ? "text-[var(--gold)]" : "text-[var(--muted)] hover:text-[var(--navy)]"}`}
         title={subscribed ? "Disable push notifications" : "Enable push notifications"}
       >
         {loading ? (
-          <Loader2 size={15} className="animate-spin" />
+          <Loader2 size={17} className="animate-spin" />
         ) : subscribed ? (
-          <Bell size={15} strokeWidth={1.5} />
+          <Bell size={17} strokeWidth={1.75} />
         ) : (
-          <BellOff size={15} strokeWidth={1.5} />
+          <BellOff size={17} strokeWidth={1.75} />
         )}
+      </button>
+    );
+  }
+
+  if (row) {
+    return (
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={loading}
+        className={`${ROW} ${
+          subscribed
+            ? "text-[var(--gold)] hover:bg-[hsl(var(--sb-bg))]"
+            : "text-[hsl(var(--sb-fg))] hover:bg-[hsl(var(--sb-bg))] hover:text-[hsl(var(--sb-fg-strong))]"
+        }`}
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : subscribed ? <Bell size={16} /> : <BellOff size={16} className="opacity-80" />}
+        {subscribed ? "Notifications on" : "Turn on notifications"}
       </button>
     );
   }

@@ -1,17 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Phone, MessageCircle, Search, CalendarDays, ChevronRight } from "lucide-react";
-import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
+import Link from "next/link";
+import { Search, CalendarDays, ChevronRight, X, ArrowUpRight } from "lucide-react";
+import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
 import BookingActions from "@/components/bookings/BookingActions";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
+import { RecordSheet, SheetSection, DetailGrid } from "@/components/layout/RecordSheet";
+import { FilterPills } from "@/components/layout/ListControls";
+import { AcPill, ContactButtons, DateChip, formatTimeRange } from "@/components/bookings/booking-list-parts";
 
 export type CeremonyBookingRow = {
   id: string;
@@ -49,20 +52,24 @@ interface Props {
   isSuperAdmin: boolean;
 }
 
-const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "CANCELLED"];
+const TYPE_OPTIONS = [
+  { value: "ALL", label: "All types" },
+  { value: "WEDDING", label: "Weddings" },
+  { value: "NAMING", label: "Namings" },
+];
 
-function normalizeTel(phone: string) {
-  return phone.replace(/[^\d+]/g, "");
-}
-
-function normalizeWhatsApp(phone: string) {
-  return phone.replace(/\D/g, "");
-}
-
-function typeLabel(type: CeremonyBookingRow["ceremonyType"]) {
-  if (type === "wedding") return <span className="badge bg-pink-50 text-pink-700 border border-pink-200">Wedding</span>;
-  if (type === "naming") return <span className="badge bg-info/10 text-info border border-info/25">Naming</span>;
-  return <span className="text-[var(--muted)] text-xs">—</span>;
+function TypePill({ type }: { type: CeremonyBookingRow["ceremonyType"] }) {
+  if (!type) return null;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-medium leading-4",
+        type === "wedding" ? "bg-[hsl(330_70%_50%/0.1)] text-[hsl(330_60%_42%)]" : "bg-info/10 text-info"
+      )}
+    >
+      {type === "wedding" ? "Wedding" : "Naming"}
+    </span>
+  );
 }
 
 function principalNames(b: CeremonyBookingRow) {
@@ -75,19 +82,18 @@ function principalNames(b: CeremonyBookingRow) {
     const parents = [b.fatherName, b.motherName].filter(Boolean).join(" & ");
     return parents ? `${child} (${parents})` : child;
   }
-  return "—";
+  return b.title || "—";
 }
 
+/** Ceremony bookings on this page. Status is filtered on the server (the pills above the list). */
 export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmin }: Props) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const filtered = bookings.filter((b) => {
     if (deletedIds.has(b.id)) return false;
-    if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
     if (typeFilter === "WEDDING" && b.ceremonyType !== "wedding") return false;
     if (typeFilter === "NAMING" && b.ceremonyType !== "naming") return false;
     if (search.trim()) {
@@ -101,11 +107,10 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
 
   const selected = useMemo(() => bookings.find((b) => b.id === selectedId) ?? null, [bookings, selectedId]);
 
-  const hasActiveFilters = !!(search || statusFilter !== "ALL" || typeFilter !== "ALL");
+  const hasActiveFilters = !!(search || typeFilter !== "ALL");
 
   function clearFilters() {
     setSearch("");
-    setStatusFilter("ALL");
     setTypeFilter("ALL");
   }
 
@@ -121,221 +126,204 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+      {/* Toolbar */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
           <Input
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, code…"
-            className="pl-8 text-sm py-1.5 w-56"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search names or ceremony code…"
+            aria-label="Search ceremony bookings"
+            className="h-10 min-h-10 !rounded-full bg-card pl-10 pr-9 text-sm shadow-[var(--shadow-xs)]"
           />
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          {STATUSES.map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                statusFilter === s
-                  ? "bg-[var(--navy)] text-white border-[var(--navy)]"
-                  : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"
-              }`}>
-              {s}
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--muted)] hover:text-[var(--navy)]"
+            >
+              <X size={14} />
             </button>
-          ))}
+          )}
         </div>
-
-        <div className="flex gap-2">
-          {(["ALL", "WEDDING", "NAMING"] as const).map((t) => (
-            <button key={t} onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                typeFilter === t
-                  ? "bg-[var(--gold)] text-[#fff] border-[var(--gold)]"
-                  : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--gold)]"
-              }`}>
-              {t === "ALL" ? "All Types" : t === "WEDDING" ? "Weddings" : "Namings"}
-            </button>
-          ))}
-        </div>
-
-        <span className="text-xs text-[var(--muted)] sm:ml-auto">{filtered.length} booking{filtered.length !== 1 ? "s" : ""}</span>
+        <FilterPills label="Ceremony type" value={typeFilter} onChange={setTypeFilter} options={TYPE_OPTIONS} />
+        <p className="shrink-0 text-sm text-[var(--muted)] sm:ml-auto">
+          <span className="font-medium tabular-nums text-[var(--navy)]">{filtered.length}</span> on this page
+        </p>
       </div>
 
-      <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={<CalendarDays />}
-            title="No ceremony bookings found"
-            description="No ceremony bookings match your current filters."
-            action={
-              hasActiveFilters ? (
-                <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
-                  Clear filters
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          filtered.map((b) => (
-            <Card
-              key={b.id}
-              role="button"
-              tabIndex={0}
-              className="block w-full text-left hover:shadow-md transition-shadow p-3 px-4 gap-0 py-3 cursor-pointer"
-              onClick={() => setSelectedId(b.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setSelectedId(b.id);
-                }
-              }}
-            >
-              <div className="flex items-center justify-between gap-3">
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<CalendarDays />}
+          title={hasActiveFilters ? "No matching ceremonies" : "No ceremony bookings here yet"}
+          description={
+            hasActiveFilters
+              ? "Nothing on this page matches your search and filters."
+              : "Weddings and namings appear here when they're booked with a ceremony code or by staff."
+          }
+          action={
+            hasActiveFilters ? (
+              <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
+                <X size={12} /> Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <ul className="divide-y divide-border/70 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
+          {filtered.map((b) => (
+            <li key={b.id}>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${principalNames(b)}`}
+                className="group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-5"
+                onClick={() => setSelectedId(b.id)}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedId(b.id);
+                  }
+                }}
+              >
+                <DateChip iso={b.startTime} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {typeLabel(b.ceremonyType)}
-                    <span className="font-semibold text-[var(--navy)] text-sm truncate">{principalNames(b)}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium text-[var(--navy)]">{principalNames(b)}</span>
+                    <TypePill type={b.ceremonyType} />
                     <StatusBadge status={b.status} size="xs" />
-                    {b.acRequested && (
-                      <span className="inline-flex items-center rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--navy)]">
-                        AC
-                      </span>
-                    )}
+                    {b.acRequested && <AcPill />}
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)] flex-wrap">
-                    {b.createdByStaffName ? (
-                      <span>Staff booking by {b.createdByStaffName} · Contact: {b.bookerName}</span>
-                    ) : b.bookerName && b.bookerName !== "—" ? (
-                      <span>Patron booking by {b.bookerName}</span>
-                    ) : null}
-                    <span>•</span>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
                     <span>{b.facilityName}</span>
-                    <span>•</span>
-                    <span>{formatDateTime(new Date(b.startTime))}</span>
+                    <span aria-hidden>·</span>
+                    <span>{formatTimeRange(b.startTime, b.endTime)}</span>
                     {b.ceremonyCodeValue && (
                       <>
-                        <span>•</span>
-                        <code className="text-[11px] bg-[var(--cream)] px-1.5 py-0.5 rounded font-mono border border-[var(--border)]">
+                        <span aria-hidden>·</span>
+                        <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-[var(--navy)]">
                           {b.ceremonyCodeValue}
                         </code>
                       </>
                     )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-semibold text-[var(--gold)] text-sm">{formatCurrency(b.totalAmount)}</span>
-                  <ChevronRight size={16} className="text-[var(--muted)]" />
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {selected && (
-        <div className="fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4" onClick={closeModal}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  {typeLabel(selected.ceremonyType)}
-                  <h2 className="text-lg font-semibold text-[var(--navy)]">{principalNames(selected)}</h2>
-                </div>
-                <p className="text-xs text-[var(--muted)]">{selected.facilityName} • {selected.title}</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={closeModal}>Close</Button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Card className="p-3 gap-0 py-3">
-                  <p className="text-xs text-[var(--muted)] mb-1.5">Status</p>
-                  <StatusBadge status={selected.status} size="sm" />
-                </Card>
-                <Card className="p-3 gap-0 py-3">
-                  <p className="text-xs text-[var(--muted)]">Amount</p>
-                  <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
-                </Card>
-                <Card className="p-3 gap-0 py-3">
-                  <p className="text-xs text-[var(--muted)]">AC requested</p>
-                  <p className="text-sm font-medium text-[var(--navy)]">
-                    {selected.acRequested
-                      ? "Yes — physical cash donation at Front Office."
-                      : "No."}
                   </p>
-                </Card>
-                {selected.ceremonyCodeValue && (
-                  <Card className="p-3 gap-0 py-3">
-                    <p className="text-xs text-[var(--muted)]">Ceremony Code</p>
-                    <code className="text-xs font-mono">{selected.ceremonyCodeValue}</code>
-                  </Card>
-                )}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {b.bookerPhone && <ContactButtons phone={b.bookerPhone} compact />}
+                  <span className="ml-1 hidden text-sm font-medium tabular-nums text-[var(--navy)] sm:inline">{formatCurrency(b.totalAmount)}</span>
+                  <ChevronRight size={16} className="text-[var(--muted)] transition-transform group-hover:translate-x-0.5" />
+                </div>
               </div>
-
-              <div className="text-sm">
-                <p>
-                  <strong>Booking Source:</strong>{" "}
-                  {selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : `Patron — ${selected.bookerName || "-"}`}
-                </p>
-                {selected.createdByStaffName && <p><strong>Customer Contact:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}</p>}
-                {selected.bookerPhone && (
-                  <div className="flex items-center gap-3 mt-1.5 mb-1">
-                    <a
-                      href={`tel:${normalizeTel(selected.bookerPhone)}`}
-                      className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
-                    >
-                      <Phone size={12} /> Call Booker
-                    </a>
-                    <a
-                      href={`https://wa.me/${normalizeWhatsApp(selected.bookerPhone)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-success hover:underline"
-                    >
-                      <MessageCircle size={12} /> WhatsApp Booker
-                    </a>
-                  </div>
-                )}
-                <p><strong>Date:</strong> {formatDateTime(new Date(selected.startTime))}</p>
-                <p><strong>Duration:</strong> {durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours</p>
-                {selected.notes && <p className="mt-2"><strong>Notes:</strong> {selected.notes}</p>}
-                {selected.rejectionReason && <p className="mt-2 text-danger"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
-              </div>
-
-              {selected.ceremonyType === "wedding" && (
-                <Card className="p-4 gap-0 py-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Wedding Details</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <p><strong>Bride:</strong> {selected.brideName ?? "—"}</p>
-                    <p><strong>Groom:</strong> {selected.groomName ?? "—"}</p>
-                    {selected.contactWhatsApp && <p><strong>Contact (WhatsApp):</strong> {selected.contactWhatsApp}</p>}
-                  </div>
-                </Card>
-              )}
-
-              {selected.ceremonyType === "naming" && (
-                <Card className="p-4 gap-0 py-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Naming Ceremony Details</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <p><strong>Child:</strong> {selected.childrenNames ?? "—"}</p>
-                    <p><strong>Birthday:</strong> {selected.childBirthday ?? "—"}</p>
-                    <p><strong>Father:</strong> {selected.fatherName ?? "—"}</p>
-                    <p><strong>Mother:</strong> {selected.motherName ?? "—"}</p>
-                    {selected.pastorName && <p><strong>Pastor:</strong> {selected.pastorName}</p>}
-                  </div>
-                </Card>
-              )}
-
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
-                {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
-                {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
-                {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
-                {isSuperAdmin && <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />}
-              </div>
-            </div>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
+
+      <RecordSheet
+        open={!!selected}
+        onClose={closeModal}
+        title={selected ? principalNames(selected) : ""}
+        badges={selected ? (
+          <>
+            <TypePill type={selected.ceremonyType} />
+            <StatusBadge status={selected.status} size="sm" />
+          </>
+        ) : null}
+        description={selected ? `${selected.facilityName} · ${selected.title}` : undefined}
+        actions={selected && (canManage || isSuperAdmin) ? (
+          <>
+            {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
+            {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
+            {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
+            {isSuperAdmin && <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />}
+          </>
+        ) : undefined}
+      >
+        {selected && (
+          <>
+            <div className="rounded-[1.25rem] bg-muted/60 p-4">
+              <p className="text-xs text-[var(--muted)]">Amount</p>
+              <p className="mt-1 text-2xl font-medium tabular-nums tracking-tight text-[var(--navy)]">{formatCurrency(selected.totalAmount)}</p>
+              <p className="mt-1.5 text-xs text-[var(--muted)]">
+                {selected.acRequested ? "AC requested — cash donation at the Front Office." : "No AC requested."}
+              </p>
+            </div>
+
+            {selected.rejectionReason && (
+              <div className="alert alert-error">
+                <span><strong className="font-medium">Rejected:</strong> {selected.rejectionReason}</span>
+              </div>
+            )}
+
+            <SheetSection title="Schedule">
+              <DetailGrid
+                items={[
+                  { label: "Date", value: formatDateTime(new Date(selected.startTime)) },
+                  { label: "Duration", value: `${durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours` },
+                  selected.ceremonyCodeValue && {
+                    label: "Ceremony code",
+                    value: <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs">{selected.ceremonyCodeValue}</code>,
+                  },
+                ]}
+              />
+            </SheetSection>
+
+            {selected.ceremonyType === "wedding" && (
+              <SheetSection title="Wedding">
+                <DetailGrid
+                  items={[
+                    { label: "Bride", value: selected.brideName ?? "—" },
+                    { label: "Groom", value: selected.groomName ?? "—" },
+                    selected.contactWhatsApp && { label: "Contact (WhatsApp)", value: selected.contactWhatsApp },
+                  ]}
+                />
+              </SheetSection>
+            )}
+
+            {selected.ceremonyType === "naming" && (
+              <SheetSection title="Naming ceremony">
+                <DetailGrid
+                  items={[
+                    { label: "Child", value: selected.childrenNames ?? "—" },
+                    { label: "Birthday", value: selected.childBirthday ?? "—" },
+                    { label: "Father", value: selected.fatherName ?? "—" },
+                    { label: "Mother", value: selected.motherName ?? "—" },
+                    selected.pastorName && { label: "Pastor", value: selected.pastorName },
+                  ]}
+                />
+              </SheetSection>
+            )}
+
+            <SheetSection title="Booker">
+              <DetailGrid
+                items={[
+                  { label: "Name", value: selected.bookerName || "—" },
+                  { label: "Source", value: selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : "Patron request" },
+                  selected.bookerPhone && { label: "Phone", value: selected.bookerPhone },
+                  selected.bookerEmail && { label: "Email", value: selected.bookerEmail },
+                ]}
+              />
+              {selected.bookerPhone && <ContactButtons phone={selected.bookerPhone} />}
+            </SheetSection>
+
+            {selected.notes && (
+              <SheetSection title="Notes">
+                <p className="whitespace-pre-line text-sm text-[var(--navy)]">{selected.notes}</p>
+              </SheetSection>
+            )}
+
+            <Link
+              href={`/bookings/${selected.id}`}
+              className="inline-flex items-center gap-1 text-sm font-medium text-[var(--gold)] hover:underline"
+            >
+              Open full booking page <ArrowUpRight size={14} />
+            </Link>
+          </>
+        )}
+      </RecordSheet>
     </div>
   );
 }

@@ -112,7 +112,7 @@ function EmptyState({
   return (
     <Empty
       className={cn(
-        "border border-dashed border-[var(--border)] bg-[var(--surface)]/40 py-16 dark:bg-[hsl(var(--ui-card))]/40",
+        "rounded-[1.25rem] border border-dashed border-border bg-card/50 py-14",
         className
       )}
     >

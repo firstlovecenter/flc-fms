@@ -21,13 +21,13 @@ export default function SectionHeader({
   return (
     <div
       className={cn(
-        "mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between",
+        "mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between",
         className
       )}
     >
       <div className="min-w-0">
         {eyebrow && <p className="section-eyebrow mb-1">{eyebrow}</p>}
-        <h2 className="font-display text-heading-md font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]">
+        <h2 className="font-display text-lg font-medium tracking-tight text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]">
           {title}
         </h2>
         {description && (

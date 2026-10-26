@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
-import { Phone, MessageCircle, Search, Filter, X, CalendarDays, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, X, CalendarDays, ChevronRight, Pencil, ArrowUpRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import BookingActions from "@/components/bookings/BookingActions";
@@ -17,6 +17,8 @@ import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import SendSMSButton from "@/components/bookings/SendSMSButton";
 import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { updateBookingByManager } from "@/actions/booking.actions";
+import { RecordSheet, SheetSection, DetailGrid } from "@/components/layout/RecordSheet";
+import { AcPill, ContactButtons, DateChip, formatTimeRange } from "@/components/bookings/booking-list-parts";
 
 type BookingItem = {
   id: string;
@@ -55,14 +57,6 @@ function labelForCategory(slug: string, categories: CategoryOption[]) {
   return hit ? hit.name : slug.replace(/_/g, " ");
 }
 
-function normalizeTel(phone: string) {
-  return phone.replace(/[^\d+]/g, "");
-}
-
-function normalizeWhatsApp(phone: string) {
-  return phone.replace(/\D/g, "");
-}
-
 const selectClassName = cn(
   "min-h-11 w-full min-w-0 rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--field-bg,var(--surface))] px-3 py-2 text-body text-[var(--field-fg,var(--navy))] transition-colors outline-none focus-visible:border-[var(--navy-mid)] focus-visible:ring-[3px] focus-visible:ring-gold/25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
 );
@@ -99,7 +93,8 @@ export default function BookingsListClient({
 
   const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  const hasActiveFilters = !!(searchQuery || filterFacility || filterCategory || filterDateFrom || filterDateTo || filterDay);
+  const activeFilterCount = [filterFacility, filterCategory, filterDateFrom, filterDateTo, filterDay].filter(Boolean).length;
+  const hasActiveFilters = !!searchQuery || activeFilterCount > 0;
 
   function clearFilters() {
     setSearchQuery("");
@@ -252,38 +247,61 @@ export default function BookingsListClient({
 
   return (
     <>
-      {/* ── Filter Bar ───────────────────────────────────────────────── */}
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+      {/* ── Toolbar ──────────────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:max-w-sm">
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
             <Input
               type="text"
-              placeholder="Search by name, booker, phone, facility..."
-              className="w-full pl-9 pr-3 text-sm"
+              placeholder="Search title, booker, phone, facility…"
+              aria-label="Search bookings"
+              className="h-10 min-h-10 !rounded-full bg-card pl-10 pr-9 text-sm shadow-[var(--shadow-xs)]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--muted)] hover:text-[var(--navy)]"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className={cn("gap-1.5 shrink-0", showFilters && "bg-[var(--navy)] text-white")}
-          >
-            <Filter size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-[var(--gold)]" />}
-          </Button>
-          {hasActiveFilters && (
-            <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="shrink-0 gap-1">
-              <X size={12} /> Clear
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              aria-expanded={showFilters}
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-10 min-h-10 gap-1.5 bg-card shadow-[var(--shadow-xs)]"
+            >
+              <SlidersHorizontal size={14} /> Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-[hsl(var(--btn))] text-[0.65rem] font-semibold text-[hsl(var(--btn-foreground))]">
+                  {activeFilterCount}
+                </span>
+              )}
             </Button>
-          )}
+            {hasActiveFilters && (
+              <Button type="button" variant="ghost" onClick={clearFilters} className="h-10 min-h-10 gap-1 text-[var(--muted)]">
+                <X size={14} /> Clear
+              </Button>
+            )}
+          </div>
+          <p className="shrink-0 text-sm text-[var(--muted)] sm:ml-auto">
+            <span className="font-medium tabular-nums text-[var(--navy)]">{filtered.length}</span>
+            {hasActiveFilters ? ` of ${bookings.length}` : ""} on this page
+          </p>
         </div>
 
         {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-white border border-[var(--border)]">
+          <div className="grid grid-cols-1 gap-3 rounded-[1.25rem] border border-border/70 bg-card p-4 shadow-[var(--shadow-xs)] sm:grid-cols-2 lg:grid-cols-5">
             <div>
-              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Facility</Label>
+              <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Facility</Label>
               <select className={cn(selectClassName, "text-sm")} value={filterFacility} onChange={(e) => setFilterFacility(e.target.value)}>
                 <option value="">All facilities</option>
                 {facilities.map((f) => (
@@ -292,7 +310,7 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Category</Label>
+              <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Category</Label>
               <select className={cn(selectClassName, "text-sm")} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
                 <option value="">All categories</option>
                 {categories.map((c) => (
@@ -301,7 +319,7 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Day of Week</Label>
+              <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Day of week</Label>
               <select className={cn(selectClassName, "text-sm")} value={filterDay} onChange={(e) => setFilterDay(e.target.value)}>
                 <option value="">Any day</option>
                 {DAYS_OF_WEEK.map((d, i) => (
@@ -310,266 +328,244 @@ export default function BookingsListClient({
               </select>
             </div>
             <div>
-              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">From Date</Label>
+              <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">From</Label>
               <Input type="date" className="w-full text-sm" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">To Date</Label>
+              <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">To</Label>
               <Input type="date" className="w-full text-sm" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
             </div>
           </div>
         )}
-
-        {hasActiveFilters && (
-          <p className="text-xs text-[var(--muted)]">
-            Showing {filtered.length} of {bookings.length} bookings
-          </p>
-        )}
       </div>
 
-      <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={<CalendarDays />}
-            title={hasActiveFilters ? "No matching bookings" : "No bookings yet"}
-            description={
-              hasActiveFilters
-                ? "No bookings match your current filters."
-                : "Bookings will appear here once they're created."
-            }
-            action={
-              hasActiveFilters ? (
-                <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
-                  <X size={12} /> Clear filters
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          filtered.map((b) => (
-            <Card
-              key={b.id}
-              role="button"
-              tabIndex={0}
-              className="block w-full text-left hover:shadow-md transition-shadow p-3 px-4 gap-0 py-3 cursor-pointer"
-              onClick={() => openModal(b)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openModal(b);
-                }
-              }}
-            >
-              <div className="flex items-center justify-between gap-3">
+      {/* ── List ─────────────────────────────────────────────────────── */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<CalendarDays />}
+          title={hasActiveFilters ? "No matching bookings" : "No bookings here yet"}
+          description={
+            hasActiveFilters
+              ? "Nothing on this page matches your search and filters."
+              : "Bookings appear here when staff create them or patrons request a facility."
+          }
+          action={
+            hasActiveFilters ? (
+              <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="gap-1">
+                <X size={12} /> Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <ul className="divide-y divide-border/70 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
+          {filtered.map((b) => (
+            <li key={b.id}>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${b.title}`}
+                className="group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-5"
+                onClick={() => openModal(b)}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openModal(b);
+                  }
+                }}
+              >
+                <DateChip iso={b.startTime} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-[var(--navy)] text-sm truncate">{b.title}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium text-[var(--navy)]">{b.title}</span>
                     <StatusBadge status={b.status} size="xs" />
-                    {b.acRequested && (
-                      <span className="inline-flex items-center rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--navy)]">
-                        AC
-                      </span>
-                    )}
+                    {b.acRequested && <AcPill />}
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--muted)]">
-                    <span>{b.createdByStaffName ? `Staff booking by ${b.createdByStaffName} · Contact: ${b.bookerName}` : `Patron booking by ${b.bookerName || "-"}`}</span>
-                    {b.bookerPhone && (
-                      <span className="inline-flex items-center gap-2">
-                        <a
-                          href={`tel:${normalizeTel(b.bookerPhone)}`}
-                          className="inline-flex items-center gap-1 text-[var(--navy)] hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Phone size={12} /> Call
-                        </a>
-                        <a
-                          href={`https://wa.me/${normalizeWhatsApp(b.bookerPhone)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-success hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MessageCircle size={12} /> WhatsApp
-                        </a>
-                      </span>
-                    )}
-                    <span>•</span>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
                     <span>{b.facilityName}</span>
-                    <span>•</span>
-                    <span>{formatDateTime(new Date(b.startTime))}</span>
-                  </div>
+                    <span aria-hidden>·</span>
+                    <span>{formatTimeRange(b.startTime, b.endTime)}</span>
+                    <span aria-hidden>·</span>
+                    <span className="truncate">
+                      {b.createdByStaffName ? `${b.bookerName || "—"} (by ${b.createdByStaffName})` : b.bookerName || "—"}
+                    </span>
+                  </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-semibold text-[var(--gold)] text-sm">{formatCurrency(b.totalAmount)}</span>
-                  <ChevronRight size={16} className="text-[var(--muted)]" />
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {b.bookerPhone && <ContactButtons phone={b.bookerPhone} compact />}
+                  <span className="ml-1 hidden text-sm font-medium tabular-nums text-[var(--navy)] sm:inline">{formatCurrency(b.totalAmount)}</span>
+                  <ChevronRight size={16} className="text-[var(--muted)] transition-transform group-hover:translate-x-0.5" />
                 </div>
               </div>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {selected && (
-        <div className="fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4" onClick={closeModal}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--navy)]">{selected.title}</h2>
-                <p className="text-xs text-[var(--muted)] mt-1">{selected.facilityName} • {labelForCategory(selected.category, categories)}</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={closeModal}>Close</Button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {error && <div className="alert alert-error">{error}</div>}
-
-              {!editing ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Card className="p-3 gap-0 py-3">
-                      <p className="text-xs text-[var(--muted)] mb-1.5">Status</p>
-                      <StatusBadge status={selected.status} size="sm" />
-                    </Card>
-                    <Card className="p-3 gap-0 py-3">
-                      <p className="text-xs text-[var(--muted)]">Amount</p>
-                      <p className="font-semibold text-[var(--gold)]">{formatCurrency(selected.totalAmount)}</p>
-                    </Card>
-                    <Card className="p-3 gap-0 py-3">
-                      <p className="text-xs text-[var(--muted)]">AC requested</p>
-                      <p className="text-sm font-medium text-[var(--navy)]">
-                        {selected.acRequested
-                          ? "Yes — physical cash donation at Front Office."
-                          : "No."}
-                      </p>
-                    </Card>
-                  </div>
-
-                  <div className="text-sm">
-                    <p>
-                      <strong>Booking Source:</strong>{" "}
-                      {selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : `Patron — ${selected.bookerName || "-"}`}
-                    </p>
-                    {selected.createdByStaffName && <p><strong>Customer Contact:</strong> {selected.bookerName || "-"} {selected.bookerPhone ? `(${selected.bookerPhone})` : ""}</p>}
-                    {selected.bookerPhone && (
-                      <div className="flex items-center gap-3 mt-1.5 mb-1">
-                        <a
-                          href={`tel:${normalizeTel(selected.bookerPhone)}`}
-                          className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
-                        >
-                          <Phone size={12} /> Call Booker
-                        </a>
-                        <a
-                          href={`https://wa.me/${normalizeWhatsApp(selected.bookerPhone)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-success hover:underline"
-                        >
-                          <MessageCircle size={12} /> WhatsApp Booker
-                        </a>
-                      </div>
-                    )}
-                    <p><strong>Start:</strong> {formatDateTime(new Date(selected.startTime))}</p>
-                    <p><strong>End:</strong> {formatDateTime(new Date(selected.endTime))}</p>
-                    <p><strong>Duration:</strong> {durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours</p>
-                    {selected.description && <p className="mt-2"><strong>Description:</strong> {selected.description}</p>}
-                    {selected.notes && <p className="mt-2"><strong>Notes:</strong> {selected.notes}</p>}
-                    {selected.rejectionReason && <p className="mt-2 text-danger"><strong>Rejection:</strong> {selected.rejectionReason}</p>}
-                  </div>
-
-                  {selected.lineItems.length > 0 && (
-                    <Card className="p-4 gap-0 py-4">
-                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Booked Items</p>
-                      <div className="space-y-2">
-                        {selected.lineItems.map((li, i) => (
-                          <div key={i} className="flex items-center justify-between gap-3 text-sm">
-                            <span className="text-[var(--navy)]">
-                              <span className="font-semibold tabular-nums">{li.quantity}×</span> {li.label}
-                              {li.unit ? <span className="text-[var(--muted)]"> ({li.unit})</span> : null}
-                            </span>
-                            <span className="font-semibold tabular-nums text-[var(--navy)]">{formatCurrency(li.subtotal)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
-                    {canManage && (selected.status === "PENDING" || isSuperAdmin) && <Button type="button" variant="outline" onClick={() => setEditing(true)}>Edit</Button>}
-                    {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
-                    {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
-                    {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
-                    {canManage && selected.bookerPhone && (
-                      <SendSMSButton
-                        bookingId={selected.id}
-                        bookingTitle={selected.title}
-                        bookerName={selected.bookerName}
-                        bookerPhone={selected.bookerPhone}
-                      />
-                    )}
-                    {isSuperAdmin && (
-                      <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />
-                    )}
-
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Facility</Label>
-                      <select className={selectClassName} value={form.facilityId} onChange={(e) => {
-                          const fid = e.target.value;
-                          const fac = facilities.find((f) => f.id === fid) ?? null;
-                          const cats = fac ? categories.filter((c) => fac.categories.includes(c.slug)) : categories;
-                          setForm((f) => ({ ...f, facilityId: fid, category: cats.length === 1 ? cats[0].slug : "" }));
-                        }}>
-                        <option value="">Select facility...</option>
-                        {facilities.map((f) => (
-                          <option key={f.id} value={f.id}>{f.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Category</Label>
-                      <select className={selectClassName} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-                        <option value="">Select category...</option>
-                        {formCategories.map((c) => (
-                          <option key={c.slug} value={c.slug}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Title</Label>
-                      <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Start</Label>
-                      <Input type="datetime-local" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">End</Label>
-                      <Input type="datetime-local" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Description</Label>
-                      <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label className="text-xs font-semibold text-[var(--muted)] mb-1 block">Notes</Label>
-                      <Textarea rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border)]">
-                    <Button type="button" disabled={isPending} onClick={saveEdit}>Save Changes</Button>
-                    <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
+
+      {/* ── Details ──────────────────────────────────────────────────── */}
+      <RecordSheet
+        open={!!selected}
+        onClose={closeModal}
+        title={selected?.title ?? ""}
+        badges={selected ? <StatusBadge status={selected.status} size="sm" /> : null}
+        description={selected ? `${selected.facilityName} · ${labelForCategory(selected.category, categories)}` : undefined}
+        actions={selected && !editing ? (
+          <>
+            {canManage && selected.status === "PENDING" && <BookingActions bookingId={selected.id} />}
+            {canManage && selected.status === "APPROVED" && <CompleteBookingButton bookingId={selected.id} />}
+            {canManage && (selected.status === "PENDING" || isSuperAdmin) && (
+              <Button type="button" variant="outline" onClick={() => setEditing(true)} className="gap-1.5">
+                <Pencil size={14} /> Edit
+              </Button>
+            )}
+            {canManage && selected.bookerPhone && (
+              <SendSMSButton
+                bookingId={selected.id}
+                bookingTitle={selected.title}
+                bookerName={selected.bookerName}
+                bookerPhone={selected.bookerPhone}
+              />
+            )}
+            {canManage && ["PENDING", "APPROVED"].includes(selected.status) && <CancelBookingButton bookingId={selected.id} />}
+            {isSuperAdmin && <DeleteBookingButton bookingId={selected.id} onDeleted={handleDeleted} />}
+          </>
+        ) : selected && editing ? (
+          <>
+            <Button type="button" disabled={isPending} onClick={saveEdit}>
+              {isPending ? "Saving…" : "Save changes"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
+          </>
+        ) : undefined}
+      >
+        {selected && (
+          <>
+            {error && <div className="alert alert-error">{error}</div>}
+
+            {!editing ? (
+              <>
+                <div className="rounded-[1.25rem] bg-muted/60 p-4">
+                  <p className="text-xs text-[var(--muted)]">Amount</p>
+                  <p className="mt-1 text-2xl font-medium tabular-nums tracking-tight text-[var(--navy)]">{formatCurrency(selected.totalAmount)}</p>
+                  <p className="mt-1.5 text-xs text-[var(--muted)]">
+                    {selected.acRequested ? "AC requested — cash donation at the Front Office." : "No AC requested."}
+                  </p>
+                </div>
+
+                {selected.rejectionReason && (
+                  <div className="alert alert-error">
+                    <span><strong className="font-medium">Rejected:</strong> {selected.rejectionReason}</span>
+                  </div>
+                )}
+
+                <SheetSection title="Schedule">
+                  <DetailGrid
+                    items={[
+                      { label: "Starts", value: formatDateTime(new Date(selected.startTime)) },
+                      { label: "Ends", value: formatDateTime(new Date(selected.endTime)) },
+                      { label: "Duration", value: `${durationHours(new Date(selected.startTime), new Date(selected.endTime))} hours` },
+                      { label: "Category", value: labelForCategory(selected.category, categories) },
+                    ]}
+                  />
+                </SheetSection>
+
+                <SheetSection title="Booker">
+                  <DetailGrid
+                    items={[
+                      { label: "Name", value: selected.bookerName || "—" },
+                      { label: "Source", value: selected.createdByStaffName ? `Staff — ${selected.createdByStaffName}` : "Patron request" },
+                      selected.bookerPhone && { label: "Phone", value: selected.bookerPhone },
+                      selected.bookerEmail && { label: "Email", value: selected.bookerEmail },
+                    ]}
+                  />
+                  {selected.bookerPhone && <ContactButtons phone={selected.bookerPhone} />}
+                </SheetSection>
+
+                {(selected.description || selected.notes) && (
+                  <SheetSection title="Notes">
+                    <DetailGrid
+                      items={[
+                        selected.description && { label: "Description", value: selected.description, full: true },
+                        selected.notes && { label: "Notes", value: selected.notes, full: true },
+                      ]}
+                    />
+                  </SheetSection>
+                )}
+
+                {selected.lineItems.length > 0 && (
+                  <SheetSection title="Booked items">
+                    <ul className="divide-y divide-border/70 rounded-2xl border border-border/70">
+                      {selected.lineItems.map((li, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm">
+                          <span className="min-w-0 text-[var(--navy)]">
+                            <span className="font-medium tabular-nums">{li.quantity}×</span> {li.label}
+                            {li.unit ? <span className="text-[var(--muted)]"> ({li.unit})</span> : null}
+                          </span>
+                          <span className="shrink-0 font-medium tabular-nums text-[var(--navy)]">{formatCurrency(li.subtotal)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </SheetSection>
+                )}
+
+                <Link
+                  href={`/bookings/${selected.id}`}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-[var(--gold)] hover:underline"
+                >
+                  Open full booking page <ArrowUpRight size={14} />
+                </Link>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Facility</Label>
+                  <select className={selectClassName} value={form.facilityId} onChange={(e) => {
+                      const fid = e.target.value;
+                      const fac = facilities.find((f) => f.id === fid) ?? null;
+                      const cats = fac ? categories.filter((c) => fac.categories.includes(c.slug)) : categories;
+                      setForm((f) => ({ ...f, facilityId: fid, category: cats.length === 1 ? cats[0].slug : "" }));
+                    }}>
+                    <option value="">Select facility...</option>
+                    {facilities.map((f) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Category</Label>
+                  <select className={selectClassName} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
+                    <option value="">Select category...</option>
+                    {formCategories.map((c) => (
+                      <option key={c.slug} value={c.slug}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Title</Label>
+                  <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Start</Label>
+                  <Input type="datetime-local" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">End</Label>
+                  <Input type="datetime-local" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Description</Label>
+                  <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">Notes</Label>
+                  <Textarea rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </RecordSheet>
     </>
   );
 }

@@ -55,9 +55,6 @@ export default async function MaintenancePage(
 
   return (
     <div className="space-y-6 animate-fade-in relative">
-      {/* Ambient glow */}
-      <div className="fixed top-[100px] -right-[80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0"
-        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Hero header */}
       <PageHeader
@@ -89,8 +86,8 @@ export default async function MaintenancePage(
             className={cn(
               "px-4 py-2 rounded-full text-[0.8rem] font-semibold transition-all duration-150 border",
               activeStatus === s
-                ? "bg-[var(--navy)] dark:bg-[var(--navy-light)] text-white border-[rgba(200,163,90,0.3)] shadow-[0_4px_12px_rgba(10,22,40,0.15)] -translate-y-0.5"
-                : "bg-white/80 dark:bg-[rgba(255,255,255,0.06)] text-[var(--slate)] dark:text-[var(--muted)] border-[rgba(200,163,90,0.15)] hover:-translate-y-px hover:border-[rgba(200,163,90,0.3)]"
+                ? "bg-[var(--navy)] dark:bg-[var(--navy-light)] text-white border-[hsl(var(--gold-hsl)/0.3)] shadow-[0_4px_12px_rgba(10,22,40,0.15)] -translate-y-0.5"
+                : "bg-white/80 dark:bg-[rgba(255,255,255,0.06)] text-[var(--slate)] dark:text-[var(--muted)] border-[hsl(var(--gold-hsl)/0.15)] hover:-translate-y-px hover:border-[hsl(var(--gold-hsl)/0.3)]"
             )}
           >
             {s.replace("_", " ")}

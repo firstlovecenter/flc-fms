@@ -43,13 +43,13 @@ type Status =
 /** Semantic tones — all colors flow from design tokens, dark mode adapts
     automatically because the token channels brighten in `.dark`. */
 const TONE = {
-  success: "bg-success/10 text-success border-success/25",
-  warning: "bg-warning/10 text-warning border-warning/25",
-  danger:  "bg-danger/10 text-danger border-danger/25",
-  info:    "bg-info/10 text-info border-info/25",
-  violet:  "bg-inventory/10 text-inventory border-inventory/25",
-  orange:  "bg-maintenance/10 text-maintenance border-maintenance/25",
-  neutral: "bg-foreground/5 text-muted-foreground border-foreground/10",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/15 text-warning",
+  danger:  "bg-danger/10 text-danger",
+  info:    "bg-info/10 text-info",
+  violet:  "bg-inventory/10 text-inventory",
+  orange:  "bg-maintenance/10 text-maintenance",
+  neutral: "bg-secondary text-secondary-foreground",
 } as const;
 
 type Tone = keyof typeof TONE;
@@ -93,7 +93,7 @@ interface StatusBadgeProps {
   status: Status;
   /** Override the display label */
   label?: string;
-  /** Show/hide the icon prefix */
+  /** Show the icon prefix (off by default: the label and tone carry the status) */
   showIcon?: boolean;
   /** Size variant */
   size?: "xs" | "sm" | "md";
@@ -103,7 +103,7 @@ interface StatusBadgeProps {
 export function StatusBadge({
   status,
   label,
-  showIcon = true,
+  showIcon = false,
   size = "sm",
   className,
 }: StatusBadgeProps) {
@@ -116,15 +116,15 @@ export function StatusBadge({
   const Icon = config.icon;
 
   const sizeClasses = {
-    xs: "text-[0.6rem] px-1.5 py-0.5 gap-1 [&_svg]:size-2.5",
-    sm: "text-[0.7rem] px-2 py-0.5 gap-1 [&_svg]:size-3",
-    md: "text-xs px-2.5 py-1 gap-1.5 [&_svg]:size-3.5",
+    xs: "text-[0.6875rem] px-2 py-0.5 gap-1 [&_svg]:size-2.5",
+    sm: "text-xs px-2.5 py-0.5 gap-1 [&_svg]:size-3",
+    md: "text-[0.8125rem] px-3 py-1 gap-1.5 [&_svg]:size-3.5",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md border font-semibold leading-none tracking-wide whitespace-nowrap select-none",
+        "inline-flex items-center rounded-full font-medium leading-4 whitespace-nowrap select-none",
         sizeClasses[size],
         TONE[config.tone],
         className,
