@@ -12,7 +12,6 @@ import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
 import { permissionsToFullStored, resolveStaffPreset } from "@/lib/permissions";
 import { checkPerm } from "@/lib/auth/guards";
-import { permissionsBeyondActor } from "@/lib/permissions/staff-guard";
 import { Role } from "@prisma/client";
 
 function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR" | "STAFF") {
@@ -198,9 +197,6 @@ export async function createStaffUser(formData: FormData) {
   // Facility Manager and Super Admin are real roles; every other preset is a
   // neutral STAFF member with the preset's permissions (editable anytime).
   const { role: dbRole, permissions: permSet } = resolveStaffPreset(parsed.data.role);
-  if (permissionsBeyondActor(session, permSet).length > 0) {
-    return { error: "You can only add staff with permissions you hold yourself. Pick a narrower preset, or ask a Super Admin." };
-  }
 
   const existingAccount = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existingAccount && existingAccount.role !== "PATRON") {
