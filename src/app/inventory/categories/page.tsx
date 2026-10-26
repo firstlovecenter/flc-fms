@@ -17,7 +17,7 @@ export default async function InventoryCategoriesPage() {
         title="Item Categories"
         description={`${categories.length} categor${categories.length !== 1 ? "ies" : "y"} · Organise inventory by type`}
         className="relative z-10"
-        actions={<Tag size={20} className="text-[rgba(200,163,90,0.7)]" />}
+        actions={<Tag size={20} className="text-[hsl(var(--gold-hsl)/0.7)]" />}
       />
 
       {/* Manager */}

@@ -22,11 +22,11 @@ export function TableSkeleton({
   className,
 }: TableSkeletonProps) {
   return (
-    <div className={cn("w-full overflow-hidden rounded-xl border border-[var(--border)] bg-white dark:bg-[rgba(15,26,43,0.6)]", className)}>
+    <div className={cn("w-full overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]", className)}>
       <table className="w-full text-sm">
         {showHeader && (
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--cream)] dark:bg-[rgba(22,24,28,0.45)]">
+            <tr className="bg-muted/60">
               {Array.from({ length: columns }).map((_, i) => (
                 <th key={i} className="px-4 py-3 text-left">
                   <Skeleton className="h-3 w-20 rounded" />

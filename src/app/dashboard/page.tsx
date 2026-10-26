@@ -64,29 +64,22 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5 sm:space-y-7 animate-fade-in relative">
-      {/* Ambient glow */}
-      <div
-        className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none -z-0"
-        style={{ background: "radial-gradient(circle, rgba(200,163,90,0.07) 0%, transparent 70%)", filter: "blur(40px)" }}
-      />
-
       <PageHeader
-        variant="hero"
-        eyebrow="Welcome Back"
-        title={`${session.name.split(" ")[0]}'s Dashboard`}
-        description="Manage facilities, bookings, and operations efficiently"
-        className="relative z-10"
+        eyebrow={greeting()}
+        title={`Welcome back, ${session.name.split(" ")[0]}`}
+        description="What needs your attention across bookings, facilities and finances today."
+        className="relative z-10 mb-0"
       />
 
       {/* Quick actions */}
       {canBook && (
         <div className="relative z-10 flex flex-wrap gap-2">
           <Link href="/bookings/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
-            <Plus size={15} /> New Booking
+            <Plus size={15} /> New booking
           </Link>
           {pendingBookings > 0 && (
-            <Link href="/bookings?status=PENDING" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>
-              <ClipboardList size={15} /> Review {pendingBookings} Pending
+            <Link href="/bookings?status=PENDING" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+              <ClipboardList size={15} /> Review {pendingBookings} pending
             </Link>
           )}
           <Link href="/inventory" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
@@ -103,8 +96,8 @@ export default async function DashboardPage() {
       {/* Primary stats */}
       <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 stagger-children">
         <StatCard label="Facilities"       value={totalFacilities} color="facilities" icon={<Building2  size={16} />} href="/facilities" />
-        <StatCard label="Pending"          value={pendingBookings}  color="bookings" icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? `${pendingBookings} awaiting approval` : "All clear"} trend={pendingBookings > 0 ? "down" : "neutral"} href="/bookings?status=PENDING" />
-        <StatCard label="Active"           value={activeBookings}   color="bookings" icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
+        <StatCard hero label="Pending bookings" value={pendingBookings} icon={<CalendarDays size={16} />} sub={pendingBookings > 0 ? "Awaiting approval" : "All clear"} href="/bookings?status=PENDING" />
+        <StatCard label="Approved"         value={activeBookings}   color="bookings" icon={<CalendarDays size={16} />} sub="Approved & upcoming" trend="up" href="/bookings?status=APPROVED" />
         <StatCard label="Maintenance"      value={openMaintenance}  color="maintenance" icon={<Wrench size={16} />} sub={openMaintenance > 0 ? "Requires attention" : "All resolved"} trend={openMaintenance > 0 ? "down" : "neutral"} href="/maintenance?status=OPEN" />
       </div>
 
@@ -133,11 +126,11 @@ export default async function DashboardPage() {
       {/* Recent bookings */}
       <div className="relative z-10">
         <SectionHeader
-          eyebrow="Latest Activity"
-          title="Recent Bookings"
+          title="Recent bookings"
+          description="The latest requests and staff bookings."
           actions={
             <Link href="/bookings" className="link-gold inline-flex items-center gap-1 text-[0.88rem]">
-              View All →
+              View all →
             </Link>
           }
         />
@@ -147,4 +140,13 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function greeting() {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Africa/Accra" }).format(new Date()),
+  );
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }

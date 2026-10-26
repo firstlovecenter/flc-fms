@@ -27,8 +27,6 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-6 animate-fade-in relative">
-      {/* Decorative bg */}
-      <div className="fixed top-[80px] right-[-80px] w-[320px] h-[320px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.07) 0%, transparent 70%)" }} />
 
       {/* Header */}
       <PageHeader

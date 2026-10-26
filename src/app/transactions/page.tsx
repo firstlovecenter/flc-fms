@@ -160,7 +160,6 @@ export default async function TransactionsPage(
 
   return (
     <div className="space-y-6 animate-fade-in relative">
-      <div className="absolute top-[-100px] right-[-80px] w-[350px] h-[350px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Header */}
       <PageHeader

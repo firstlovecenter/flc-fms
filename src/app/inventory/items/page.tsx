@@ -115,7 +115,7 @@ export default async function InventoryItemsPage(
                     <div className="flex gap-2">
                       <Link href={`/inventory/items/${item.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>View</Link>
                       {canManage && (
-                        <Link href={`/inventory/items/${item.id}/edit`} className="text-[0.78rem] font-semibold text-[var(--gold)] py-0.5 px-2.5 rounded border border-[rgba(200,163,90,0.4)] hover:border-[rgba(200,163,90,0.7)] transition-colors">Edit</Link>
+                        <Link href={`/inventory/items/${item.id}/edit`} className="text-[0.78rem] font-semibold text-[var(--gold)] py-0.5 px-2.5 rounded border border-[hsl(var(--gold-hsl)/0.4)] hover:border-[hsl(var(--gold-hsl)/0.7)] transition-colors">Edit</Link>
                       )}
                     </div>
                   </td>

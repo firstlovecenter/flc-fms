@@ -275,14 +275,14 @@ export default function CommandSearch({
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 z-[60] bg-[rgb(28_25_23/0.35)] backdrop-blur-sm flex items-start justify-center px-3 pt-[12vh]"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#1a2233] rounded-xl shadow-2xl w-full max-w-lg border border-[var(--border)] overflow-hidden animate-fade-in"
+        className="bg-popover text-popover-foreground rounded-[1.5rem] shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)] w-full max-w-xl border border-border/70 overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 border-b border-[var(--border)]">
+        <div className="flex items-center gap-3 px-5 border-b border-border/70">
           <Search size={16} className="text-[var(--muted)] flex-shrink-0" />
           <input
             ref={inputRef}
@@ -290,23 +290,25 @@ export default function CommandSearch({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search pages, actions…"
-            className="flex-1 h-12 bg-transparent border-0 outline-none text-sm text-[var(--navy)] placeholder:text-[var(--muted)]"
+            aria-label="Search pages and actions"
+            className="flex-1 h-14 !rounded-none bg-transparent border-0 outline-none text-[0.95rem] text-[var(--navy)] placeholder:text-[var(--muted)]"
           />
           <button
             onClick={onClose}
-            className="w-6 h-6 flex items-center justify-center rounded bg-[var(--cream-dark)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
+            aria-label="Close search"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-muted text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
           >
             <X size={12} />
           </button>
         </div>
 
-        <div ref={listRef} className="max-h-[340px] overflow-y-auto py-2">
+        <div ref={listRef} className="max-h-[380px] overflow-y-auto p-2">
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-[var(--muted)]">No results for &ldquo;{query}&rdquo;</div>
           ) : (
             Object.entries(groups).map(([group, items]) => (
               <div key={group}>
-                <div className="px-4 pt-3 pb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <div className="px-3 pt-3 pb-1.5 text-xs font-medium text-[var(--muted)]">
                   {group}
                 </div>
                 {items.map((item) => {
@@ -317,10 +319,10 @@ export default function CommandSearch({
                     <button
                       key={`${item.href}-${item.label}`}
                       type="button"
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-left transition-colors ${
                         idx === activeIndex
-                          ? "bg-[var(--cream-dark)] text-[var(--navy)]"
-                          : "text-[var(--slate)] hover:bg-[var(--cream)]"
+                          ? "bg-muted text-[var(--navy)]"
+                          : "text-[var(--slate)] hover:bg-muted/60"
                       }`}
                       onClick={() => navigate(item.href)}
                       onMouseEnter={() => setActiveIndex(idx)}
@@ -328,7 +330,7 @@ export default function CommandSearch({
                       <Icon size={16} className={idx === activeIndex ? "text-[var(--gold)]" : "text-[var(--muted)]"} />
                       <span className="flex-1 font-medium">{item.label}</span>
                       {idx === activeIndex && (
-                        <kbd className="text-[0.6rem] px-1.5 py-0.5 rounded bg-[var(--border)] text-[var(--muted)] font-mono">↵</kbd>
+                        <kbd className="text-[0.6rem] px-1.5 py-0.5 rounded-md border border-border bg-card text-[var(--muted)] font-mono">↵</kbd>
                       )}
                     </button>
                   );
@@ -338,10 +340,10 @@ export default function CommandSearch({
           )}
         </div>
 
-        <div className="border-t border-[var(--border)] px-4 py-2 flex items-center gap-4 text-[0.65rem] text-[var(--muted)]">
-          <span><kbd className="px-1 py-0.5 rounded bg-[var(--cream-dark)] border border-[var(--border)] font-mono text-[0.6rem]">↑↓</kbd> Navigate</span>
-          <span><kbd className="px-1 py-0.5 rounded bg-[var(--cream-dark)] border border-[var(--border)] font-mono text-[0.6rem]">↵</kbd> Open</span>
-          <span><kbd className="px-1 py-0.5 rounded bg-[var(--cream-dark)] border border-[var(--border)] font-mono text-[0.6rem]">Esc</kbd> Close</span>
+        <div className="border-t border-border/70 px-5 py-2.5 flex items-center gap-4 text-[0.7rem] text-[var(--muted)]">
+          <span><kbd className="px-1 py-0.5 rounded-md bg-muted border border-border font-mono text-[0.6rem]">↑↓</kbd> Navigate</span>
+          <span><kbd className="px-1 py-0.5 rounded-md bg-muted border border-border font-mono text-[0.6rem]">↵</kbd> Open</span>
+          <span><kbd className="px-1 py-0.5 rounded-md bg-muted border border-border font-mono text-[0.6rem]">Esc</kbd> Close</span>
         </div>
       </div>
     </div>

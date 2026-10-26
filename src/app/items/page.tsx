@@ -17,8 +17,6 @@ export default async function ItemsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in relative">
-      {/* Decorative */}
-      <div className="absolute top-[-60px] right-[-80px] w-[360px] h-[360px] rounded-full pointer-events-none z-0" style={{ background: "radial-gradient(circle, rgba(200,163,90,0.08) 0%, transparent 70%)" }} />
 
       {/* Header */}
       <PageHeader

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Building2, User, FileText, Phone, MessageCircle, LogIn } from "lucide-react";
+import { Clock, User, FileText, Phone, MessageCircle, LogIn, Wallet, ShieldCheck, ArrowUpRight } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import StatCard from "@/components/ui/StatCard";
+import PageHeader from "@/components/layout/PageHeader";
 
 function normalizeTel(phone: string) {
   return phone.replace(/[^\d+]/g, "");
@@ -50,227 +52,242 @@ export default async function BookingDetailPage(props: { params: Promise<{ id: s
   const contact   = booking.patron ?? booking.user;
   const cd = booking.ceremonyDetails as CeremonyDetails | null;
 
+  const actions = (
+    <>
+      {canManage && booking.status === "PENDING" && (
+        <BookingActions bookingId={booking.id} />
+      )}
+      {canManage && booking.status === "APPROVED" && (
+        <CompleteBookingButton bookingId={booking.id} />
+      )}
+      {canManage && contact?.phone && (
+        <SendSMSButton
+          bookingId={booking.id}
+          bookingTitle={booking.title}
+          bookerName={contact.name}
+          bookerPhone={contact.phone}
+        />
+      )}
+      {canManage && contact?.phone && booking.status === "APPROVED" && booking.facility?.hasAccessCode && booking.facility.accessCode && (
+        <SendAccessCodeButton
+          bookingId={booking.id}
+          bookerName={contact.name}
+        />
+      )}
+      {canManage && ["PENDING", "APPROVED"].includes(booking.status) && (
+        <CancelBookingButton bookingId={booking.id} />
+      )}
+      {isSuperAdmin && <DeleteBookingButton bookingId={booking.id} redirectTo="/bookings" />}
+    </>
+  );
+  const hasActions = canManage || isSuperAdmin;
+
   return (
-    <div className="w-full max-w-3xl space-y-6">
-      <div className="flex items-start sm:items-center gap-3 flex-wrap">
-        <Link href="/bookings" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-[var(--muted)]")}>
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="flex-1">
-          <h1 className="page-title">{booking.title}</h1>
-          {booking.description && <p className="page-subtitle mt-0.5">{booking.description}</p>}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status={booking.status} size="sm" />
-        </div>
-      </div>
+    <div className="w-full max-w-6xl space-y-5">
+      <PageHeader
+        back={{ href: "/bookings", label: "Bookings" }}
+        title={
+          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+            {booking.title}
+            <StatusBadge status={booking.status} size="md" />
+          </span>
+        }
+        description={booking.description ?? undefined}
+        meta={`${booking.facility?.name ?? "No facility"} · ${formatDateTime(booking.startTime)}`}
+        className="mb-0"
+      />
 
       {booking.rejectionReason && (
-        <div className="bg-danger/10 border border-danger/25 rounded-lg p-4 text-danger text-sm">
-          <strong>Rejection reason:</strong> {booking.rejectionReason}
+        <div className="alert alert-error">
+          <span><strong className="font-medium">Rejected:</strong> {booking.rejectionReason}</span>
         </div>
       )}
 
-      {(booking.status === "APPROVED" || booking.status === "COMPLETED") && (
-        <div className="bg-success/10 border border-success/25 rounded-lg p-4 text-sm">
-          <strong className="text-success">Approved by:</strong>{" "}
-          {booking.approvedBy ? (
-            <span className="text-[var(--navy)]">
-              {booking.approvedBy.name}
-              {booking.approvedAt && <> on {formatDateTime(booking.approvedAt)}</>}
-            </span>
-          ) : (
-            <span className="text-[var(--muted)]">Auto-approved via payment code — no staff approver on record.</span>
-          )}
-        </div>
-      )}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        {/* ── Main ───────────────────────────────────────────── */}
+        <div className="space-y-5">
+          <Card className="gap-0 p-5 sm:p-6">
+            <SectionTitle icon={<Clock size={14} />}>Schedule</SectionTitle>
+            <Facts
+              items={[
+                { label: "Starts", value: formatDateTime(booking.startTime) },
+                { label: "Ends", value: formatDateTime(booking.endTime) },
+                { label: "Duration", value: `${durationHours(booking.startTime, booking.endTime)} hours` },
+                {
+                  label: "Facility",
+                  value: booking.facilityId ? (
+                    <Link href={`/facilities/${booking.facilityId}`} className="font-medium text-[var(--gold)] hover:underline">
+                      {booking.facility?.name}
+                    </Link>
+                  ) : "N/A",
+                },
+                { label: "Capacity", value: booking.facility ? booking.facility.capacity.toLocaleString() : "N/A" },
+                { label: "AC requested", value: booking.acRequested ? "Yes — cash donation at the Front Office" : "No" },
+              ]}
+            />
+          </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Facility */}
-        <Card className="p-5 gap-0 py-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <Building2 size={13} /> Facility
-          </div>
-          <p className="font-semibold text-[var(--navy)]">{booking.facility?.name ?? "N/A"}</p>
-          <p className="text-sm page-subtitle">Cap. {booking.facility?.capacity.toLocaleString() ?? "N/A"}</p>
-          {booking.facilityId && (
-            <Link href={`/facilities/${booking.facilityId}`} className="text-xs text-[var(--gold)] hover:underline mt-2 block">
-              View facility →
-            </Link>
-          )}
-        </Card>
-
-        {/* Time */}
-        <Card className="p-5 gap-0 py-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <Clock size={13} /> Schedule
-          </div>
-          <p className="text-sm text-gray-800"><strong>From:</strong> {formatDateTime(booking.startTime)}</p>
-          <p className="text-sm text-gray-800 mt-1"><strong>To:</strong> {formatDateTime(booking.endTime)}</p>
-          <p className="text-xs text-[var(--muted)] mt-2">{durationHours(booking.startTime, booking.endTime)} hours</p>
-        </Card>
-
-        {/* Booker */}
-        <Card className="p-5 gap-0 py-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <User size={13} /> {booking.user ? "Staff booking" : "Patron booking"}
-          </div>
-          <p className="font-semibold text-[var(--navy)]">{contact?.name}</p>
-          <p className="text-sm page-subtitle">{contact?.email}</p>
-          {contact?.phone && (
-            <>
-              <p className="text-xs text-[var(--muted)] mt-1">{contact.phone}</p>
-              <div className="flex items-center gap-3 mt-2">
+          <Card className="gap-0 p-5 sm:p-6">
+            <SectionTitle icon={<User size={14} />}>{booking.user && !booking.patron ? "Staff booking" : "Booker"}</SectionTitle>
+            <Facts
+              items={[
+                { label: "Name", value: contact?.name ?? "—" },
+                contact?.email ? { label: "Email", value: contact.email } : null,
+                contact?.phone ? { label: "Phone", value: contact.phone } : null,
+                booking.patron && booking.user ? { label: "Booked by", value: `${booking.user.name} (staff)` } : null,
+              ]}
+            />
+            {contact?.phone && (
+              <div className="mt-4 flex flex-wrap gap-2">
                 <a
                   href={`tel:${normalizeTel(contact.phone)}`}
-                  className="inline-flex items-center gap-1 text-xs text-[var(--navy)] hover:underline"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 text-xs font-medium text-[var(--navy)] shadow-[var(--shadow-xs)] hover:bg-muted"
                 >
-                  <Phone size={12} /> Call
+                  <Phone size={13} /> Call
                 </a>
                 <a
                   href={`https://wa.me/${normalizeWhatsApp(contact.phone)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-success hover:underline"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-card px-3.5 text-xs font-medium text-success shadow-[var(--shadow-xs)] hover:bg-success/10"
                 >
-                  <MessageCircle size={12} /> WhatsApp
+                  <MessageCircle size={13} /> WhatsApp
                 </a>
               </div>
-            </>
-          )}
-          {booking.patron && booking.user && (
-            <p className="text-xs text-[var(--muted)] mt-2">Booked by {booking.user.name} (staff)</p>
-          )}
-        </Card>
-      </div>
+            )}
+          </Card>
 
-      {/* Amount */}
-      <Card className="p-6 gap-0 py-6">
-        <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-          <FileText size={13} /> Booking Amount
+          {cd && (
+            <Card className="gap-0 p-5 sm:p-6">
+              <SectionTitle icon={<FileText size={14} />}>{cd.type === "wedding" ? "Wedding" : "Naming ceremony"}</SectionTitle>
+              {cd.type === "wedding" ? (
+                <Facts
+                  items={[
+                    { label: "Bride", value: cd.brideName },
+                    { label: "Groom", value: cd.groomName },
+                    { label: "Contact (WhatsApp)", value: cd.contactWhatsApp },
+                    { label: "Email", value: cd.email },
+                    { label: "Bishop", value: `${cd.bishopName} (${cd.bishopPhone})` },
+                  ]}
+                />
+              ) : (
+                <Facts
+                  items={[
+                    { label: "Child", value: cd.childrenNames },
+                    { label: "Date of birth", value: cd.childBirthday },
+                    { label: "Father", value: `${cd.fatherName} · ${cd.fatherPhone} · WA ${cd.fatherWhatsApp}` },
+                    { label: "Mother", value: `${cd.motherName} · ${cd.motherPhone}` },
+                    cd.email ? { label: "Email", value: cd.email } : null,
+                    { label: "Pastor", value: `${cd.pastorName} (${cd.pastorPhone})` },
+                    { label: "Bishop", value: `${cd.bishopName} (${cd.bishopPhone})` },
+                  ]}
+                />
+              )}
+            </Card>
+          )}
+
+          {booking.notes && (
+            <Card className="gap-0 p-5 sm:p-6">
+              <SectionTitle icon={<FileText size={14} />}>Notes</SectionTitle>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--navy)]">{booking.notes}</p>
+            </Card>
+          )}
         </div>
-        <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
-        <p className="text-sm text-[var(--slate)] mt-3">
-          <strong>AC requested:</strong>{" "}
-          {booking.acRequested
-            ? "Yes — physical cash donation at Front Office."
-            : "No."}
-        </p>
-      </Card>
 
-      {booking.notes && (
-        <Card className="p-5 gap-0 py-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-2">
-            <FileText size={13} /> Notes
-          </div>
-          <p className="text-sm text-[var(--slate)]">{booking.notes}</p>
-        </Card>
-      )}
+        {/* ── Side ───────────────────────────────────────────── */}
+        <aside className="space-y-5">
+          <StatCard
+            hero
+            label="Booking amount"
+            value={formatCurrency(Number(booking.totalAmount))}
+            icon={<Wallet />}
+            sub={booking.acRequested ? "Plus AC — cash donation at the Front Office" : "No AC requested"}
+          />
 
-      {/* Ceremony Details */}
-      {cd && (
-        <Card className="p-5 gap-0 py-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-            <FileText size={13} /> {cd.type === "wedding" ? "Wedding" : "Naming Ceremony"} Details
-          </div>
-          {cd.type === "wedding" ? (
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-gray-100">
-                {[
-                  ["Bride's Name", cd.brideName],
-                  ["Groom's Name", cd.groomName],
-                  ["Contact (WhatsApp)", cd.contactWhatsApp],
-                  ["Email", cd.email],
-                  ["Bishop", `${cd.bishopName} (${cd.bishopPhone})`],
-                ].map(([label, value]) => (
-                  <tr key={label}>
-                    <td className="py-2 pr-4 text-[var(--muted)] w-40">{label}</td>
-                    <td className="py-2 font-medium text-[var(--navy)]">{value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Father</p>
-                <p>{cd.fatherName}</p>
-                <p className="text-[var(--muted)] text-xs">{cd.fatherPhone} / WA: {cd.fatherWhatsApp}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Child</p>
-                <p>{cd.childrenNames}</p>
-                <p className="text-[var(--muted)] text-xs">DOB: {cd.childBirthday}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Mother</p>
-                <p>{cd.motherName}</p>
-                <p className="text-[var(--muted)] text-xs">{cd.motherPhone}</p>
-                {cd.email && <p className="text-[var(--muted)] text-xs">{cd.email}</p>}
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Officiating Clergy</p>
-                <p>Pastor: {cd.pastorName} ({cd.pastorPhone})</p>
-                <p>Bishop: {cd.bishopName} ({cd.bishopPhone})</p>
-              </div>
-            </div>
+          {hasActions && (
+            <Card className="gap-0 p-5">
+              <SectionTitle>Actions</SectionTitle>
+              <div className="flex flex-wrap gap-2">{actions}</div>
+            </Card>
           )}
-        </Card>
-      )}
 
-      {/* Check-In / Check-Out Status */}
-      {(booking.checkIn || booking.checkInRequested) && (
-        <Card className={cn("p-5 gap-0 py-5", booking.checkIn ? "bg-success/10 border-success/25" : "bg-warning/10 border-warning/25")}>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-2 text-[var(--muted)]">
-            <LogIn size={13} /> Check-In Status
-          </div>
-          {booking.checkIn ? (
-            <div className="text-sm space-y-1">
-              <p className="text-success">
-                <strong>Checked in</strong> by {booking.checkIn.checkedInBy.name} at {formatDateTime(booking.checkIn.checkedInAt)}
-              </p>
-              {booking.checkIn.checkedOutAt && booking.checkIn.checkedOutBy && (
-                <p className="text-gray-700">
-                  <strong>Checked out</strong> by {booking.checkIn.checkedOutBy.name} at {formatDateTime(booking.checkIn.checkedOutAt)}
+          <Card className="gap-0 p-5">
+            <SectionTitle icon={<ShieldCheck size={14} />}>Approval</SectionTitle>
+            {booking.status === "APPROVED" || booking.status === "COMPLETED" ? (
+              booking.approvedBy ? (
+                <p className="text-sm text-[var(--navy)]">
+                  Approved by <span className="font-medium">{booking.approvedBy.name}</span>
+                  {booking.approvedAt && <span className="text-[var(--muted)]"> · {formatDateTime(booking.approvedAt)}</span>}
                 </p>
-              )}
-              {booking.checkIn.notes && (
-                <p className="text-xs text-gray-600 mt-1 whitespace-pre-line"><strong>Notes:</strong> {booking.checkIn.notes}</p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-warning">Patron has requested check-in. <a href="/checkin" className="underline font-semibold">Go to Check-In page →</a></p>
-          )}
-        </Card>
-      )}
+              ) : (
+                <p className="text-sm text-[var(--muted)]">Auto-approved via payment code — no staff approver on record.</p>
+              )
+            ) : booking.status === "PENDING" ? (
+              <p className="text-sm text-[var(--muted)]">Waiting for a booking manager to approve or reject.</p>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">Not approved.</p>
+            )}
+          </Card>
 
-      {/* Actions */}
-      <div className="flex flex-wrap gap-3">
-        {canManage && booking.status === "PENDING" && (
-          <BookingActions bookingId={booking.id} />
-        )}
-        {canManage && booking.status === "APPROVED" && (
-          <CompleteBookingButton bookingId={booking.id} />
-        )}
-        {canManage && ["PENDING", "APPROVED"].includes(booking.status) && (
-          <CancelBookingButton bookingId={booking.id} />
-        )}
-        {canManage && contact?.phone && (
-          <SendSMSButton
-            bookingId={booking.id}
-            bookingTitle={booking.title}
-            bookerName={contact.name}
-            bookerPhone={contact.phone}
-          />
-        )}
-        {canManage && contact?.phone && booking.status === "APPROVED" && booking.facility?.hasAccessCode && booking.facility.accessCode && (
-          <SendAccessCodeButton
-            bookingId={booking.id}
-            bookerName={contact.name}
-          />
-        )}
-        {isSuperAdmin && <DeleteBookingButton bookingId={booking.id} redirectTo="/bookings" />}
+          {(booking.checkIn || booking.checkInRequested) && (
+            <Card className="gap-0 p-5">
+              <SectionTitle icon={<LogIn size={14} />}>Check-in</SectionTitle>
+              {booking.checkIn ? (
+                <div className="space-y-1.5 text-sm">
+                  <p className="text-[var(--navy)]">
+                    <span className="font-medium text-success">Checked in</span> by {booking.checkIn.checkedInBy.name}
+                    <span className="text-[var(--muted)]"> · {formatDateTime(booking.checkIn.checkedInAt)}</span>
+                  </p>
+                  {booking.checkIn.checkedOutAt && booking.checkIn.checkedOutBy && (
+                    <p className="text-[var(--navy)]">
+                      <span className="font-medium">Checked out</span> by {booking.checkIn.checkedOutBy.name}
+                      <span className="text-[var(--muted)]"> · {formatDateTime(booking.checkIn.checkedOutAt)}</span>
+                    </p>
+                  )}
+                  {booking.checkIn.notes && (
+                    <p className="whitespace-pre-line pt-1 text-xs text-[var(--muted)]">{booking.checkIn.notes}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 text-sm">
+                  <p className="flex items-center gap-2 text-[var(--navy)]">
+                    <span aria-hidden className="size-2 shrink-0 animate-pulse rounded-full bg-warning" />
+                    The booker has asked to check in.
+                  </p>
+                  <Link href="/checkin" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-1.5")}>
+                    Go to check-in <ArrowUpRight size={14} />
+                  </Link>
+                </div>
+              )}
+            </Card>
+          )}
+        </aside>
       </div>
     </div>
+  );
+}
+
+function SectionTitle({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--muted)]">
+      {icon}
+      {children}
+    </h2>
+  );
+}
+
+/** Label/value pairs; empty rows are skipped. */
+function Facts({ items }: { items: ({ label: string; value: React.ReactNode } | null)[] }) {
+  return (
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
+      {items.map((item) =>
+        item && item.value !== null && item.value !== undefined && item.value !== "" ? (
+          <div key={item.label} className="min-w-0">
+            <dt className="text-xs text-[var(--muted)]">{item.label}</dt>
+            <dd className="mt-0.5 break-words text-[var(--navy)]">{item.value}</dd>
+          </div>
+        ) : null
+      )}
+    </dl>
   );
 }

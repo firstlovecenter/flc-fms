@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -26,7 +26,7 @@ type Accent =
 interface StatCardProps {
   label: string;
   value: string | number;
-  /** Domain accent — colors the icon chip and trend treatment */
+  /** Domain accent — colors the icon so the tile reads as part of its area */
   color?: Accent;
   sub?: string;
   icon?: React.ReactNode;
@@ -35,6 +35,11 @@ interface StatCardProps {
   loading?: boolean;
   /** Compact layout for mobile stat rows */
   compact?: boolean;
+  /**
+   * The orange gradient tile with white text. One per page at most, for the
+   * number that matters most there.
+   */
+  hero?: boolean;
 }
 
 const LEGACY_ALIAS: Partial<Record<Accent, Accent>> = {
@@ -45,27 +50,24 @@ const LEGACY_ALIAS: Partial<Record<Accent, Accent>> = {
   gray: "neutral",
 };
 
-const ACCENT_CHIP: Record<string, string> = {
-  gold:        "bg-gold/15 text-gold-muted ring-gold/25 dark:bg-gold/15 dark:text-gold",
-  bookings:    "bg-bookings/10 text-bookings ring-bookings/20",
-  facilities:  "bg-facilities/10 text-facilities ring-facilities/20",
-  inventory:   "bg-inventory/10 text-inventory ring-inventory/20",
-  maintenance: "bg-maintenance/10 text-maintenance ring-maintenance/20",
-  finance:     "bg-finance/10 text-finance ring-finance/20",
-  duty:        "bg-duty/10 text-duty ring-duty/20",
-  success:     "bg-success/10 text-success ring-success/20",
-  warning:     "bg-warning/10 text-warning ring-warning/20",
-  danger:      "bg-danger/10 text-danger ring-danger/20",
-  neutral:     "bg-foreground/5 text-muted-foreground ring-foreground/10",
+const ACCENT_ICON: Record<string, string> = {
+  gold:        "text-gold",
+  bookings:    "text-bookings",
+  facilities:  "text-facilities",
+  inventory:   "text-inventory",
+  maintenance: "text-maintenance",
+  finance:     "text-finance",
+  duty:        "text-duty",
+  success:     "text-success",
+  warning:     "text-warning",
+  danger:      "text-danger",
+  neutral:     "text-muted-foreground",
 };
 
-const cardBase = cn(
-  "relative overflow-hidden rounded-[var(--r-md)] bg-[var(--surface)] ring-1 ring-[var(--card-ring,var(--border))] [container-type:inline-size]",
-  "shadow-[var(--shadow-sm)] transition-all duration-200",
-  "dark:bg-[hsl(var(--ui-card))]",
-  "sm:hover:shadow-[var(--shadow-md)] sm:hover:-translate-y-px"
-);
-
+/**
+ * A rounded number tile: label and a round icon chip on top, the figure, then a
+ * one-line caption. Linked tiles lift on hover and show an arrow.
+ */
 export default function StatCard({
   label,
   value,
@@ -76,79 +78,75 @@ export default function StatCard({
   href,
   loading = false,
   compact = false,
+  hero = false,
 }: StatCardProps) {
   const accent = LEGACY_ALIAS[color] ?? color;
-  const chip = ACCENT_CHIP[accent] ?? ACCENT_CHIP.gold;
+  const iconTone = ACCENT_ICON[accent] ?? ACCENT_ICON.gold;
+  const attention = trend === "down";
 
-  const content = (
-    <div
-      className={cn(
-        "relative z-10 flex items-start justify-between",
-        compact ? "gap-1.5 p-2.5 sm:gap-2 sm:p-3" : "gap-2 p-2.5 sm:p-4 lg:p-5"
-      )}
-    >
-      <div className="flex-1 min-w-0">
-        <div
-          className={cn(
-            "truncate font-bold uppercase text-muted-foreground",
-            compact ? "text-[0.55rem] tracking-[0.04em] sm:text-[0.65rem] sm:tracking-[0.08em]" : "text-[0.58rem] tracking-[0.04em] sm:text-[0.7rem] sm:tracking-[0.08em]"
-          )}
-        >
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <p className={cn("min-w-0 truncate text-[0.8rem] sm:text-sm", hero ? "text-[#fff]" : "text-muted-foreground")}>
           {label}
-        </div>
-        {loading ? (
-          <Skeleton className={cn("mb-1", compact ? "mt-1 h-5 w-12 sm:h-7 sm:w-16" : "mt-1 h-6 w-14 sm:mt-2 sm:h-8 sm:w-20 lg:h-9 lg:w-24")} />
-        ) : (
-          <div
-            className={cn(
-              "font-display font-bold tabular-nums break-words leading-tight text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]",
-              // Scale the value to the card's own width (cqi) so long amounts
-              // never overflow/clip; break-words is a last-resort safety net.
-              compact ? "mt-0.5 text-[clamp(0.95rem,12cqi,1.2rem)] sm:mt-1 sm:text-[clamp(1rem,9cqi,1.3rem)]" : "mt-0.5 text-[clamp(1rem,12cqi,1.35rem)] sm:mt-1.5 sm:text-[clamp(1.15rem,9cqi,1.85rem)] lg:text-[clamp(1.2rem,10cqi,2.1rem)]"
-            )}
-          >
-            {value}
-          </div>
-        )}
-        {sub && !loading && (
-          <div className="mt-1 hidden truncate text-[0.72rem] leading-snug text-muted-foreground sm:block lg:text-body-sm">{sub}</div>
-        )}
-        {trend && trend !== "neutral" && !loading && (
+        </p>
+        {icon ? (
           <span
+            aria-hidden
             className={cn(
-              "mt-2 hidden items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold leading-none sm:inline-flex",
-              trend === "up"
-                ? "bg-success/15 text-success"
-                : "bg-danger/15 text-danger"
+              "flex size-7 shrink-0 items-center justify-center rounded-full [&_svg]:size-3.5",
+              hero ? "bg-[rgb(255_255_255/0.2)] text-[#fff]" : cn("border border-border/80", iconTone)
             )}
           >
-            {trend === "up" ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-            <span>{trend === "up" ? "Trending up" : "Needs attention"}</span>
+            {icon}
           </span>
-        )}
+        ) : href ? (
+          <ArrowUpRight aria-hidden className={cn("size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100", hero ? "text-[#fff]" : "text-muted-foreground")} />
+        ) : null}
       </div>
-      {icon && (
-        <div
-          aria-hidden
+      {loading ? (
+        <Skeleton className={cn("mt-3 h-7 w-20 sm:mt-4 sm:h-8 sm:w-24", hero && "bg-[rgb(255_255_255/0.25)]")} />
+      ) : (
+        <p
           className={cn(
-            "ml-1.5 flex shrink-0 items-center justify-center rounded-[8px] ring-1 ring-inset [&_svg]:size-3.5 sm:ml-2 sm:rounded-[10px] sm:[&_svg]:size-4",
-            compact ? "h-7 w-7 sm:h-9 sm:w-9" : "h-7 w-7 sm:h-9 sm:w-9 lg:h-10 lg:w-10",
-            chip
+            "font-display font-medium leading-none tracking-tight tabular-nums break-words",
+            compact
+              ? "mt-2.5 text-[clamp(1.05rem,11cqi,1.35rem)]"
+              : "mt-3 text-[clamp(1.15rem,12cqi,1.5rem)] sm:mt-4 sm:text-[clamp(1.25rem,10cqi,1.75rem)]",
+            hero ? "text-[#fff]" : "text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]"
           )}
         >
-          {icon}
-        </div>
+          {value}
+        </p>
       )}
-    </div>
+      {sub && !loading && (
+        <p
+          className={cn(
+            "mt-2.5 flex items-center gap-1.5 truncate text-xs sm:mt-3",
+            hero ? "text-[rgb(255_255_255/0.9)]" : "text-muted-foreground"
+          )}
+        >
+          {attention && !hero && <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-warning" />}
+          <span className="truncate">{sub}</span>
+        </p>
+      )}
+    </>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={cn(cardBase, "block no-underline")}>
-        {content}
-      </Link>
-    );
-  }
+  const cls = cn(
+    "group relative flex flex-col overflow-hidden rounded-[1.25rem] outline-none [container-type:inline-size] transition-[transform,box-shadow] duration-200 focus-visible:ring-2 focus-visible:ring-ring",
+    compact ? "min-h-[6.5rem] p-3" : "min-h-[7.5rem] p-3.5 sm:min-h-[8.5rem] sm:p-4",
+    hero
+      ? "bg-gradient-to-br from-[hsl(var(--hero-from,var(--gold-hsl)))] to-[hsl(var(--hero-to,var(--gold-muted-hsl)))] shadow-[0_14px_30px_-14px_hsl(var(--hero-to,var(--gold-muted-hsl))/0.65)]"
+      : "border border-border/70 bg-card shadow-[var(--shadow-xs)]",
+    href && "no-underline sm:hover:-translate-y-0.5 sm:hover:shadow-[var(--shadow-md)]"
+  );
 
-  return <div className={cardBase}>{content}</div>;
+  return href ? (
+    <Link href={href} className={cls}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
 }

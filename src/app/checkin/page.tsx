@@ -10,7 +10,7 @@ export default async function CheckInPage() {
   return (
     <div className="w-full max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-[rgba(200,163,90,0.12)]">
+        <div className="p-2 rounded-lg bg-[hsl(var(--gold-hsl)/0.12)]">
           <ClipboardCheck size={20} className="text-[var(--gold)]" />
         </div>
         <div>

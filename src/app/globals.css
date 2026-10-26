@@ -1135,18 +1135,26 @@
 }
 
 .staff-main {
-  padding: 20px 16px;
   overflow-x: clip;
+}
+
+/* Page content sits under the sticky staff header, which spans the full width */
+.staff-content {
+  padding: 8px 16px 24px;
 }
 
 @media (min-width: 640px) {
   .campus-main { padding: 28px 32px; }
-  .staff-main { padding: 28px 32px; }
+  .staff-content { padding: 12px 24px 40px; }
+}
+
+@media (min-width: 1024px) {
+  .staff-content { padding: 12px 32px 48px; }
 }
 
 /* Clear the floating mobile bottom tab bar (MobileBottomNav, hidden at lg+) */
 @media (max-width: 1023px) {
-  .staff-main { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .staff-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
 
 /* ─── Page subtitle (alias for page-sub) ─────────────────────────────────── */
@@ -1250,233 +1258,436 @@ textarea:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CODE-CAMP STAFF THEME — staff portal only (scoped to .surface-cool)
-   Mirrors the sibling `code-camp` repo's palette with a more modern touch:
-   warm coral/rose primary (#ff4d6b = 349 100% 63%), warm neutral grays, a
-   warm-charcoal sidebar, and a slightly larger radius. Public/patron/auth
-   (.surface-warm) keep the First Love navy + gold identity untouched.
-   Remove this whole section to revert.
+   STAFF PORTAL THEME — scoped to .surface-cool
+   The Codeslaw BMS admin console's design language: a warm, quiet canvas,
+   white rounded cards, ink (near-black) pill buttons and tabs, and one
+   confident orange accent, set in Outfit. Public/patron/auth (.surface-warm)
+   keep the Anagkazo identity untouched.
+
+   StaffShell also puts .surface-cool on <body> while it is mounted, so
+   dialogs, sheets and menus portalled out of the shell get the same theme.
+
+   Contrast: the orange primary is 4.8:1 on white, so it is safe for links and
+   small text as well as fills.
    ───────────────────────────────────────────────────────────────────────── */
 .surface-cool {
-  /* Brand accent: gold → coral (channels drive every text-gold/bg-gold/--gold) */
-  --gold-hsl:        349 100% 63%;
-  --gold-bright-hsl: 349 100% 71%;
-  --gold-muted-hsl:  349 64% 50%;
-  --gold-pale-hsl:   349 100% 96%;
+  /* Brand accent: every text-gold / bg-gold / var(--gold) becomes the orange */
+  --gold-hsl:        13 82% 45%;
+  --gold-bright-hsl: 14 88% 55%;
+  --gold-muted-hsl:  12 80% 38%;
+  --gold-pale-hsl:   18 90% 95%;
 
-  /* Headings/body: cool navy → warm near-black (also warms the sidebar canvas) */
-  --navy-hsl:        20 14% 12%;
-  --navy-mid-hsl:    20 13% 20%;
-  --navy-light-hsl:  22 12% 30%;
+  /* Ink: headings and body copy */
+  --navy-hsl:        24 10% 10%;
+  --navy-mid-hsl:    24 8% 20%;
+  --navy-light-hsl:  24 6% 32%;
 
-  /* Warm neutral canvas */
-  --cream-hsl:       24 16% 97%;
-  --cream-dark-hsl:  24 13% 93%;
-  --border-hsl:      24 13% 88%;
-  --text-muted-hsl:  24 8% 44%;
+  /* Warm canvas */
+  --cream-hsl:       30 14% 95%;
+  --cream-dark-hsl:  30 12% 93%;
+  --border-hsl:      30 10% 90%;
+  --text-muted-hsl:  25 6% 42%;
+  --success-hsl:     152 60% 36%;
+  --warning-hsl:     34 92% 42%;
+  --danger-hsl:      0 72% 50%;
+  --info-hsl:        221 60% 48%;
   --surface:         #ffffff;
   --white:           #ffffff;
-  --border-dark:     #d8cfc9;
-  --field-border:    #e7ddd6;
+  --slate:           hsl(25 6% 30%);
+  --muted:           hsl(25 6% 42%);
+  --border-dark:     hsl(30 8% 82%);
+  --field-bg:        #ffffff;
+  --field-fg:        hsl(24 10% 10%);
+  --field-border:    hsl(30 10% 88%);
+  --field-placeholder: hsl(25 6% 58%);
 
-  /* shadcn tokens — code-camp light */
-  --ui-background: 24 16% 97%;
-  --ui-foreground: 20 14% 12%;
+  /* Areas of the portal — muted so they orient without competing with orange */
+  --accent-bookings:    221 60% 48%;
+  --accent-facilities:  174 63% 33%;
+  --accent-inventory:   270 55% 52%;
+  --accent-maintenance: 30 90% 40%;
+  --accent-finance:     152 60% 32%;
+  --accent-duty:        199 80% 38%;
+
+  --chart-1: 14 88% 55%;
+  --chart-2: 24 10% 14%;
+  --chart-3: 30 10% 72%;
+  --chart-4: 152 60% 36%;
+  --chart-5: 221 60% 48%;
+
+  /* Buttons: ink pills. Button reads these with a fallback to --ui-primary,
+     so surfaces that don't set them keep their brand primary. */
+  --btn:            24 10% 10%;
+  --btn-foreground: 0 0% 100%;
+  --btn-radius:     9999px;
+  --signal:         14 88% 55%;
+
+  /* The orange hero tile (one per page, at most); white text stays above 4.5:1 */
+  --hero-from: 13 82% 45%;
+  --hero-to:   9 78% 38%;
+
+  --font-display: var(--font-outfit, 'Outfit'), system-ui, sans-serif;
+  --font-body:    var(--font-outfit, 'Outfit'), system-ui, sans-serif;
+
+  --shadow-xs: 0 1px 2px rgb(28 25 23 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px -16px rgb(28 25 23 / 0.12);
+  --shadow-md: 0 1px 2px rgb(28 25 23 / 0.05), 0 12px 32px -16px rgb(28 25 23 / 0.18);
+  --shadow-lg: 0 16px 40px -16px rgb(28 25 23 / 0.22);
+
+  /* shadcn tokens */
+  --ui-background: 30 14% 95%;
+  --ui-foreground: 24 10% 10%;
   --ui-card: 0 0% 100%;
-  --ui-card-foreground: 20 14% 12%;
+  --ui-card-foreground: 24 10% 10%;
   --ui-popover: 0 0% 100%;
-  --ui-popover-foreground: 20 14% 12%;
-  --ui-primary: 349 100% 63%;
+  --ui-popover-foreground: 24 10% 10%;
+  --ui-primary: 13 82% 45%;
   --ui-primary-foreground: 0 0% 100%;
-  --ui-secondary: 24 13% 93%;
-  --ui-secondary-foreground: 20 14% 18%;
-  --ui-muted: 24 13% 94%;
-  --ui-muted-foreground: 24 8% 44%;
-  --ui-accent: 24 13% 93%;
-  --ui-accent-foreground: 20 14% 18%;
-  --ui-border: 24 13% 88%;
-  --ui-input: 24 13% 88%;
-  --ui-ring: 349 100% 63%;
-  --radius: 0.625rem;
+  --ui-secondary: 30 12% 94%;
+  --ui-secondary-foreground: 24 10% 10%;
+  --ui-muted: 30 12% 94%;
+  --ui-muted-foreground: 25 6% 42%;
+  --ui-accent: 30 12% 93%;
+  --ui-accent-foreground: 24 10% 10%;
+  --ui-destructive: 0 72% 50%;
+  --ui-destructive-foreground: 0 0% 100%;
+  --ui-border: 30 10% 90%;
+  --ui-input: 30 10% 88%;
+  --ui-ring: 13 82% 45%;
+  --radius: 0.875rem;
 
-  /* Theme-aware sidebar (light): warm off-white canvas, dark text, coral active */
-  --sb-bg: 24 22% 98%;
-  --sb-fg: 20 12% 32%;
-  --sb-fg-strong: 20 14% 12%;
-  --sb-muted: 24 7% 52%;
-  --sb-hover-bg: 24 14% 93%;
-  --sb-border: 24 13% 90%;
+  --submit-bg: hsl(24 10% 10%);
+  --submit-bg-hover: hsl(24 10% 10% / 0.88);
+  --submit-fg: #ffffff;
+  --submit-border: hsl(24 10% 10%);
+  --submit-ring: hsl(13 82% 45% / 0.3);
 
-  /* Warm hero with a coral edge */
-  --page-hero-bg: linear-gradient(135deg, hsl(20 14% 12%) 0%, hsl(22 13% 18%) 100%);
-  --page-hero-fg: #ffffff;
-  --page-hero-muted: rgba(255, 255, 255, 0.74);
-  --page-hero-border: hsl(349 100% 63% / 0.40);
-}
+  /* Sidebar: white floating panel, ink active pill */
+  --sb-bg: 0 0% 100%;
+  --sb-fg: 25 6% 42%;
+  --sb-fg-strong: 24 10% 10%;
+  --sb-muted: 25 6% 52%;
+  --sb-hover-bg: 30 12% 95%;
+  --sb-border: 30 10% 91%;
+  --sb-active-bg: 24 10% 10%;
+  --sb-active-fg: 0 0% 100%;
 
-/* Staff sidebar (.on-navy): bright coral accent on the warm-charcoal canvas */
-.surface-cool .on-navy {
-  --gold-hsl:        349 100% 68%;
-  --gold-bright-hsl: 349 100% 74%;
-}
-
-/* Staff portal — dark mode: coral primary + warm darks */
-.dark .surface-cool {
-  --gold-hsl:        349 100% 67%;
-  --gold-bright-hsl: 349 100% 74%;
-  --gold-muted-hsl:  349 70% 62%;
-
-  --navy-hsl:        24 16% 96%;
-  --navy-mid-hsl:    24 14% 86%;
-  --navy-light-hsl:  24 12% 74%;
-  --text-muted-hsl:  24 8% 62%;
-
-  --surface: hsl(20 13% 12% / 0.92);
-  --white:   hsl(20 13% 14% / 0.6);
-  --cream-dark: rgba(40, 34, 30, 0.5);
-
-  --ui-background: 20 14% 8%;
-  --ui-foreground: 24 16% 96%;
-  --ui-card: 20 13% 11%;
-  --ui-card-foreground: 24 16% 96%;
-  --ui-popover: 20 13% 11%;
-  --ui-popover-foreground: 24 16% 96%;
-  --ui-primary: 349 100% 63%;
-  --ui-primary-foreground: 0 0% 100%;
-  --ui-secondary: 22 9% 17%;
-  --ui-secondary-foreground: 24 16% 96%;
-  --ui-muted: 22 9% 17%;
-  --ui-muted-foreground: 24 8% 62%;
-  --ui-accent: 22 9% 19%;
-  --ui-accent-foreground: 24 16% 96%;
-  --ui-border: 24 8% 18%;
-  --ui-input: 24 8% 20%;
-  --ui-ring: 349 100% 63%;
-
-  /* Theme-aware sidebar (dark): warm charcoal canvas, light text, coral active */
-  --sb-bg: 20 13% 10%;
-  --sb-fg: 24 10% 72%;
-  --sb-fg-strong: 24 16% 96%;
-  --sb-muted: 24 8% 55%;
-  --sb-hover-bg: 24 8% 16%;
-  --sb-border: 24 8% 18%;
-
-  --page-hero-bg: linear-gradient(135deg, hsl(20 14% 10%) 0%, hsl(22 13% 16%) 100%);
-  --page-hero-fg: #f7f3f1;
-  --page-hero-muted: rgba(247, 243, 241, 0.72);
-  --page-hero-border: hsl(349 100% 63% / 0.35);
-}
-
-/* Final FLC theme alignment. This intentionally wins over older scoped experiments. */
-.surface-cool {
-  --gold-hsl:        349 100% 63%;
-  --gold-bright-hsl: 349 100% 71%;
-  --gold-muted-hsl:  349 64% 50%;
-  --gold-pale-hsl:   349 100% 96%;
-  --navy-hsl:        220 14% 10%;
-  --navy-mid-hsl:    220 13% 18%;
-  --navy-light-hsl:  220 12% 28%;
-  --cream-hsl:       215 20% 95%;
-  --cream-dark-hsl:  214 14% 94%;
-  --border-hsl:      214 14% 89%;
-  --text-muted-hsl:  215 12% 47%;
-  --surface:         #FCFDFE;
-  --white:           #FCFDFE;
-  --border-dark:     #D0D5DC;
-  --field-border:    #E2E6EB;
-
-  --ui-background: 215 20% 95%;
-  --ui-foreground: 220 14% 10%;
-  --ui-card: 210 20% 99%;
-  --ui-card-foreground: 220 14% 10%;
-  --ui-popover: 210 20% 99%;
-  --ui-popover-foreground: 220 14% 10%;
-  --ui-primary: 349 100% 63%;
-  --ui-primary-foreground: 0 0% 100%;
-  --ui-secondary: 214 14% 94%;
-  --ui-secondary-foreground: 220 14% 10%;
-  --ui-muted: 214 14% 94%;
-  --ui-muted-foreground: 215 12% 47%;
-  --ui-accent: 214 14% 94%;
-  --ui-accent-foreground: 220 14% 10%;
-  --ui-border: 214 14% 89%;
-  --ui-input: 214 14% 89%;
-  --ui-ring: 349 100% 63%;
-
-  --sb-bg: 210 20% 99%;
-  --sb-fg: 215 12% 47%;
-  --sb-fg-strong: 220 14% 10%;
-  --sb-muted: 215 10% 56%;
-  --sb-hover-bg: 214 14% 94%;
-  --sb-border: 214 14% 89%;
-
+  /* Re-derive against this scope's channels: a var() inside a custom property
+     resolves where it is declared, so the :root versions would keep :root's
+     colours. Declared once here, they also follow the .dark channels below. */
+  --navy:        hsl(var(--navy-hsl));
+  --navy-mid:    hsl(var(--navy-mid-hsl));
+  --navy-light:  hsl(var(--navy-light-hsl));
+  --gold:        hsl(var(--gold-hsl));
+  --gold-bright: hsl(var(--gold-bright-hsl));
+  --gold-pale:   hsl(var(--gold-pale-hsl));
+  --gold-muted:  hsl(var(--gold-muted-hsl));
+  --success:     hsl(var(--success-hsl));
+  --warning:     hsl(var(--warning-hsl));
+  --danger:      hsl(var(--danger-hsl));
+  --success-bg:  hsl(var(--success-hsl) / 0.08);
+  --warning-bg:  hsl(var(--warning-hsl) / 0.08);
+  --danger-bg:   hsl(var(--danger-hsl) / 0.06);
+  --glow-gold:   0 0 0 3px hsl(var(--gold-hsl) / 0.2), 0 0 20px hsl(var(--gold-hsl) / 0.1);
   --cream: hsl(var(--cream-hsl));
   --cream-dark: hsl(var(--cream-dark-hsl));
   --border: hsl(var(--border-hsl));
-  --card-ring: hsl(var(--border-hsl));
+  --card-ring: hsl(var(--border-hsl) / 0.7);
   --text-muted: hsl(var(--text-muted-hsl));
   --page-bg: hsl(var(--cream-hsl));
-  --page-hero-bg:
-    radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.12), transparent 34%),
-    linear-gradient(135deg, rgba(15,17,20,0.96) 0%, rgba(37,39,43,0.94) 58%, rgba(15,23,42,0.42) 100%);
-  --page-hero-fg: #ffffff;
-  --page-hero-muted: rgba(255, 255, 255, 0.74);
-  --page-hero-border: hsl(349 100% 63% / 0.35);
+
+  /* "Hero" page headers read as the plain console header: no band */
+  --page-hero-bg: none;
+  --page-hero-fg: hsl(24 10% 10%);
+  --page-hero-muted: hsl(25 6% 42%);
+  --page-hero-border: transparent;
+  --hero-btn-bg: hsl(24 10% 10%);
+  --hero-btn-fg: #ffffff;
+  --hero-outline-border: hsl(30 10% 88%);
+  --hero-outline-bg: #ffffff;
+
+  font-family: var(--font-body);
+  color: var(--navy);
 }
 
+/* The sidebar used to be navy; it is white now, so accents stay standard. */
 .surface-cool .on-navy {
-  --gold-hsl:        349 100% 68%;
-  --gold-bright-hsl: 349 100% 74%;
+  --gold-hsl:        13 82% 45%;
+  --gold-bright-hsl: 14 88% 55%;
 }
 
+/* Dark mode (the app currently forces light; kept coherent for when it doesn't) */
 .dark .surface-cool {
-  --gold-hsl:        349 100% 63%;
-  --gold-bright-hsl: 349 100% 71%;
-  --gold-muted-hsl:  349 72% 58%;
-  --navy-hsl:        210 20% 96%;
-  --navy-mid-hsl:    210 18% 86%;
-  --navy-light-hsl:  210 15% 74%;
-  --text-muted-hsl:  215 10% 68%;
-  --surface:         rgba(22, 24, 28, 0.78);
-  --white:           rgba(22, 24, 28, 0.68);
-  --cream:           transparent;
-  --cream-dark:      rgba(37, 39, 43, 0.5);
-  --border:          rgba(255, 255, 255, 0.06);
-  --card-ring:       rgba(255, 255, 255, 0.05);
-  --text-muted:      hsl(var(--text-muted-hsl));
-  --page-bg:         transparent;
+  --gold-hsl:        16 92% 60%;
+  --gold-bright-hsl: 16 92% 66%;
+  --gold-muted-hsl:  16 85% 66%;
+  --gold-pale-hsl:   16 30% 14%;
+  --navy-hsl:        30 20% 96%;
+  --navy-mid-hsl:    30 14% 86%;
+  --navy-light-hsl:  30 10% 74%;
+  --cream-hsl:       24 10% 6%;
+  --cream-dark-hsl:  24 6% 14%;
+  --border-hsl:      24 6% 17%;
+  --text-muted-hsl:  30 6% 62%;
+  --success-hsl:     152 55% 50%;
+  --warning-hsl:     38 92% 56%;
+  --danger-hsl:      0 70% 58%;
+  --info-hsl:        221 70% 66%;
+  --surface:         hsl(24 8% 10%);
+  --white:           hsl(24 8% 10% / 0.7);
+  --slate:           hsl(30 10% 80%);
+  --muted:           hsl(30 6% 62%);
+  --border-dark:     hsl(24 6% 24%);
+  --field-bg:        hsl(24 8% 11%);
+  --field-bg-focus:  hsl(24 8% 13%);
+  --field-fg:        hsl(30 20% 96%);
+  --field-border:    hsl(24 6% 19%);
 
-  --ui-background: 222 14% 7%;
-  --ui-foreground: 210 20% 96%;
-  --ui-card: 220 13% 10%;
-  --ui-card-foreground: 210 20% 96%;
-  --ui-popover: 220 13% 10%;
-  --ui-popover-foreground: 210 20% 96%;
-  --ui-primary: 349 100% 63%;
-  --ui-primary-foreground: 0 0% 100%;
-  --ui-secondary: 217 10% 16%;
-  --ui-secondary-foreground: 210 20% 96%;
-  --ui-muted: 217 10% 16%;
-  --ui-muted-foreground: 215 10% 68%;
-  --ui-accent: 217 10% 16%;
-  --ui-accent-foreground: 210 20% 96%;
-  --ui-border: 217 10% 15%;
-  --ui-input: 217 10% 16%;
-  --ui-ring: 349 100% 63%;
+  --accent-bookings:    221 70% 66%;
+  --accent-facilities:  174 55% 55%;
+  --accent-inventory:   270 60% 70%;
+  --accent-maintenance: 30 90% 58%;
+  --accent-finance:     152 55% 50%;
+  --accent-duty:        199 75% 62%;
 
-  --sb-bg: 220 13% 10%;
-  --sb-fg: 215 10% 72%;
-  --sb-fg-strong: 210 20% 96%;
-  --sb-muted: 215 8% 55%;
-  --sb-hover-bg: 217 10% 16%;
-  --sb-border: 217 10% 18%;
+  --btn:            30 20% 96%;
+  --btn-foreground: 24 10% 8%;
+  --signal:         16 92% 60%;
 
-  --page-hero-bg:
-    radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.12), transparent 34%),
-    linear-gradient(135deg, rgba(15,17,20,0.96) 0%, rgba(31,34,39,0.94) 58%, rgba(15,23,42,0.42) 100%);
-  --page-hero-fg: #F1F5F9;
-  --page-hero-muted: rgba(241, 245, 249, 0.72);
-  --page-hero-border: hsl(349 100% 63% / 0.35);
+  --shadow-xs: 0 1px 0 rgb(255 255 255 / 0.03) inset;
+  --shadow-sm: 0 1px 0 rgb(255 255 255 / 0.03) inset;
+  --shadow-md: 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 16px 40px -16px rgb(0 0 0 / 0.7);
+
+  --ui-background: 24 10% 6%;
+  --ui-foreground: 30 20% 96%;
+  --ui-card: 24 8% 10%;
+  --ui-card-foreground: 30 20% 96%;
+  --ui-popover: 24 8% 11%;
+  --ui-popover-foreground: 30 20% 96%;
+  --ui-primary: 16 92% 60%;
+  --ui-primary-foreground: 24 10% 8%;
+  --ui-secondary: 24 6% 15%;
+  --ui-secondary-foreground: 30 20% 96%;
+  --ui-muted: 24 6% 15%;
+  --ui-muted-foreground: 30 6% 62%;
+  --ui-accent: 24 6% 16%;
+  --ui-accent-foreground: 30 20% 96%;
+  --ui-destructive: 0 70% 58%;
+  --ui-border: 24 6% 17%;
+  --ui-input: 24 6% 19%;
+  --ui-ring: 16 92% 60%;
+
+  --submit-bg: hsl(30 20% 96%);
+  --submit-bg-hover: hsl(30 20% 96% / 0.88);
+  --submit-fg: hsl(24 10% 8%);
+  --submit-border: hsl(30 20% 96%);
+  --submit-ring: hsl(16 92% 60% / 0.3);
+
+  --sb-bg: 24 8% 9%;
+  --sb-fg: 30 6% 62%;
+  --sb-fg-strong: 30 20% 96%;
+  --sb-muted: 30 6% 52%;
+  --sb-hover-bg: 24 6% 14%;
+  --sb-border: 24 6% 15%;
+  --sb-active-bg: 30 20% 96%;
+  --sb-active-fg: 24 10% 8%;
+
+  --page-hero-fg: hsl(30 20% 96%);
+  --page-hero-muted: hsl(30 6% 62%);
+  --hero-btn-bg: hsl(30 20% 96%);
+  --hero-btn-fg: hsl(24 10% 8%);
+  --hero-outline-border: hsl(24 6% 19%);
+  --hero-outline-bg: hsl(24 8% 10%);
+}
+
+/* ─── Staff chrome: the console's component shapes ─────────────────────────
+   Cards float on the canvas with a generous radius and a soft lift; tabs are
+   pill segment controls with an ink active pill; tables get a soft header
+   band; headings are Outfit at medium weight.                              */
+.surface-cool h1,
+.surface-cool h2,
+.surface-cool h3,
+.surface-cool h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.surface-cool [data-slot='card'] {
+  border-radius: 1.25rem;
+}
+.surface-cool [data-slot='card-title'] {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Legacy page-title / page-sub headings match the console header */
+.surface-cool .page-title {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.surface-cool .section-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+/* Inputs, selects and textareas: rounded fields */
+.surface-cool input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.surface-cool select,
+.surface-cool textarea,
+.surface-cool [data-slot='select-trigger'] {
+  border-radius: 0.75rem;
+}
+
+/* shadcn tabs: pill segment control */
+.surface-cool [data-slot='tabs-list'][data-variant='default'] {
+  height: auto;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  border: 1px solid hsl(var(--ui-border) / 0.7);
+  border-radius: 9999px;
+  background: hsl(var(--ui-card));
+  box-shadow: var(--shadow-xs);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.surface-cool [data-slot='tabs-list'][data-variant='default'] > [data-slot='tabs-trigger'] {
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  border-color: transparent;
+  font-weight: 500;
+}
+.surface-cool [data-slot='tabs-list'][data-variant='default'] > [data-slot='tabs-trigger']:not([data-active]):hover {
+  background: hsl(var(--ui-muted));
+}
+.surface-cool [data-slot='tabs-list'][data-variant='default'] > [data-slot='tabs-trigger'][data-active] {
+  background: hsl(var(--btn));
+  color: hsl(var(--btn-foreground));
+  box-shadow: 0 1px 2px rgb(28 25 23 / 0.12);
+}
+
+/* Tables: a soft header band, roomy rows */
+.surface-cool [data-slot='table-header'] tr {
+  background: hsl(var(--ui-muted) / 0.6);
+  border-bottom-color: transparent;
+}
+.surface-cool [data-slot='table-head'] {
+  height: 2.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--ui-muted-foreground));
+  text-transform: none;
+  letter-spacing: 0;
+}
+.surface-cool [data-slot='table-row'] {
+  border-bottom-color: hsl(var(--ui-border) / 0.6);
+}
+.surface-cool .data-table {
+  border-color: hsl(var(--ui-border) / 0.7);
+  border-radius: 1.25rem;
+  background: hsl(var(--ui-card));
+}
+.surface-cool .data-table thead th {
+  background: hsl(var(--ui-muted) / 0.6);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--ui-muted-foreground));
+  border-bottom-color: transparent;
+}
+.surface-cool .data-table thead th:first-child { border-radius: 1.25rem 0 0 0; }
+.surface-cool .data-table thead th:last-child  { border-radius: 0 1.25rem 0 0; }
+.surface-cool .data-table tbody td {
+  border-bottom-color: hsl(var(--ui-border) / 0.6);
+}
+.surface-cool .data-table tbody tr:hover td {
+  background: hsl(var(--ui-muted) / 0.5);
+}
+
+/* Alerts: soft rounded notes */
+.surface-cool .alert {
+  border-radius: 1rem;
+  padding: 0.875rem 1rem;
+}
+.surface-cool .alert-warn  { background: hsl(38 92% 50% / 0.08); border-color: hsl(38 92% 50% / 0.3); color: hsl(30 80% 28%); }
+.surface-cool .alert-error { background: hsl(0 72% 50% / 0.06);  border-color: hsl(0 72% 50% / 0.25); color: hsl(0 65% 40%); }
+.surface-cool .alert-info  { background: hsl(221 60% 48% / 0.06); border-color: hsl(221 60% 48% / 0.25); color: hsl(221 55% 36%); }
+.surface-cool .alert-ok    { background: hsl(152 60% 36% / 0.07); border-color: hsl(152 60% 36% / 0.25); color: hsl(152 60% 24%); }
+
+/* Page headers: no band, no rule; a 28–32px medium title, a quiet eyebrow
+   (the breadcrumbs already say where you are), and one plain sentence. */
+.surface-cool [data-page-header='hero'] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  margin-bottom: 0.25rem;
+}
+.surface-cool [data-page-header-eyebrow] {
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+.surface-cool [data-page-header-title] {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+}
+@media (min-width: 640px) {
+  .surface-cool [data-page-header-title] { font-size: 2rem; }
+}
+.surface-cool [data-page-header-description] {
+  margin-top: 0.375rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* Overlays (portalled to <body>, which carries .surface-cool while the shell
+   is mounted): rounded panels and menus with rounded rows. */
+.surface-cool [data-slot='dialog-content'],
+.surface-cool [data-slot='alert-dialog-content'] {
+  border-radius: 1.5rem;
+}
+.surface-cool [data-slot='dropdown-menu-content'],
+.surface-cool [data-slot='popover-content'],
+.surface-cool [data-slot='select-content'] {
+  border-radius: 1rem;
+}
+.surface-cool [data-slot='dropdown-menu-item'],
+.surface-cool [data-slot='select-item'] {
+  border-radius: 0.625rem;
+}
+@media (max-width: 639px) {
+  .surface-cool [data-slot='dialog-content'],
+  .surface-cool [data-slot='alert-dialog-content'] {
+    width: calc(100% - 1.5rem);
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+  }
+}
+
+/* Phones: nothing in the portal scrolls sideways */
+.surface-cool .staff-main {
+  overflow-wrap: anywhere;
+}
+.surface-cool .staff-main pre {
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .dark .surface-warm {
