@@ -176,7 +176,7 @@ export default function InventoryItemForm({
       />
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading} variant="gold" className="flex-1">
+        <Button type="submit" disabled={loading} variant="default" className="flex-1">
           {loading ? (itemId ? "Updating…" : "Saving…") : (itemId ? "Update Item" : "Save Item")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>

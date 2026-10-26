@@ -54,7 +54,7 @@ export default async function FacilityDetailPage(props: { params: Promise<{ id: 
   return (
     <div className="space-y-6 w-full max-w-4xl">
       <div className="flex items-start sm:items-center gap-4 flex-wrap">
-        <Link href="/facilities" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
+        <Link href="/facilities" className="p-2 rounded-lg hover:bg-muted text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">

@@ -44,7 +44,7 @@ export default function ExpensePieChart({ data }: { data: Item[] }) {
               style={{ backgroundColor: COLORS[i % COLORS.length] }}
             />
             <span className="flex-1 truncate text-[var(--slate)]">{item.name}</span>
-            <span className="font-semibold text-gray-800">{formatCurrency(item.value)}</span>
+            <span className="font-semibold text-[var(--navy)]">{formatCurrency(item.value)}</span>
             <span className="text-[var(--muted)] text-xs">({item.count})</span>
           </div>
         ))}

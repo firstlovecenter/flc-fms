@@ -282,7 +282,7 @@ export default function AddBundleForm({
       />
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading} variant="gold" className="flex-1">
+        <Button type="submit" disabled={loading} variant="default" className="flex-1">
           {loading ? (bundleId ? "Updating…" : "Creating…") : (bundleId ? "Update Package" : "Create Package")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>

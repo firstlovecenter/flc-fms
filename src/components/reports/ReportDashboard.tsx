@@ -14,7 +14,6 @@ import InventoryTab  from "./tabs/InventoryTab";
 import CeremonyTab   from "./tabs/CeremonyTab";
 import PatronsTab    from "./tabs/PatronsTab";
 import MaintenanceTab from "./tabs/MaintenanceTab";
-import { Card } from "@/components/ui/card";
 
 type Tab = "financial" | "bookings" | "facilities" | "inventory" | "ceremony" | "patrons" | "maintenance";
 
@@ -110,81 +109,85 @@ export default function ReportDashboard({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Date range controls */}
-      <Card className="p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
-          <Calendar size={14} />
-          <span>Period:</span>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {PRESETS.map((p) => (
+    <div className="space-y-5">
+      {/* Report type: pills on wider screens, a dropdown on phones (no sideways scrolling) */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div
+          role="group"
+          aria-label="Report"
+          className="hidden flex-wrap gap-1 rounded-full border border-border/70 bg-card p-1 shadow-[var(--shadow-xs)] sm:inline-flex"
+        >
+          {TABS.map((t) => (
             <button
-              key={p.value}
-              onClick={() => handlePreset(p.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                period === p.value
-                  ? "bg-[var(--navy)] text-white border-[var(--navy)]"
-                  : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"
-              }`}
+              key={t.id}
+              type="button"
+              onClick={() => handleTabChange(t.id)}
+              aria-pressed={tab === t.id}
+              className={cn(
+                "h-9 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
+                tab === t.id
+                  ? "bg-[hsl(var(--btn))] text-[hsl(var(--btn-foreground))] shadow-[var(--shadow-xs)]"
+                  : "text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]"
+              )}
             >
-              {p.label}
+              {t.label}
             </button>
           ))}
-          <button
-            onClick={() => setPeriod("custom")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              period === "custom"
-                ? "bg-[var(--navy)] text-white border-[var(--navy)]"
-                : "bg-white text-[var(--slate)] border-[var(--border)] hover:border-[var(--navy)]"
-            }`}
-          >
-            Custom
-          </button>
         </div>
-        {period === "custom" && (
-          <div className="flex items-center gap-2">
-            <Input
-              type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="text-sm py-1.5 px-2 w-auto"
-            />
-            <span className="text-[var(--muted)] text-xs">to</span>
-            <Input
-              type="date" value={to} onChange={(e) => setTo(e.target.value)}
-              className="text-sm py-1.5 px-2 w-auto"
-            />
-            <Button onClick={handleCustom} size="sm">Apply</Button>
-          </div>
-        )}
-        {isPending && <span className="text-xs text-[var(--muted)] animate-pulse">Loading…</span>}
-
-        {/* Download button */}
-        <div className="sm:ml-auto">
-          <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}>
-            <Download size={13} /> Download CSV
-          </a>
-        </div>
-      </Card>
-
-      {/* Tab navigation */}
-      <div className="flex gap-1 flex-wrap border-b border-[var(--border)]">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => handleTabChange(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              tab === t.id
-                ? "border-[var(--navy)] text-[var(--navy)]"
-                : "border-transparent text-[var(--muted)] hover:text-[var(--slate)] hover:border-gray-300"
-            }`}
+        <label className="sm:hidden">
+          <span className="sr-only">Report</span>
+          <select
+            value={tab}
+            onChange={(e) => handleTabChange(e.target.value as Tab)}
+            className="h-11 w-full rounded-full border border-border/70 bg-card px-4 text-sm font-medium text-[var(--navy)] shadow-[var(--shadow-xs)]"
           >
-            {t.label}
-          </button>
-        ))}
+            {TABS.map((t) => (
+              <option key={t.id} value={t.id}>{t.label} report</option>
+            ))}
+          </select>
+        </label>
+        <a href={downloadUrl} className={cn(buttonVariants({ variant: "outline" }), "gap-2 self-start lg:self-auto")}>
+          <Download size={15} /> Download CSV
+        </a>
       </div>
 
-      {/* Active tab content */}
-      <div className={isPending ? "opacity-60 pointer-events-none" : ""}>
+      {/* Period */}
+      <div className="flex flex-col gap-3 rounded-[1.25rem] border border-border/70 bg-card p-3 shadow-[var(--shadow-xs)] sm:flex-row sm:flex-wrap sm:items-center">
+        <span className="flex items-center gap-2 px-1 text-sm text-[var(--muted)]">
+          <Calendar size={14} /> Period
+        </span>
+        <div role="group" aria-label="Period" className="flex flex-wrap gap-1.5">
+          {[...PRESETS, { value: "custom", label: "Custom" }].map((p) => {
+            const active = period === p.value;
+            return (
+              <button
+                key={p.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => (p.value === "custom" ? setPeriod("custom") : handlePreset(p.value))}
+                className={cn(
+                  "inline-flex h-9 items-center rounded-full border px-3.5 text-xs font-medium transition-colors",
+                  active
+                    ? "border-[hsl(var(--btn))] bg-[hsl(var(--btn))] text-[hsl(var(--btn-foreground))]"
+                    : "border-border/70 bg-card text-[var(--muted)] hover:border-foreground/30 hover:text-[var(--navy)]"
+                )}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+        {period === "custom" && (
+          <div className="grid grid-cols-2 items-center gap-2 sm:flex">
+            <Input type="date" aria-label="From" value={from} onChange={(e) => setFrom(e.target.value)} className="text-sm sm:w-auto" />
+            <Input type="date" aria-label="To" value={to} onChange={(e) => setTo(e.target.value)} className="text-sm sm:w-auto" />
+            <Button onClick={handleCustom} className="col-span-2 sm:col-span-1">Apply</Button>
+          </div>
+        )}
+        {isPending && <span className="text-xs text-[var(--muted)] animate-pulse sm:ml-auto">Updating…</span>}
+      </div>
+
+      <div className={isPending ? "opacity-60 pointer-events-none transition-opacity" : "transition-opacity"}>
         {tabData[tab].component}
       </div>
     </div>

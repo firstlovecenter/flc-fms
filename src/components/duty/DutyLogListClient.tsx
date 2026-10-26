@@ -10,15 +10,16 @@ import { toast } from "sonner";
 import { deleteDutyLog } from "@/actions/duty.actions";
 import { formatDutyDate } from "@/lib/duty/format";
 import type { SerializedDutyLog } from "./types";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE:
-    "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200",
+    "bg-warning/15 text-warning dark:bg-warning dark:text-warning",
   COMPLETED:
-    "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200",
+    "bg-info/15 text-info dark:bg-info dark:text-info",
   SIGNED_OFF:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200",
+    "bg-success/15 text-success dark:bg-success dark:text-success",
 };
 
 export default function DutyLogListClient({
@@ -86,13 +87,13 @@ export default function DutyLogListClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--cream-dark)]">
-                <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Form</th>
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Form</th>
                 {canManage && (
-                  <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Assigned to</th>
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Assigned to</th>
                 )}
-                <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Progress</th>
-                <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Status</th>
-                <th className="px-4 py-3" />
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Progress</th>
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Status</th>
+                <th className="px-4 py-3 font-medium" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -142,7 +143,7 @@ export default function DutyLogListClient({
                             type="button"
                             disabled={pending}
                             onClick={() => handleDelete(log.id, log.assignedTo.name)}
-                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1"
+                            className="text-danger hover:text-danger dark:text-danger dark:hover:text-danger p-1"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />

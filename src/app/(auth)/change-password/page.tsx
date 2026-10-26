@@ -46,26 +46,26 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-dvh flex items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-gold-bright text-navy-light flex items-center justify-center mx-auto mb-3">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--hero-from))] to-[hsl(var(--hero-to))] text-[#fff] shadow-[0_6px_16px_-6px_hsl(var(--hero-to)/0.6)]">
             <KeyRound size={22} />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--navy)]">Set Your Password</h1>
+          <h1 className="text-[1.6rem] font-medium tracking-tight text-[var(--navy)]">Set your password</h1>
           <p className="text-sm text-[var(--muted)] mt-1">
             Your account was created with a temporary password. Please set a new one to continue.
           </p>
         </div>
 
-        <Card className="p-6">
+        <Card className="rounded-[1.5rem] p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-danger/10 border border-danger/25 rounded-lg p-3 text-danger text-sm">{error}</div>
+              <div role="alert" className="alert alert-error">{error}</div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Current (Temporary) Password</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--navy)]">Current (Temporary) Password</label>
               <div className="relative">
                 <Input
                   name="current"
@@ -82,7 +82,7 @@ export default function ChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">New Password</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--navy)]">New Password</label>
               <div className="relative">
                 <Input
                   name="new"
@@ -101,7 +101,7 @@ export default function ChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--slate)] mb-1">Confirm New Password</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--navy)]">Confirm New Password</label>
               <Input
                 name="confirm"
                 type="password"
@@ -111,7 +111,7 @@ export default function ChangePasswordPage() {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Saving…" : "Set New Password"}
+              {loading ? "Saving…" : "Set new password"}
             </Button>
           </form>
         </Card>

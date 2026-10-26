@@ -103,7 +103,7 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
         <Card className="p-6 border-2 border-[var(--gold)] space-y-4">
           <h3 className="font-semibold text-[var(--navy)]">New Report Subscription</h3>
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+            <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
           )}
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -198,14 +198,14 @@ export default function SubscriptionManager({ initialSubscriptions }: Props) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleToggle(sub.id, sub.isActive)}
-                  className="p-2 rounded-lg hover:bg-[var(--cream)] text-[var(--slate)]"
+                  className="p-2 rounded-lg hover:bg-muted/60 text-[var(--slate)]"
                   title={sub.isActive ? "Pause" : "Resume"}
                 >
-                  {sub.isActive ? <ToggleRight size={20} className="text-green-600" /> : <ToggleLeft size={20} />}
+                  {sub.isActive ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
                 </button>
                 <button
                   onClick={() => handleDelete(sub.id, sub.name)}
-                  className="p-2 rounded-lg hover:bg-red-50 text-red-500"
+                  className="p-2 rounded-lg hover:bg-danger/10 text-danger"
                   title="Delete"
                 >
                   <Trash2 size={16} />

@@ -30,7 +30,7 @@ export default function CatalogTabs({
             className={cn(
               "min-w-[96px] sm:min-w-0 flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200",
               isActive
-                ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(255,66,102,0.22)]"
+                ? "bg-primary text-primary-foreground shadow-[0_2px_8px_hsl(var(--gold-hsl)/0.22)]"
                 : "text-[var(--text-muted)] hover:text-[var(--navy)] dark:hover:text-[#fff] hover:bg-[rgba(22,26,31,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)]"
             )}
           >

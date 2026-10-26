@@ -43,7 +43,7 @@ export default async function InventoryItemsPage(
         className="relative z-10"
         actions={
           canManage ? (
-            <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "gold" }), "gap-2 flex-shrink-0")}>
+            <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "default" }), "gap-2 flex-shrink-0")}>
               + Add Item
             </Link>
           ) : undefined
@@ -85,16 +85,16 @@ export default async function InventoryItemsPage(
       <Card className="overflow-hidden relative z-10">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+            <thead className="bg-muted/60">
               <tr>
                 {["Item", "Category", "Location", "Serial / Asset Tag", "Qty", "Condition", "Status", "Actions"].map((h) => (
-                  <th key={h} className="py-3 px-4 text-left text-[0.72rem] font-bold uppercase tracking-[0.4px] text-[var(--navy)] whitespace-nowrap">{h}</th>
+                  <th key={h} className="py-3 px-4 text-left text-xs tracking-[0.4px] text-[var(--muted)] whitespace-nowrap font-medium">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                <tr key={item.id} className="border-t border-border/60 hover:bg-muted/40">
                   <td className="py-3 px-4">
                     <Link href={`/inventory/items/${item.id}`} className="no-underline">
                       <p className="font-semibold text-[var(--navy)] text-[0.875rem]">{item.name}</p>

@@ -65,11 +65,11 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
 
       {open && (
         <div
-          className="fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/45 p-4"
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-md"
+            className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[1.5rem] bg-card shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
@@ -79,8 +79,8 @@ export default function SendSMSButton({ bookingId, bookingTitle, bookerName, boo
                   To: {bookerName} ({bookerPhone})
                 </p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="p-1 rounded hover:bg-gray-100">
-                <X size={18} className="text-gray-500" />
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="p-1 rounded hover:bg-muted">
+                <X size={18} className="text-[var(--muted)]" />
               </button>
             </div>
 

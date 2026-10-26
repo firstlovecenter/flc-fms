@@ -9,7 +9,8 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -84,7 +85,7 @@ export default function ForgotPasswordPage() {
           <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={26} className="text-success" />
           </div>
-          <h2 className="text-[1.5rem] font-bold text-[var(--navy)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          <h2 className="text-[1.6rem] font-medium tracking-tight text-[var(--navy)] mb-2">
             Password Reset
           </h2>
           <p className="text-[var(--text-muted)] text-[0.9rem] mb-6">
@@ -101,9 +102,9 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell>
         <AuthBrandLink />
-        <Card className="p-9">
+        <Card className="rounded-[1.5rem] p-6 sm:p-9">
           <div className="text-center mb-7">
-            <h2 className="text-[1.5rem] font-bold text-[var(--navy)] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
+            <h2 className="text-[1.6rem] font-medium tracking-tight text-[var(--navy)] mb-1.5">
               {step === "email" ? "Forgot Password" : "Reset Password"}
             </h2>
             <p className="text-[0.85rem] text-[var(--text-muted)]">

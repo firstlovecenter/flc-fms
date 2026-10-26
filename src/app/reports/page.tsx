@@ -45,27 +45,25 @@ export default async function ReportsPage(
     ]);
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
+    <div className="space-y-5 animate-fade-in">
 
       {/* Header */}
       <PageHeader
-        variant="hero"
-        eyebrow="Analytics & Insights"
         title="Reports"
-        description="Enterprise-grade analytics across all business domains"
-        className="relative z-10"
+        description="Finance, bookings, facilities, inventory and maintenance over a period you choose. Download any report as CSV."
+        className="mb-0"
         actions={
           <Link
             href="/reports/subscriptions"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
-            <Users size={15} /> Manage Subscriptions
+            <Users size={15} /> Email subscriptions
           </Link>
         }
       />
 
       {/* Dashboard */}
-      <div className="relative z-10">
+      <div>
         <ReportDashboard
           activeTab={tab}
           period={period}

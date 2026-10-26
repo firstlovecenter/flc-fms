@@ -1,164 +1,166 @@
+import Image from "next/image";
+import { Users } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { cn, formatDate } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
 import AddStaffModal from "@/components/staff/AddStaffModal";
 import StaffRowActions from "@/components/staff/StaffRowActions";
-import { Card } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EmptyState } from "@/components/ui/empty";
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  FACILITY_MANAGER: "Facility Manager",
+  STAFF: "Staff",
+  BOOKING_MANAGER: "Booking Manager",
+  VICAR: "Vicar",
+};
+
+const ROLE_TONE: Record<string, string> = {
+  SUPER_ADMIN: "bg-inventory/10 text-inventory",
+  FACILITY_MANAGER: "bg-gold/10 text-gold",
+};
+
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  lastLoginAt: Date | null;
+  profilePicture: string | null;
+};
 
 export default async function StaffPage() {
   const session = await requirePerm("staff:view");
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+  const canManage = isSuperAdmin || (session.authContext?.permissions["staff:manage"] ?? false);
 
+  const select = { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true, profilePicture: true } as const;
   const [activeStaff, inactiveStaff] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
-      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true, profilePicture: true },
+      select,
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
     prisma.user.findMany({
       where: { isActive: false, role: { notIn: ["SUPER_ADMIN", "PATRON"] } },
-      select: { id: true, name: true, email: true, phone: true, role: true, lastLoginAt: true, profilePicture: true },
+      select,
       orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
   ]);
 
   const activeFms = activeStaff.filter((u) => u.role === "FACILITY_MANAGER").length;
-  const activeMembers = activeStaff.filter((u) => u.role === "STAFF").length;
+
+  // Mirrors checkStaffTarget: only a Super Admin manages Facility Managers, and
+  // nobody manages their own account from this list.
+  const canManageMember = (m: Member) =>
+    canManage && m.id !== session.sub && (isSuperAdmin || (m.role !== "FACILITY_MANAGER" && m.role !== "SUPER_ADMIN"));
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
-
+    <div className="space-y-5 animate-fade-in">
       <PageHeader
-        variant="hero"
-        eyebrow="Administration"
-        title="Staff Management"
-        description={`${activeStaff.length} active staff • ${activeFms} Facility Manager${activeFms !== 1 ? "s" : ""} • ${activeMembers} Staff member${activeMembers !== 1 ? "s" : ""}`}
-        className="relative z-10"
-        actions={<AddStaffModal canAssignSuperAdmin={session.role === "SUPER_ADMIN"} />}
+        title="Staff"
+        description="Everyone who can sign in to the staff portal. Open a person's menu to edit their details, permissions or password."
+        meta={`${activeStaff.length} active · ${activeFms} Facility Manager${activeFms !== 1 ? "s" : ""} · ${inactiveStaff.length} inactive`}
+        actions={canManage ? <AddStaffModal canAssignSuperAdmin={isSuperAdmin} /> : undefined}
+        className="mb-0"
       />
 
-      <Card className="relative z-10 p-0 gap-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
-              <tr>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Name</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Email</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Phone</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Role</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Last Login</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeStaff.map((u) => (
-                <tr key={u.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
-                  <td className="py-3 px-4 font-medium text-[var(--navy)]">{u.name}</td>
-                  <td className="py-3 px-4 text-[var(--slate)]">{u.email}</td>
-                  <td className="py-3 px-4 text-[var(--slate)]">{u.phone ?? "—"}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={cn(
-                        "text-[0.8rem] font-semibold px-[10px] py-1 rounded-[20px]",
-                        u.role === "SUPER_ADMIN"
-                          ? "bg-inventory/10 text-inventory"
-                          : u.role === "FACILITY_MANAGER"
-                            ? "bg-gold/10 text-gold"
-                            : "bg-warning/10 text-warning"
-                      )}
-                    >
-                      {u.role.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-[var(--muted)] text-[0.9rem]">
-                    {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
-                  </td>
-                  <td className="py-3 px-4">
-                    <StatusBadge status="APPROVED" label="Active" size="xs" />
-                  </td>
-                  <td className="py-3 px-4">
-                    <StaffRowActions
-                      userId={u.id}
-                      role={u.role}
-                      name={u.name}
-                      email={u.email}
-                      phone={u.phone}
-                      profilePicture={u.profilePicture}
-                      currentUserRole={session.role}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {activeStaff.length === 0 ? (
+        <EmptyState icon={<Users />} title="No staff yet" description="Staff you add appear here, with their role and last sign-in." />
+      ) : (
+        <StaffList members={activeStaff} currentUserRole={session.role} canManageMember={canManageMember} />
+      )}
 
       {inactiveStaff.length > 0 && (
-        <Card className="relative z-10 opacity-85 p-0 gap-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] font-semibold text-[var(--navy)]">
-            Inactive Staff ({inactiveStaff.length})
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
-                <tr>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Name</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Email</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Phone</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Last Login</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-[var(--navy)]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inactiveStaff.map((u) => (
-                  <tr key={u.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
-                    <td className="py-3 px-4 font-medium text-[var(--navy)]">{u.name}</td>
-                    <td className="py-3 px-4 text-[var(--slate)]">{u.email}</td>
-                    <td className="py-3 px-4 text-[var(--slate)]">{u.phone ?? "—"}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={cn(
-                          "text-[0.8rem] font-semibold px-[10px] py-1 rounded-[20px]",
-                          u.role === "SUPER_ADMIN"
-                            ? "bg-inventory/10 text-inventory"
-                            : u.role === "FACILITY_MANAGER"
-                              ? "bg-gold/10 text-gold"
-                              : "bg-warning/10 text-warning"
-                        )}
-                      >
-                        {u.role.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-[var(--muted)] text-[0.9rem]">
-                      {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge status="CANCELLED" label="Inactive" size="xs" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <StaffRowActions
-                        userId={u.id}
-                        role={u.role}
-                        name={u.name}
-                        email={u.email}
-                        phone={u.phone}
-                        profilePicture={u.profilePicture}
-                        currentUserRole={session.role}
-                        inactive
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-[var(--muted)]">
+            Inactive · {inactiveStaff.length}
+          </h2>
+          <StaffList members={inactiveStaff} currentUserRole={session.role} canManageMember={canManageMember} inactive />
+        </section>
       )}
     </div>
+  );
+}
+
+function StaffList({
+  members,
+  currentUserRole,
+  canManageMember,
+  inactive = false,
+}: {
+  members: Member[];
+  currentUserRole: string;
+  canManageMember: (m: Member) => boolean;
+  inactive?: boolean;
+}) {
+  return (
+    <ul
+      className={cn(
+        "divide-y divide-border/70 rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]",
+        inactive && "opacity-80"
+      )}
+    >
+      {members.map((u) => (
+        <li key={u.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+          <Avatar name={u.name} src={u.profilePicture} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="truncate text-sm font-medium text-[var(--navy)]">{u.name}</span>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-medium leading-4",
+                  ROLE_TONE[u.role] ?? "bg-secondary text-secondary-foreground"
+                )}
+              >
+                {ROLE_LABELS[u.role] ?? u.role.replace(/_/g, " ")}
+              </span>
+              {inactive && (
+                <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] font-medium leading-4 text-secondary-foreground">
+                  Inactive
+                </span>
+              )}
+            </div>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
+              <a href={`mailto:${u.email}`} className="truncate hover:text-[var(--navy)] hover:underline">{u.email}</a>
+              {u.phone && (
+                <>
+                  <span aria-hidden>·</span>
+                  <a href={`tel:${u.phone}`} className="hover:text-[var(--navy)] hover:underline">{u.phone}</a>
+                </>
+              )}
+              <span aria-hidden className="hidden sm:inline">·</span>
+              <span className="w-full sm:w-auto">
+                {u.lastLoginAt ? `Last signed in ${formatDate(u.lastLoginAt)}` : "Never signed in"}
+              </span>
+            </p>
+          </div>
+          <StaffRowActions
+            userId={u.id}
+            role={u.role}
+            name={u.name}
+            email={u.email}
+            phone={u.phone}
+            profilePicture={u.profilePicture}
+            currentUserRole={currentUserRole}
+            canManage={canManageMember(u)}
+            inactive={inactive}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Avatar({ name, src }: { name: string; src: string | null }) {
+  const initials = name.split(" ").filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  return src ? (
+    <Image src={src} alt="" width={40} height={40} unoptimized className="size-10 shrink-0 rounded-full object-cover" />
+  ) : (
+    <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-[var(--navy)]">
+      {initials}
+    </span>
   );
 }

@@ -75,7 +75,7 @@ export default function DutyTemplateRowActions({
         type="button"
         disabled={pending}
         onClick={handleDelete}
-        className="p-1.5 text-red-600 hover:text-red-700 dark:text-red-400 rounded"
+        className="p-1.5 text-danger hover:text-danger dark:text-danger rounded"
         title="Delete"
       >
         <Trash2 className="h-4 w-4" />

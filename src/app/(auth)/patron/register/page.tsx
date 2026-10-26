@@ -9,7 +9,8 @@ import AuthShell, { AuthBrandLink } from "@/components/layout/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -34,11 +35,11 @@ export default function PatronRegisterPage() {
   return (
     <AuthShell>
         <AuthBrandLink />
-        <Card className="p-9">
-          <h1 className="text-[1.6rem] font-semibold text-[var(--navy)] mb-1" style={{ fontFamily: "var(--font-display)" }}>
-            Create Account
+        <Card className="rounded-[1.5rem] p-6 sm:p-9">
+          <h1 className="text-[1.6rem] font-medium tracking-tight text-[var(--navy)] mb-1">
+            Create an account
           </h1>
-          <p className="text-[var(--text-muted)] text-[0.875rem] mb-7">Register to book facilities</p>
+          <p className="text-[var(--text-muted)] text-[0.875rem] mb-7">Register to book facilities and track your bookings.</p>
 
           {state?.error && (
             <div className="alert alert-error mb-5">{state.error}</div>

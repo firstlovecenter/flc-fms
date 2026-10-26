@@ -148,7 +148,7 @@ export default function DutyLogPanel({
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
                     item.isDone
-                      ? "border-emerald-600 bg-emerald-600 text-[#fff]"
+                      ? "border-success/60 bg-success text-[#fff]"
                       : "border-[var(--border)] hover:border-[var(--navy)]",
                   )}
                   aria-label={item.isDone ? "Mark incomplete" : "Mark done"}
@@ -160,7 +160,7 @@ export default function DutyLogPanel({
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2",
                     item.isDone
-                      ? "border-emerald-600 bg-emerald-600 text-[#fff]"
+                      ? "border-success/60 bg-success text-[#fff]"
                       : "border-[var(--border)]",
                   )}
                 >
@@ -191,16 +191,16 @@ export default function DutyLogPanel({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--cream-dark)]">
-                <th className="text-left px-4 py-2 font-semibold text-[var(--navy)] w-28">
+                <th className="text-left px-4 py-2 text-[var(--muted)] w-28 font-medium">
                   Time
                 </th>
-                <th className="text-left px-4 py-2 font-semibold text-[var(--navy)]">
+                <th className="text-left px-4 py-2 text-[var(--muted)] font-medium">
                   Task
                 </th>
-                <th className="text-center px-2 py-2 font-semibold text-[var(--navy)] w-16">
+                <th className="text-center px-2 py-2 text-[var(--muted)] w-16 font-medium">
                   Done
                 </th>
-                <th className="text-left px-4 py-2 font-semibold text-[var(--navy)] w-36">
+                <th className="text-left px-4 py-2 text-[var(--muted)] w-36 font-medium">
                   Signature
                 </th>
               </tr>
@@ -223,7 +223,7 @@ export default function DutyLogPanel({
                         className={cn(
                           "mx-auto flex h-6 w-6 items-center justify-center rounded border-2",
                           item.isDone
-                            ? "border-emerald-600 bg-emerald-600 text-[#fff]"
+                            ? "border-success/60 bg-success text-[#fff]"
                             : "border-[var(--border)] hover:border-[var(--navy)]",
                         )}
                       >
@@ -234,7 +234,7 @@ export default function DutyLogPanel({
                         className={cn(
                           "mx-auto flex h-6 w-6 items-center justify-center rounded border-2",
                           item.isDone
-                            ? "border-emerald-600 bg-emerald-600 text-[#fff]"
+                            ? "border-success/60 bg-success text-[#fff]"
                             : "border-[var(--border)]",
                         )}
                       >

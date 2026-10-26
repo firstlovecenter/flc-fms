@@ -83,7 +83,7 @@ export default function ExpenseActions({
     return (
       <div className="flex flex-col gap-1">
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+          <p className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
             {error}
           </p>
         )}
@@ -113,7 +113,7 @@ export default function ExpenseActions({
             type="button"
             onClick={handleApprove}
             disabled={loading}
-            className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50"
+            className="p-1.5 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50"
             title="Confirm approval"
           >
             <Check size={12} />
@@ -121,7 +121,7 @@ export default function ExpenseActions({
           <button
             type="button"
             onClick={() => { setMode(null); setChargeAmount(""); setAccountId(""); setError(null); }}
-            className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
+            className="p-1.5 rounded bg-muted text-[var(--muted)] hover:bg-muted"
             title="Cancel"
           >
             <X size={12} />
@@ -135,7 +135,7 @@ export default function ExpenseActions({
     return (
       <div className="flex flex-col gap-1">
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+          <p className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
             {error}
           </p>
         )}
@@ -148,11 +148,11 @@ export default function ExpenseActions({
             autoFocus
           />
           <button type="button" onClick={handleReject} disabled={!reason.trim() || loading}
-            className="p-1.5 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">
+            className="p-1.5 rounded bg-danger/15 text-danger hover:bg-danger/25 disabled:opacity-50">
             <Check size={12} />
           </button>
           <button type="button" onClick={() => { setMode(null); setError(null); }}
-            className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200">
+            className="p-1.5 rounded bg-muted text-[var(--muted)] hover:bg-muted">
             <X size={12} />
           </button>
         </div>
@@ -163,7 +163,7 @@ export default function ExpenseActions({
   return (
     <div className="flex flex-col gap-1">
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+        <p className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
           {error}
         </p>
       )}
@@ -172,7 +172,7 @@ export default function ExpenseActions({
           type="button"
           onClick={() => { setError(null); setMode("approve"); }}
           disabled={loading}
-          className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 text-xs font-medium px-2"
+          className="p-1.5 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50 text-xs font-medium px-2"
           title="Approve"
         >
           Approve
@@ -180,7 +180,7 @@ export default function ExpenseActions({
         <button
           type="button"
           onClick={() => { setError(null); setMode("reject"); }}
-          className="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 text-xs font-medium px-2"
+          className="p-1.5 rounded bg-danger/15 text-danger hover:bg-danger/25 text-xs font-medium px-2"
           title="Reject"
         >
           Reject

@@ -103,11 +103,11 @@ function fmt(d: Date) {
 // ── Inline modal shell ────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <Card className="w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain p-4 bg-black/40" onClick={onClose}>
+      <Card className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto p-6 space-y-4 rounded-[1.5rem]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)]">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100"><X size={16} /></button>
+          <button onClick={onClose} className="p-1 rounded hover:bg-muted"><X size={16} /></button>
         </div>
         {children}
       </Card>
@@ -221,8 +221,8 @@ function CopyButton({ value }: { value: string }) {
     });
   }
   return (
-    <button onClick={copy} title="Copy code" className="ml-1 p-0.5 rounded hover:bg-gray-100 text-[var(--muted)] hover:text-[var(--navy)]">
-      {copied ? <CheckCheck size={12} className="text-green-600" /> : <Copy size={12} />}
+    <button onClick={copy} title="Copy code" className="ml-1 p-0.5 rounded hover:bg-muted text-[var(--muted)] hover:text-[var(--navy)]">
+      {copied ? <CheckCheck size={12} className="text-success" /> : <Copy size={12} />}
     </button>
   );
 }
@@ -439,7 +439,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       {pageTab === "dates" && (
         <div className="space-y-6">
           {dateError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{dateError}</div>
+            <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-sm text-danger">{dateError}</div>
           )}
 
           <Card className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -475,32 +475,32 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Day</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Action</th>
+                    <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Date</th>
+                    <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Day</th>
+                    <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Status</th>
+                    <th className="px-4 py-2.5 text-right text-xs text-[var(--muted)] font-medium">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {firstSaturdays.map((d) => {
                     const dateStr = toDateStr(d);
                     const isExcluded = excludedStrs.has(dateStr);
                     const excludeOverride = excludedOverrides.find((o) => toDateStr(new Date(o.date)) === dateStr);
                     return (
-                      <tr key={dateStr} className="hover:bg-gray-50">
+                      <tr key={dateStr} className="hover:bg-muted">
                         <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
                           {d.toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
                         </td>
                         <td className="px-4 py-2.5 text-[var(--muted)]">Saturday</td>
                         <td className="px-4 py-2.5">
                           {isExcluded ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-[var(--muted)]">
                               <X size={10} /> Blocked
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success">
                               <Check size={10} /> Ceremony Day
                             </span>
                           )}
@@ -517,7 +517,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                           ) : (
                             <button
                               onClick={() => openExcludeModal(dateStr)}
-                              className="text-xs font-semibold text-red-500 hover:underline"
+                              className="text-xs font-semibold text-danger hover:underline"
                             >
                               Exclude
                             </button>
@@ -547,18 +547,18 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-muted border-b border-border">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Date</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Day</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Note</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Added By</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Action</th>
+                      <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Date</th>
+                      <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Day</th>
+                      <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] hidden md:table-cell font-medium">Note</th>
+                      <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] hidden md:table-cell font-medium">Added By</th>
+                      <th className="px-4 py-2.5 text-right text-xs text-[var(--muted)] font-medium">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border">
                     {addedOverrides.map((o) => (
-                      <tr key={o.id} className="hover:bg-gray-50">
+                      <tr key={o.id} className="hover:bg-muted">
                         <td className="px-4 py-2.5 font-medium text-[var(--navy)]">
                           {new Date(o.date).toLocaleDateString("en-GH", { day: "numeric", month: "long", year: "numeric" })}
                         </td>
@@ -571,7 +571,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                           <button
                             onClick={() => handleRemoveDate(o.id)}
                             disabled={dateActionLoading === o.id}
-                            className="p-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-50"
+                            className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/15 disabled:opacity-50"
                             title="Remove"
                           >
                             <Trash2 size={13} />
@@ -651,7 +651,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               key={t}
               onClick={() => setActiveTab(t)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                activeTab === t ? "bg-[var(--navy)] text-white" : "bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
+                activeTab === t ? "bg-[var(--navy)] text-white" : "bg-muted text-[var(--muted)] hover:bg-muted"
               }`}
             >
               {t}
@@ -676,13 +676,13 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       </div>
 
       {globalError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+        <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-sm text-danger">
           {globalError}
         </div>
       )}
 
       {globalWarning && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
           {globalWarning}
         </div>
       )}
@@ -691,21 +691,21 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide w-5"></th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden md:table-cell">Venue</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden lg:table-cell">Requested</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide hidden lg:table-cell">Expires</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Actions</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] w-5 font-medium"></th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium">Name</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] hidden md:table-cell font-medium">Contact</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium">Type</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] hidden md:table-cell font-medium">Venue</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium">Amount</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium">Status</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] hidden lg:table-cell font-medium">Requested</th>
+                <th className="px-4 py-3 text-left text-xs text-[var(--muted)] hidden lg:table-cell font-medium">Expires</th>
+                <th className="px-4 py-3 text-right text-xs text-[var(--muted)] font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-8 text-center text-[var(--muted)] text-sm">
@@ -715,7 +715,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
               )}
               {filtered.map((c) => (
                 <>
-                  <tr key={c.id} className="hover:bg-gray-50">
+                  <tr key={c.id} className="hover:bg-muted">
                     {/* Expand toggle */}
                     <td className="px-3 py-3">
                       <button
@@ -759,7 +759,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                         {/* Receipt */}
                         {c.receiptUrl && (
                           <a href={c.receiptUrl} target="_blank" rel="noopener noreferrer" title="View receipt"
-                            className="p-1.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100">
+                            className="p-1.5 rounded bg-warning/10 text-warning hover:bg-warning/15">
                             <Receipt size={13} />
                           </a>
                         )}
@@ -768,7 +768,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                           <button
                             onClick={() => { setEditTarget(c); setEditError(null); }}
                             title="Edit details"
-                            className="p-1.5 rounded bg-gray-100 text-[var(--muted)] hover:bg-gray-200"
+                            className="p-1.5 rounded bg-muted text-[var(--muted)] hover:bg-muted"
                           >
                             <Pencil size={13} />
                           </button>
@@ -779,7 +779,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                             onClick={() => doRegenerate(c.id)}
                             disabled={actionLoading === c.id + "regen"}
                             title="Regenerate code"
-                            className="p-1.5 rounded bg-purple-50 text-purple-600 hover:bg-purple-100 disabled:opacity-50"
+                            className="p-1.5 rounded bg-inventory/10 text-inventory hover:bg-inventory/15 disabled:opacity-50"
                           >
                             <RotateCcw size={13} />
                           </button>
@@ -787,18 +787,18 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                         {/* Status actions */}
                         {c.status === "PENDING" && (
                           <button onClick={() => doAction(c.id, "activate")} disabled={actionLoading === c.id + "activate"}
-                            title="Activate" className="p-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50">
+                            title="Activate" className="p-1.5 rounded bg-success/15 text-success hover:bg-success/25 disabled:opacity-50">
                             <Check size={13} />
                           </button>
                         )}
                         {c.status === "ACTIVE" && (
                           <>
                             <button onClick={() => doAction(c.id, "resend")} disabled={actionLoading === c.id + "resend"}
-                              title="Resend" className="p-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50">
+                              title="Resend" className="p-1.5 rounded bg-info/15 text-info hover:bg-info/25 disabled:opacity-50">
                               <RefreshCw size={13} />
                             </button>
                             <button onClick={() => doAction(c.id, "revoke")} disabled={actionLoading === c.id + "revoke"}
-                              title="Revoke" className="p-1.5 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">
+                              title="Revoke" className="p-1.5 rounded bg-danger/15 text-danger hover:bg-danger/25 disabled:opacity-50">
                               <X size={13} />
                             </button>
                           </>
@@ -812,7 +812,7 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
                         {/* Delete — not for USED */}
                         {c.status !== "USED" && (
                           <button onClick={() => setDeleteTarget(c)} title="Delete"
-                            className="p-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100">
+                            className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/15">
                             <Trash2 size={13} />
                           </button>
                         )}
@@ -822,13 +822,13 @@ export default function CeremonyCodesClient({ initialCodes, total, initialDateOv
 
                   {/* Expanded detail row */}
                   {expanded.has(c.id) && (
-                    <tr key={c.id + "-detail"} className="bg-gray-50/60">
+                    <tr key={c.id + "-detail"} className="bg-muted">
                       <td colSpan={10} className="px-6 py-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-xs">
                           <div>
                             <span className="text-[var(--muted)] font-medium uppercase tracking-wide">Code</span>
                             <div className="flex items-center mt-0.5">
-                              <span className="font-mono font-bold text-[var(--navy)] tracking-widest">{c.code}</span>
+                              <span className="font-mono font-medium text-[var(--navy)] tracking-widest">{c.code}</span>
                               <CopyButton value={c.code} />
                             </div>
                           </div>

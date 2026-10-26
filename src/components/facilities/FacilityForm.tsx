@@ -256,7 +256,7 @@ export default function FacilityForm({ facility, categories }: Props) {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                 selectedDays.includes(value)
                   ? "bg-[var(--navy)] text-white border-gold"
-                  : "bg-white text-[var(--slate)] border-gray-300 hover:bg-[var(--cream)]"
+                  : "bg-white text-[var(--slate)] border-border hover:bg-muted/60"
               }`}
             >
               {label}
@@ -382,7 +382,7 @@ export default function FacilityForm({ facility, categories }: Props) {
                               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                                 isSelected
                                   ? "bg-[var(--navy)] text-white border-gold"
-                                  : "bg-white text-[var(--slate)] border-gray-300 hover:bg-[var(--cream)]"
+                                  : "bg-white text-[var(--slate)] border-border hover:bg-muted/60"
                               }`}
                             >
                               {label}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModalBehavior } from "@/hooks/use-modal-behavior";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -47,6 +48,8 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
     reset();
   }
 
+  useModalBehavior(open, handleClose);
+
   function handleClose() {
     setOpen(false);
     setCreated(false);
@@ -57,24 +60,24 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
   return (
     <>
       <Button onClick={() => setOpen(true)} className="gap-2">
-        <UserPlus size={16} /> Add Staff
+        <UserPlus size={16} /> Add staff
       </Button>
 
       {open && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-[1.5rem] bg-card shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
               <h2 className="text-lg font-semibold text-[var(--navy)]">Add Staff Member</h2>
-              <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)]">
+              <button onClick={handleClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]">
                 <X size={18} />
               </button>
             </div>
 
             {created ? (
               <div className="p-6 space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                  <p className="text-green-700 font-semibold mb-1">✅ Staff member created!</p>
-                  <p className="text-sm text-green-600">Login details have been sent through the configured notification channels.</p>
+                <div className="bg-success/10 border border-success/30 rounded-xl p-4 text-center">
+                  <p className="text-success font-semibold mb-1">✅ Staff member created!</p>
+                  <p className="text-sm text-success">Login details have been sent through the configured notification channels.</p>
                 </div>
                 <p className="text-xs text-[var(--muted)] text-center">The staff member will still be required to change the temporary password on first login.</p>
                 <Button onClick={handleClose} className="w-full">Done</Button>
@@ -82,22 +85,22 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+                  <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
                 )}
                 <div>
                   <Label htmlFor="add-staff-name">Full Name *</Label>
                   <Input id="add-staff-name" {...register("name")} placeholder="Ama Boateng" />
-                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                  {errors.name && <p className="text-danger text-xs mt-1">{errors.name.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="add-staff-email">Email *</Label>
                   <Input id="add-staff-email" {...register("email")} type="email" placeholder="ama@campus.org" />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                  {errors.email && <p className="text-danger text-xs mt-1">{errors.email.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="add-staff-phone">Phone *</Label>
                   <Input id="add-staff-phone" {...register("phone")} placeholder="+233..." />
-                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+                  {errors.phone && <p className="text-danger text-xs mt-1">{errors.phone.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="add-staff-role">Role *</Label>
@@ -105,7 +108,7 @@ export default function AddStaffModal({ canAssignSuperAdmin = false }: Props) {
                     <option value="VICAR">Vicar (limited)</option>
                     <option value="OPERATIONS_NO_FINANCE">Operations (no finance)</option>
                     <option value="BOOKING_MANAGER">Booking Manager</option>
-                    <option value="FACILITY_MANAGER">Facility Manager</option>
+                    {canAssignSuperAdmin && <option value="FACILITY_MANAGER">Facility Manager</option>}
                     {canAssignSuperAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
                   </select>
                   <p className="text-xs text-[var(--muted)] mt-1">

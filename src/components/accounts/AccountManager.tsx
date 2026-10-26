@@ -103,14 +103,14 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
                 <button onClick={handleSave} disabled={isPending} aria-label="Save" className="p-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20">
                   <Check size={14} />
                 </button>
-                <button onClick={cancel} aria-label="Cancel" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+                <button onClick={cancel} aria-label="Cancel" className="p-1.5 rounded-lg hover:bg-muted text-[var(--muted)]">
                   <X size={14} />
                 </button>
               </div>
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${account.isActive ? "text-[var(--navy)]" : "text-gray-400 line-through"}`}>
+                  <span className={`text-sm font-medium ${account.isActive ? "text-[var(--navy)]" : "text-[var(--muted)] line-through"}`}>
                     {account.name}
                   </span>
                   <span className={`text-sm font-semibold tabular-nums ${account.balance >= 0 ? "text-success" : "text-danger"}`}>
@@ -124,7 +124,7 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
                     className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                       account.isActive
                         ? "bg-success/10 text-success border-success/25 hover:bg-success/20"
-                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                        : "bg-muted text-[var(--muted)] border-border hover:bg-muted"
                     }`}
                   >
                     {account.isActive ? "Active" : "Inactive"}
@@ -132,7 +132,7 @@ export default function AccountManager({ initialAccounts }: { initialAccounts: A
                   <button
                     onClick={() => startEdit(account)}
                     aria-label="Edit account"
-                    className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)]"
+                    className="p-1.5 rounded-lg hover:bg-muted/60 text-[var(--muted)] hover:text-[var(--navy)]"
                   >
                     <Pencil size={13} />
                   </button>

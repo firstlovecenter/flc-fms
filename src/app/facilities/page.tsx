@@ -32,7 +32,7 @@ export default async function FacilitiesPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--navy)]">Facilities</h1>
+          <h1 className="text-2xl font-medium text-[var(--navy)]">Facilities</h1>
           <p className="text-sm text-[var(--muted)]">{facilities.length} {facilities.length === 1 ? "facility" : "facilities"}</p>
         </div>
         {canManage && (

@@ -127,12 +127,12 @@ export default function FinancialTab({ data, downloadUrl }: Props) {
             {data.monthly.map((m) => {
               const net = m.income + m.bookingRevenue - m.expenses;
               return (
-                <tr key={m.label} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                <tr key={m.label} className="border-t border-border/60 hover:bg-muted/40">
                   <td className="py-2 px-3 font-medium text-[var(--navy)]">{m.label}</td>
-                  <td className="py-2 px-3 text-green-700">{money(m.income)}</td>
-                  <td className="py-2 px-3 text-blue-700">{money(m.bookingRevenue)}</td>
-                  <td className="py-2 px-3 text-red-600">{money(m.expenses)}</td>
-                  <td className={`py-2 px-3 font-semibold ${net >= 0 ? "text-green-700" : "text-red-600"}`}>{money(net)}</td>
+                  <td className="py-2 px-3 text-success">{money(m.income)}</td>
+                  <td className="py-2 px-3 text-info">{money(m.bookingRevenue)}</td>
+                  <td className="py-2 px-3 text-danger">{money(m.expenses)}</td>
+                  <td className={`py-2 px-3 font-semibold ${net >= 0 ? "text-success" : "text-danger"}`}>{money(net)}</td>
                 </tr>
               );
             })}

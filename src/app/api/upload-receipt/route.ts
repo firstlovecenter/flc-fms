@@ -1,10 +1,15 @@
 import { getSanityWriteClient, isSanityWriteEnabled } from "@/lib/sanity/server-client";
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth/session";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.role === "PATRON") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     if (!isSanityWriteEnabled()) {
       return NextResponse.json({ error: "Media service is not configured" }, { status: 500 });

@@ -126,26 +126,26 @@ export default function ExpenseForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {!isOnline && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
           <WifiOff size={15} />
           <span>You&apos;re offline. Your request will be saved locally and submitted when you reconnect.</span>
         </div>
       )}
 
       {savedOffline && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-700 text-sm">
+        <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-success text-sm">
           Request saved offline. It will be submitted automatically when your connection is restored. You can also submit it from the banner at the top of the page.
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div>
         <Label htmlFor="expense-title">Title *</Label>
         <Input id="expense-title" {...register("title")} placeholder="e.g. Generator Fuel — October" />
-        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+        {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
@@ -158,14 +158,14 @@ export default function ExpenseForm() {
           rows={4}
           placeholder="Describe the expense in detail: what it's for, why it's needed, vendor name, date of purchase, etc."
         />
-        {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
+        {errors.narration && <p className="text-danger text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="expense-amount">Amount (GH₵) *</Label>
           <Input id="expense-amount" {...register("amount")} type="text" inputMode="decimal" placeholder="0.00" />
-          {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+          {errors.amount && <p className="text-danger text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
           <Label htmlFor="expense-category">Category *</Label>
@@ -173,7 +173,7 @@ export default function ExpenseForm() {
             <option value="">Select…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+          {errors.category && <p className="text-danger text-xs mt-1">{errors.category.message}</p>}
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export default function ExpenseForm() {
         <Label htmlFor="expense-spent-at">Date Spent *</Label>
         <Input id="expense-spent-at" {...register("spentAt")} type="date" max={today} />
         <p className="text-xs text-[var(--muted)] mt-1">You can pick a past date for expenses that were paid earlier.</p>
-        {errors.spentAt && <p className="text-red-500 text-xs mt-1">{errors.spentAt.message}</p>}
+        {errors.spentAt && <p className="text-danger text-xs mt-1">{errors.spentAt.message}</p>}
       </div>
 
       <div>
@@ -212,14 +212,14 @@ export default function ExpenseForm() {
               <button
                 type="button"
                 onClick={() => setReceiptUrl("")}
-                className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs text-danger hover:underline"
               >
                 <X size={12} /> Remove
               </button>
             </>
           )}
         </div>
-        {receiptError && <p className="text-red-500 text-xs mt-1">{receiptError}</p>}
+        {receiptError && <p className="text-danger text-xs mt-1">{receiptError}</p>}
         <p className="text-xs text-[var(--muted)] mt-1">Accepted formats: JPG, PNG, WEBP, PDF.</p>
       </div>
 

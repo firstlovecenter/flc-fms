@@ -50,12 +50,12 @@ export default async function PatronBookPage(props: { searchParams: Promise<{ fa
   }));
 
   return (
-    <div className="max-w-4xl space-y-6 animate-fade-in">
+    <div className="max-w-4xl space-y-5 animate-fade-in">
       <PageHeader
-        variant="hero"
-        eyebrow="Facility Booking"
-        title="Book a Facility"
-        description="Select a facility and your preferred time slot."
+        back={{ href: "/patron/dashboard", label: "Home" }}
+        title="Book a facility"
+        description="Choose a venue, then your date and time. The office reviews each request and you'll be notified once it's approved."
+        className="mb-0"
       />
       <PatronBookingForm
         facilities={serialized}

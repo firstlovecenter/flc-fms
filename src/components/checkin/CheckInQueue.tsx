@@ -131,7 +131,7 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
           "border transition-all duration-150",
           booking.checkInRequested && mode === "pending"
             ? "border-warning/40 bg-warning/10"
-            : "border-gray-100"
+            : "border-border"
         )}
       >
         {/* Header row */}
@@ -198,7 +198,7 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
 
         {/* Expanded section */}
         {isExpanded && (
-          <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-3">
+          <div className="px-4 pb-4 border-t border-border pt-3 space-y-3">
             {/* Inventory requirements */}
             {booking.facility && (
               <div>
@@ -216,7 +216,7 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
                           key={req.id}
                           className={cn(
                             "flex items-center justify-between text-xs px-2 py-1.5 rounded",
-                            req.isRequired && !ok ? "bg-danger/10 text-danger" : "bg-gray-50 text-gray-700"
+                            req.isRequired && !ok ? "bg-danger/10 text-danger" : "bg-muted text-[var(--navy)]"
                           )}
                         >
                           <span>
@@ -244,7 +244,7 @@ export default function CheckInQueue({ bookings }: { bookings: Booking[] }) {
                   <p>Checked out by <strong>{booking.checkIn.checkedOutBy.name}</strong> at {formatDateTime(booking.checkIn.checkedOutAt)}</p>
                 )}
                 {booking.checkIn.notes && (
-                  <p className="whitespace-pre-line mt-1 text-gray-600"><strong>Notes:</strong> {booking.checkIn.notes}</p>
+                  <p className="whitespace-pre-line mt-1 text-[var(--muted)]"><strong>Notes:</strong> {booking.checkIn.notes}</p>
                 )}
               </div>
             )}

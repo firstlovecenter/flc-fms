@@ -31,7 +31,7 @@ export default async function EditDutyTemplatePage(
         <Link href="/duty/templates" className="text-sm text-[var(--gold)] hover:underline">
           ← Duty forms
         </Link>
-        <h1 className="text-2xl font-bold text-[var(--navy)] mt-2">Edit duty form</h1>
+        <h1 className="text-2xl font-medium text-[var(--navy)] mt-2">Edit duty form</h1>
       </div>
 
       <EditDutyTemplateForm

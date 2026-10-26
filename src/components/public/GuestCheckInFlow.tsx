@@ -6,7 +6,8 @@ import { lookupGuestCheckInBookings, requestGuestCheckIn } from "@/actions/check
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 type BookingResult = {
   id: string;
@@ -90,7 +91,7 @@ export default function GuestCheckInFlow() {
     return (
       <div className="w-full max-w-md mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-full bg-[rgba(255,66,102,0.12)] flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-[hsl(var(--gold-hsl)/0.12)] flex items-center justify-center mx-auto">
             <Phone size={24} className="text-[var(--gold)]" />
           </div>
           <h2 className="text-xl font-bold text-[var(--navy)]" style={{ fontFamily: "var(--font-display)" }}>

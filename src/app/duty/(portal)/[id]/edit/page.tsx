@@ -27,7 +27,7 @@ export default async function EditDutyAssignmentPage(
         <Link href={`/duty/${log.id}`} className="text-sm text-[var(--gold)] hover:underline">
           ← Back to duty log
         </Link>
-        <h1 className="text-2xl font-bold text-[var(--navy)] mt-2">Edit assignment</h1>
+        <h1 className="text-2xl font-medium text-[var(--navy)] mt-2">Edit assignment</h1>
         <p className="text-[var(--muted)] text-sm mt-1">
           Change the date or staff member for this duty.
         </p>

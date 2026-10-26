@@ -106,7 +106,7 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
           {data.statusBreakdown.map((s) => (
             <div key={s.status} className="flex items-center gap-3">
               <StatusBadge status={s.status} size="xs" className="w-24 justify-center" />
-              <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -131,12 +131,12 @@ export default function CeremonyTab({ data, downloadUrl }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)]">
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Venue</th>
-                  <th className="px-2 py-2 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Codes</th>
-                  <th className="px-2 py-2 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Amount Paid</th>
+                  <th className="px-2 py-2 text-left text-xs text-[var(--muted)] font-medium">Venue</th>
+                  <th className="px-2 py-2 text-right text-xs text-[var(--muted)] font-medium">Codes</th>
+                  <th className="px-2 py-2 text-right text-xs text-[var(--muted)] font-medium">Amount Paid</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {data.revenueByVenue.map((v) => (
                   <tr key={v.facilityId}>
                     <td className="px-2 py-2 text-[var(--navy)] font-medium">{v.facilityName}</td>

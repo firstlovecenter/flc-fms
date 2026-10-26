@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { ChevronRight, Menu, Search } from "lucide-react";
 import Image from "next/image";
 import PushNotificationToggle from "@/components/layout/PushNotificationToggle";
-import { crumbsFor, ROLE_LABELS } from "@/components/staff-shell/nav";
+import { areasFor, crumbsFor, ROLE_LABELS } from "@/components/staff-shell/nav";
+import type { PermissionSet } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 
 const ROUND_BUTTON =
   "flex size-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-[var(--muted)] shadow-[var(--shadow-xs)] transition-colors hover:text-[var(--navy)]";
@@ -15,17 +17,20 @@ export default function Topbar({
   name,
   role,
   profilePicture,
+  permissions,
   onMenuToggle,
   onSearch,
 }: {
   name: string;
   role: string;
   profilePicture?: string;
+  permissions?: PermissionSet;
   onMenuToggle?: () => void;
   onSearch?: () => void;
 }) {
   const pathname = usePathname();
   const crumbs = crumbsFor(pathname);
+  const areas = areasFor(pathname, role, permissions);
   const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
@@ -37,7 +42,31 @@ export default function Topbar({
           </button>
         )}
 
-        <nav aria-label="Breadcrumb" className="min-w-0 flex-1 overflow-hidden">
+        {/* Wide screens: the console's areas as pills. Narrower: breadcrumbs. */}
+        <div className="hidden min-w-0 flex-1 2xl:block">
+          <nav
+            aria-label="Portal areas"
+            className="inline-flex items-center gap-0.5 rounded-full border border-border/70 bg-card p-1 shadow-[var(--shadow-xs)]"
+          >
+            {areas.map((a) => (
+              <Link
+                key={a.label}
+                href={a.href}
+                aria-current={a.active ? "true" : undefined}
+                className={cn(
+                  "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  a.active
+                    ? "bg-[hsl(var(--btn))] text-[hsl(var(--btn-foreground))] shadow-[var(--shadow-xs)]"
+                    : "text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]"
+                )}
+              >
+                {a.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <nav aria-label="Breadcrumb" className="min-w-0 flex-1 overflow-hidden 2xl:hidden">
           <ol className="flex min-w-0 items-center gap-1.5 text-sm">
             {crumbs.map((c, i) => {
               const last = i === crumbs.length - 1;

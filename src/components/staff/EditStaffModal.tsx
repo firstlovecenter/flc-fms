@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModalBehavior } from "@/hooks/use-modal-behavior";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function EditStaffModal({ open, onClose, currentUserRole, staff }: Props) {
+  useModalBehavior(open, onClose);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [profileImages, setProfileImages] = useState<string[]>(
@@ -105,17 +107,17 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto overscroll-contain">
+      <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-[1.5rem] bg-card shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
           <h2 className="text-lg font-semibold text-[var(--navy)]">Edit Staff — {staff.name}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)]">
+          <button onClick={onClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]">
             <X size={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+            <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
           )}
 
           {/* Profile Picture */}
@@ -130,17 +132,17 @@ export default function EditStaffModal({ open, onClose, currentUserRole, staff }
           <div>
             <Label htmlFor="edit-staff-name">Full Name *</Label>
             <Input id="edit-staff-name" {...register("name")} />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+            {errors.name && <p className="text-danger text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div>
             <Label htmlFor="edit-staff-email">Email *</Label>
             <Input id="edit-staff-email" {...register("email")} type="email" />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-danger text-xs mt-1">{errors.email.message}</p>}
           </div>
           <div>
             <Label htmlFor="edit-staff-phone">Phone *</Label>
             <Input id="edit-staff-phone" {...register("phone")} />
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+            {errors.phone && <p className="text-danger text-xs mt-1">{errors.phone.message}</p>}
           </div>
           <div>
             <Label htmlFor="edit-staff-role">Role *</Label>

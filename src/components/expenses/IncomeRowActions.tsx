@@ -37,7 +37,7 @@ export default function IncomeRowActions({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
       <div className="flex items-center gap-2 justify-end">
         <Link href={`/transactions/income/${incomeId}/edit`} className="text-xs text-[var(--navy)] hover:underline">
           Edit
@@ -46,7 +46,7 @@ export default function IncomeRowActions({
           type="button"
           onClick={handleDelete}
           disabled={loading}
-          className="text-xs text-red-700 hover:underline disabled:opacity-60"
+          className="text-xs text-danger hover:underline disabled:opacity-60"
         >
           Delete
         </button>

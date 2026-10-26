@@ -1,25 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyJWT } from "@/lib/auth/session";
 
+/**
+ * Pages and APIs a signed-out visitor may open. Each entry matches the path
+ * itself and anything below it ("/venue" covers "/venue/abc"), never a mere
+ * string prefix — "/" in particular matches only the home page. (It used to be
+ * a startsWith check, which made "/" match every path and switched the gate off.)
+ */
 const PUBLIC_PATHS = [
-  "/",
-
+  // Visitor site
+  "/catalog",
+  "/venue",
+  "/faq",
+  "/feedback",
   "/guest",
+  "/offline",
   "/pwa",
   "/duty/display",
+  "/unauthorized",
+  // Sign-in
   "/login",
   "/register",
+  "/forgot-password",
+  "/reset-password",
   "/patron/login",
   "/patron/register",
+  // APIs that serve visitors or authenticate themselves
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+  "/api/public",
+  "/api/offline",
+  "/api/facilities/sanity",
+  "/api/push/public-key",
   "/api/webhooks",
   "/api/cron",
-  "/_next",
-  "/favicon.ico",
-  "/robots.txt",
 ];
 
 function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  if (pathname === "/") return true;
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export async function middleware(req: NextRequest) {
@@ -36,6 +55,14 @@ export async function middleware(req: NextRequest) {
 
   // ── Auth gate ──────────────────────────────────────────────────────────────
   if (!session && !isPublic(pathname)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (pathname.startsWith("/patron")) {
+      const patronLogin = new URL("/patron/login", req.url);
+      patronLogin.searchParams.set("from", pathname);
+      return NextResponse.redirect(patronLogin);
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);

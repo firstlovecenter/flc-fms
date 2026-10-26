@@ -93,13 +93,13 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
       {/* Overdue items */}
       {data.overdueItems.length > 0 && (
         <Card className="p-6">
-          <h3 className="font-semibold text-red-700 mb-4">Overdue Checkouts</h3>
+          <h3 className="font-semibold text-danger mb-4">Overdue Checkouts</h3>
           <div className="space-y-2">
             {data.overdueItems.map((item) => (
               <div key={item.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                 <span className="font-medium text-[var(--navy)]">{item.name}</span>
                 <span className="text-xs text-[var(--muted)]">Qty: {item.quantity}</span>
-                <span className="text-xs text-red-600">
+                <span className="text-xs text-danger">
                   Due: {item.dueBack ? new Date(item.dueBack).toLocaleDateString() : "—"}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export default function InventoryTab({ data, downloadUrl }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {data.statusBreakdown.map((s) => (
             <div key={s.status} className="bg-[var(--cream)] rounded-lg p-3 text-center border border-[var(--border)]">
-              <p className="text-2xl font-bold text-[var(--navy)]">{s.count}</p>
+              <p className="text-2xl font-medium text-[var(--navy)]">{s.count}</p>
               <p className="text-xs text-[var(--muted)] mt-0.5">{s.status.replace("_", " ")}</p>
             </div>
           ))}

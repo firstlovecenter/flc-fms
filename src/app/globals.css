@@ -219,6 +219,17 @@
   --submit-border: hsl(var(--gold-hsl));
   --submit-ring: hsl(var(--gold-hsl) / 0.35);
 
+  /* Re-derive against this scope's channels. A var() inside a custom property
+     resolves where it is declared, so the :root versions kept :root's pink
+     and charcoal for every var(--gold) / var(--navy) on the public site. */
+  --navy:        hsl(var(--navy-hsl));
+  --navy-mid:    hsl(var(--navy-mid-hsl));
+  --navy-light:  hsl(var(--navy-light-hsl));
+  --gold:        hsl(var(--gold-hsl));
+  --gold-bright: hsl(var(--gold-bright-hsl));
+  --gold-pale:   hsl(var(--gold-pale-hsl));
+  --gold-muted:  hsl(var(--gold-muted-hsl));
+  --glow-gold:   0 0 0 3px hsl(var(--gold-hsl) / 0.2), 0 0 20px hsl(var(--gold-hsl) / 0.1);
   --cream: hsl(var(--cream-hsl));
   --cream-dark: hsl(var(--cream-dark-hsl));
   --border: hsl(var(--border-hsl));
@@ -510,28 +521,27 @@
 /* ─── Component Layer ────────────────────────────────────────────────────── */
 @layer components {
 
-  button[type="submit"],
-  input[type="submit"] {
+  /* Default look for submit buttons that don't style themselves. :where()
+     keeps specificity at zero, so a button's own classes (an outline or
+     ghost variant, a custom colour, border-0) always win. */
+  :where(button[type="submit"], input[type="submit"]) {
     background: var(--submit-bg);
     color: var(--submit-fg);
     border: 1px solid var(--submit-border);
     transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
-  button[type="submit"]:hover:not(:disabled),
-  input[type="submit"]:hover:not(:disabled) {
+  :where(button[type="submit"], input[type="submit"]):where(:hover:not(:disabled)) {
     background: var(--submit-bg-hover);
     border-color: var(--submit-bg-hover);
   }
 
-  button[type="submit"]:focus-visible,
-  input[type="submit"]:focus-visible {
+  :where(button[type="submit"], input[type="submit"]):where(:focus-visible) {
     outline: none;
     box-shadow: 0 0 0 3px var(--submit-ring);
   }
 
-  button[type="submit"]:disabled,
-  input[type="submit"]:disabled {
+  :where(button[type="submit"], input[type="submit"]):where(:disabled) {
     opacity: 0.6;
     cursor: not-allowed;
   }
@@ -1136,6 +1146,25 @@
 
 .staff-main {
   overflow-x: clip;
+  /* Scrolling stops at the edges instead of dragging the page or firing the
+     browser's own pull-to-refresh (the app has its own); focused fields and
+     anchors land below the sticky header. */
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: 5rem;
+}
+
+/* iOS Safari zooms the page when a field under 16px gets focus. Keep fields at
+   16px on phones; the attribute selectors outrank text-sm and friends. */
+@media (max-width: 639px) {
+  :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']) {
+    font-size: 16px;
+  }
+}
+
+/* The app handles pull-to-refresh itself; stop Chrome's from firing too. */
+html, body {
+  overscroll-behavior-y: none;
 }
 
 /* Page content sits under the sticky staff header, which spans the full width */
@@ -1677,6 +1706,226 @@ textarea:focus-visible {
     width: calc(100% - 1.5rem);
     max-height: calc(100dvh - 1.5rem);
     overflow-y: auto;
+  }
+}
+
+/* ─── Phone tables (staff + patron portals) ───────────────────────────────
+   Ported from the BMS console. Below 640px each table row becomes a card,
+   every value beside its column's name; useStackedTables() copies the names
+   from the header into data-label. Opt a table out with data-stack="off". */
+@media (max-width: 639px) {
+  /*
+   * Tables become a stack of cards: one per row, each value beside its column's
+   * name. useStackedTables() copies the names from the header into data-label.
+   * Opt a table out with data-stack="off".
+   */
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) thead {
+    display: none;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) :is(tbody, tfoot) {
+    display: block;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr {
+    display: block;
+    margin: 0 0 0.625rem;
+    padding: 0.25rem 0.875rem;
+    border: 1px solid hsl(var(--ui-border) / 0.7) !important;
+    border-radius: 1rem;
+    background-color: hsl(var(--ui-card));
+    box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:last-child {
+    margin-bottom: 0;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto;
+    padding: 0.5rem 0 !important;
+    border: 0;
+    text-align: right;
+    white-space: normal !important;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td + td {
+    border-top: 1px dashed hsl(var(--ui-border) / 0.8);
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 45%;
+    text-align: left;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: hsl(var(--ui-muted-foreground));
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td:is([data-label=''], :not([data-label]))::before {
+    content: none;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td:is([data-label=''], :not([data-label])) {
+    justify-content: flex-end;
+  }
+  /* Empty and loading rows span every column: centre them. */
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[colspan]:not([colspan='1']) {
+    display: block;
+    text-align: center;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td > * {
+    min-width: 0;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) :is(td, th).hidden {
+    display: none;
+  }
+
+  /*
+   * Compact cards. A column whose header has data-mobile (copied to its cells
+   * by useStackedTables) drops its label and takes a place in a short card:
+   *   title  first line, left: who or what the row is
+   *   badge  first line, right: a status pill
+   *   body   full width under it (clamp long text in the cell itself)
+   *   meta   one small muted line of facts, run together
+   *   hide   not shown on a phone (the row's detail page has it)
+   * Unmarked columns keep the label-and-value layout beneath, and actions
+   * (an empty header) go last. A table with no marked column looks as before.
+   */
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:has(> td[data-mobile]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.4rem;
+    padding: 0.375rem 0.875rem;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:has(> td[data-mobile])::before {
+    content: '';
+    order: 2;
+    flex: 0 0 100%;
+    height: 0;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:has(> td[data-mobile]) > td:not([data-mobile]) {
+    order: 5;
+    flex: 0 0 100%;
+    border-top: 1px dashed hsl(var(--ui-border) / 0.8);
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:has(> td[data-mobile]) > td:not([data-mobile]):is([data-label=''], :not([data-label])) {
+    order: 4;
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0 !important;
+    border-top: 0;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile] {
+    border-top: 0 !important;
+    text-align: left;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile]::before {
+    content: none;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='hide'] {
+    display: none;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='title'] {
+    order: 0;
+    flex: 1 1 0%;
+    display: block;
+    min-width: 0;
+    padding: 0.5rem 0 0.125rem !important;
+    font-weight: 600;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='title'] a {
+    font-weight: 600;
+  }
+  /* A second line in the title cell (a name under a code, say) is quieter. */
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='title'] > * + * {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: hsl(var(--ui-muted-foreground));
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='badge'] {
+    order: 1;
+    flex: 0 0 auto;
+    display: block;
+    padding: 0.5rem 0 0.125rem !important;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='body'] {
+    order: 3;
+    flex: 1 1 100%;
+    display: block;
+    padding: 0.125rem 0 !important;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] {
+    order: 4;
+    flex: 0 1 auto;
+    display: block;
+    padding: 0.125rem 0 !important;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: hsl(var(--ui-muted-foreground));
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] :is(div, p):not(.hidden) {
+    display: inline;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] * {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+  }
+  /* Pills and badges read as plain words in the facts line. */
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] :is([class*='rounded'], [class*='bg-'], [class*='border']) {
+    display: inline !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] > * + * {
+    margin-left: 0.25rem;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) td[data-mobile='meta'] ~ td[data-mobile='meta']::before {
+    content: '·';
+    margin-right: 0.25rem;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog'], .surface-cool [role='alertdialog']) table:not([data-stack='off']) tr:has(> td[data-mobile]) {
+    padding-bottom: 0.625rem;
+  }
+
+}
+
+/* Compact phone cards: keep each fact's column name, inline and quiet, so a
+   row reads "Qty: 4 · Unit: pcs · Updated: 12 Mar" on one wrapping line. */
+@media (max-width: 639px) {
+  :is(.surface-cool main, .surface-cool [role='dialog']) table:not([data-stack='off']) td[data-mobile='meta'][data-label]:not([data-label=''])::before {
+    content: attr(data-label) ': ';
+    display: inline;
+    max-width: none;
+    font-size: inherit;
+    line-height: inherit;
+    font-weight: 400;
+    color: inherit;
+    opacity: 0.8;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog']) table:not([data-stack='off']) td[data-mobile='meta'] ~ td[data-mobile='meta'][data-label]:not([data-label=''])::before {
+    content: '· ' attr(data-label) ': ';
+    margin-right: 0;
+  }
+  /* Tighter cards overall */
+  :is(.surface-cool main, .surface-cool [role='dialog']) table:not([data-stack='off']) tr {
+    margin-bottom: 0.5rem;
+    padding: 0.125rem 0.875rem;
+  }
+  :is(.surface-cool main, .surface-cool [role='dialog']) table:not([data-stack='off']) td {
+    padding: 0.375rem 0 !important;
+    font-size: 0.8125rem;
   }
 }
 

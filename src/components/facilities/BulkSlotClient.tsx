@@ -6,7 +6,8 @@ import { bulkCreateTimeSlots, copyTimeSlotsToFacilities } from "@/actions/facili
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, inputStyles } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ function FacilityChecklist({
         {filtered.map((f) => (
           <label
             key={f.id}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--cream)] cursor-pointer transition-colors"
+            className="flex items-center gap-3 px-3 py-2 hover:bg-muted/60 cursor-pointer transition-colors"
           >
             <input
               type="checkbox"

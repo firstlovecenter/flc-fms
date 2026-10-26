@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, CircleDot, Wrench, CheckCircle2 } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import MaintenanceRequestCard from "@/components/maintenance/MaintenanceRequestCard";
@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import PageHeader from "@/components/layout/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { buttonVariants } from "@/components/ui/button-variants";
+import { FilterPills } from "@/components/layout/ListControls";
+import { EmptyState } from "@/components/ui/empty";
 
 const STATUS_FILTERS = ["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const;
 
@@ -52,65 +54,58 @@ export default async function MaintenancePage(
   }));
 
   const activeStatus = searchParams.status ?? "ALL";
+  const closed = summary.find((s) => s.status === "CLOSED")?._count ?? 0;
+  const countFor = (s: string) =>
+    s === "ALL" ? summary.reduce((n, c) => n + c._count, 0) : summary.find((c) => c.status === s)?._count ?? 0;
+  const label = (s: string) => (s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase().replace("_", " "));
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
-
-      {/* Hero header */}
+    <div className="space-y-5 animate-fade-in">
       <PageHeader
-        variant="hero"
-        eyebrow="Facility Management"
         title="Maintenance"
-        description={`${serializedRequests.length} request${serializedRequests.length !== 1 ? "s" : ""} to manage`}
-        className="relative z-10"
+        description="Repair and upkeep requests for campus facilities, most urgent first."
         actions={
-          <Link href="/maintenance/new" className={cn(buttonVariants({ variant: "default" }), "gap-2 flex-shrink-0")}>
-            <Plus size={16} /> New Request
+          <Link href="/maintenance/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
+            <Plus size={16} /> New request
           </Link>
         }
+        className="mb-0"
       />
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4 relative z-10 stagger-children">
-        <StatCard label="Open"        value={open}       color="warning" />
-        <StatCard label="In Progress" value={inProgress} color="maintenance" />
-        <StatCard label="Resolved"    value={resolved}   color="success" />
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Open"        value={open}       color="warning"     icon={<CircleDot size={16} />} href="/maintenance?status=OPEN" sub="Waiting to be picked up" trend={open > 0 ? "down" : undefined} />
+        <StatCard label="In progress" value={inProgress} color="maintenance" icon={<Wrench size={16} />} href="/maintenance?status=IN_PROGRESS" sub="Being worked on" />
+        <StatCard label="Resolved"    value={resolved + closed} color="success" icon={<CheckCircle2 size={16} />} href="/maintenance?status=RESOLVED" sub="Fixed or closed" />
       </div>
 
-      {/* Status filters */}
-      <div className="flex gap-2 flex-wrap relative z-10">
-        {STATUS_FILTERS.map((s) => (
-          <Link
-            key={s}
-            href={`/maintenance?status=${s}`}
-            className={cn(
-              "px-4 py-2 rounded-full text-[0.8rem] font-semibold transition-all duration-150 border",
-              activeStatus === s
-                ? "bg-[var(--navy)] dark:bg-[var(--navy-light)] text-white border-[hsl(var(--gold-hsl)/0.3)] shadow-[0_4px_12px_rgba(10,22,40,0.15)] -translate-y-0.5"
-                : "bg-white/80 dark:bg-[rgba(255,255,255,0.06)] text-[var(--slate)] dark:text-[var(--muted)] border-[hsl(var(--gold-hsl)/0.15)] hover:-translate-y-px hover:border-[hsl(var(--gold-hsl)/0.3)]"
-            )}
-          >
-            {s.replace("_", " ")}
-          </Link>
-        ))}
-      </div>
+      <FilterPills
+        label="Status"
+        value={activeStatus}
+        options={STATUS_FILTERS.map((s) => ({
+          value: s,
+          label: label(s),
+          count: countFor(s),
+          href: s === "ALL" ? "/maintenance" : `/maintenance?status=${s}`,
+        }))}
+      />
 
-      {/* Cards */}
       {serializedRequests.length === 0 ? (
-        <div className="empty-state card relative z-10">
-          <p>No maintenance requests found.</p>
-        </div>
+        <EmptyState
+          icon={<Wrench />}
+          title={activeStatus === "ALL" ? "No maintenance requests" : `No ${label(activeStatus).toLowerCase()} requests`}
+          description="Requests raised by staff for broken or worn-out facilities appear here."
+          action={
+            <Link href="/maintenance/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}>
+              <Plus size={15} /> New request
+            </Link>
+          }
+        />
       ) : (
-        <div className="grid gap-3 relative z-10">
-          {serializedRequests.map((r, idx) => (
-            <MaintenanceRequestCard
-              key={r.id}
-              request={r}
-              canManage={canManage}
-              index={idx}
-            />
+        <ul className="divide-y divide-border/70 rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
+          {serializedRequests.map((r) => (
+            <MaintenanceRequestCard key={r.id} request={r} canManage={canManage} />
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

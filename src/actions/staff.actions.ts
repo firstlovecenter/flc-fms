@@ -15,6 +15,7 @@ import {
 import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 import { type Role, Prisma } from "@prisma/client";
+import { checkStaffTarget, permissionsBeyondActor } from "@/lib/permissions/staff-guard";
 
 export async function getStaffMembers() {
   await requirePerm("staff:view");
@@ -33,6 +34,8 @@ export async function updateStaffPermissions(
   permissions: PermissionSet
 ) {
   const session = await requirePerm("staff:manage");
+  const check = await checkStaffTarget(session, staffId);
+  if ("error" in check) return check;
   const target = await prisma.user.findFirstOrThrow({ where: { id: staffId } });
   if (target.role === "SUPER_ADMIN") {
     return { error: "Super Admin already has full access; permissions can't be edited." };
@@ -41,9 +44,12 @@ export async function updateStaffPermissions(
   const clean = sanitizePermissionInput(
     Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, Boolean(permissions[k])]))
   );
-  const full = permissionsToFullStored(
-    Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, clean[k] ?? false])) as PermissionSet
-  );
+  const nextSet = Object.fromEntries(ALL_PERMISSIONS.map((k) => [k, clean[k] ?? false])) as PermissionSet;
+  const beyond = permissionsBeyondActor(session, nextSet);
+  if (beyond.length > 0) {
+    return { error: `You can only grant permissions you hold yourself (not: ${beyond.join(", ")}).` };
+  }
+  const full = permissionsToFullStored(nextSet);
 
   await prisma.user.update({
     where: { id: staffId },
@@ -68,6 +74,8 @@ export async function updateStaffPermissions(
 
 export async function deactivateStaffMember(userId: string) {
   const session = await requirePerm("staff:manage");
+  const check = await checkStaffTarget(session, userId);
+  if ("error" in check) return check;
   await prisma.user.update({
     where: { id: userId },
     data: { isActive: false },
@@ -81,6 +89,8 @@ export async function deactivateStaffMember(userId: string) {
 
 export async function reactivateStaffMember(userId: string) {
   const session = await requirePerm("staff:manage");
+  const check = await checkStaffTarget(session, userId);
+  if ("error" in check) return check;
   await prisma.user.update({
     where: { id: userId },
     data: { isActive: true },
@@ -94,6 +104,8 @@ export async function reactivateStaffMember(userId: string) {
 
 export async function resetStaffPassword(userId: string) {
   const session = await requirePerm("staff:manage");
+  const check = await checkStaffTarget(session, userId, { allowSelf: true });
+  if ("error" in check) return check;
   const bcrypt = await import("bcryptjs");
   const tempPassword = `Reset@${Math.random().toString(36).slice(2, 8)}`;
   const passwordHash = await bcrypt.hash(tempPassword, 12);
@@ -140,6 +152,10 @@ export async function updateStaffMember(
   data: z.infer<typeof UpdateStaffSchema>
 ) {
   const session = await requirePerm("staff:manage");
+  // Changing a manager's email and then resetting their password would hand
+  // over their account, so the same target rules apply here.
+  const check = await checkStaffTarget(session, userId, { allowSelf: true });
+  if ("error" in check) return check;
   const validated = UpdateStaffSchema.parse(data);
   if (validated.email) validated.email = validated.email.trim().toLowerCase();
 
@@ -198,6 +214,15 @@ export async function updateStaffRole(userId: string, nextRoleInput: string) {
   if (!target.isActive) return { error: "Cannot change role for an inactive staff member." };
   if (session.sub === userId) return { error: "You cannot change your own role." };
 
+  const check = await checkStaffTarget(session, userId);
+  if ("error" in check) return check;
+  if (nextRole === "FACILITY_MANAGER" && session.role !== "SUPER_ADMIN") {
+    return { error: "Only Super Admin can assign the Facility Manager role." };
+  }
+  if (permissionsBeyondActor(session, permSet).length > 0) {
+    return { error: "You can only assign a role whose permissions you hold yourself." };
+  }
+
   if (target.role === "SUPER_ADMIN" && session.role !== "SUPER_ADMIN") {
     return { error: "Only Super Admin can modify another Super Admin role." };
   }
@@ -250,6 +275,10 @@ export async function updateStaffProfilePicture(
   const isSelf = session.sub === userId;
   const canManage = session.role === "SUPER_ADMIN" || session.authContext?.permissions["staff:manage"];
   if (!isSelf && !canManage) return { error: "Unauthorized" };
+  if (!isSelf) {
+    const check = await checkStaffTarget(session, userId);
+    if ("error" in check) return check;
+  }
 
   await prisma.user.update({
     where: { id: userId },

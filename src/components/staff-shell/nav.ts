@@ -19,7 +19,14 @@ import {
   MessageSquare,
   type LucideIcon,
 } from "lucide-react";
-import { STAFF_NAV_GROUPS, STAFF_ADMIN_NAV, STAFF_BOTTOM_NAV } from "@/lib/permissions";
+import {
+  STAFF_NAV_GROUPS,
+  STAFF_ADMIN_NAV,
+  STAFF_BOTTOM_NAV,
+  navItemVisible,
+  type Permission,
+  type PermissionSet,
+} from "@/lib/permissions";
 
 export const NAV_ICONS: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
@@ -84,4 +91,21 @@ export function crumbsFor(pathname: string): Crumb[] {
     crumbs.push({ label: rest === "new" ? "New" : "Details" });
   }
   return crumbs;
+}
+
+export type Area = { label: string; href: string; active: boolean };
+
+/** One entry per nav group this person can open, linking to its first page. */
+export function areasFor(pathname: string, role: string, permissions?: PermissionSet): Area[] {
+  const hasPerm = (p: Permission) => role === "SUPER_ADMIN" || (permissions?.[p] ?? false);
+  const current = crumbsFor(pathname)[0]?.label;
+  const areas = STAFF_NAV_GROUPS.map((g) => {
+    const first = g.items.find((i) => navItemVisible(i, role, hasPerm));
+    const label = g.label ?? "Overview";
+    return first ? { label, href: first.href, active: current === label || (label === "Overview" && pathname === "/dashboard") } : null;
+  }).filter((a): a is Area => a !== null);
+  if (role === "SUPER_ADMIN") {
+    areas.push({ label: "Administration", href: STAFF_ADMIN_NAV[0].href, active: current === "Administration" });
+  }
+  return areas;
 }

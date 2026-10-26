@@ -46,12 +46,12 @@ export default async function DutyTemplatesPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--cream-dark)]">
-              <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Name</th>
-              <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Type</th>
-              <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Tasks</th>
-              <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Used</th>
-              <th className="text-left px-4 py-3 font-semibold text-[var(--navy)]">Status</th>
-              <th className="px-4 py-3" />
+              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Name</th>
+              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Type</th>
+              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Tasks</th>
+              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Used</th>
+              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">Status</th>
+              <th className="px-4 py-3 font-medium" />
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border)]">

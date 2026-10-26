@@ -106,7 +106,7 @@ export default function MaintenanceTab({ data, downloadUrl }: Props) {
             const count = data.statusBreakdown.find((s) => s.status === status)?.count ?? 0;
             return (
               <div key={status} className="rounded-lg p-3 text-center border border-[var(--border)]">
-                <p className="text-2xl font-bold text-[var(--navy)]">{count}</p>
+                <p className="text-2xl font-medium text-[var(--navy)]">{count}</p>
                 <StatusBadge status={status} size="xs" className="mt-1" />
               </div>
             );

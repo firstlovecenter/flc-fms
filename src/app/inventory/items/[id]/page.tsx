@@ -100,7 +100,7 @@ export default async function InventoryItemDetailPage(props: { params: Promise<{
           <div className="flex gap-2 flex-wrap pt-1">
             {item.images.map((src) => (
               // eslint-disable-next-line @next/next/no-img-element
-              (<img key={src} src={src} alt={item.name} className="w-24 h-24 object-cover rounded-lg border border-[var(--border)]" />)
+              (<img key={src} src={src} alt={item.name} className="w-24 h-24 object-cover rounded-2xl border border-border/70" />)
             ))}
           </div>
         )}
@@ -114,15 +114,15 @@ export default async function InventoryItemDetailPage(props: { params: Promise<{
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Checked Out</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">By</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Purpose</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Returned</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Checked Out</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">By</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Purpose</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Returned</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {item.checkouts.map((c) => (
                   <tr key={c.id}>
                     <td className="px-4 py-2.5 text-xs text-[var(--muted)]">{fmt(c.checkedOutAt)}</td>
@@ -145,15 +145,15 @@ export default async function InventoryItemDetailPage(props: { params: Promise<{
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Title</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Priority</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">Requested</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Title</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Priority</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-left text-xs text-[var(--muted)] font-medium">Requested</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {item.maintenanceLogs.map((m) => (
                   <tr key={m.id}>
                     <td className="px-4 py-2.5 text-xs">{m.title}</td>

@@ -61,13 +61,13 @@ export default function SavingsDepositForm({ accounts }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {isLocked && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-700 text-sm">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-warning text-sm">
           There are no active accounts to transfer from. Create one under Transactions ▸ Accounts.
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div>
@@ -76,11 +76,11 @@ export default function SavingsDepositForm({ accounts }: Props) {
           <option value="" disabled>Select an account…</option>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.name} — GH₵{a.balance.toFixed(2)}</option>)}
         </select>
-        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
+        {errors.accountId && <p className="text-danger text-xs mt-1">{errors.accountId.message}</p>}
       </div>
 
       {selectedAccount && (
-        <div className="rounded-lg px-4 py-3 text-sm flex items-center justify-between border bg-emerald-50 border-emerald-200 text-emerald-800">
+        <div className="rounded-lg px-4 py-3 text-sm flex items-center justify-between border bg-success/10 border-success/30 text-success">
           <span>Available balance in &ldquo;{selectedAccount.name}&rdquo;</span>
           <span className="font-bold tabular-nums">GH₵{selectedAccount.balance.toFixed(2)}</span>
         </div>
@@ -96,7 +96,7 @@ export default function SavingsDepositForm({ accounts }: Props) {
           placeholder="0.00"
           disabled={isLocked}
         />
-        {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+        {errors.amount && <p className="text-danger text-xs mt-1">{errors.amount.message}</p>}
       </div>
 
       <div>
@@ -108,7 +108,7 @@ export default function SavingsDepositForm({ accounts }: Props) {
           placeholder="Reason for transferring to savings…"
           disabled={isLocked}
         />
-        {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
+        {errors.narration && <p className="text-danger text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">

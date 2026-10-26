@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, User, Wrench, Calendar } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import MaintenanceStatusUpdate from "@/components/maintenance/MaintenanceStatusUpdate";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
 const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
+  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
 
 interface MaintenanceRequestCardProps {
   request: {
@@ -26,52 +24,39 @@ interface MaintenanceRequestCardProps {
     assignedTo: { name: string } | null;
   };
   canManage: boolean;
-  index: number;
 }
 
-export default function MaintenanceRequestCard({ request: r, canManage, index: idx }: MaintenanceRequestCardProps) {
+/** One maintenance request as a compact list row; the title opens the request. */
+export default function MaintenanceRequestCard({ request: r, canManage }: MaintenanceRequestCardProps) {
   const isDone = ["RESOLVED", "CLOSED"].includes(r.status);
+  const facts = [
+    r.facility?.name,
+    r.assignedTo ? `Assigned to ${r.assignedTo.name}` : `Raised by ${r.requestedBy.name}`,
+    formatDate(r.createdAt),
+    r.actualCost ? `Cost ${formatCurrency(r.actualCost)}` : r.estimatedCost ? `Est. ${formatCurrency(r.estimatedCost)}` : null,
+  ].filter(Boolean);
 
   return (
-    <Card style={{ animation: `fadeIn 0.3s ease-out ${idx * 0.05}s backwards` }} className="p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <h3 className="font-semibold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-[1rem]">{r.title}</h3>
-            <StatusBadge status={r.priority} size="md" />
-            <StatusBadge status={r.status} size="md" />
-          </div>
-          {r.description && (
-            <p className="text-[0.9rem] text-[var(--slate)] mb-3">{r.description}</p>
-          )}
-          <div className="flex items-center gap-4 flex-wrap text-[0.8rem] text-[var(--text-muted)]">
-            {r.facility && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin size={12} /> {r.facility.name}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5">
-              <User size={12} /> {r.requestedBy.name}
-            </span>
-            {r.assignedTo && (
-              <span className="inline-flex items-center gap-1.5">
-                <Wrench size={12} /> Assigned to {r.assignedTo.name}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar size={12} /> {formatDate(r.createdAt)}
-            </span>
-            {r.estimatedCost && <span>Est. {formatCurrency(Number(r.estimatedCost))}</span>}
-            {r.actualCost && <span>Actual {formatCurrency(Number(r.actualCost))}</span>}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link href={`/maintenance/${r.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>View</Link>
-          {canManage && !isDone && (
-            <MaintenanceStatusUpdate requestId={r.id} currentStatus={r.status} />
-          )}
-        </div>
+    <li className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+      <Link href={`/maintenance/${r.id}`} className="group min-w-0 flex-1 no-underline">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="truncate text-sm font-medium text-[var(--navy)] group-hover:underline">{r.title}</span>
+          <StatusBadge status={r.status} size="xs" />
+          {r.priority !== "LOW" && r.priority !== "MEDIUM" && <StatusBadge status={r.priority} size="xs" />}
+        </span>
+        {r.description && <span className="mt-1 line-clamp-1 block text-xs text-[var(--slate)]">{r.description}</span>}
+        <span className="mt-1 block text-xs text-[var(--muted)]">{facts.join(" · ")}</span>
+      </Link>
+      <div className="flex shrink-0 items-center gap-2">
+        {canManage && !isDone && <MaintenanceStatusUpdate requestId={r.id} currentStatus={r.status} />}
+        <Link
+          href={`/maintenance/${r.id}`}
+          aria-label={`Open ${r.title}`}
+          className="ml-auto hidden size-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)] sm:flex"
+        >
+          <ChevronRight size={18} />
+        </Link>
       </div>
-    </Card>
+    </li>
   );
 }

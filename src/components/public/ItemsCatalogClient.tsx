@@ -193,14 +193,14 @@ function ItemCard({ item, onAdd }: { item: BookableItem; onAdd: () => void }) {
       {img ? (
         <img src={img} alt={item.name} className="w-full h-40 object-cover" />
       ) : (
-        <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-[rgba(22,26,31,0.04)] to-[rgba(255,66,102,0.08)] dark:from-[rgba(255,66,102,0.05)] dark:to-[rgba(255,66,102,0.12)]">
+        <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-[rgba(22,26,31,0.04)] to-[hsl(var(--gold-hsl)/0.08)] dark:from-[hsl(var(--gold-hsl)/0.05)] dark:to-[hsl(var(--gold-hsl)/0.12)]">
           <Package size={36} className="text-[var(--gold)]" />
         </div>
       )}
       <div className="p-4 flex flex-col flex-1 gap-2">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-bold text-[var(--navy)] dark:text-[rgba(232,238,248,0.9)] text-base leading-snug">{item.name}</h3>
-          <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-[rgba(255,66,102,0.10)] text-[var(--navy)] border border-[rgba(255,66,102,0.26)]">
+          <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--gold-hsl)/0.10)] text-[var(--navy)] border border-[hsl(var(--gold-hsl)/0.26)]">
             {item.quantity} avail.
           </span>
         </div>
@@ -253,14 +253,14 @@ function BundleCard({
       {img ? (
         <img src={img} alt={bundle.name} className="w-full h-44 object-cover" />
       ) : (
-        <div className="w-full h-44 flex items-center justify-center bg-gradient-to-br from-[rgba(22,26,31,0.05)] to-[rgba(255,66,102,0.10)] dark:from-[rgba(255,66,102,0.05)] dark:to-[rgba(255,66,102,0.15)]">
+        <div className="w-full h-44 flex items-center justify-center bg-gradient-to-br from-[rgba(22,26,31,0.05)] to-[hsl(var(--gold-hsl)/0.10)] dark:from-[hsl(var(--gold-hsl)/0.05)] dark:to-[hsl(var(--gold-hsl)/0.15)]">
           <Layers size={40} className="text-[var(--gold)]" />
         </div>
       )}
       <div className="p-5 flex flex-col flex-1 gap-3">
         {/* Badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[rgba(255,66,102,0.12)] text-[var(--navy)] dark:text-[rgba(241,245,249,0.9)] border border-[rgba(255,66,102,0.30)]">
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--gold-hsl)/0.12)] text-[var(--navy)] dark:text-[rgba(241,245,249,0.9)] border border-[hsl(var(--gold-hsl)/0.30)]">
             <Layers size={10} className="inline mr-1" />Package
           </span>
           {bundle.tags.slice(0, 2).map(t => (

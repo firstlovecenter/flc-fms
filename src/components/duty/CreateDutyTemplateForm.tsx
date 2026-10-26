@@ -14,7 +14,8 @@ import {
 } from "@/lib/duty/template-form";
 import type { DutyTemplateType, DutyTimeType } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 type ItemRow = TemplateFormItemRow;
 
@@ -134,7 +135,7 @@ export default function CreateDutyTemplateForm() {
         {items.map((item, index) => (
           <div
             key={index}
-            className="rounded-lg border border-[var(--border)] p-4 space-y-3 bg-[var(--cream-dark)]"
+            className="rounded-2xl border border-border/70 p-4 space-y-3 bg-[var(--cream-dark)]"
           >
             <div className="flex justify-between gap-2">
               <span className="text-xs font-medium text-[var(--muted)]">

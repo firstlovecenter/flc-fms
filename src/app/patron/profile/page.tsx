@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function PatronProfilePage() {
   const [profile, setProfile] = useState({ name: "", email: "", phone: "", profilePicture: "" });
@@ -101,16 +102,27 @@ export default function PatronProfilePage() {
 
   const initials = profile.name.split(" ").filter(Boolean).map(p => p[0]).slice(0, 2).join("").toUpperCase();
 
-  if (loading) return <div className="p-8 text-[var(--muted)]">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="max-w-2xl space-y-5" aria-busy="true" aria-label="Loading profile">
+        <div className="h-9 w-48 animate-pulse rounded-full bg-muted" />
+        {[0, 1, 2].map((i) => <div key={i} className="h-40 animate-pulse rounded-[1.25rem] bg-card" />)}
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-lg space-y-8">
-      <h1 className="page-title">My Profile</h1>
+    <div className="max-w-2xl space-y-5">
+      <PageHeader
+        title="Profile"
+        description="Your name, contact details and password. The office uses your phone number to reach you about bookings."
+        className="mb-0"
+      />
 
       {/* Profile picture */}
       <Card className="p-6">
-        <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
-          <User size={18} /> Profile Picture
+        <div className="flex items-center gap-2 text-sm font-medium text-[var(--muted)] mb-5">
+          <User size={15} /> Photo
         </div>
         <div className="flex items-center gap-5">
           <div className="relative group">
@@ -124,7 +136,7 @@ export default function PatronProfilePage() {
                 className="w-20 h-20 rounded-full object-cover border-2 border-[var(--border)]"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-[rgba(200,163,90,0.15)] border-2 border-[rgba(200,163,90,0.25)] flex items-center justify-center text-2xl font-bold text-[var(--gold)]">
+              <div className="w-20 h-20 rounded-full bg-[var(--gold)]/10 border-2 border-[var(--gold)]/20 flex items-center justify-center text-2xl font-bold text-[var(--gold)]">
                 {initials || "?"}
               </div>
             )}
@@ -145,14 +157,14 @@ export default function PatronProfilePage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
             >
-              {uploading ? "Uploading…" : "Change Photo"}
+              {uploading ? "Uploading…" : "Change photo"}
             </Button>
             <p className="text-xs text-[var(--muted)] mt-1">JPG, PNG or WebP · max 5 MB</p>
           </div>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         {message && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
+          <div className={`mt-4 p-3 rounded-xl text-sm ${message.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {message.text}
           </div>
         )}
@@ -160,8 +172,8 @@ export default function PatronProfilePage() {
 
       {/* Profile details */}
       <Card className="p-6">
-        <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
-          <User size={18} /> Profile Details
+        <div className="flex items-center gap-2 text-sm font-medium text-[var(--muted)] mb-5">
+          <User size={15} /> Details
         </div>
 
         <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -178,19 +190,19 @@ export default function PatronProfilePage() {
             <Input name="phone" type="tel" required defaultValue={profile.phone} placeholder="+233..." />
           </div>
           <Button type="submit" disabled={saving} className="gap-2">
-            <Save size={16} /> {saving ? "Saving…" : "Save Changes"}
+            <Save size={16} /> {saving ? "Saving…" : "Save changes"}
           </Button>
         </form>
       </Card>
 
       {/* Change password */}
       <Card className="p-6">
-        <div className="flex items-center gap-2 text-[var(--slate)] font-semibold mb-5">
-          <KeyRound size={18} /> Change Password
+        <div className="flex items-center gap-2 text-sm font-medium text-[var(--muted)] mb-5">
+          <KeyRound size={15} /> Password
         </div>
 
         {pwMessage && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${pwMessage.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
+          <div className={`mb-4 p-3 rounded-xl text-sm ${pwMessage.type === "success" ? "bg-success/10 text-success border border-success/25" : "bg-danger/10 text-danger border border-danger/25"}`}>
             {pwMessage.text}
           </div>
         )}
@@ -219,7 +231,7 @@ export default function PatronProfilePage() {
             <Input name="confirm" type="password" required autoComplete="new-password" />
           </div>
           <Button type="submit" disabled={pwLoading} className="gap-2">
-            <KeyRound size={16} /> {pwLoading ? "Updating…" : "Update Password"}
+            <KeyRound size={16} /> {pwLoading ? "Updating…" : "Update password"}
           </Button>
         </form>
       </Card>

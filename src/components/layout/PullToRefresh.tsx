@@ -1,161 +1,147 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const PULL_THRESHOLD = 120;
-const MAX_PULL_DISTANCE = 180;
-const MIN_PULL_START = 50;   // px of deliberate downward travel before gesture registers
-const VERTICAL_DOMINANCE = 25; // vertical must exceed horizontal by this much to count
+/** Pull distance (after resistance) that triggers a refresh. */
+const THRESHOLD = 80;
+/** The furthest the indicator travels. */
+const MAX_PULL = 120;
+/** Finger travel ignored before a pull counts, so ordinary scrolls never start one. */
+const DEAD_ZONE = 24;
 
+/** Overlays, fields and anything marked data-no-pull handle their own gestures. */
+const IGNORE_SELECTOR =
+  "[role='dialog'], [role='alertdialog'], [role='menu'], [role='listbox'], [data-slot='sheet-content'], [data-vaul-drawer], [data-no-pull], input, textarea, select";
+
+/**
+ * True when the touch starts inside something scrolled away from its top. The
+ * staff portal scrolls an inner <main>, not the window, so window.scrollY
+ * alone would turn every downward swipe into a pull.
+ */
+function scrolledAboveTop(target: EventTarget | null): boolean {
+  if (window.scrollY > 0) return true;
+  let el = target instanceof Element ? target : null;
+  while (el && el !== document.body) {
+    if (el.scrollTop > 0) {
+      const { overflowY } = getComputedStyle(el);
+      if (overflowY === "auto" || overflowY === "scroll") return true;
+    }
+    el = el.parentElement;
+  }
+  return false;
+}
+
+/**
+ * Pull down from the top of a page to re-fetch its data — the BMS gesture: a
+ * small round indicator that follows the finger with rubber-band resistance,
+ * then refreshes in place (filters, scroll and form input survive).
+ */
 export default function PullToRefresh() {
-  const [pullDistance, setPullDistance] = useState(0);
+  const router = useRouter();
+  const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const startYRef = useRef(0);
-  const startXRef = useRef(0);
-  const pullingRef = useRef(false);
-  const pullActivatedRef = useRef(false);
+  const startY = useRef(0);
+  const startX = useRef(0);
+  const tracking = useRef(false);
+  const active = useRef(false);
+  const pullRef = useRef(0);
+  const refreshingRef = useRef(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!("ontouchstart" in window)) return;
 
-    const supportsTouch = "ontouchstart" in window;
-    if (!supportsTouch) return;
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (refreshing) return;
-      if (window.scrollY > 0) return;
-      if (event.touches.length !== 1) return;
-
-      startYRef.current = event.touches[0].clientY;
-      startXRef.current = event.touches[0].clientX;
-      pullingRef.current = true;
-      pullActivatedRef.current = false;
+    const set = (d: number) => {
+      pullRef.current = d;
+      setPull(d);
     };
 
-    const onTouchMove = (event: TouchEvent) => {
-      if (!pullingRef.current || refreshing) return;
-      if (event.touches.length !== 1) return;
-
-      const deltaY = event.touches[0].clientY - startYRef.current;
-      const deltaX = Math.abs(event.touches[0].clientX - startXRef.current);
-
-      if (deltaY <= 0) {
-        setPullDistance(0);
-        pullActivatedRef.current = false;
-        return;
-      }
-
-      if (!pullActivatedRef.current) {
-        if (deltaY < MIN_PULL_START) return;
-        if (deltaY <= deltaX + VERTICAL_DOMINANCE) return;
-        pullActivatedRef.current = true;
-      }
-
-      if (window.scrollY > 0) {
-        pullingRef.current = false;
-        pullActivatedRef.current = false;
-        setPullDistance(0);
-        return;
-      }
-
-      const effectiveDelta = Math.max(0, deltaY - MIN_PULL_START);
-      const distance = Math.min(MAX_PULL_DISTANCE, effectiveDelta * 0.38);
-      setPullDistance(distance);
-      event.preventDefault();
+    const onStart = (e: TouchEvent) => {
+      if (refreshingRef.current || e.touches.length !== 1) return;
+      const target = e.target;
+      if (target instanceof Element && target.closest(IGNORE_SELECTOR)) return;
+      if (scrolledAboveTop(target)) return;
+      startY.current = e.touches[0].clientY;
+      startX.current = e.touches[0].clientX;
+      tracking.current = true;
+      active.current = false;
     };
 
-    const onTouchEnd = () => {
-      if (!pullingRef.current || refreshing) return;
+    const onMove = (e: TouchEvent) => {
+      if (!tracking.current || refreshingRef.current) return;
+      const dy = e.touches[0].clientY - startY.current;
+      const dx = Math.abs(e.touches[0].clientX - startX.current);
 
-      pullingRef.current = false;
-      const isActivated = pullActivatedRef.current;
-      pullActivatedRef.current = false;
-
-      if (!isActivated) {
-        setPullDistance(0);
-        return;
+      if (!active.current) {
+        if (dy <= 0 || dx > dy) {
+          // Scrolling down or swiping sideways: not a pull.
+          if (dy < 0 || dx > DEAD_ZONE) tracking.current = false;
+          return;
+        }
+        if (dy < DEAD_ZONE) return;
+        active.current = true;
       }
 
-      if (pullDistance >= PULL_THRESHOLD) {
+      const travel = Math.max(0, dy - DEAD_ZONE);
+      // Rubber-band resistance: each extra pixel counts for less.
+      const resistance = 1 - Math.min(travel / MAX_PULL, 1) * 0.5;
+      set(Math.min(travel * resistance, MAX_PULL));
+      if (e.cancelable && pullRef.current > 4) e.preventDefault();
+    };
+
+    const onEnd = () => {
+      if (!tracking.current) return;
+      tracking.current = false;
+      const wasActive = active.current;
+      active.current = false;
+      if (wasActive && pullRef.current >= THRESHOLD && !refreshingRef.current) {
+        refreshingRef.current = true;
         setRefreshing(true);
-        setPullDistance(PULL_THRESHOLD);
+        set(THRESHOLD * 0.6);
+        router.refresh();
         window.setTimeout(() => {
-          window.location.reload();
-        }, 120);
+          refreshingRef.current = false;
+          setRefreshing(false);
+          set(0);
+        }, 700);
         return;
       }
-
-      setPullDistance(0);
+      set(0);
     };
 
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
+    document.addEventListener("touchstart", onStart, { passive: true });
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onEnd, { passive: true });
+    document.addEventListener("touchcancel", onEnd, { passive: true });
     return () => {
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
+      document.removeEventListener("touchstart", onStart);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
+      document.removeEventListener("touchcancel", onEnd);
     };
-  }, [pullDistance, refreshing]);
+  }, [router]);
 
-  const progress = Math.min(1, pullDistance / PULL_THRESHOLD);
-  const visible = refreshing || pullDistance > 0;
+  const progress = Math.min(pull / THRESHOLD, 1);
 
   return (
     <div
       aria-hidden
+      className={cn(
+        "fixed left-1/2 z-[1000] flex size-10 items-center justify-center rounded-full border border-border/70 bg-card shadow-lg transition-opacity duration-200",
+        pull > 4 || refreshing ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
       style={{
-        position: "fixed",
-        top: 10,
-        left: "50%",
-        transform: `translate(-50%, ${visible ? 0 : -80}px)`,
-        transition: refreshing ? "none" : "transform 150ms ease",
-        zIndex: 1000,
-        pointerEvents: "none",
+        top: `calc(env(safe-area-inset-top) + ${Math.max(pull - 44, -48)}px)`,
+        transform: "translateX(-50%)",
+        transition: pull === 0 ? "top 0.2s ease, opacity 0.2s ease" : "opacity 0.2s ease",
       }}
     >
-      <div
-        style={{
-          background: "rgba(10, 22, 40, 0.9)",
-          color: "#fff",
-          borderRadius: 999,
-          padding: "8px 14px",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          boxShadow: "0 6px 18px rgba(10, 22, 40, 0.25)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          minWidth: 120,
-          textAlign: "center",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-        }}
-      >
-        {refreshing && (
-          <span
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              border: "2px solid rgba(255,255,255,0.35)",
-              borderTopColor: "#fff",
-              animation: "ptr-spin 0.8s linear infinite",
-            }}
-          />
-        )}
-        {refreshing ? "Refreshing..." : progress >= 1 ? "Release to refresh" : "Pull to refresh"}
-      </div>
-
-      <style>{`
-        @keyframes ptr-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      <RefreshCw
+        className={cn("size-5", progress >= 1 || refreshing ? "text-[var(--gold)]" : "text-[var(--muted)]", refreshing && "animate-spin")}
+        style={{ transform: refreshing ? undefined : `rotate(${progress * 180}deg)` }}
+      />
     </div>
   );
 }
