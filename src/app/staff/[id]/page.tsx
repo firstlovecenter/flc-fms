@@ -48,13 +48,13 @@ export default async function StaffDetailPage(props: Props) {
         <Link
           href="/staff"
           aria-label="Back to staff"
-          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-gray-500")}
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "text-[var(--muted)]")}
         >
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">{member.name}</h1>
-          <p className="text-sm text-gray-400">{ROLE_LABELS[member.role] ?? member.role}</p>
+          <h1 className="text-xl font-medium text-[var(--navy)]">{member.name}</h1>
+          <p className="text-sm text-[var(--muted)]">{ROLE_LABELS[member.role] ?? member.role}</p>
         </div>
         <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
           member.isActive ? "bg-success/10 text-success border-success/25" : "bg-danger/10 text-danger border-danger/25"
@@ -64,30 +64,30 @@ export default async function StaffDetailPage(props: Props) {
       </div>
 
       {/* Profile card */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 grid sm:grid-cols-2 gap-4 text-sm">
+      <div className="bg-white rounded-xl border border-border shadow-sm p-6 grid sm:grid-cols-2 gap-4 text-sm">
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Email</p>
-          <p className="font-medium text-gray-800">{member.email}</p>
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Email</p>
+          <p className="font-medium text-[var(--navy)]">{member.email}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Phone</p>
-          <p className="font-medium text-gray-800">{member.phone ?? "—"}</p>
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Phone</p>
+          <p className="font-medium text-[var(--navy)]">{member.phone ?? "—"}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Joined</p>
-          <p className="font-medium text-gray-800">{format(member.createdAt, "dd MMM yyyy")}</p>
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Joined</p>
+          <p className="font-medium text-[var(--navy)]">{format(member.createdAt, "dd MMM yyyy")}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Last login</p>
-          <p className="font-medium text-gray-800">
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Last login</p>
+          <p className="font-medium text-[var(--navy)]">
             {member.lastLoginAt ? format(member.lastLoginAt, "dd MMM yyyy, HH:mm") : "Never"}
           </p>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Actions</h2>
+      <div className="bg-white rounded-xl border border-border shadow-sm p-5">
+        <h2 className="text-sm font-semibold text-[var(--navy)] mb-4">Actions</h2>
         <div className="flex flex-wrap gap-3">
           {member.role !== "SUPER_ADMIN" && (
             <Link
@@ -108,23 +108,27 @@ export default async function StaffDetailPage(props: Props) {
             role={member.role}
             profilePicture={member.profilePicture}
             currentUserRole={session.role}
+            canManage={
+              member.id !== session.sub &&
+              (session.role === "SUPER_ADMIN" || (member.role !== "FACILITY_MANAGER" && member.role !== "SUPER_ADMIN"))
+            }
           />
         </div>
       </div>
 
       {/* Recent activity */}
       {recentAudit.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Activity</h2>
+        <div className="bg-white rounded-xl border border-border shadow-sm p-5">
+          <h2 className="text-sm font-semibold text-[var(--navy)] mb-3">Recent Activity</h2>
           <ul className="space-y-2">
             {recentAudit.map((log, i) => (
               <li key={i} className="flex items-center justify-between text-sm">
                 <span>
-                  <span className="font-medium text-gray-800">{log.action}</span>
+                  <span className="font-medium text-[var(--navy)]">{log.action}</span>
                   {" "}
-                  <span className="text-gray-400">on {log.entity}</span>
+                  <span className="text-[var(--muted)]">on {log.entity}</span>
                 </span>
-                <span className="text-xs text-gray-400">{format(log.createdAt, "dd MMM, HH:mm")}</span>
+                <span className="text-xs text-[var(--muted)]">{format(log.createdAt, "dd MMM, HH:mm")}</span>
               </li>
             ))}
           </ul>

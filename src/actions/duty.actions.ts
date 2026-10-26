@@ -14,6 +14,7 @@ import {
   type TemplateItemInput,
 } from "@/lib/duty/template-form";
 import type { SessionPayload } from "@/lib/auth/session";
+import { getStaffAuthContext, ctxHasPermission } from "@/lib/permissions/session";
 
 function revalidateDutyPaths(dutyLogId?: string) {
   revalidatePath("/duty");
@@ -21,8 +22,11 @@ function revalidateDutyPaths(dutyLogId?: string) {
   if (dutyLogId) revalidatePath(`/duty/${dutyLogId}`);
 }
 
-function canManage(session: SessionPayload) {
-  return session.role === "FACILITY_MANAGER" || session.role === "SUPER_ADMIN";
+/** Granted by the duty:manage permission (Facility Managers have it by default). */
+async function canManage(session: SessionPayload) {
+  if (session.role === "SUPER_ADMIN") return true;
+  const ctx = await getStaffAuthContext(session.sub);
+  return ctx ? ctxHasPermission(ctx, "duty:manage") : false;
 }
 
 async function syncDutyLogStatus(dutyLogId: string) {
@@ -80,7 +84,7 @@ const AssignSchema = z.object({
 
 export async function assignDuty(data: z.infer<typeof AssignSchema>) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can assign duties." };
   }
 
@@ -162,7 +166,7 @@ export async function completeDutyItem(dutyLogId: string, itemId: string, isDone
   }
 
   const canComplete =
-    log.assignedToId === session.sub || canManage(session);
+    log.assignedToId === session.sub || (await canManage(session));
   if (!canComplete) {
     return { success: false as const, error: "You can only complete items on your own duty log." };
   }
@@ -201,7 +205,7 @@ export async function signDutyAsAssignee(dutyLogId: string) {
   if (log.status === "SIGNED_OFF") {
     return { success: false as const, error: "This duty log is signed off and cannot be edited." };
   }
-  if (log.assignedToId !== session.sub && !canManage(session)) {
+  if (log.assignedToId !== session.sub && !(await canManage(session))) {
     return { success: false as const, error: "Only the assigned person can sign this log." };
   }
 
@@ -223,7 +227,7 @@ export async function signDutyAsAssignee(dutyLogId: string) {
 
 export async function signDutyAsSupervisor(dutyLogId: string) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only supervisors can sign off duty logs." };
   }
 
@@ -263,7 +267,7 @@ export async function signDutyAsSupervisor(dutyLogId: string) {
 
 export async function deleteDutyLog(dutyLogId: string) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can delete duty logs." };
   }
 
@@ -327,7 +331,7 @@ function parseTemplatePayload(data: TemplateFormPayload) {
 
 export async function createDutyTemplate(data: TemplateFormPayload) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can create duty forms." };
   }
 
@@ -384,7 +388,7 @@ export async function createDutyTemplate(data: TemplateFormPayload) {
 
 export async function updateDutyTemplate(templateId: string, data: TemplateFormPayload) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can edit duty forms." };
   }
 
@@ -457,7 +461,7 @@ export async function updateDutyTemplate(templateId: string, data: TemplateFormP
 
 export async function setDutyTemplateActive(templateId: string, isActive: boolean) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can update duty forms." };
   }
 
@@ -480,7 +484,7 @@ export async function setDutyTemplateActive(templateId: string, isActive: boolea
 
 export async function deleteDutyTemplate(templateId: string) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can delete duty forms." };
   }
 
@@ -522,7 +526,7 @@ export async function updateDutyAssignment(
   data: z.infer<typeof UpdateAssignmentSchema>,
 ) {
   const session = await requirePerm("duty:manage");
-  if (!canManage(session)) {
+  if (!(await canManage(session))) {
     return { success: false as const, error: "Only facility managers can edit assignments." };
   }
 

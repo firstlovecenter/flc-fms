@@ -237,7 +237,9 @@ export async function updateAccessCode(
   return { success: true, facility };
 }
 
+// Full rows include the door accessCode, so these are staff-only.
 export async function getFacilities(includeInactive = false) {
+  await requirePerm("facilities:view");
   return prisma.facility.findMany({
     where: includeInactive
       ? { deletedAt: null }
@@ -247,6 +249,7 @@ export async function getFacilities(includeInactive = false) {
 }
 
 export async function getFacility(id: string) {
+  await requirePerm("facilities:view");
   return prisma.facility.findFirstOrThrow({ where: { id } });
 }
 

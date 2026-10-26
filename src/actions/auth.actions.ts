@@ -11,6 +11,8 @@ import { headers } from "next/headers";
 import { notifyStaffAppointment } from "@/lib/notifications/sms";
 import { sendStaffAppointmentEmail } from "@/lib/notifications/email";
 import { permissionsToFullStored, resolveStaffPreset } from "@/lib/permissions";
+import { checkPerm } from "@/lib/auth/guards";
+import { permissionsBeyondActor } from "@/lib/permissions/staff-guard";
 import { Role } from "@prisma/client";
 
 function defaultRedirectForRole(role: "PATRON" | "SUPER_ADMIN" | "FACILITY_MANAGER" | "BOOKING_MANAGER" | "VICAR" | "STAFF") {
@@ -169,20 +171,15 @@ const CreateStaffSchema = z.object({
 });
 
 export async function createStaffUser(formData: FormData) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  // Anyone granted staff:manage can add staff (Facility Managers have it by
+  // default). Only Super Admin can create a Facility Manager or Super Admin.
+  const check = await checkPerm("staff:manage");
+  if ("error" in check) return { error: "You don't have permission to add staff." };
+  const { session } = check;
 
-  // Super admin can create all roles; FM can create any staff preset but not
-  // another Facility Manager or Super Admin.
-  const requestedRole = formData.get("role");
-  if (session.role === "FACILITY_MANAGER" && ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(String(requestedRole))) {
-    return { error: "Facility Managers cannot create another Facility Manager or Super Admin." };
-  }
-  if (session.role !== "SUPER_ADMIN" && requestedRole === "SUPER_ADMIN") {
-    return { error: "Only Super Admin can create another Super Admin." };
-  }
-  if (!["SUPER_ADMIN", "FACILITY_MANAGER"].includes(session.role)) {
-    return { error: "Unauthorized" };
+  const requestedRole = String(formData.get("role") ?? "");
+  if (session.role !== "SUPER_ADMIN" && ["FACILITY_MANAGER", "SUPER_ADMIN"].includes(requestedRole)) {
+    return { error: "Only Super Admin can create a Facility Manager or Super Admin." };
   }
 
   const parsed = CreateStaffSchema.safeParse({
@@ -201,6 +198,9 @@ export async function createStaffUser(formData: FormData) {
   // Facility Manager and Super Admin are real roles; every other preset is a
   // neutral STAFF member with the preset's permissions (editable anytime).
   const { role: dbRole, permissions: permSet } = resolveStaffPreset(parsed.data.role);
+  if (permissionsBeyondActor(session, permSet).length > 0) {
+    return { error: "You can only add staff with permissions you hold yourself. Pick a narrower preset, or ask a Super Admin." };
+  }
 
   const existingAccount = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existingAccount && existingAccount.role !== "PATRON") {

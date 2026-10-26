@@ -290,7 +290,10 @@ export async function lookupGuestCheckInBookings(data: z.infer<typeof GuestLooku
   // Strip all non-digit characters for a reliable partial match
   const digits = phone.replace(/\D/g, "");
   // Use the last 9 digits (local number without country code) for matching
-  const searchDigits = digits.length > 9 ? digits.slice(-9) : digits;
+  // Need a full local number: a short or empty fragment would match other
+  // people's bookings.
+  if (digits.length < 9) return { error: "Enter the full phone number you booked with." };
+  const searchDigits = digits.slice(-9);
 
   const phoneFilter = {
     OR: [
@@ -378,7 +381,8 @@ export async function requestGuestCheckIn(data: z.infer<typeof GuestCheckInReque
 
   // Verify the booking belongs to a patron with this phone
   const phoneDigits = phone.replace(/\D/g, "");
-  const searchDigits = phoneDigits.length > 9 ? phoneDigits.slice(-9) : phoneDigits;
+  if (phoneDigits.length < 9) return { error: "Enter the full phone number you booked with." };
+  const searchDigits = phoneDigits.slice(-9);
 
   const booking = await prisma.booking.findFirst({
     where: {
