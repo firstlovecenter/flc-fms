@@ -65,7 +65,7 @@ export default function ToggleMaintenanceButton({
           onClick={() => setShowModal(true)}
           disabled={loading}
           title="Set maintenance period"
-          className="p-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-50 bg-[var(--cream)] text-[var(--muted)] border-[var(--border)] hover:bg-[var(--cream)] flex items-center gap-1.5"
+          className="p-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-50 bg-[var(--cream)] text-[var(--muted)] border-[var(--border)] hover:bg-muted/60 flex items-center gap-1.5"
         >
           <Wrench size={14} />
           <span className="text-xs">Maintenance</span>
@@ -73,12 +73,12 @@ export default function ToggleMaintenanceButton({
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/40 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[1.5rem] bg-card p-6 shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]">
             <button
               onClick={() => setShowModal(false)}
               aria-label="Close"
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              className="absolute top-4 right-4 text-[var(--muted)] hover:text-[var(--muted)]"
             >
               <X size={18} />
             </button>
@@ -88,14 +88,14 @@ export default function ToggleMaintenanceButton({
                 <Wrench size={18} className="text-maintenance" />
               </div>
               <div>
-                <h2 className="font-bold text-[var(--navy)] text-lg leading-tight">Set Maintenance Period</h2>
-                <p className="text-xs text-slate-500">Facility will be hidden from bookings during this period</p>
+                <h2 className="font-medium text-[var(--navy)] text-lg leading-tight">Set Maintenance Period</h2>
+                <p className="text-xs text-[var(--muted)]">Facility will be hidden from bookings during this period</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
+                <label className="block text-sm font-medium text-[var(--navy)] mb-1 flex items-center gap-1.5">
                   <Calendar size={13} /> Start Date *
                 </label>
                 <Input
@@ -107,8 +107,8 @@ export default function ToggleMaintenanceButton({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Calendar size={13} /> End Date <span className="text-slate-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-[var(--navy)] mb-1 flex items-center gap-1.5">
+                  <Calendar size={13} /> End Date <span className="text-[var(--muted)] font-normal">(optional)</span>
                 </label>
                 <Input
                   type="date"
@@ -117,7 +117,7 @@ export default function ToggleMaintenanceButton({
                   onChange={e => setEndDate(e.target.value)}
                   className="w-full"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Leave blank for indefinite maintenance</p>
+                <p className="text-[11px] text-[var(--muted)] mt-1">Leave blank for indefinite maintenance</p>
               </div>
             </div>
 

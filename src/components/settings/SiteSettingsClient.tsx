@@ -32,16 +32,16 @@ export default function SiteSettingsClient({
   }
 
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="space-y-6 rounded-[1.25rem] p-5 sm:p-6">
       <div>
-        <h2 className="text-base font-semibold text-[var(--navy)] mb-1">Office Contact Information</h2>
+        <h2 className="mb-1 text-base font-medium tracking-tight text-[var(--navy)]">Office contact</h2>
         <p className="text-sm text-[var(--muted)]">
           Displayed on public-facing pages so visitors can reach the office.
         </p>
       </div>
 
       {message && (
-        <div className={`p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+        <div role={message.type === "error" ? "alert" : "status"} className={`p-3 rounded-xl text-sm ${message.type === "success" ? "bg-success/10 text-success border border-success/30" : "bg-danger/10 text-danger border border-danger/30"}`}>
           {message.text}
         </div>
       )}
@@ -49,7 +49,7 @@ export default function SiteSettingsClient({
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <Label htmlFor="site-office-phone">
-            <span className="flex items-center gap-1.5"><Phone size={14} /> Office Phone Number</span>
+            <span className="flex items-center gap-1.5"><Phone size={14} /> Office phone</span>
           </Label>
           <Input
             id="site-office-phone"
@@ -64,7 +64,7 @@ export default function SiteSettingsClient({
 
         <div>
           <Label htmlFor="site-office-email">
-            <span className="flex items-center gap-1.5"><Mail size={14} /> Office Email Address</span>
+            <span className="flex items-center gap-1.5"><Mail size={14} /> Office email</span>
           </Label>
           <Input
             id="site-office-email"
@@ -79,7 +79,7 @@ export default function SiteSettingsClient({
 
         {canEdit && (
           <Button type="submit" disabled={saving} className="gap-2">
-            <Save size={16} /> {saving ? "Saving…" : "Save Settings"}
+            <Save size={16} /> {saving ? "Saving…" : "Save settings"}
           </Button>
         )}
       </form>

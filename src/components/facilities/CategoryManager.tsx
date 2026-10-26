@@ -10,7 +10,8 @@ import {
 } from "@/actions/category.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 interface Category {
   id: string;
@@ -115,14 +116,14 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                 <button onClick={handleSave} disabled={isPending} aria-label="Save" className="p-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20">
                   <Check size={14} />
                 </button>
-                <button onClick={cancel} aria-label="Cancel" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+                <button onClick={cancel} aria-label="Cancel" className="p-1.5 rounded-lg hover:bg-muted text-[var(--muted)]">
                   <X size={14} />
                 </button>
               </div>
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${cat.isActive ? "text-[var(--navy)]" : "text-gray-400 line-through"}`}>
+                  <span className={`text-sm font-medium ${cat.isActive ? "text-[var(--navy)]" : "text-[var(--muted)] line-through"}`}>
                     {cat.name}
                   </span>
                   <span className="text-xs text-[var(--muted)]">{cat.slug}</span>
@@ -134,7 +135,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                     className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                       cat.isActive
                         ? "bg-success/10 text-success border-success/25 hover:bg-success/20"
-                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                        : "bg-muted text-[var(--muted)] border-border hover:bg-muted"
                     }`}
                   >
                     {cat.isActive ? "Active" : "Inactive"}
@@ -142,7 +143,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
                   <button
                     onClick={() => startEdit(cat)}
                     aria-label="Edit category"
-                    className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)]"
+                    className="p-1.5 rounded-lg hover:bg-muted/60 text-[var(--muted)] hover:text-[var(--navy)]"
                   >
                     <Pencil size={13} />
                   </button>

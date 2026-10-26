@@ -56,21 +56,21 @@ export default function SavingsWithdrawalForm({ savingsBalance, accounts }: Prop
       {/* Balance info banner */}
       <div className={`rounded-lg px-4 py-3 text-sm flex items-center justify-between border ${
         savingsBalance <= 0
-          ? "bg-red-50 border-red-200 text-red-700"
-          : "bg-blue-50 border-blue-200 text-blue-800"
+          ? "bg-danger/10 border-danger/30 text-danger"
+          : "bg-info/10 border-info/30 text-info"
       }`}>
         <span>Current savings balance</span>
         <span className="font-bold tabular-nums">GH₵{savingsBalance.toFixed(2)}</span>
       </div>
 
       {savingsBalance <= 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-700 text-sm">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-warning text-sm">
           There are no funds in savings to transfer out.
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div>
@@ -79,7 +79,7 @@ export default function SavingsWithdrawalForm({ savingsBalance, accounts }: Prop
           <option value="" disabled>Select an account…</option>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
-        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
+        {errors.accountId && <p className="text-danger text-xs mt-1">{errors.accountId.message}</p>}
       </div>
 
       <div>
@@ -93,7 +93,7 @@ export default function SavingsWithdrawalForm({ savingsBalance, accounts }: Prop
           placeholder="0.00"
           disabled={isLocked}
         />
-        {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+        {errors.amount && <p className="text-danger text-xs mt-1">{errors.amount.message}</p>}
       </div>
 
       <div>
@@ -105,7 +105,7 @@ export default function SavingsWithdrawalForm({ savingsBalance, accounts }: Prop
           placeholder="Reason for transferring out of savings…"
           disabled={isLocked}
         />
-        {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
+        {errors.narration && <p className="text-danger text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">

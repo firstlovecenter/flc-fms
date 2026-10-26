@@ -95,7 +95,7 @@ export default function BookingActions({ bookingId }: { bookingId: string }) {
             type="checkbox"
             checked={waiveBilling}
             onChange={(e) => setWaiveBilling(e.target.checked)}
-            className="rounded border-gray-300"
+            className="rounded border-border"
           />
           Waive billing
         </label>

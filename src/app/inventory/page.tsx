@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, Tag, ArrowRightLeft, Wrench, AlertTriangle, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { Package, Tag, ArrowRightLeft, Wrench, AlertTriangle, CheckCircle, Clock, Plus } from "lucide-react";
 import { requirePerm } from "@/lib/auth/guards";
 import { getInventorySummary, getInventoryItems, getActiveCheckouts, getInventoryMaintenanceLogs } from "@/actions/inventory.actions";
 import { cn } from "@/lib/utils";
@@ -26,47 +26,46 @@ export default async function InventoryPage() {
   ]);
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
+    <div className="space-y-5 animate-fade-in">
 
       {/* Header */}
       <PageHeader
-        variant="hero"
-        eyebrow="Campus Management"
         title="Inventory"
-        description={<>{summary.totalItems} item{summary.totalItems !== 1 ? "s" : ""} tracked &bull; Est. value {formatCurrency(summary.totalEstimatedValue)}</>}
-        className="relative z-10"
+        description="Equipment and supplies on campus: where they are, who has them, and what needs repair."
+        meta={<>{summary.totalItems} item{summary.totalItems !== 1 ? "s" : ""} tracked · est. value {formatCurrency(summary.totalEstimatedValue)}</>}
+        className="mb-0"
         actions={
           canManage ? (
             <>
-              <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "gold" }), "gap-2")}>+ Add Item</Link>
-              <Link href="/inventory/categories" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>Categories</Link>
+              <Link href="/inventory/categories" className={cn(buttonVariants({ variant: "outline" }), "gap-2")}><Tag size={15} /> Categories</Link>
+              <Link href="/inventory/items/new" className={cn(buttonVariants({ variant: "default" }), "gap-2")}><Plus size={15} /> Add item</Link>
             </>
           ) : undefined
         }
       />
 
       {/* Summary tiles */}
-      <div className="grid gap-4 relative z-10 stagger-children" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
-        <StatCard label="Total Items"       value={summary.totalItems}            color="inventory"   icon={<Package size={16} />} />
-        <StatCard label="Available"         value={summary.availableItems}        color="success"     icon={<CheckCircle size={16} />} />
-        <StatCard label="Checked Out"       value={summary.checkedOutItems}       color="warning"     icon={<ArrowRightLeft size={16} />} />
-        <StatCard label="Under Maintenance" value={summary.underMaintenanceItems} color="inventory"   icon={<Wrench size={16} />} />
-        <StatCard label="Overdue Returns"   value={summary.overdueCheckouts}      color="danger"      icon={<AlertTriangle size={16} />} />
-        <StatCard label="Open Maintenance"  value={summary.openMaintenanceLogs}   color="maintenance" icon={<Clock size={16} />} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Items"             value={summary.totalItems}            color="inventory"   icon={<Package size={16} />} href="/inventory/items" sub="Tracked on campus" />
+        <StatCard label="Available"         value={summary.availableItems}        color="success"     icon={<CheckCircle size={16} />} href="/inventory/items" sub="Ready to check out" />
+        <StatCard label="Checked out"       value={summary.checkedOutItems}       color="warning"     icon={<ArrowRightLeft size={16} />} href="/inventory/checkouts" sub="With staff now" />
+        <StatCard label="Overdue returns"   value={summary.overdueCheckouts}      color="danger"      icon={<AlertTriangle size={16} />} href="/inventory/checkouts" sub="Past their due date" trend={summary.overdueCheckouts > 0 ? "down" : undefined} />
+        <StatCard label="In maintenance"    value={summary.underMaintenanceItems} color="maintenance" icon={<Wrench size={16} />} href="/inventory/maintenance" sub="Out of service" />
+        <StatCard label="Open repairs"      value={summary.openMaintenanceLogs}   color="maintenance" icon={<Clock size={16} />} href="/inventory/maintenance" sub="Logs not closed" />
       </div>
 
-      <div className="grid gap-5 relative z-10" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         {/* Quick nav */}
         <Card className="p-5 px-6">
-          <h2 className="text-base font-bold text-[var(--navy)] mb-4">Quick Access</h2>
+          <h2 className="text-base font-medium text-[var(--navy)] mb-4">Quick access</h2>
           <div className="flex flex-col gap-2.5">
             {[
-              { href: "/inventory/items",       icon: Package,        label: "All Items",              sub: `${summary.totalItems} tracked` },
-              { href: "/inventory/checkouts",   icon: ArrowRightLeft, label: "Active Checkouts",       sub: `${summary.checkedOutItems} out` },
-              { href: "/inventory/maintenance", icon: Wrench,         label: "Maintenance Logs",       sub: `${summary.openMaintenanceLogs} open` },
+              { href: "/inventory/items",       icon: Package,        label: "All items",              sub: `${summary.totalItems} tracked` },
+              { href: "/inventory/checkouts",   icon: ArrowRightLeft, label: "Active checkouts",       sub: `${summary.checkedOutItems} out` },
+              { href: "/inventory/maintenance", icon: Wrench,         label: "Maintenance logs",       sub: `${summary.openMaintenanceLogs} open` },
               { href: "/inventory/categories",  icon: Tag,            label: "Categories",             sub: "Manage types" },
             ].map(({ href, icon: Icon, label, sub }) => (
-              <Link key={href} href={href} className="flex items-center gap-3 p-2.5 px-3 rounded-lg border border-[var(--border)] hover:bg-[var(--cream)] transition-colors">
+              <Link key={href} href={href} className="flex items-center gap-3 p-2.5 px-3 rounded-2xl border border-border/70 hover:bg-muted/60 transition-colors">
                 <Icon size={18} className="text-[var(--navy)] shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-[var(--navy)]">{label}</p>
@@ -80,7 +79,7 @@ export default async function InventoryPage() {
         {/* Active checkouts */}
         <Card className="overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
-            <h2 className="text-base font-bold text-[var(--navy)]">Active Checkouts</h2>
+            <h2 className="text-base font-medium text-[var(--navy)]">Active checkouts</h2>
             <Link href="/inventory/checkouts" className="text-[0.78rem] text-[var(--gold)] font-semibold hover:underline">View all →</Link>
           </div>
           {checkouts.length === 0 ? (
@@ -88,10 +87,10 @@ export default async function InventoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+                <thead className="bg-muted/60">
                   <tr>
-                    {["Item", "Checked Out By", "Due Back"].map((h) => (
-                      <th key={h} className="py-2.5 px-4 text-left text-[0.72rem] font-bold uppercase tracking-[0.4px] text-[var(--navy)] whitespace-nowrap">{h}</th>
+                    {["Item", "Checked out by", "Due back"].map((h) => (
+                      <th key={h} className="py-2.5 px-4 text-left text-xs tracking-[0.4px] text-[var(--muted)] whitespace-nowrap font-medium">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -99,7 +98,7 @@ export default async function InventoryPage() {
                   {checkouts.slice(0, 5).map((co) => {
                     const isOverdue = co.dueBack && new Date(co.dueBack) < new Date();
                     return (
-                      <tr key={co.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                      <tr key={co.id} className="border-t border-border/60 hover:bg-muted/40">
                         <td className="py-2.5 px-4">
                           <p className="font-semibold text-[var(--navy)] text-[0.85rem]">{co.item.name}</p>
                           {co.item.assetTag && <p className="text-[0.72rem] text-[var(--muted)]">#{co.item.assetTag}</p>}
@@ -125,23 +124,23 @@ export default async function InventoryPage() {
       </div>
 
       {/* Recent items */}
-      <Card className="overflow-hidden relative z-10">
+      <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
-          <h2 className="text-base font-bold text-[var(--navy)]">Recent Items</h2>
+          <h2 className="text-base font-medium text-[var(--navy)]">Recent items</h2>
           <Link href="/inventory/items" className="text-[0.78rem] text-[var(--gold)] font-semibold hover:underline">View all →</Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+            <thead className="bg-muted/60">
               <tr>
                 {["Item", "Category", "Location", "Qty", "Condition", "Status"].map((h) => (
-                  <th key={h} className="py-2.5 px-4 text-left text-[0.72rem] font-bold uppercase tracking-[0.4px] text-[var(--navy)] whitespace-nowrap">{h}</th>
+                  <th key={h} className="py-2.5 px-4 text-left text-xs tracking-[0.4px] text-[var(--muted)] whitespace-nowrap font-medium">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {items.slice(0, 8).map((item) => (
-                <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                <tr key={item.id} className="border-t border-border/60 hover:bg-muted/40">
                   <td className="py-2.5 px-4">
                     <Link href={`/inventory/items/${item.id}`} className="no-underline">
                       <p className="font-semibold text-[var(--navy)] text-[0.875rem]">{item.name}</p>

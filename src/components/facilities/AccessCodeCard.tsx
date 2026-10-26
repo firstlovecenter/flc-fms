@@ -92,14 +92,14 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
                 disabled={isPending}
                 className="sr-only peer"
               />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-[var(--gold)]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]" />
+              <div className="w-9 h-5 bg-muted peer-focus:ring-2 peer-focus:ring-[var(--gold)]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]" />
             </label>
           )}
           {enabled && !editing && (
             <button
               type="button"
               onClick={() => setRevealed(!revealed)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-[var(--muted)] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-muted text-[var(--muted)] transition-colors"
               title={revealed ? "Hide code" : "Show code"}
             >
               {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -109,7 +109,7 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
             <button
               type="button"
               onClick={() => { setEditing(true); setNewCode(accessCode ?? ""); setError(null); }}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-[var(--muted)] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-muted text-[var(--muted)] transition-colors"
               title="Edit access code"
             >
               <Pencil size={14} />
@@ -153,7 +153,7 @@ export default function AccessCodeCard({ facilityId, hasAccessCode, accessCode, 
               // If we were enabling a new code and cancelled, revert
               if (!hasAccessCode && !accessCode) setEnabled(false);
             }}
-            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg bg-muted text-[var(--muted)] hover:bg-muted transition-colors"
             title="Cancel"
           >
             <X size={16} />

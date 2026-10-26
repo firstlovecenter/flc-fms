@@ -73,26 +73,26 @@ export default function PatronsTab({ data, downloadUrl }: Props) {
         <h3 className="font-semibold text-[var(--navy)] mb-4">Verification Status</h3>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <div className="w-3 h-3 rounded-full bg-success" />
             <span className="text-sm text-[var(--slate)]">Verified</span>
-            <span className="font-bold text-[var(--navy)]">{data.verified}</span>
+            <span className="font-medium text-[var(--navy)]">{data.verified}</span>
             <span className="text-xs text-[var(--muted)]">
               ({data.total > 0 ? Math.round((data.verified / data.total) * 100) : 0}%)
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <div className="w-3 h-3 rounded-full bg-warning" />
             <span className="text-sm text-[var(--slate)]">Unverified</span>
-            <span className="font-bold text-[var(--navy)]">{data.unverified}</span>
+            <span className="font-medium text-[var(--navy)]">{data.unverified}</span>
             <span className="text-xs text-[var(--muted)]">
               ({data.total > 0 ? Math.round((data.unverified / data.total) * 100) : 0}%)
             </span>
           </div>
         </div>
         {/* Simple progress bar */}
-        <div className="mt-3 h-3 bg-yellow-200 rounded-full overflow-hidden">
+        <div className="mt-3 h-3 bg-warning/25 rounded-full overflow-hidden">
           <div
-            className="h-full bg-green-500 rounded-full"
+            className="h-full bg-success rounded-full"
             style={{ width: `${data.total > 0 ? (data.verified / data.total) * 100 : 0}%` }}
           />
         </div>

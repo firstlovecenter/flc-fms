@@ -9,7 +9,7 @@ export default async function BookingContentPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--navy)]">Booking Content Manager</h1>
+        <h1 className="text-2xl font-medium text-[var(--navy)]">Booking Content Manager</h1>
         <p className="text-sm text-[var(--muted)]">
           Edit Booking FAQs, venue booking terms, and item/package booking terms in Sanity.
         </p>

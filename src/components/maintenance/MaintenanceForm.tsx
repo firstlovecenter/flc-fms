@@ -115,7 +115,7 @@ export default function MaintenanceForm({
       </div>
 
       {/* Scheduling toggle */}
-      <div className="rounded-lg border border-[var(--border)] overflow-hidden">
+      <div className="rounded-2xl border border-border/70 overflow-hidden">
         <button
           type="button"
           onClick={() => setHasSchedule((v) => !v)}

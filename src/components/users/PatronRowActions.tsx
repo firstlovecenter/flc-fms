@@ -61,27 +61,27 @@ export default function PatronRowActions({ patron }: Props) {
 
   if (resetSent) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800 max-w-56">
+      <div className="bg-success/10 border border-success/30 rounded-lg px-3 py-2 text-xs text-success max-w-56">
         New temporary password sent.
-        <button onClick={() => setResetSent(false)} className="text-green-700 hover:text-green-900 ml-2 font-semibold">Dismiss</button>
+        <button onClick={() => setResetSent(false)} className="text-success hover:text-success ml-2 font-semibold">Dismiss</button>
       </div>
     );
   }
 
   if (deleteError) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 max-w-56">
+      <div className="bg-danger/10 border border-danger/30 rounded-lg px-3 py-2 text-xs text-danger max-w-56">
         {deleteError}
-        <button onClick={() => setDeleteError(null)} className="text-red-600 hover:text-red-800 ml-2 font-semibold">Dismiss</button>
+        <button onClick={() => setDeleteError(null)} className="text-danger hover:text-danger ml-2 font-semibold">Dismiss</button>
       </div>
     );
   }
 
   if (impersonateError) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 max-w-56">
+      <div className="bg-danger/10 border border-danger/30 rounded-lg px-3 py-2 text-xs text-danger max-w-56">
         {impersonateError}
-        <button onClick={() => setImpersonateError(null)} className="text-red-600 hover:text-red-800 ml-2 font-semibold">Dismiss</button>
+        <button onClick={() => setImpersonateError(null)} className="text-danger hover:text-danger ml-2 font-semibold">Dismiss</button>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function PatronRowActions({ patron }: Props) {
     <div className="relative">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--slate)]"
+        className="p-1.5 rounded-lg hover:bg-muted/60 text-[var(--muted)] hover:text-[var(--slate)]"
       >
         <MoreHorizontal size={16} />
       </button>
@@ -102,21 +102,21 @@ export default function PatronRowActions({ patron }: Props) {
             <button
               onClick={handleImpersonate}
               disabled={loading === "impersonate"}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-purple-50 text-purple-700 disabled:opacity-50"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-inventory/10 text-inventory disabled:opacity-50"
             >
               <UserCog size={14} /> {loading === "impersonate" ? "Starting…" : "Impersonate"}
             </button>
             <div className="border-t border-[var(--border)] my-1" />
             <button
               onClick={() => { setOpen(false); setEditOpen(true); }}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)]"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted/60 text-[var(--slate)]"
             >
               <Pencil size={14} /> Edit Details
             </button>
             <button
               onClick={handleResetPassword}
               disabled={!!loading}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[var(--cream)] text-[var(--slate)] disabled:opacity-50"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted/60 text-[var(--slate)] disabled:opacity-50"
             >
               <KeyRound size={14} /> {loading === "reset" ? "Sending…" : "Reset Password"}
             </button>
@@ -124,7 +124,7 @@ export default function PatronRowActions({ patron }: Props) {
             <button
               onClick={handleDelete}
               disabled={!!loading}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 disabled:opacity-50"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-danger/10 text-danger disabled:opacity-50"
             >
               <Trash2 size={14} /> {loading === "delete" ? "Deleting…" : "Delete"}
             </button>

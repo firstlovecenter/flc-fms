@@ -94,7 +94,7 @@ export default function StatCard({
           <span
             aria-hidden
             className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-full [&_svg]:size-3.5",
+              "flex size-6 shrink-0 items-center justify-center rounded-full sm:size-7 [&_svg]:size-3 sm:[&_svg]:size-3.5",
               hero ? "bg-[rgb(255_255_255/0.2)] text-[#fff]" : cn("border border-border/80", iconTone)
             )}
           >
@@ -111,8 +111,8 @@ export default function StatCard({
           className={cn(
             "font-display font-medium leading-none tracking-tight tabular-nums break-words",
             compact
-              ? "mt-2.5 text-[clamp(1.05rem,11cqi,1.35rem)]"
-              : "mt-3 text-[clamp(1.15rem,12cqi,1.5rem)] sm:mt-4 sm:text-[clamp(1.25rem,10cqi,1.75rem)]",
+              ? "mt-2 text-[clamp(1rem,11cqi,1.25rem)] sm:mt-2.5 sm:text-[clamp(1.05rem,11cqi,1.35rem)]"
+              : "mt-2 text-[clamp(1.05rem,11cqi,1.3rem)] sm:mt-4 sm:text-[clamp(1.25rem,10cqi,1.75rem)]",
             hero ? "text-[#fff]" : "text-[var(--navy)] dark:text-[rgba(232,238,248,0.95)]"
           )}
         >
@@ -122,7 +122,8 @@ export default function StatCard({
       {sub && !loading && (
         <p
           className={cn(
-            "mt-2.5 flex items-center gap-1.5 truncate text-xs sm:mt-3",
+            // Phones keep tiles short: the label and figure carry them.
+            "mt-3 hidden items-center gap-1.5 truncate text-xs sm:flex",
             hero ? "text-[rgb(255_255_255/0.9)]" : "text-muted-foreground"
           )}
         >
@@ -135,7 +136,7 @@ export default function StatCard({
 
   const cls = cn(
     "group relative flex flex-col overflow-hidden rounded-[1.25rem] outline-none [container-type:inline-size] transition-[transform,box-shadow] duration-200 focus-visible:ring-2 focus-visible:ring-ring",
-    compact ? "min-h-[6.5rem] p-3" : "min-h-[7.5rem] p-3.5 sm:min-h-[8.5rem] sm:p-4",
+    compact ? "min-h-[4.75rem] p-3 sm:min-h-[6.5rem]" : "min-h-[5.25rem] p-3 sm:min-h-[8.5rem] sm:p-4",
     hero
       ? "bg-gradient-to-br from-[hsl(var(--hero-from,var(--gold-hsl)))] to-[hsl(var(--hero-to,var(--gold-muted-hsl)))] shadow-[0_14px_30px_-14px_hsl(var(--hero-to,var(--gold-muted-hsl))/0.65)]"
       : "border border-border/70 bg-card shadow-[var(--shadow-xs)]",

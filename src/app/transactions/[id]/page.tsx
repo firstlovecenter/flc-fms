@@ -74,7 +74,7 @@ export default async function ExpenseDetailPage(props: { params: Promise<{ id: s
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
             <DollarSign size={13} /> Amount
           </div>
-          <p className="text-3xl font-bold text-[var(--navy)] tabular-nums">{formatCurrency(Number(expense.amount))}</p>
+          <p className="text-3xl font-medium text-[var(--navy)] tabular-nums">{formatCurrency(Number(expense.amount))}</p>
           <p className="text-sm page-subtitle">{expense.category}</p>
         </Card>
 
@@ -82,7 +82,7 @@ export default async function ExpenseDetailPage(props: { params: Promise<{ id: s
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-1">
             <User size={13} /> Submitted By
           </div>
-          <p className="text-sm font-semibold text-gray-800">{expense.createdBy.name}</p>
+          <p className="text-sm font-semibold text-[var(--navy)]">{expense.createdBy.name}</p>
           <p className="text-xs text-[var(--muted)]">{expense.createdBy.email}</p>
         </Card>
 
@@ -90,7 +90,7 @@ export default async function ExpenseDetailPage(props: { params: Promise<{ id: s
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-1">
             <Clock size={13} /> Submitted
           </div>
-          <p className="text-sm font-semibold text-gray-800">{formatDateTime(expense.createdAt)}</p>
+          <p className="text-sm font-semibold text-[var(--navy)]">{formatDateTime(expense.createdAt)}</p>
           {expense.approvedBy && (
             <p className="text-xs text-[var(--muted)] mt-1">Approved by {expense.approvedBy.name}</p>
           )}
@@ -105,7 +105,7 @@ export default async function ExpenseDetailPage(props: { params: Promise<{ id: s
           <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-medium mb-2">
             <FileText size={13} /> Description
           </div>
-          <p className="text-gray-800 whitespace-pre-wrap text-sm">{expense.narration}</p>
+          <p className="text-[var(--navy)] whitespace-pre-wrap text-sm">{expense.narration}</p>
         </Card>
       )}
 

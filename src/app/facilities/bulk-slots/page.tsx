@@ -48,7 +48,7 @@ export default async function BulkSlotsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Link href="/facilities" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
+        <Link href="/facilities" className="p-2 rounded-lg hover:bg-muted text-[var(--muted)]">
           <ArrowLeft size={20} />
         </Link>
         <div>

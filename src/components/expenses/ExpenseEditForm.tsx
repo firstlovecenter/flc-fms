@@ -13,7 +13,8 @@ import { Input, inputStyles } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   title: z.string().min(2, "Title is required"),
@@ -123,13 +124,13 @@ export default function ExpenseEditForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+        <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
       )}
 
       <div>
         <Label htmlFor="expense-edit-title">Title *</Label>
         <Input id="expense-edit-title" {...register("title")} disabled={receiptOnly} />
-        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+        {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
@@ -142,14 +143,14 @@ export default function ExpenseEditForm({
           rows={4}
           disabled={receiptOnly}
         />
-        {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
+        {errors.narration && <p className="text-danger text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="expense-edit-amount">Amount (GH₵) *</Label>
           <Input id="expense-edit-amount" {...register("amount")} type="text" inputMode="decimal" disabled={receiptOnly} />
-          {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+          {errors.amount && <p className="text-danger text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
           <Label htmlFor="expense-edit-category">Category *</Label>
@@ -157,14 +158,14 @@ export default function ExpenseEditForm({
             <option value="">Select…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+          {errors.category && <p className="text-danger text-xs mt-1">{errors.category.message}</p>}
         </div>
       </div>
 
       <div>
         <Label htmlFor="expense-edit-spent-at">Date Spent *</Label>
         <Input id="expense-edit-spent-at" {...register("spentAt")} type="date" max={today} disabled={receiptOnly} />
-        {errors.spentAt && <p className="text-red-500 text-xs mt-1">{errors.spentAt.message}</p>}
+        {errors.spentAt && <p className="text-danger text-xs mt-1">{errors.spentAt.message}</p>}
       </div>
 
       <div>
@@ -196,7 +197,7 @@ export default function ExpenseEditForm({
                 <button
                   type="button"
                   onClick={() => setReceiptUrl("")}
-                  className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs text-danger hover:underline"
                 >
                   <X size={12} /> Remove
                 </button>
@@ -204,7 +205,7 @@ export default function ExpenseEditForm({
             </>
           )}
         </div>
-        {receiptError && <p className="text-red-500 text-xs mt-1">{receiptError}</p>}
+        {receiptError && <p className="text-danger text-xs mt-1">{receiptError}</p>}
         <p className="text-xs text-[var(--muted)] mt-1">Accepted formats: JPG, PNG, WEBP, PDF.</p>
       </div>
 

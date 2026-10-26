@@ -62,7 +62,7 @@ export default function BookingsTab({ data, downloadUrl }: Props) {
             {data.statusBreakdown.map((b) => (
               <div key={b.status} className="flex items-center gap-3">
                 <StatusBadge status={b.status} size="xs" className="w-24 justify-center" />
-                <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{

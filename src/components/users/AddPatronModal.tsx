@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModalBehavior } from "@/hooks/use-modal-behavior";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { UserPlus, X } from "lucide-react";
@@ -35,6 +36,8 @@ export default function AddPatronModal() {
     router.refresh();
   }
 
+  useModalBehavior(open, handleClose);
+
   function handleClose() {
     setOpen(false);
     setCreated(false);
@@ -48,27 +51,27 @@ export default function AddPatronModal() {
       </Button>
 
       {open && mounted && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-[1.5rem] bg-card shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
               <h2 className="text-lg font-semibold text-[var(--navy)]">Add Patron</h2>
-              <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)]">
+              <button onClick={handleClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]">
                 <X size={18} />
               </button>
             </div>
 
             {created ? (
               <div className="p-6 space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                  <p className="text-green-700 font-semibold mb-1">Patron account created!</p>
-                  <p className="text-sm text-green-600">Login credentials have been sent via SMS and email.</p>
+                <div className="bg-success/10 border border-success/30 rounded-xl p-4 text-center">
+                  <p className="text-success font-semibold mb-1">Patron account created!</p>
+                  <p className="text-sm text-success">Login credentials have been sent via SMS and email.</p>
                 </div>
                 <Button onClick={handleClose} className="w-full">Done</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+                  <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
                 )}
                 <div>
                   <Label htmlFor="add-patron-name">Full Name *</Label>

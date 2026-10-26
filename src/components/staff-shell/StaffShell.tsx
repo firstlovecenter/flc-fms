@@ -7,6 +7,8 @@ import Topbar from "@/components/ui/Topbar";
 import CommandSearch from "@/components/ui/CommandSearch";
 import OfflineQueueBanner from "@/components/layout/OfflineQueueBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import BodyScope from "@/components/layout/BodyScope";
+import { useStackedTables } from "@/components/ui/useStackedTables";
 import type { PermissionSet } from "@/lib/permissions";
 
 interface ImpersonatedBy {
@@ -31,9 +33,13 @@ export default function StaffShell({
   permissions?: PermissionSet;
   impersonatedBy?: ImpersonatedBy;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggle = useCallback(() => setMenuOpen((o) => !o), []);
-  const close  = useCallback(() => setMenuOpen(false), []);
+  // Tables become labelled cards on phones (see "Phone tables" in globals.css).
+  useStackedTables(".staff-main");
+
+  // Phones and tablets navigate with the bottom bar's launcher sheet; the
+  // header's menu button opens the same sheet.
+  const [launcherOpen, setLauncherOpen] = useState(false);
+  const openLauncher = useCallback(() => setLauncherOpen(true), []);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const openSearch = useCallback(() => setSearchOpen(true), []);
@@ -51,13 +57,6 @@ export default function StaffShell({
     });
   }, []);
 
-  // Dialogs, sheets and menus portal to <body>, outside this wrapper; give
-  // <body> the staff theme too while the shell is mounted.
-  useEffect(() => {
-    document.body.classList.add("surface-cool");
-    return () => document.body.classList.remove("surface-cool");
-  }, []);
-
   // ⌘K / Ctrl+K opens search
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -72,7 +71,8 @@ export default function StaffShell({
 
   return (
     <div className="surface-cool flex h-[100dvh] overflow-hidden bg-background">
-      <StaffSidebar role={role} name={name} profilePicture={profilePicture} permissions={permissions} canUsePatronContext={canUsePatronContext} isOpen={menuOpen} onClose={close} collapsed={collapsed} onToggleCollapse={toggleCollapse} onSearch={openSearch} />
+      <BodyScope className="surface-cool" />
+      <StaffSidebar role={role} name={name} profilePicture={profilePicture} permissions={permissions} canUsePatronContext={canUsePatronContext} collapsed={collapsed} onToggleCollapse={toggleCollapse} onSearch={openSearch} />
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         {impersonatedBy && (
           <ImpersonationBanner
@@ -83,13 +83,21 @@ export default function StaffShell({
         )}
         <OfflineQueueBanner />
         <main className="staff-main flex-1 overflow-y-auto">
-          <Topbar name={name} role={role} profilePicture={profilePicture} onMenuToggle={toggle} onSearch={openSearch} />
+          <Topbar name={name} role={role} profilePicture={profilePicture} permissions={permissions} onMenuToggle={openLauncher} onSearch={openSearch} />
           <div className="staff-content mx-auto w-full max-w-screen-2xl">
             {children}
           </div>
         </main>
       </div>
-      <MobileBottomNav onMenuToggle={toggle} />
+      <MobileBottomNav
+        role={role}
+        name={name}
+        permissions={permissions}
+        canUsePatronContext={canUsePatronContext}
+        launcherOpen={launcherOpen}
+        onLauncherChange={setLauncherOpen}
+        onSearch={openSearch}
+      />
       {searchOpen && <CommandSearch onClose={closeSearch} role={role} permissions={permissions} />}
     </div>
   );

@@ -3,12 +3,11 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { loginAnyAccount } from "@/actions/auth.actions";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Home } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -23,7 +22,7 @@ function SubmitBtn() {
       disabled={pending}
       className="w-full min-h-[44px]"
     >
-      {pending ? "Signing in…" : <><span>Sign In</span> <ArrowRight size={15} /></>}
+      {pending ? "Signing in…" : <><span>Sign in</span> <ArrowRight size={15} /></>}
     </Button>
   );
 }
@@ -43,6 +42,7 @@ function LoginContent() {
   const [leftSplitImage, setLeftSplitImage] = useState(LEFT_SPLIT_IMAGE_PRIMARY);
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
   const [launchSplashExiting, setLaunchSplashExiting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [state, action] = useFormState(
     async (_: unknown, fd: FormData) => loginAnyAccount(fd),
@@ -52,7 +52,9 @@ function LoginContent() {
   useEffect(() => {
     if (state && "success" in state && state.success) {
       const fallback = ("redirectTo" in state && state.redirectTo) ? state.redirectTo : "/dashboard";
-      const safeFrom = from && from.startsWith("/") ? from : null;
+      // Same-site paths only: "//host" and "/\host" are read by browsers as
+      // another site, which would make this an open redirect.
+      const safeFrom = from && /^\/(?![\/\\])/.test(from) ? from : null;
       router.push(safeFrom ?? fallback);
     }
   }, [state, from, router]);
@@ -75,7 +77,7 @@ function LoginContent() {
   }, []);
 
   return (
-    <div className="min-h-dvh flex relative bg-[var(--cream)] dark:bg-transparent lg:bg-navy">
+    <div className="relative flex min-h-dvh bg-background lg:p-3">
       {showLaunchSplash && (
         <div
           className={cn(
@@ -90,133 +92,123 @@ function LoginContent() {
             onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(10,22,40,0.86)] to-[rgba(10,22,40,0.68)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(28,25,23,0.86)] to-[rgba(28,25,23,0.66)]" />
           <div className="relative z-10 flex flex-col items-center gap-2.5 px-6 text-center">
             <img src="/fl-logo-white.webp" alt="FLC FMS" className="w-[86px] h-[86px] object-contain" />
-            <p className="font-display text-heading-lg text-[#fff] m-0">FLC FMS</p>
-            <p className="text-eyebrow text-[#fff]/85 m-0">Preparing Sign-In</p>
-            <div className="w-[140px] h-0.5 mt-2 bg-white/20 rounded-full overflow-hidden">
+            <p className="text-2xl font-medium tracking-tight text-[#fff] m-0">FLC FMS</p>
+            <p className="text-sm text-[#fff]/80 m-0">Preparing sign-in</p>
+            <div className="w-[140px] h-0.5 mt-2 bg-[rgb(255_255_255/0.2)] rounded-full overflow-hidden">
               <div className="w-full h-full bg-[var(--gold)] origin-left animate-[splashBar_2800ms_linear_forwards]" />
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Desktop left panel ─────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-3/5 flex-[0_0_60%] items-center justify-center p-[60px] relative overflow-hidden">
-        {/* Background media */}
+      {/* ── Photo panel (desktop): floats on the canvas like the console sidebar ── */}
+      <div className="relative hidden flex-[0_0_55%] overflow-hidden rounded-[1.75rem] lg:flex lg:flex-col lg:justify-between lg:p-12">
         <img
           src={leftSplitImage}
           alt=""
           aria-hidden="true"
           onError={() => setLeftSplitImage(LEFT_SPLIT_IMAGE_FALLBACK)}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(6,15,30,0.84)] via-[rgba(8,20,40,0.68)] to-[rgba(17,33,59,0.6)]" />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(80% 60% at 14% 86%, rgba(224,186,112,0.14) 0%, transparent 70%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(75% 55% at 88% 14%, rgba(150,174,215,0.2) 0%, transparent 75%)" }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,8,16,0.38)] via-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(28,25,23,0.9)] via-[rgba(28,25,23,0.45)] to-[rgba(28,25,23,0.25)]" />
 
-        <div className="relative max-w-[440px]">
-          {/* Logo mark */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-11 h-11 rounded-xl bg-[rgba(200,163,90,0.15)] border border-[rgba(200,163,90,0.3)] flex items-center justify-center flex-shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <div>
-              <div className="text-[1.2rem] font-bold text-[#fff] leading-none" style={{ fontFamily: "var(--font-display)" }}>
-                First Love Center
-              </div>
-              <div className="text-[0.62rem] text-[rgba(255,255,255,0.3)] uppercase tracking-[0.07em] mt-1">
-                Facility Management
-              </div>
-            </div>
-          </div>
+        <div className="relative flex items-center gap-2.5">
+          <span className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--hero-from))] to-[hsl(var(--hero-to))] text-[#fff] shadow-[0_6px_16px_-6px_hsl(var(--hero-to)/0.6)]">
+            <Home size={18} aria-hidden />
+          </span>
+          <span className="leading-none">
+            <span className="block text-base font-semibold tracking-tight text-[#fff]">First Love Center</span>
+            <span className="mt-1 block text-xs font-medium text-[rgb(255_255_255/0.7)]">Facility management</span>
+          </span>
+        </div>
 
-          <h1 className="text-[2.8rem] font-bold text-[#fff] leading-[1.15] mb-5" style={{ fontFamily: "var(--font-display)" }}>
-            Welcome back<br /><em className="text-[var(--gold)] italic">to Revival Campus</em>
+        <div className="relative max-w-[460px]">
+          <h1 className="text-[2.75rem] font-medium leading-[1.1] tracking-tight text-[#fff]">
+            Welcome back to Revival Campus.
           </h1>
+          <p className="mt-4 text-base leading-relaxed text-[rgb(255_255_255/0.78)]">
+            Bookings, facilities, duty logs and finances for the campus, in one place.
+          </p>
         </div>
       </div>
 
-      {/* ── Form panel (full-width on mobile, fixed-width on desktop) ── */}
-      <div className="w-full lg:w-2/5 lg:shrink-0 min-h-dvh lg:min-h-0 bg-[var(--cream)] dark:bg-[rgba(8,15,28,0.96)] flex flex-col overflow-y-auto">
-        {/* Mobile-only header */}
-        <div className="flex lg:hidden items-center gap-3 px-6 py-5 border-b border-[var(--border)]">
-          <div className="w-9 h-9 rounded-[10px] bg-[var(--navy)] flex items-center justify-center flex-shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
-          <div>
-            <div className="text-[1rem] font-bold text-[var(--navy)] leading-none" style={{ fontFamily: "var(--font-display)" }}>
-              First Love Center
-            </div>
-            <div className="text-[0.6rem] text-[var(--text-muted)] uppercase tracking-[0.07em] mt-0.5">
-              Facility Management
-            </div>
-          </div>
-        </div>
-
-        {/* Form content */}
-        <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-10">
+      {/* ── Form ──────────────────────────────────────────────────────── */}
+      <div className="flex min-h-dvh w-full flex-col lg:min-h-0 lg:flex-1">
+        <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-10">
           <div className="w-full max-w-[380px]">
-            <div className="mb-8 text-center">
-              {/* Mobile-only welcome heading */}
-              <div className="lg:hidden mb-4">
-                <p className="text-[1.1rem] font-semibold text-[var(--navy)] leading-snug" style={{ fontFamily: "var(--font-display)" }}>
-                  Welcome back to{" "}
-                  <em className="text-[var(--gold)] italic">Revival Campus Facilities</em>
-                </p>
-              </div>
-              <h2 className="text-[1.9rem] font-bold text-[var(--navy)] mb-1.5" style={{ fontFamily: "var(--font-display)" }}>
-                Sign In
-              </h2>
-              <p className="text-[0.85rem] text-[var(--text-muted)]">Enter your credentials below.</p>
-            </div>
+            {/* Brand (phones and tablets; the photo panel carries it on desktop) */}
+            <Link href="/" className="mb-10 inline-flex items-center gap-2.5 no-underline lg:hidden">
+              <span className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--hero-from))] to-[hsl(var(--hero-to))] text-[#fff] shadow-[0_6px_16px_-6px_hsl(var(--hero-to)/0.6)]">
+                <Home size={18} aria-hidden />
+              </span>
+              <span className="leading-none">
+                <span className="block text-base font-semibold tracking-tight text-[var(--navy)]">First Love Center</span>
+                <span className="mt-1 block text-xs font-medium text-[var(--muted)]">Facility management</span>
+              </span>
+            </Link>
 
-            <form action={action} className="flex flex-col gap-[18px]">
+            <h2 className="text-[2rem] font-medium leading-tight tracking-tight text-[var(--navy)]">Sign in</h2>
+            <p className="mt-1.5 text-sm text-[var(--muted)]">Staff and patrons both sign in here.</p>
+
+            <form action={action} className="mt-8 flex flex-col gap-4">
               {state?.error && (
-                <div className="alert alert-error">{state.error as string}</div>
+                <div role="alert" className="alert alert-error">{state.error as string}</div>
               )}
 
               <div className="form-group">
                 <Label htmlFor="login-email">Email address</Label>
-                <Input id="login-email" name="email" type="email" required placeholder="you@organization.org" autoComplete="email" />
+                <Input id="login-email" name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
               </div>
 
               <div className="form-group">
-                <Label htmlFor="login-password">Password</Label>
-                <Input id="login-password" name="password" type="password" required placeholder="••••••••" autoComplete="current-password" />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Link href="/forgot-password" className="text-xs font-medium text-[var(--gold)] hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="mt-2">
                 <SubmitBtn />
-                <Link
-                  href="/patron/register"
-                  className={cn(buttonVariants({ variant: "outline" }), "w-full min-h-[44px] no-underline")}
-                >
-                  Create Account
-                </Link>
-              </div>
-
-              <div className="flex justify-center -mt-0.5">
-                <Link href="/forgot-password" className="link-gold text-[0.8rem]">
-                  Forgot password?
-                </Link>
               </div>
             </form>
 
-            <div className="flex justify-center mt-2.5">
-              <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
-                ← Back to Home
+            <p className="mt-6 text-center text-sm text-[var(--muted)]">
+              New here?{" "}
+              <Link href="/patron/register" className="font-medium text-[var(--gold)] hover:underline">
+                Create a patron account
               </Link>
-            </div>
+            </p>
           </div>
+        </div>
+
+        <div className="flex justify-center pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-[var(--muted)] hover:text-[var(--navy)]">
+            <ArrowLeft size={14} /> Back to the website
+          </Link>
         </div>
       </div>
     </div>

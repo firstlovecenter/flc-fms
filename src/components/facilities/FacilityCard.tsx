@@ -52,7 +52,7 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
       }}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+      <div className="relative aspect-[4/3] w-full bg-muted dark:bg-[var(--navy)] overflow-hidden">
         {f.images && f.images.length > 0 ? (
           <img
             src={f.images[0]}
@@ -60,7 +60,7 @@ export default function FacilityCard({ facility: f, canManage, index: idx, total
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+          <div className="w-full h-full flex flex-col items-center justify-center text-[var(--muted)]">
             <MapPin size={30} className="opacity-40 mb-2" />
             <span className="text-xs font-semibold uppercase tracking-widest opacity-60">No Image</span>
           </div>

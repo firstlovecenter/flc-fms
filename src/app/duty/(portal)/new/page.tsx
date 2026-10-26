@@ -47,7 +47,7 @@ export default async function CreateDutyPage() {
         <Link href="/duty" className="text-sm text-[var(--gold)] hover:underline">
           ← Duty logs
         </Link>
-        <h1 className="text-2xl font-bold text-[var(--navy)] mt-2">Create duty</h1>
+        <h1 className="text-2xl font-medium text-[var(--navy)] mt-2">Create duty</h1>
         <p className="text-[var(--muted)] text-sm mt-1">
           Assign a staff member to a duty form for a specific date.
         </p>

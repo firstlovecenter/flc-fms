@@ -51,7 +51,7 @@ export default function OfflineQueueBanner() {
     return (
       <div
         role="status"
-        className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-amber-900/10 border-b border-amber-900/20 text-amber-700 dark:text-amber-400"
+        className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-warning/90 border-b border-warning/60 text-warning dark:text-warning"
       >
         <WifiOff size={13} />
         <span>You&apos;re offline. Any expense requests will be saved and submitted automatically when you reconnect.</span>
@@ -67,8 +67,8 @@ export default function OfflineQueueBanner() {
       className={cn(
         "flex items-center gap-3 px-4 py-2 text-xs font-medium flex-wrap border-b",
         syncResult
-          ? "bg-emerald-50/80 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
-          : "bg-blue-50/80 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 text-[var(--navy)] dark:text-blue-300"
+          ? "bg-success/10 dark:bg-success/90 border-success/30 dark:border-success/60 text-success dark:text-success"
+          : "bg-info/10 dark:bg-info/90 border-info/30 dark:border-info/60 text-[var(--navy)] dark:text-info"
       )}
     >
       <UploadCloud size={13} />
@@ -83,7 +83,7 @@ export default function OfflineQueueBanner() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-md px-3 py-1 text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 text-[var(--navy)] dark:text-blue-300 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+            className="rounded-md px-3 py-1 text-xs font-semibold bg-info/15 dark:bg-info/90 border border-info/30 dark:border-info/60 text-[var(--navy)] dark:text-info disabled:cursor-not-allowed disabled:opacity-60 hover:bg-info/25 dark:hover:bg-info/90 transition-colors"
           >
             {syncing ? "Submitting…" : "Submit now"}
           </button>

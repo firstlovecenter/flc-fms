@@ -7,7 +7,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, inputStyles } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -310,7 +311,7 @@ function SlotCard({
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => setEditing(true)}
-          className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
+          className="p-1.5 rounded-lg hover:bg-muted/60 text-[var(--muted)] hover:text-[var(--navy)] transition-colors"
           title="Edit slot"
           aria-label="Edit slot"
         >
@@ -329,7 +330,7 @@ function SlotCard({
             </button>
             <button
               onClick={() => setConfirming(false)}
-              className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-muted/60 text-[var(--muted)] transition-colors"
               title="Cancel"
               aria-label="Cancel"
             >

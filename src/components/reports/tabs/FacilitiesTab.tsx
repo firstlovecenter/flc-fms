@@ -88,14 +88,14 @@ export default function FacilitiesTab({ data, downloadUrl }: Props) {
           </thead>
           <tbody>
             {data.map((f) => (
-              <tr key={f.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+              <tr key={f.id} className="border-t border-border/60 hover:bg-muted/40">
                 <td className="py-2 px-3 font-medium text-[var(--navy)]">{f.name}</td>
                 <td className="py-2 px-3 text-[var(--slate)]">{f.capacity}</td>
                 <td className="py-2 px-3 text-[var(--slate)]">{f.bookings}</td>
                 <td className="py-2 px-3 text-[var(--slate)]">{money(f.revenue)}</td>
                 <td className="py-2 px-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-100 rounded-full h-1.5 w-16 overflow-hidden">
+                    <div className="flex-1 bg-muted rounded-full h-1.5 w-16 overflow-hidden">
                       <div className="h-full bg-[var(--navy)] rounded-full" style={{ width: `${f.utilizationPct}%` }} />
                     </div>
                     <span className="text-xs text-[var(--muted)]">{f.utilizationPct}%</span>

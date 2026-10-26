@@ -11,7 +11,8 @@ import { Input, inputStyles } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+
+import { Card } from "@/components/ui/card";
 
 const schema = z.object({
   title: z.string().min(2, "Title is required"),
@@ -83,25 +84,25 @@ export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} ><Card className="p-6 space-y-5">
-      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
+      {error && <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>}
 
       <div>
         <Label htmlFor="income-edit-title">Title *</Label>
         <Input id="income-edit-title" {...register("title")} />
-        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+        {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
       </div>
 
       <div>
         <Label htmlFor="income-edit-narration">Narration *</Label>
         <Textarea id="income-edit-narration" {...register("narration")} rows={3} />
-        {errors.narration && <p className="text-red-500 text-xs mt-1">{errors.narration.message}</p>}
+        {errors.narration && <p className="text-danger text-xs mt-1">{errors.narration.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="income-edit-amount">Amount (GH₵) *</Label>
           <Input id="income-edit-amount" {...register("amount")} type="text" inputMode="decimal" />
-          {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+          {errors.amount && <p className="text-danger text-xs mt-1">{errors.amount.message}</p>}
         </div>
         <div>
           <Label htmlFor="income-edit-category">Category *</Label>
@@ -109,7 +110,7 @@ export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps
             <option value="">Select…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+          {errors.category && <p className="text-danger text-xs mt-1">{errors.category.message}</p>}
         </div>
       </div>
 
@@ -121,7 +122,7 @@ export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps
         <div>
           <Label htmlFor="income-edit-received-at">Date Received *</Label>
           <Input id="income-edit-received-at" {...register("receivedAt")} type="date" max={new Date().toISOString().split("T")[0]} />
-          {errors.receivedAt && <p className="text-red-500 text-xs mt-1">{errors.receivedAt.message}</p>}
+          {errors.receivedAt && <p className="text-danger text-xs mt-1">{errors.receivedAt.message}</p>}
         </div>
       </div>
 
@@ -131,7 +132,7 @@ export default function IncomeEditForm({ income, accounts }: IncomeEditFormProps
           <option value="" disabled>Select which account this income goes into…</option>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
-        {errors.accountId && <p className="text-red-500 text-xs mt-1">{errors.accountId.message}</p>}
+        {errors.accountId && <p className="text-danger text-xs mt-1">{errors.accountId.message}</p>}
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">

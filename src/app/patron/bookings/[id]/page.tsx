@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Clock, Building2, FileText } from "lucide-react";
+import { Clock, FileText, LogIn, Package, Wallet } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDateTime, durationHours } from "@/lib/utils";
@@ -8,6 +7,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { type CeremonyDetails } from "@/lib/ceremony-utils";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import CheckInRequestButton from "@/components/patron/CheckInRequestButton";
+import StatCard from "@/components/ui/StatCard";
+import PageHeader from "@/components/layout/PageHeader";
 
 import { Card } from "@/components/ui/card";
 
@@ -33,176 +34,170 @@ export default async function PatronBookingDetailPage(props: { params: Promise<{
 
   const cd = booking.ceremonyDetails as CeremonyDetails | null;
 
+  const canCheckIn = booking.status === "APPROVED" && !booking.checkInRequested && !booking.checkIn;
+  const canCancel = ["PENDING", "APPROVED"].includes(booking.status);
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/patron/bookings" className="p-2 rounded-lg hover:bg-gray-100 text-[var(--muted)]">
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="flex-1">
-          <h1 className="page-title">{booking.title}</h1>
-          {booking.description && <p className="page-subtitle mt-0.5">{booking.description}</p>}
-        </div>
-        <div className="flex gap-2">
-          <StatusBadge status={booking.status} size="sm" />
-        </div>
-      </div>
+    <div className="w-full space-y-5">
+      <PageHeader
+        back={{ href: "/patron/bookings", label: "My bookings" }}
+        title={
+          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+            {booking.title}
+            <StatusBadge status={booking.status} size="md" />
+          </span>
+        }
+        description={booking.description ?? undefined}
+        meta={`${booking.facility?.name ?? "No facility"} · ${formatDateTime(booking.startTime)}`}
+        className="mb-0"
+      />
 
       {booking.rejectionReason && (
-        <div className="bg-danger/10 border border-danger/25 rounded-lg p-4 text-danger text-sm">
-          <strong>Rejection reason:</strong> {booking.rejectionReason}
+        <div className="alert alert-error">
+          <span><strong className="font-medium">Not approved:</strong> {booking.rejectionReason}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Facility */}
-        {booking.facility && (
-          <Card className="p-5">
-            <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-              <Building2 size={13} /> Facility
-            </div>
-            <p className="font-semibold text-[var(--navy)]">{booking.facility.name}</p>
-            <p className="text-sm page-subtitle">Cap. {booking.facility.capacity.toLocaleString()}</p>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        {/* ── Main ───────────────────────────────────────────── */}
+        <div className="space-y-5">
+          <Card className="gap-0 p-5 sm:p-6">
+            <SectionTitle icon={<Clock size={14} />}>Schedule</SectionTitle>
+            <Facts
+              items={[
+                { label: "Starts", value: formatDateTime(booking.startTime) },
+                { label: "Ends", value: formatDateTime(booking.endTime) },
+                { label: "Duration", value: `${durationHours(booking.startTime, booking.endTime)} hours` },
+                booking.facility ? { label: "Facility", value: booking.facility.name } : null,
+                booking.facility ? { label: "Capacity", value: booking.facility.capacity.toLocaleString() } : null,
+                { label: "AC requested", value: booking.acRequested ? "Yes — cash donation at the Front Office" : "No" },
+              ]}
+            />
           </Card>
-        )}
 
-        {/* Time */}
-        <Card className="p-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <Clock size={13} /> Schedule
-          </div>
-          <p className="text-sm text-gray-800"><strong>From:</strong> {formatDateTime(booking.startTime)}</p>
-          <p className="text-sm text-gray-800 mt-1"><strong>To:</strong> {formatDateTime(booking.endTime)}</p>
-          <p className="text-xs text-[var(--muted)] mt-2">{durationHours(booking.startTime, booking.endTime)} hours</p>
-        </Card>
-      </div>
-
-      {/* Line items */}
-      {booking.lineItems.length > 0 && (
-        <Card className="p-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-3">
-            <FileText size={13} /> Items
-          </div>
-          <div className="space-y-2">
-            {booking.lineItems.map(li => (
-              <div key={li.id} className="flex items-center justify-between text-sm">
-                <span className="text-[var(--navy)]">
-                  {li.item?.name ?? li.bundle?.name ?? "Item"} × {li.quantity}
-                </span>
-                <span className="font-medium text-[var(--slate)]">{formatCurrency(Number(li.subtotal))}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Amount summary */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-          <FileText size={13} /> Booking Amount
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-3xl font-bold text-[var(--navy)]">{formatCurrency(Number(booking.totalAmount))}</p>
-            {booking.isBillingWaived && (
-              <p className="text-sm text-success font-medium mt-1">Billing waived</p>
-            )}
-            <p className="text-sm text-[var(--slate)] mt-3">
-              <strong>AC requested:</strong>{" "}
-              {booking.acRequested
-                ? "Yes — physical cash donation at Front Office."
-                : "No."}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {booking.notes && (
-        <Card className="p-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-2">
-            <FileText size={13} /> Notes
-          </div>
-          <p className="text-sm text-[var(--slate)] whitespace-pre-line">{booking.notes}</p>
-        </Card>
-      )}
-
-      {/* Ceremony Details */}
-      {cd && (
-        <Card className="p-5">
-          <div className="flex items-center gap-2 text-[var(--muted)] text-xs font-semibold uppercase tracking-wide mb-4">
-            <FileText size={13} /> {cd.type === "wedding" ? "Wedding" : "Naming Ceremony"} Details
-          </div>
-          {cd.type === "wedding" ? (
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-gray-100">
-                {[
-                  ["Bride's Name", cd.brideName],
-                  ["Groom's Name", cd.groomName],
-                  ["Contact (WhatsApp)", cd.contactWhatsApp],
-                  ["Email", cd.email],
-                  ["Bishop", `${cd.bishopName} (${cd.bishopPhone})`],
-                ].map(([label, value]) => (
-                  <tr key={label}>
-                    <td className="py-2 pr-4 text-[var(--muted)] w-40">{label}</td>
-                    <td className="py-2 font-medium text-[var(--navy)]">{value}</td>
-                  </tr>
+          {booking.lineItems.length > 0 && (
+            <Card className="gap-0 p-5 sm:p-6">
+              <SectionTitle icon={<Package size={14} />}>Items</SectionTitle>
+              <ul className="divide-y divide-border/70 rounded-2xl border border-border/70">
+                {booking.lineItems.map((li) => (
+                  <li key={li.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm">
+                    <span className="min-w-0 text-[var(--navy)]">
+                      <span className="font-medium tabular-nums">{li.quantity}×</span> {li.item?.name ?? li.bundle?.name ?? "Item"}
+                    </span>
+                    <span className="shrink-0 font-medium tabular-nums text-[var(--navy)]">{formatCurrency(Number(li.subtotal))}</span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Father</p>
-                <p>{cd.fatherName}</p>
-                <p className="text-[var(--muted)] text-xs">{cd.fatherPhone} / WA: {cd.fatherWhatsApp}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Child</p>
-                <p>{cd.childrenNames}</p>
-                <p className="text-[var(--muted)] text-xs">DOB: {cd.childBirthday}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Mother</p>
-                <p>{cd.motherName}</p>
-                <p className="text-[var(--muted)] text-xs">{cd.motherPhone}</p>
-                {cd.email && <p className="text-[var(--muted)] text-xs">{cd.email}</p>}
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-[var(--muted)] mb-2">Officiating Clergy</p>
-                <p>Pastor: {cd.pastorName} ({cd.pastorPhone})</p>
-                <p>Bishop: {cd.bishopName} ({cd.bishopPhone})</p>
-              </div>
-            </div>
+              </ul>
+            </Card>
           )}
-        </Card>
-      )}
 
-      {/* Check-in status */}
-      {booking.checkIn && (
-        <Card className="p-5 bg-success/10 border-success/25">
-          <p className="text-sm font-semibold text-success">✓ Checked in{booking.checkIn.checkedOutAt ? " & Checked out" : ""}</p>
-          <p className="text-xs text-success mt-1">
-            Checked in at {formatDateTime(booking.checkIn.checkedInAt)}
-            {booking.checkIn.checkedOutAt && ` · Checked out at ${formatDateTime(booking.checkIn.checkedOutAt)}`}
-          </p>
-        </Card>
-      )}
-      {booking.checkInRequested && !booking.checkIn && (
-        <Card className="p-5 bg-warning/10 border-warning/25">
-          <p className="text-sm font-semibold text-warning">Check-in requested</p>
-          <p className="text-xs text-warning mt-1">Waiting for staff to approve your check-in.</p>
-        </Card>
-      )}
+          {cd && (
+            <Card className="gap-0 p-5 sm:p-6">
+              <SectionTitle icon={<FileText size={14} />}>{cd.type === "wedding" ? "Wedding" : "Naming ceremony"}</SectionTitle>
+              {cd.type === "wedding" ? (
+                <Facts
+                  items={[
+                    { label: "Bride", value: cd.brideName },
+                    { label: "Groom", value: cd.groomName },
+                    { label: "Contact (WhatsApp)", value: cd.contactWhatsApp },
+                    { label: "Email", value: cd.email },
+                    { label: "Bishop", value: `${cd.bishopName} (${cd.bishopPhone})` },
+                  ]}
+                />
+              ) : (
+                <Facts
+                  items={[
+                    { label: "Child", value: cd.childrenNames },
+                    { label: "Date of birth", value: cd.childBirthday },
+                    { label: "Father", value: `${cd.fatherName} · ${cd.fatherPhone} · WA ${cd.fatherWhatsApp}` },
+                    { label: "Mother", value: `${cd.motherName} · ${cd.motherPhone}` },
+                    cd.email ? { label: "Email", value: cd.email } : null,
+                    { label: "Pastor", value: `${cd.pastorName} (${cd.pastorPhone})` },
+                    { label: "Bishop", value: `${cd.bishopName} (${cd.bishopPhone})` },
+                  ]}
+                />
+              )}
+            </Card>
+          )}
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        {booking.status === "APPROVED" && !booking.checkInRequested && !booking.checkIn && (
-          <CheckInRequestButton bookingId={booking.id} />
-        )}
-        {["PENDING", "APPROVED"].includes(booking.status) && (
-          <CancelBookingButton bookingId={booking.id} />
-        )}
+          {booking.notes && (
+            <Card className="gap-0 p-5 sm:p-6">
+              <SectionTitle icon={<FileText size={14} />}>Notes</SectionTitle>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--navy)]">{booking.notes}</p>
+            </Card>
+          )}
+        </div>
+
+        {/* ── Side ───────────────────────────────────────────── */}
+        <aside className="space-y-5">
+          <StatCard
+            hero
+            label="Booking amount"
+            value={formatCurrency(Number(booking.totalAmount))}
+            icon={<Wallet />}
+            sub={booking.isBillingWaived ? "Billing waived" : booking.acRequested ? "Plus AC — cash donation at the Front Office" : "No AC requested"}
+          />
+
+          <Card className="gap-0 p-5">
+            <SectionTitle icon={<LogIn size={14} />}>Check-in</SectionTitle>
+            {booking.checkIn ? (
+              <div className="space-y-1.5 text-sm">
+                <p className="font-medium text-success">
+                  Checked in{booking.checkIn.checkedOutAt ? " and out" : ""}
+                </p>
+                <p className="text-[var(--muted)]">
+                  In at {formatDateTime(booking.checkIn.checkedInAt)}
+                  {booking.checkIn.checkedOutAt && <> · out at {formatDateTime(booking.checkIn.checkedOutAt)}</>}
+                </p>
+              </div>
+            ) : booking.checkInRequested ? (
+              <p className="flex items-center gap-2 text-sm text-[var(--navy)]">
+                <span aria-hidden className="size-2 shrink-0 animate-pulse rounded-full bg-warning" />
+                Requested — waiting for staff to check you in.
+              </p>
+            ) : booking.status === "APPROVED" ? (
+              <p className="text-sm text-[var(--muted)]">When you arrive, request check-in and staff will confirm it.</p>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">Available once your booking is approved.</p>
+            )}
+          </Card>
+
+          {(canCheckIn || canCancel) && (
+            <Card className="gap-0 p-5">
+              <SectionTitle>Actions</SectionTitle>
+              <div className="flex flex-wrap gap-2">
+                {canCheckIn && <CheckInRequestButton bookingId={booking.id} />}
+                {canCancel && <CancelBookingButton bookingId={booking.id} />}
+              </div>
+            </Card>
+          )}
+        </aside>
       </div>
     </div>
+  );
+}
+
+function SectionTitle({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-[var(--muted)]">
+      {icon}
+      {children}
+    </h2>
+  );
+}
+
+/** Label/value pairs; empty rows are skipped. */
+function Facts({ items }: { items: ({ label: string; value: React.ReactNode } | null)[] }) {
+  return (
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
+      {items.map((item) =>
+        item && item.value !== null && item.value !== undefined && item.value !== "" ? (
+          <div key={item.label} className="min-w-0">
+            <dt className="text-xs text-[var(--muted)]">{item.label}</dt>
+            <dd className="mt-0.5 break-words text-[var(--navy)]">{item.value}</dd>
+          </div>
+        ) : null
+      )}
+    </dl>
   );
 }

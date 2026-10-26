@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModalBehavior } from "@/hooks/use-modal-behavior";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function EditPatronModal({ open, onClose, patron }: Props) {
+  useModalBehavior(open, onClose);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -52,17 +54,17 @@ export default function EditPatronModal({ open, onClose, patron }: Props) {
   if (!open || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto overscroll-contain">
+      <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-[1.5rem] bg-card shadow-[0_24px_64px_-24px_rgb(28_25_23/0.45)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
           <h2 className="text-lg font-semibold text-[var(--navy)]">Edit Patron</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--cream)] text-[var(--muted)]">
+          <button onClick={onClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-muted hover:text-[var(--navy)]">
             <X size={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+            <div className="bg-danger/10 border border-danger/30 rounded-lg p-3 text-danger text-sm">{error}</div>
           )}
           <div>
             <Label htmlFor="edit-patron-name">Full Name *</Label>

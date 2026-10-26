@@ -16,29 +16,27 @@ export default async function ItemsPage() {
   const canManage = session.role === "SUPER_ADMIN" || (session.authContext?.permissions["items:manage"] ?? false);
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
+    <div className="space-y-5 animate-fade-in">
 
       {/* Header */}
       <PageHeader
-        variant="hero"
-        eyebrow="Catalog Management"
-        title="Bookable Items & Packages"
-        description="Manage single items and package bundles available for external event bookings"
-        className="relative z-10"
+        title="Items & packages"
+        description="Chairs, tents, sound equipment and bundles that guests can add to an event booking."
+        className="mb-0"
         actions={
           canManage ? (
             <>
               <Link
-                href="/items/new"
-                className={cn(buttonVariants({ variant: "gold" }), "gap-2")}
-              >
-                <Plus size={15} /> Add Item
-              </Link>
-              <Link
                 href="/items/bundles/new"
                 className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
               >
-                <Layers size={15} /> New Package
+                <Layers size={15} /> New package
+              </Link>
+              <Link
+                href="/items/new"
+                className={cn(buttonVariants({ variant: "default" }), "gap-2")}
+              >
+                <Plus size={15} /> Add item
               </Link>
             </>
           ) : undefined
@@ -46,18 +44,18 @@ export default async function ItemsPage() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 stagger-children">
-        <StatCard label="Total Items"  value={items.length} color="inventory" icon={<Package size={16} />} />
-        <StatCard label="Active Items" value={items.filter(i => i.isActive).length} color="success" icon={<Package size={16} />} />
-        <StatCard label="Packages"     value={bundles.length} color="gold" icon={<Layers size={16} />} />
-        <StatCard label="Total Units"  value={items.reduce((s, i) => s + i.quantity, 0)} color="neutral" icon={<Tag size={16} />} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Items"     value={items.length} color="inventory" icon={<Package size={16} />} sub="Single rentable items" />
+        <StatCard label="Active"    value={items.filter(i => i.isActive).length} color="success" icon={<Package size={16} />} sub="Shown to guests" />
+        <StatCard label="Packages"  value={bundles.length} color="gold" icon={<Layers size={16} />} sub="Bundles of items" />
+        <StatCard label="Units"     value={items.reduce((s, i) => s + i.quantity, 0)} color="neutral" icon={<Tag size={16} />} sub="Total stock" />
       </div>
 
       {/* Items Table */}
-      <Card className="overflow-hidden relative z-10 p-0 gap-0">
+      <Card className="overflow-hidden p-0 gap-0">
         <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
-            <Package size={16} /> Single Items
+            <Package size={16} /> Single items
           </h2>
           {canManage && (
             <Link href="/items/new" className="text-xs font-semibold text-[var(--navy)] hover:underline flex items-center gap-1">
@@ -70,21 +68,21 @@ export default async function ItemsPage() {
             <Package size={36} className="mx-auto mb-3 text-[var(--gold)]" />
             <p className="font-semibold text-[var(--navy)] mb-1">No items yet</p>
             <p className="text-sm text-[var(--muted)] mb-4">Add chairs, tents, audio equipment — anything guests can rent.</p>
-            <Link href="/items/new" className={buttonVariants({ variant: "gold" })}>Add First Item</Link>
+            <Link href="/items/new" className={buttonVariants({ variant: "default" })}>Add first item</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+              <thead className="bg-muted/60">
                 <tr>
-                  {["Item", "Unit", "Price / Unit", "Stock", "Tags", "Status", "Actions"].map(h => (
-                    <th key={h} className="text-left py-3 px-4 font-semibold text-[var(--navy)] text-[0.78rem] uppercase tracking-[0.04em] whitespace-nowrap">{h}</th>
+                  {["Item", "Unit", "Price / unit", "Stock", "Tags", "Status", "Actions"].map(h => (
+                    <th key={h} className="text-left py-3 px-4 text-[var(--muted)] text-xs tracking-[0.04em] whitespace-nowrap font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {items.map(item => (
-                  <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                  <tr key={item.id} className="border-t border-border/60 hover:bg-muted/40">
                     <td className="py-3 px-4">
                       <p className="font-semibold text-[var(--navy)]">{item.name}</p>
                       {item.description && <p className="text-xs text-[var(--muted)] mt-0.5 line-clamp-1">{item.description}</p>}
@@ -130,7 +128,7 @@ export default async function ItemsPage() {
       </Card>
 
       {/* Bundles Table */}
-      <Card className="overflow-hidden relative z-10 p-0 gap-0">
+      <Card className="overflow-hidden p-0 gap-0">
         <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <h2 className="font-semibold text-[var(--navy)] flex items-center gap-2">
             <Layers size={16} /> Packages & Bouquets
@@ -146,21 +144,21 @@ export default async function ItemsPage() {
             <Layers size={36} className="mx-auto mb-3 text-[var(--gold)]" />
             <p className="font-semibold text-[var(--navy)] mb-1">No packages yet</p>
             <p className="text-sm text-[var(--muted)] mb-4">Create a bundle combining multiple items into one convenient package.</p>
-            <Link href="/items/bundles/new" className={buttonVariants({ variant: "gold" })}>Create First Package</Link>
+            <Link href="/items/bundles/new" className={buttonVariants({ variant: "default" })}>Create First Package</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--cream)] border-b border-[var(--border)]">
+              <thead className="bg-muted/60">
                 <tr>
                   {["Package", "Tagline", "Contents", "Price", "Status", "Actions"].map(h => (
-                    <th key={h} className="text-left py-3 px-4 font-semibold text-[var(--navy)] text-[0.78rem] uppercase tracking-[0.04em]">{h}</th>
+                    <th key={h} className="text-left py-3 px-4 text-[var(--muted)] text-xs tracking-[0.04em] font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {bundles.map(bundle => (
-                  <tr key={bundle.id} className="border-b border-[var(--border)] hover:bg-[var(--cream)]">
+                  <tr key={bundle.id} className="border-t border-border/60 hover:bg-muted/40">
                     <td className="py-3 px-4">
                       <p className="font-semibold text-[var(--navy)]">{bundle.name}</p>
                     </td>

@@ -89,7 +89,7 @@ export default function CeremonyConfigCard({ facilityId, type, config }: Props) 
                 </div>
               ))}
               {config.images.length > 4 && (
-                <div className="w-16 h-16 rounded-lg border border-[var(--border)] bg-gray-50 flex items-center justify-center text-xs text-[var(--muted)]">
+                <div className="w-16 h-16 rounded-2xl border border-border/70 bg-muted flex items-center justify-center text-xs text-[var(--muted)]">
                   +{config.images.length - 4}
                 </div>
               )}
