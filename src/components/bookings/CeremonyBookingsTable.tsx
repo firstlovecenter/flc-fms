@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, CalendarDays, ChevronRight, X, ArrowUpRight } from "lucide-react";
+import { Search, CalendarDays, X, ArrowUpRight } from "lucide-react";
 import { formatCurrency, formatDateTime, durationHours, cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ import CompleteBookingButton from "@/components/bookings/CompleteBookingButton";
 import DeleteBookingButton from "@/components/bookings/DeleteBookingButton";
 import { RecordSheet, SheetSection, DetailGrid } from "@/components/layout/RecordSheet";
 import { FilterPills } from "@/components/layout/ListControls";
-import { AcPill, ContactButtons, DateChip, formatTimeRange } from "@/components/bookings/booking-list-parts";
+import { ContactButtons } from "@/components/bookings/booking-list-parts";
+import BookingTable from "@/components/bookings/BookingTable";
 
 export type CeremonyBookingRow = {
   id: string;
@@ -172,54 +173,26 @@ export default function CeremonyBookingsTable({ bookings, canManage, isSuperAdmi
           }
         />
       ) : (
-        <ul className="divide-y divide-border/70 overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]">
-          {filtered.map((b) => (
-            <li key={b.id}>
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label={`Open ${principalNames(b)}`}
-                className="group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-5"
-                onClick={() => setSelectedId(b.id)}
-                onKeyDown={(e) => {
-                  if (e.target !== e.currentTarget) return;
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelectedId(b.id);
-                  }
-                }}
-              >
-                <DateChip iso={b.startTime} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="truncate text-sm font-medium text-[var(--navy)]">{principalNames(b)}</span>
-                    <TypePill type={b.ceremonyType} />
-                    <StatusBadge status={b.status} size="xs" />
-                    {b.acRequested && <AcPill />}
-                  </div>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
-                    <span>{b.facilityName}</span>
-                    <span aria-hidden>·</span>
-                    <span>{formatTimeRange(b.startTime, b.endTime)}</span>
-                    {b.ceremonyCodeValue && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-[var(--navy)]">
-                          {b.ceremonyCodeValue}
-                        </code>
-                      </>
-                    )}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {b.bookerPhone && <ContactButtons phone={b.bookerPhone} compact />}
-                  <span className="ml-1 hidden text-sm font-medium tabular-nums text-[var(--navy)] sm:inline">{formatCurrency(b.totalAmount)}</span>
-                  <ChevronRight size={16} className="text-[var(--muted)] transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <BookingTable
+          onOpen={setSelectedId}
+          rows={filtered.map((b) => ({
+            id: b.id,
+            title: principalNames(b),
+            tags: <TypePill type={b.ceremonyType} />,
+            subtitle: b.ceremonyCodeValue ? (
+              <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-[var(--navy)]">{b.ceremonyCodeValue}</code>
+            ) : b.title,
+            facility: b.facilityName,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            booker: b.bookerName,
+            bookerNote: b.createdByStaffName ? `Booked by ${b.createdByStaffName}` : null,
+            phone: b.bookerPhone,
+            amount: b.totalAmount,
+            status: b.status,
+            ac: b.acRequested,
+          }))}
+        />
       )}
 
       <RecordSheet

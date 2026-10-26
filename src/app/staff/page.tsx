@@ -85,6 +85,9 @@ export default async function StaffPage() {
   );
 }
 
+const TH = "px-4 py-2.5 text-left text-xs font-medium text-[var(--muted)] whitespace-nowrap";
+const TD = "px-4 py-3 align-middle";
+
 function StaffList({
   members,
   currentUserRole,
@@ -97,60 +100,68 @@ function StaffList({
   inactive?: boolean;
 }) {
   return (
-    <ul
-      className={cn(
-        "divide-y divide-border/70 rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]",
-        inactive && "opacity-80"
-      )}
-    >
-      {members.map((u) => (
-        <li key={u.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-          <Avatar name={u.name} src={u.profilePicture} />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="truncate text-sm font-medium text-[var(--navy)]">{u.name}</span>
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-medium leading-4",
-                  ROLE_TONE[u.role] ?? "bg-secondary text-secondary-foreground"
-                )}
-              >
-                {ROLE_LABELS[u.role] ?? u.role.replace(/_/g, " ")}
-              </span>
-              {inactive && (
-                <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] font-medium leading-4 text-secondary-foreground">
-                  Inactive
+    // No overflow-hidden here: each row's actions menu must be able to open
+    // past the card's edge. The header band rounds its own corners instead.
+    <div className={cn("rounded-[1.25rem] border border-border/70 bg-card shadow-[var(--shadow-xs)]", inactive && "opacity-80")}>
+      <table className="w-full text-sm">
+        <thead className="[&_th]:bg-muted/60 [&_th:first-child]:rounded-tl-[1.25rem] [&_th:last-child]:rounded-tr-[1.25rem]">
+          <tr>
+            <th data-mobile="title" className={TH}>Name</th>
+            <th data-mobile="badge" className={TH}>Role</th>
+            <th data-mobile="meta" className={TH}>Email</th>
+            <th data-mobile="meta" className={cn(TH, "sm:max-lg:hidden")}>Phone</th>
+            <th data-mobile="meta" className={TH}>Last sign-in</th>
+            <th className={cn(TH, "w-px")}><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map((u) => (
+            <tr key={u.id} className="border-t border-border/60 transition-colors hover:bg-muted/40">
+              <td className={TD}>
+                <span className="flex items-center gap-3">
+                  <span className="hidden sm:block"><Avatar name={u.name} src={u.profilePicture} /></span>
+                  <span className="font-medium text-[var(--navy)]">{u.name}</span>
                 </span>
-              )}
-            </div>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--muted)]">
-              <a href={`mailto:${u.email}`} className="truncate hover:text-[var(--navy)] hover:underline">{u.email}</a>
-              {u.phone && (
-                <>
-                  <span aria-hidden>·</span>
-                  <a href={`tel:${u.phone}`} className="hover:text-[var(--navy)] hover:underline">{u.phone}</a>
-                </>
-              )}
-              <span aria-hidden className="hidden sm:inline">·</span>
-              <span className="w-full sm:w-auto">
-                {u.lastLoginAt ? `Last signed in ${formatDate(u.lastLoginAt)}` : "Never signed in"}
-              </span>
-            </p>
-          </div>
-          <StaffRowActions
-            userId={u.id}
-            role={u.role}
-            name={u.name}
-            email={u.email}
-            phone={u.phone}
-            profilePicture={u.profilePicture}
-            currentUserRole={currentUserRole}
-            canManage={canManageMember(u)}
-            inactive={inactive}
-          />
-        </li>
-      ))}
-    </ul>
+              </td>
+              <td className={TD}>
+                <span
+                  className={cn(
+                    "inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[0.6875rem] font-medium leading-4",
+                    inactive ? "bg-secondary text-secondary-foreground" : ROLE_TONE[u.role] ?? "bg-secondary text-secondary-foreground"
+                  )}
+                >
+                  {inactive ? "Inactive" : ROLE_LABELS[u.role] ?? u.role.replace(/_/g, " ")}
+                </span>
+              </td>
+              <td className={cn(TD, "text-[var(--slate)]")}>
+                <a href={`mailto:${u.email}`} className="hover:text-[var(--navy)] hover:underline">{u.email}</a>
+              </td>
+              <td className={cn(TD, "whitespace-nowrap text-[var(--slate)] sm:max-lg:hidden")}>
+                {u.phone ? <a href={`tel:${u.phone}`} className="hover:text-[var(--navy)] hover:underline">{u.phone}</a> : "—"}
+              </td>
+              <td className={cn(TD, "whitespace-nowrap text-[var(--slate)]")}>
+                {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
+              </td>
+              <td className={TD}>
+                <div className="flex justify-end">
+                  <StaffRowActions
+                    userId={u.id}
+                    role={u.role}
+                    name={u.name}
+                    email={u.email}
+                    phone={u.phone}
+                    profilePicture={u.profilePicture}
+                    currentUserRole={currentUserRole}
+                    canManage={canManageMember(u)}
+                    inactive={inactive}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

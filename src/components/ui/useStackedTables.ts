@@ -83,7 +83,7 @@ function labelTable(table: HTMLTableElement) {
         const column = cell.colSpan > 1 ? undefined : columns[col];
         let mobile = column ? mobiles[col] : null;
         // Facts are run together as text; a cell with controls keeps its own row.
-        if ((mobile === 'meta' || mobile === 'title') && cell.querySelector(CONTROLS)) mobile = null;
+        if (mobile === 'meta' && cell.querySelector(CONTROLS)) mobile = null;
         copyFromHeader(cell, 'data-label', column ? column.label : null);
         copyFromHeader(cell, 'data-mobile', mobile);
         col += cell.colSpan;
