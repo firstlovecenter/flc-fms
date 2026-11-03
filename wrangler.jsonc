@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "flc-fms",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "flc-fms"
+    }
+  ],
+  // Pooled, warm connections to the Neon database. Query caching is disabled
+  // on this config (financial data must never be served stale).
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "a9c863c3ac764fb6855867961b815b34"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
