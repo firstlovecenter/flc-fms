@@ -2,6 +2,7 @@ import "server-only";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { hyperdriveConnectionString, requestScoped } from "@/lib/runtime/request-scope";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof buildPrismaClient> | undefined;
@@ -15,7 +16,10 @@ const globalForPrisma = globalThis as unknown as {
  * explicitly passes `where: { deletedAt: { not: null } }` to opt in.
  */
 function buildPrismaClient() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // On Cloudflare Workers, connect through Hyperdrive (pooled near the database);
+  // everywhere else, connect to DATABASE_URL directly.
+  const connectionString = hyperdriveConnectionString() ?? process.env.DATABASE_URL;
+  const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
   const base = new PrismaClient({
     adapter,
@@ -69,6 +73,14 @@ function buildPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? buildPrismaClient();
+function sharedPrismaClient() {
+  // Reused across hot reloads in development and across requests on Node.
+  globalForPrisma.prisma ??= buildPrismaClient();
+  return globalForPrisma.prisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+/**
+ * One client per request on Cloudflare Workers (whose sockets cannot cross
+ * requests), one shared client everywhere else.
+ */
+export const prisma = requestScoped(buildPrismaClient, sharedPrismaClient);

@@ -34,6 +34,9 @@ const developmentSecurityHeaders = [
 ];
 
 const nextConfig = {
+  // Prisma's generated client must stay external so the Cloudflare build can
+  // resolve its workerd-specific entry point.
+  serverExternalPackages: ["@prisma/client", ".prisma/client"],
   async headers() {
     const headers =
       process.env.NODE_ENV === "production"
@@ -66,3 +69,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

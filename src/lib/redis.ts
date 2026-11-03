@@ -1,5 +1,6 @@
 import "server-only";
 import Redis from "ioredis";
+import { requestScoped } from "@/lib/runtime/request-scope";
 
 const globalForRedis = globalThis as unknown as { redis: Redis | undefined };
 
@@ -17,9 +18,16 @@ function createClient(): Redis {
   return client;
 }
 
-export const redis = globalForRedis.redis ?? createClient();
+function sharedClient(): Redis {
+  globalForRedis.redis ??= createClient();
+  return globalForRedis.redis;
+}
 
-if (process.env.NODE_ENV !== "production") globalForRedis.redis = redis;
+/**
+ * One connection per request on Cloudflare Workers (whose sockets cannot cross
+ * requests), one shared connection everywhere else.
+ */
+export const redis: Redis = requestScoped(createClient, sharedClient);
 
 /** Sliding-window rate limiter. Returns true if the request is allowed. */
 export async function rateLimit(
