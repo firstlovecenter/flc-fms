@@ -1,7 +1,6 @@
-import { Resend } from "resend";
+import { sendMail } from "@/lib/notifications/mail-transport";
 import { prisma } from "@/lib/db/prisma";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
 const FROM = process.env.EMAIL_FROM ?? "CFMS <noreply@platform.com>";
 const APP_NAME = "First Love Center Facility Management";
 const APP_SHORT = "FLC FMS";
@@ -156,22 +155,13 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
   let providerRef: string | undefined;
   let error: string | undefined;
 
-  try {
-    const { data, error: resendError } = await resend.emails.send({
-      from: FROM,
-      to,
-      subject,
-      html,
-    });
-
-    if (resendError) {
-      error = resendError.message;
-    } else {
-      status = "SENT";
-      providerRef = data?.id;
-    }
-  } catch (err: any) {
-    error = err.message;
+  const result = await sendMail({ from: FROM, to, subject, html });
+  const provider = result.provider;
+  if (result.error) {
+    error = result.error;
+  } else {
+    status = "SENT";
+    providerRef = result.id;
   }
 
   if (status !== "SENT") {
@@ -180,7 +170,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
 
   try {
     await prisma.notificationLog.create({
-      data: { type: "EMAIL", recipient: to, subject, body: html, status, provider: "RESEND", providerRef, error },
+      data: { type: "EMAIL", recipient: to, subject, body: html, status, provider, providerRef, error },
     });
   } catch (logErr) {
     console.error("[Email] Failed to write notification log:", logErr);

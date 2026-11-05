@@ -22,8 +22,10 @@ export const env = createEnv({
     // Redis
     REDIS_URL: z.string().url("REDIS_URL must be a valid URL").optional(),
 
-    // Email (Resend)
-    RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY must start with re_"),
+    // Email: notifyGo (preferred), or Resend until the notifyGo key is set
+    NOTIFYGO_API_KEY: z.string().startsWith("ng_", "NOTIFYGO_API_KEY must start with ng_").optional(),
+    NOTIFYGO_API_URL: z.string().url().optional(),
+    RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY must start with re_").optional(),
     EMAIL_FROM: z.string().email("EMAIL_FROM must be a valid email address"),
 
     // SMS (FlashSMS v2 API)
@@ -55,6 +57,8 @@ export const env = createEnv({
     JWT_SECRET:            process.env.JWT_SECRET,
     ENCRYPTION_KEY:        process.env.ENCRYPTION_KEY,
     REDIS_URL:             process.env.REDIS_URL,
+    NOTIFYGO_API_KEY:      process.env.NOTIFYGO_API_KEY,
+    NOTIFYGO_API_URL:      process.env.NOTIFYGO_API_URL,
     RESEND_API_KEY:        process.env.RESEND_API_KEY,
     EMAIL_FROM:            process.env.EMAIL_FROM,
     FLASHSMS_API_URL:      process.env.FLASHSMS_API_URL,

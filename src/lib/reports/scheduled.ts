@@ -24,7 +24,7 @@ import {
   patronsToCSV,
   maintenanceToCSV,
 } from "./csv";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/notifications/mail-transport";
 
 type ReportType =
   | "FINANCIAL"
@@ -244,7 +244,6 @@ export async function runScheduledReports(frequency: ScheduledFrequency, range: 
 
   if (subscriptions.length === 0) return { sent: 0, errors: [] };
 
-  const resend = new Resend(process.env.RESEND_API_KEY!);
   const periodLabel = { WEEKLY: "Weekly", MONTHLY: "Monthly", QUARTERLY: "Quarterly", YEARLY: "Annual" }[frequency];
 
   let sent = 0;
@@ -263,13 +262,14 @@ export async function runScheduledReports(frequency: ScheduledFrequency, range: 
         content:  Buffer.from(b.csvContent, "utf-8").toString("base64"),
       }));
 
-      await resend.emails.send({
+      const result = await sendMail({
         from: FROM,
         to:   sub.email,
         subject: `${APP_SHORT} — ${periodLabel} Reports`,
         html,
         attachments,
       });
+      if (result.error) throw new Error(result.error);
 
       sent++;
     } catch (err: any) {

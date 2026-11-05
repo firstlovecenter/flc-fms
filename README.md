@@ -73,7 +73,7 @@ src/
 ├── lib/
 │   ├── auth/            # JWT session + guards
 │   ├── db/              # Prisma client
-│   ├── notifications/   # SMS (BMS) + Email (Resend)
+│   ├── notifications/   # SMS (BMS) + Email (notifyGo)
 │   ├── crypto.ts        # AES-256-GCM for secrets at rest
 │   ├── audit.ts         # Fire-and-forget audit logger
 │   ├── redis.ts         # Redis client + rate limiter
@@ -169,7 +169,7 @@ Hyperdrive config (`flc-fms-db`, query caching **disabled**), bound as `HYPERDRI
   secrets: `npx wrangler secret put NAME` or `npx wrangler secret bulk secrets.json`.
 - **OpenNext embeds every value in `.env` into the Worker bundle.** Build for deploy with only
   `NEXT_PUBLIC_*` values present in `.env` (or a CI environment that has only those), and pass
-  `SKIP_ENV_VALIDATION=1 RESEND_API_KEY=re_build_placeholder` so the build doesn't need the
+  `SKIP_ENV_VALIDATION=1` so the build doesn't need the
   real server secrets.
 - `npm run preview:cf` runs the built Worker locally; `npm run deploy:cf` builds and deploys.
 - On Workers, `prisma` and `redis` are created per request (see `src/lib/runtime/request-scope.ts`),
