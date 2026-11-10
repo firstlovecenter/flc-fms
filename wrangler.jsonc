@@ -22,6 +22,14 @@
       "id": "a9c863c3ac764fb6855867961b815b34"
     }
   ],
+  // Run the Worker next to the Neon database (us-east-1) instead of next to
+  // the visitor. A page render makes many sequential queries; from an edge
+  // location far from the database each one costs a long round trip, which
+  // is what made pages slow after the move from Vercel (where functions ran
+  // in iad1 beside the database). Keep this in step with the Neon region.
+  "placement": {
+    "region": "aws:us-east-1"
+  },
   "observability": {
     "enabled": true
   }
