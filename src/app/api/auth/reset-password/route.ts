@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit: 10 attempts per 15 minutes per email
-  const { allowed } = await rateLimit(`reset-pw:${email}`, 10, 900);
+  const { allowed } = await rateLimit(`reset-pw:${email}`, 10, 900, true);
   if (!allowed) {
     return NextResponse.json({ error: "Too many attempts. Please request a new code." }, { status: 429 });
   }

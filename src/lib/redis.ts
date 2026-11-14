@@ -29,11 +29,17 @@ function sharedClient(): Redis {
  */
 export const redis: Redis = requestScoped(createClient, sharedClient);
 
-/** Sliding-window rate limiter. Returns true if the request is allowed. */
+/** Sliding-window rate limiter. Returns true if the request is allowed.
+ *
+ * @param failClosed - When true, deny the request if Redis is unavailable
+ *   (use for auth paths). When false (default), allow the request on Redis
+ *   failure so non-auth flows degrade gracefully.
+ */
 export async function rateLimit(
   key: string,
   limit: number,
-  windowSeconds: number
+  windowSeconds: number,
+  failClosed: boolean = false
 ): Promise<{ allowed: boolean; remaining: number }> {
   try {
     const now = Date.now();
@@ -53,7 +59,11 @@ export async function rateLimit(
       allowed: count <= limit,
       remaining: Math.max(0, limit - count)};
   } catch {
-    // Degrade gracefully when Redis is unavailable so auth flows continue to work.
+    if (failClosed) {
+      // Deny when Redis is unavailable on auth-critical paths to prevent brute-force bypass.
+      return { allowed: false, remaining: 0 };
+    }
+    // Degrade gracefully when Redis is unavailable so non-auth flows continue to work.
     return {
       allowed: true,
       remaining: limit,

@@ -7,16 +7,20 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+const SEED_SUPER_ADMIN_PASSWORD = process.env.SEED_SUPER_ADMIN_PASSWORD ?? (() => { throw new Error('SEED_SUPER_ADMIN_PASSWORD env var required') })()
+const SEED_FM_PASSWORD = process.env.SEED_FM_PASSWORD ?? (() => { throw new Error('SEED_FM_PASSWORD env var required') })()
+const SEED_VICAR_PASSWORD = process.env.SEED_VICAR_PASSWORD ?? (() => { throw new Error('SEED_VICAR_PASSWORD env var required') })()
+
 async function main() {
   console.log("🌱 Seeding database...");
 
   // Super Admin
   const superAdmin = await prisma.user.upsert({
-    where: { email: "skaduteye@gmail.com" },
+    where: { email: "admin@example.com" },
     update: {},
     create: {
-      email: "skaduteye@gmail.com",
-      passwordHash: await bcrypt.hash("SuperAdmin@123", 12),
+      email: "admin@example.com",
+      passwordHash: await bcrypt.hash(SEED_SUPER_ADMIN_PASSWORD, 12),
       name: "Super Administrator",
       role: "SUPER_ADMIN",
     },
@@ -29,7 +33,7 @@ async function main() {
     update: {},
     create: {
       email: "fm@firstlovecenter.com",
-      passwordHash: await bcrypt.hash("FmPassword@123", 12),
+      passwordHash: await bcrypt.hash(SEED_FM_PASSWORD, 12),
       name: "Gold Opoku",
       role: "FACILITY_MANAGER",
     },
@@ -41,7 +45,7 @@ async function main() {
     update: {},
     create: {
       email: "vicar@firstlovecenter.com",
-      passwordHash: await bcrypt.hash("VicarPassword@123", 12),
+      passwordHash: await bcrypt.hash(SEED_VICAR_PASSWORD, 12),
       name: "Bicknell Aidoo",
       role: "VICAR",
       permissions: {
@@ -334,9 +338,9 @@ async function main() {
   console.log("✅ Duty log templates seeded");
   console.log("\n🎉 Seed complete!\n");
   console.log("Login credentials:");
-  console.log("  Super Admin:       skaduteye@gmail.com              / SuperAdmin@123");
-  console.log("  Facility Manager:  fm@firstlovecenter.com           / FmPassword@123");
-  console.log("  Vicar:             vicar@firstlovecenter.com        / VicarPassword@123");
+  console.log("  Super Admin:       admin@example.com                / (see SEED_SUPER_ADMIN_PASSWORD)");
+  console.log("  Facility Manager:  fm@firstlovecenter.com           / (see SEED_FM_PASSWORD)");
+  console.log("  Vicar:             vicar@firstlovecenter.com        / (see SEED_VICAR_PASSWORD)");
 }
 
 main()

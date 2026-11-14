@@ -2,7 +2,9 @@ import "server-only";
 import crypto from "crypto";
 
 const ALG = "aes-256-gcm";
-const KEY = Buffer.from(process.env.ENCRYPTION_KEY ?? "0".repeat(64), "hex");
+const encryptionKey = process.env.ENCRYPTION_KEY
+if (!encryptionKey) throw new Error('ENCRYPTION_KEY environment variable is required')
+const KEY = Buffer.from(encryptionKey, 'hex')
 
 export function encrypt(plaintext: string): string {
   const iv = crypto.randomBytes(12);

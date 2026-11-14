@@ -44,10 +44,23 @@ export async function POST(request: NextRequest) {
       // Directory might already exist, ignore error
     }
 
+    // Derive extension from MIME type rather than untrusted filename
+    const MIME_TO_EXT: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+      'image/avif': 'avif',
+    }
+    const extension = MIME_TO_EXT[file.type]
+    if (!extension) {
+      return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
+    }
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
-    const extension = file.name.split(".").pop();
     const filename = `${timestamp}-${randomString}.${extension}`;
     const filepath = join(uploadsDir, filename);
 

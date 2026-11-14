@@ -110,10 +110,7 @@ export async function POST(req: NextRequest) {
       uploadedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Media upload error:", error);
-    return NextResponse.json(
-      { error: "Upload failed", details: String(error) },
-      { status: 500 }
-    );
+    console.error('Upload failed:', error)
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

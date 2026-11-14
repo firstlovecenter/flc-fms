@@ -28,7 +28,7 @@ const StaffLoginSchema = z.object({
 
 export async function loginAnyAccount(formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-  const { allowed } = await rateLimit(`login:${ip}`, 10, 60);
+  const { allowed } = await rateLimit(`login:${ip}`, 10, 60, true);
   if (!allowed) return { error: "Too many attempts. Try again in a minute." };
 
   const parsed = StaffLoginSchema.safeParse({

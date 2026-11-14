@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit: 5 requests per 15 minutes per email
-  const { allowed } = await rateLimit(`forgot-pw:${email}`, 5, 900);
+  const { allowed } = await rateLimit(`forgot-pw:${email}`, 5, 900, true);
   if (!allowed) {
     return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
   }
