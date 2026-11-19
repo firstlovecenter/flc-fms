@@ -2,7 +2,7 @@
 // Both speak the same API, so this is a plain fetch. Settings are read on every call rather than
 // at import, because on Cloudflare Workers the environment is only populated per request.
 
-const NOTIFYGO_DEFAULT_URL = "https://notifygo.app/resend";
+const NOTIFYGO_DEFAULT_URL = "https://dev.notifygo.app/resend";
 const RESEND_URL = "https://api.resend.com";
 
 export type MailProvider = "NOTIFYGO" | "RESEND";
@@ -42,11 +42,14 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
       headers: { Authorization: `Bearer ${target.key}`, "Content-Type": "application/json" },
       body: JSON.stringify(message),
     });
-    const body = (await response.json().catch(() => null)) as { id?: string; message?: string } | null;
+    const body = (await response.json().catch(() => null)) as { id?: string; message?: string; error?: { message?: string } } | null;
     if (!response.ok) {
-      return { provider: target.provider, error: body?.message || `HTTP ${response.status}` };
+      return { provider: target.provider, error: body?.message || body?.error?.message || `HTTP ${response.status}` };
     }
-    return { provider: target.provider, id: body?.id };
+    if (typeof body?.id !== "string" || !body.id.trim()) {
+      return { provider: target.provider, error: "Email provider returned no message ID. Check the email API URL." };
+    }
+    return { provider: target.provider, id: body.id };
   } catch (err: any) {
     return { provider: target.provider, error: err?.message ?? "Network error" };
   }
