@@ -1,19 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
-import { randomUUID } from "crypto";
 
-// FLASHSMS_API_URL must be the v2 base URL, e.g. https://app.flashsms.africa/api/v2
-// FLASHSMS_API_KEY must be a v2 API key (v1 keys are not accepted by v2 endpoints)
-const FLASHSMS_BASE_URL = process.env.FLASHSMS_API_URL!;
-const FLASHSMS_API_KEY = process.env.FLASHSMS_API_KEY!;
-const FLASHSMS_SENDER_ID = process.env.FLASHSMS_SENDER_ID ?? "CFMS";
-
-function v2Headers(idempotencyKey?: string) {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${FLASHSMS_API_KEY}`,
-    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-  } as const;
-}
+const FLC_NOTIFY_URL = (process.env.FLC_NOTIFY_URL ?? "").replace(/\/+$/, "");
+const FLC_NOTIFY_KEY = process.env.FLC_NOTIFY_KEY ?? "";
+const FLC_NOTIFY_SENDER_ID = process.env.FLC_NOTIFY_SENDER_ID ?? "CFMS";
 
 // ── Core send ─────────────────────────────────────────────────────────────────
 
@@ -33,24 +22,22 @@ export async function sendSMS({ to, message }: SendSMSParams): Promise<boolean> 
       let error: string | undefined;
 
       try {
-        const res = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
+        const res = await fetch(`${FLC_NOTIFY_URL}/send-sms`, {
           method: "POST",
-          headers: v2Headers(randomUUID()),
-          body: JSON.stringify({
-            phones: [phone],
-            message,
-            senderId: FLASHSMS_SENDER_ID,
-          }),
+          headers: {
+            "Content-Type": "application/json",
+            "x-secret-key": FLC_NOTIFY_KEY,
+          },
+          body: JSON.stringify({ recipient: phone, message, sender: FLC_NOTIFY_SENDER_ID }),
         });
 
         const body = await res.json();
 
-        // v2 returns 202 Accepted on success
-        if (res.status === 202 && body.data?.id) {
+        if (res.ok && body.success) {
           status = "SENT";
-          providerRef = body.data.id;
+          providerRef = body.data?.id;
         } else {
-          error = body.error?.message ?? "Unknown FlashSMS error";
+          error = body.error ?? body.message ?? "FLC notify error";
         }
       } catch (err: any) {
         error = err.message;
@@ -67,7 +54,7 @@ export async function sendSMS({ to, message }: SendSMSParams): Promise<boolean> 
             recipient: phone,
             body: message,
             status,
-            provider: "BMS",
+            provider: "FLC_NOTIFY",
             providerRef,
             error,
           },
@@ -81,62 +68,6 @@ export async function sendSMS({ to, message }: SendSMSParams): Promise<boolean> 
   );
 
   return results.every((r) => r.status === "fulfilled" && r.value === true);
-}
-
-// ── Balance & status helpers ──────────────────────────────────────────────────
-
-export async function checkSMSBalance(): Promise<{
-  total: number;
-  expiry: number;
-  nonExpiry: number;
-} | null> {
-  try {
-    const res = await fetch(`${FLASHSMS_BASE_URL}/balance`, {
-      headers: v2Headers(),
-    });
-    if (!res.ok) return null;
-    const body = await res.json();
-    if (!body.data) return null;
-    return {
-      total:     body.data.total ?? 0,
-      expiry:    body.data.expiry?.credits ?? 0,
-      nonExpiry: body.data.nonExpiry?.credits ?? 0,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function getSMSStatus(
-  messageId: string,
-): Promise<{ status: string; recipientCount?: number; creditsUsed?: number } | null> {
-  try {
-    const res = await fetch(
-      `${FLASHSMS_BASE_URL}/sms/status/${encodeURIComponent(messageId)}`,
-      { headers: v2Headers() },
-    );
-    if (!res.ok) return null;
-    const body = await res.json();
-    return body.data ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function getSMSHistory(cursor?: string, limit = 20) {
-  try {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (cursor) params.set("cursor", cursor);
-    const res = await fetch(
-      `${FLASHSMS_BASE_URL}/sms?${params.toString()}`,
-      { headers: v2Headers() },
-    );
-    if (!res.ok) return null;
-    const body = await res.json();
-    return body.data ?? null;
-  } catch {
-    return null;
-  }
 }
 
 // ── Templated senders ─────────────────────────────────────────────────────────

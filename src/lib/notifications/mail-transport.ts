@@ -1,11 +1,7 @@
-// Sends one email through notifyGo (Codeslaw's mail service) or, until its key is set, Resend.
-// Both speak the same API, so this is a plain fetch. Settings are read on every call rather than
-// at import, because on Cloudflare Workers the environment is only populated per request.
+// Sends email through FLC notify only.
+// Settings are read on every call rather than at import.
 
-const NOTIFYGO_DEFAULT_URL = "https://dev.notifygo.app/resend";
-const RESEND_URL = "https://api.resend.com";
-
-export type MailProvider = "NOTIFYGO" | "RESEND";
+export type MailProvider = "FLC_NOTIFY";
 
 export interface MailMessage {
   from: string;
@@ -21,36 +17,39 @@ export interface MailResult {
   error?: string;
 }
 
-function transport(): { provider: MailProvider; url: string; key: string } | null {
-  const notifygoKey = process.env.NOTIFYGO_API_KEY;
-  if (notifygoKey) {
-    const url = (process.env.NOTIFYGO_API_URL || NOTIFYGO_DEFAULT_URL).replace(/\/+$/, "");
-    return { provider: "NOTIFYGO", url, key: notifygoKey };
-  }
-  const resendKey = process.env.RESEND_API_KEY;
-  if (resendKey) return { provider: "RESEND", url: RESEND_URL, key: resendKey };
-  return null;
-}
-
 export async function sendMail(message: MailMessage): Promise<MailResult> {
-  const target = transport();
-  if (!target) return { provider: "NOTIFYGO", error: "No email API key is set (NOTIFYGO_API_KEY)." };
+  const key = process.env.FLC_NOTIFY_KEY;
+  const url = (process.env.FLC_NOTIFY_URL ?? "").replace(/\/+$/, "");
+
+  if (!key || !url) {
+    return { provider: "FLC_NOTIFY", error: "FLC_NOTIFY_KEY or FLC_NOTIFY_URL is not set." };
+  }
 
   try {
-    const response = await fetch(`${target.url}/emails`, {
+    const response = await fetch(`${url}/send-email`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${target.key}`, "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-secret-key": key,
+      },
       body: JSON.stringify(message),
     });
-    const body = (await response.json().catch(() => null)) as { id?: string; message?: string; error?: { message?: string } } | null;
-    if (!response.ok) {
-      return { provider: target.provider, error: body?.message || body?.error?.message || `HTTP ${response.status}` };
+    const body = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      data?: { id?: string };
+      message?: string;
+      error?: string;
+    } | null;
+
+    if (!response.ok || !body?.success) {
+      return { provider: "FLC_NOTIFY", error: body?.error ?? body?.message ?? `HTTP ${response.status}` };
     }
-    if (typeof body?.id !== "string" || !body.id.trim()) {
-      return { provider: target.provider, error: "Email provider returned no message ID. Check the email API URL." };
+    const id = body?.data?.id;
+    if (typeof id !== "string" || !id.trim()) {
+      return { provider: "FLC_NOTIFY", error: "FLC notify returned no message ID." };
     }
-    return { provider: target.provider, id: body.id };
+    return { provider: "FLC_NOTIFY", id };
   } catch (err: any) {
-    return { provider: target.provider, error: err?.message ?? "Network error" };
+    return { provider: "FLC_NOTIFY", error: err?.message ?? "Network error" };
   }
 }

@@ -6,8 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requirePerm } from "@/lib/auth/guards";
 import { auditLog } from "@/lib/audit";
 import { rateLimit } from "@/lib/redis";
-import { sendSMS, checkSMSBalance } from "@/lib/notifications/sms";
-import { notifyAccessCode } from "@/lib/notifications/sms";
+import { sendSMS, notifyAccessCode } from "@/lib/notifications/sms";
 import { headers } from "next/headers";
 
 const SendCustomSMSSchema = z.object({
@@ -94,7 +93,7 @@ export async function sendBulkSMSToBookers(data: z.input<typeof BulkSMSSchema>) 
 
 export async function getSMSBalanceAction() {
   await requirePerm("bookings:approve");
-  return checkSMSBalance();
+  return null; // Balance check not available via FLC notify
 }
 
 export async function sendAccessCodeToBooker(bookingId: string) {
