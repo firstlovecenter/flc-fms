@@ -34,6 +34,7 @@ const PUBLIC_PATHS = [
   "/api/push/public-key",
   "/api/webhooks",
   "/api/cron",
+  "/api/test-sms",
 ];
 
 function isPublic(pathname: string) {
