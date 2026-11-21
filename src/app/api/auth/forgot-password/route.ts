@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { rateLimit } from "@/lib/redis";
 import { randomInt } from "crypto";
-import { sendSMS } from "@/lib/notifications/sms";
 import { sendPasswordResetOtpEmail } from "@/lib/notifications/email";
 import { setPasswordResetOtp } from "@/lib/password-reset";
 
@@ -35,22 +34,14 @@ export async function POST(req: NextRequest) {
   await setPasswordResetOtp(email, otp, 900);
 
   // Notifications should not break password reset request handling.
-  const notifyTasks: Promise<unknown>[] = [];
-  if (account.phone) {
-    notifyTasks.push(sendSMS({
-      to: account.phone,
-      message: `[Revival Mgmt] Your password reset code is: ${otp}. This code expires in 15 minutes. If you did not request this, please ignore.`,
-    }));
-  }
-
-  notifyTasks.push(sendPasswordResetOtpEmail({
-    to: email,
-    name: account.name,
-    otp,
-    expiresMinutes: 15,
-  }));
-
-  await Promise.allSettled(notifyTasks);
+  await Promise.allSettled([
+    sendPasswordResetOtpEmail({
+      to: email,
+      name: account.name,
+      otp,
+      expiresMinutes: 15,
+    }),
+  ]);
 
   return successResponse;
 }

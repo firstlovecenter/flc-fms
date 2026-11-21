@@ -1,7 +1,6 @@
 import { sendMail } from "@/lib/notifications/mail-transport";
 import { prisma } from "@/lib/db/prisma";
 
-const FROM = process.env.EMAIL_FROM ?? "CFMS <noreply@platform.com>";
 const APP_NAME = "First Love Center Facility Management";
 const APP_SHORT = "FLC FMS";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -155,7 +154,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
   let providerRef: string | undefined;
   let error: string | undefined;
 
-  const result = await sendMail({ from: FROM, to, subject, html });
+  const result = await sendMail({ to, subject, html });
   const provider = result.provider;
   if (result.error) {
     error = result.error;

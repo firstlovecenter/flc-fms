@@ -4,7 +4,7 @@
 export type MailProvider = "FLC_NOTIFY";
 
 export interface MailMessage {
-  from: string;
+  from?: string;
   to: string;
   subject: string;
   html: string;
@@ -25,6 +25,15 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     return { provider: "FLC_NOTIFY", error: "FLC_NOTIFY_KEY or FLC_NOTIFY_URL is not set." };
   }
 
+  const from = message.from || process.env.EMAIL_FROM;
+  const payload = {
+    ...(from ? { from } : {}),
+    to: message.to,
+    subject: message.subject,
+    html: message.html,
+    ...(message.attachments ? { attachments: message.attachments } : {}),
+  };
+
   try {
     const response = await fetch(`${url}/send-email`, {
       method: "POST",
@@ -32,7 +41,7 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
         "Content-Type": "application/json",
         "x-secret-key": key,
       },
-      body: JSON.stringify(message),
+      body: JSON.stringify(payload),
     });
     const body = (await response.json().catch(() => null)) as {
       success?: boolean;

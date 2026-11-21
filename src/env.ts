@@ -26,7 +26,7 @@ export const env = createEnv({
     FLC_NOTIFY_URL: z.string().url().optional(),
     FLC_NOTIFY_KEY: z.string().optional(),
     FLC_NOTIFY_SENDER_ID: z.string().optional(),
-    EMAIL_FROM: z.string().email("EMAIL_FROM must be a valid email address"),
+    EMAIL_FROM: z.string().min(1).optional(),
 
     // Push Notifications (VAPID web-push)
     VAPID_PUBLIC_KEY: z.string().optional(),

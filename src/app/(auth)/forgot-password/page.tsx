@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
             <p className="text-[0.85rem] text-[var(--text-muted)]">
               {step === "email"
                 ? "Enter your email to receive a reset code."
-                : "Enter the code sent to your phone/email and your new password."}
+                : "Enter the code sent to your email and your new password."}
             </p>
           </div>
 

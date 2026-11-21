@@ -38,7 +38,6 @@ type ReportType =
 const APP_URL  = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const APP_NAME = "First Love Center Facility Management";
 const APP_SHORT = "FLC FMS";
-const FROM = process.env.EMAIL_FROM ?? "CFMS <noreply@platform.com>";
 
 function esc(v: string) {
   return v.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -263,7 +262,6 @@ export async function runScheduledReports(frequency: ScheduledFrequency, range: 
       }));
 
       const result = await sendMail({
-        from: FROM,
         to:   sub.email,
         subject: `${APP_SHORT} — ${periodLabel} Reports`,
         html,

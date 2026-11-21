@@ -12,7 +12,6 @@ import {
   sanitizePermissionInput,
   ALL_PERMISSIONS,
 } from "@/lib/permissions";
-import { notifyStaffPasswordReset } from "@/lib/notifications/sms";
 import { sendStaffPasswordResetEmail } from "@/lib/notifications/email";
 import { type Role, Prisma } from "@prisma/client";
 import { checkStaffTarget } from "@/lib/permissions/staff-guard";
@@ -113,14 +112,6 @@ export async function resetStaffPassword(userId: string) {
   });
 
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-  if (user.phone) {
-    await notifyStaffPasswordReset({
-      phone: user.phone,
-      name: user.name,
-      tempPassword,
-      loginUrl,
-    });
-  }
   if (user.email) {
     await sendStaffPasswordResetEmail({
       to: user.email,
